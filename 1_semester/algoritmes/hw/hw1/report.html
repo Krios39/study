@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>HW1. Algorithmic Evidence: Prediction, Measurement, and Explanation</title>
+    <meta name="reference" content="Big_O_notation | https://en.wikipedia.org/wiki/Big_O_notation">
+
+    <link rel="stylesheet" href="../../styles.css">
+    <script src="../../header.js" defer></script>
+    <script src="../../footer.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+
+<h2>T1. Asymptotic winner versus practical winner</h2>
+
+<div class="math-left">
+$$T_A(n) = 0.3 * n * log_2(n)\text{ milliseconds}$$
+$$T_B(n) = 5 * n \text{ milliseconds}$$
+</div>
+
+<h4>Some calculations:</h4>
+<div class="math-left">
+$$0.3 \cdot n \cdot \log_2(n) = 5 \cdot n$$
+$$0.3 \cdot \log_2(n) = 5\text{ (divide both part for n)}$$
+$$\log_2(n) = \frac{5}{0.3} = \frac{50}{3}\ = 16\frac{2}{3}\text{ (divide both part for 0.3)}$$
+$$n = 2^{16\frac{2}{3}} = 2^{16} \cdot \sqrt[3]{2^2} = 65\,536 \cdot \sqrt[3]{4} \approx \mathbf{104\,031.92} \text{ (found Intersection point)}$$
+</div>
+
+<h4>The graph:</h4>
+<div style="max-width: 800px; margin: 30px auto;">
+    <canvas id="complexityChart"></canvas>
+</div>
+
+<h2>The answers:</h2>
+<ol>
+    <li>
+        Asymptotically better <strong>T_B</strong> because after point <i>104_031.92</i> it will increase slower
+    </li>
+    <li>
+        Winner change after crossover point (n = <i>104_031</i>, if we are talking  about integers)
+    </li>
+    <li>
+        For <i>100_000</i>  i would choose <strong>T_A</strong> (because it less than <i>104_031</i>) and for <i>10_000_000</i> i would choose <strong>T_B</strong>
+    </li>
+    <li>
+        Crossover point pretty sensitive because this functions have power dependency. Besides main equality where $n = 2^{\frac{5}{0.3}}$ and ratio of constants is $\frac{5}{0.3}$ we can see 4 cases
+        <ol>
+            <li>
+                $n = 2^{\frac{6}{0.3}} = 2^{20} =1\,048\,576$
+            </li>
+            <li>
+                $n = 2^{\frac{4}{0.3}} = 2^{13\frac{1}{3}} \approx 10\,321,3$
+            </li>
+            <li>
+                $n = 2^{\frac{5}{0.36}} = 2^{\approx13.9} \approx 15\,286,8$
+            </li>
+            <li>
+                $n = 2^{\frac{5}{0.24}} = 2^{\approx20.8} \approx 1\,825\,676,9$
+            </li>
+        </ol>
+    </li>
+</ul>
+
+</body>
+<script>
+    window.addEventListener('load', () => {
+        const nValues = [
+            1000, 10_000, 25_000, 50_000, 75_000, 100_000,
+            104_032,
+            125_000, 150_000, 175_000, 200_000
+        ];
+
+        const calculateTA = (n, m = 1)=> Math.round(0.3 * n *m * Math.log2(n*m))
+        const calculateTB = (n, m = 1)=> Math.round(5 * n * m)
+
+        const dataTA = nValues.map(n => ({
+            x: n,
+            y: calculateTA(n)
+        }));
+
+        const dataTB = nValues.map(n => ({
+            x: n,
+            y: calculateTB(n)
+        }));
+
+        const intersectionPoint = [{
+            x: 104032,
+            y: Math.round(5 * 104032)
+        }];
+
+        const ctx = document.getElementById('complexityChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'T_A(n) = 0.3 · n · log₂(n)',
+                        data: dataTA,
+                        borderColor: '#dc2626',
+                        backgroundColor: '#dc2626',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'T_B(n) = 5 · n',
+                        data: dataTB,
+                        borderColor: '#2563eb',
+                        backgroundColor: '#2563eb',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Crossover point (n ≈ 104 032)',
+                        data: intersectionPoint,
+                        borderColor: '#16a34a',
+                        backgroundColor: '#16a34a',
+                        pointRadius: 7,
+                        pointHoverRadius: 9,
+                        showLine: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Comparison of execution times T_A(n) and T_B(n)',
+                        font: { size: 16 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const val = context.parsed.y.toLocaleString();
+                                return `${context.dataset.label}: ${val} ms`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        title: {
+                            display: true,
+                            text: 'Enter size (n)'
+                        },
+                        ticks: {
+                            callback: value => value.toLocaleString()
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Time (мс)'
+                        },
+                        ticks: {
+                            callback: value => value.toLocaleString()
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+</html>
