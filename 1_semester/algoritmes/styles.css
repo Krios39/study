@@ -143,3 +143,44 @@ a.ref-link:hover {
     word-break: break-all;
     cursor: pointer;
 }
+
+details {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    margin: 16px 0;
+    background-color: #fff;
+    transition: all 0.2s ease;
+}
+
+details[open] {
+    border-color: #cbd5e1;
+}
+
+details > :not(summary) {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+summary {
+    cursor: pointer;
+    padding: 10px 14px;
+    user-select: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+summary:hover {
+    background-color: #f8fafc;
+}
+
+summary h2 {
+    display: inline;
+    font-size: 16px;
+    margin: 0 0 0 6px;
+}
+
+.details-content {
+    padding: 12px 16px 16px;
+    border-top: 1px solid #f1f5f9;
+}
