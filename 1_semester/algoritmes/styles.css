@@ -1,0 +1,145 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
+    color: #111;
+    background-color: #fff;
+    max-width: 1280px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+h1 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+h2 {
+    font-size: 18px;
+    margin-top: 24px;
+    margin-bottom: 8px;
+}
+
+p {
+    margin: 8px 0;
+}
+
+.math {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 17px;
+    margin: 12px 0;
+    padding-left: 20px;
+}
+
+ul {
+    margin: 8px 0 16px 20px;
+}
+
+li {
+    margin-bottom: 4px;
+}
+
+/* Шапка отчёта */
+.report-header {
+    margin-bottom: 28px;
+}
+
+.report-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111;
+    margin-bottom: 12px;
+}
+
+.report-meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.report-meta-table th {
+    text-align: left;
+    font-weight: 600;
+    color: #4b5563;
+    width: 15%;
+    padding: 3px 6px 3px 0;
+    white-space: nowrap;
+}
+
+.report-meta-table td {
+    color: #111;
+    width: 35%;
+    padding: 3px 12px 3px 0;
+}
+
+.report-meta-table a {
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+.report-meta-table a:hover {
+    text-decoration: underline;
+}
+
+.report-divider {
+    border: 0;
+    border-top: 1px solid #d1d5db;
+    margin-top: 8px;
+}
+
+.math-left .katex-display {
+    text-align: left !important;
+}
+
+.math-left .katex-display > .katex {
+    text-align: left !important;
+    padding-left: 20px;
+}
+
+/* Сноски в тексте */
+a.ref-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 0 1px;
+}
+
+a.ref-link:hover {
+    text-decoration: underline;
+}
+
+.report-references {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.report-references h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.report-references ol {
+    padding-left: 20px;
+}
+
+.report-references li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.report-references .ref-title {
+    font-weight: 600;
+    color: #111;
+}
+
+.report-references a {
+    color: #1a73e8 !important;
+    text-decoration: underline !important;
+    word-break: break-all;
+    cursor: pointer;
+}
