@@ -678,17 +678,16 @@ Zipf Sample (s=1.2)  | Distinct:  1585 | Comparisons: 23738856 | Shifts: 2372886
 </details>
 
 <details>
-    <summary>T5</summary>
+    <summary>T5. Order and simplify typical CS growth functions</summary>
 
     <div class="math-left">
-
-
-
     <div>
-        <p>solution</p>
+        <p> <strong>Solutions:</strong></p>
 
         <ul>
             <li>
+                <h4>Simplify:</h4>
+
                 $$f_{10}(n) = 2^{\log_2(n)} = n, the \ same \ as \ f_5$$
                 $$f_{11}(n) = n^{1 + \frac{1}{\log_2(n)}} = n^1 \cdot n^{\frac{1}{\log_2(n)}} = n \cdot \left(
                 2^{\log_2(n)} \right)^{\frac{1}{\log_2(n)}} = n \cdot 2^{\log_2(n) \cdot \frac{1}{\log_2(n)}} = n \cdot
@@ -696,10 +695,13 @@ Zipf Sample (s=1.2)  | Distinct:  1585 | Comparisons: 23738856 | Shifts: 2372886
                 $$f_{12}(n) = \log_2(n^n) = n\log_2(n), the \ same \ as \ f_6$$
             </li>
             <li>
+                <h4>Group:</h4>
                 $$\{f_6(n), f_{12}(n)\} \in \Theta(n \log_2(n))$$
                 $$\{f_5(n), f_{10}(n), f_{11}(n)\} \in \Theta(n) \quad (n, \; 2n)$$
             </li>
             <li>
+                <h4>Order:</h4>
+
                 <ol>
                     <li>
                         $$f_1(n) = \log_2(\log_2(n))$$
@@ -733,7 +735,7 @@ Zipf Sample (s=1.2)  | Distinct:  1585 | Comparisons: 23738856 | Shifts: 2372886
                 </ol>
             </li>
             <li>
-                <h4>Justifications of little-o for each adjacent class:</h4>
+                <h4>Justifications:</h4>
                 <p>
                     By definition, $f(n) = o(g(n)) \iff \lim_{n \to \infty} \frac{f(n)}{g(n)} = 0$. <br>
                     We use the standard theorem: $(\log_2 n)^a = o(n^b)$ for any fixed constants $a, b > 0$, meaning $\lim_{n \to \infty} \frac{(\log_2 n)^a}{n^b} = 0$.
