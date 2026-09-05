@@ -9,6 +9,7 @@
     <meta name="reference" content="Theta Notation for Analysis | https://www.geeksforgeeks.org/dsa/analysis-of-algorithms-big-theta-notation/">
     <meta name="reference" content="Confused about Big-oh, Theta and Omega notations
  | https://www.reddit.com/r/algorithms/comments/13rcitf/confused_about_bigoh_theta_and_omega_notations/">
+    <meta name="reference" content="Zipf's law |  https://en.wikipedia.org/wiki/Zipf%27s_law">
 
 
     <link rel="stylesheet" href="../../styles.css">
@@ -280,6 +281,170 @@
     </p>
 </details>
 
+
+
+<details>
+    <summary>T4. How input structure changes insertion sort (1p, conceptual/experimental)</summary>
+
+    <div>
+        predictions
+
+        <ul>
+            <li>for sorted it would be fewer, because it doesnt need to shift something, it would be just traversal of the array (O(n))</li>
+            <li>for reverse-sorted it would be more, because each element would need to shift for array length n time (O(n^2))</li>
+            <li>for sorted-block it would be similar (slightly fewer), because blocks are randomly ordered, but elements within each block are already sorted and introduce zero internal inversions</li>
+        </ul>
+        <ul>
+            <li>
+                zipf would be fewer cause less unical items you have then less shifts you need
+            </li>
+        </ul>
+    </div>
+    <div>
+        pure output
+
+        === EXPERIMENT A ===
+        Random Permutation   | Distinct: 10000 | Comparisons: 24953600 | Shifts: 24943610
+        Sorted               | Distinct: 10000 | Comparisons:     9999 | Shifts:        0
+        Reverse-Sorted       | Distinct: 10000 | Comparisons: 49995000 | Shifts: 49995000
+        100 Sorted Blocks    | Distinct: 10000 | Comparisons: 22029995 | Shifts: 22020000
+
+        === EXPERIMENT B ===
+        Uniform Sample       | Distinct:  6323 | Comparisons: 25004135 | Shifts: 24994147
+        Zipf Sample (s=1.2)  | Distinct:  1585 | Comparisons: 23738856 | Shifts: 23728860
+
+    </div>
+</details>
+
+
+<details>
+    <summary>T4. Insertion Sort Operation Counting & Sensitivity</summary>
+
+    <h4>Basic operations counted:</h4>
+    <ul>
+        <li><strong>Comparisons:</strong> condition <code>array[j - 1] <= key</code> evaluated inside the inner loop (plus boundary check).</li>
+        <li><strong>Shifts:</strong> assignment <code>array[j] = array[j - 1]</code> moving elements to the right.</li>
+    </ul>
+
+    <h4>Predictions before test:</h4>
+    <div>
+        <strong>Experiment A (Ordering, baseline: Random):</strong>
+        <ul>
+            <li>for sorted it would be fewer, because it doesnt need to shift something, it would be just traversal of the array (O(n))</li>
+            <li>for reverse-sorted it would be more, because each element would need to shift for array length n time (O(n^2))</li>
+            <li>for sorted-block it would be similar (slightly fewer), because blocks are randomly ordered, but elements within each block are already sorted and introduce zero internal inversions</li>
+        </ul>
+        <strong>Experiment B (Frequency, baseline: Uniform):</strong>
+        <ul>
+            <li>zipf would be fewer cause less unical items you have then less shifts you need</li>
+        </ul>
+    </div>
+
+    <h4>Pure output:</h4>
+    <pre style="background-color: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 4px; overflow-x: auto;"><code>=== EXPERIMENT A ===
+Random Permutation   | Distinct: 10000 | Comparisons: 24953600 | Shifts: 24943610
+Sorted               | Distinct: 10000 | Comparisons:     9999 | Shifts:        0
+Reverse-Sorted       | Distinct: 10000 | Comparisons: 49995000 | Shifts: 49995000
+100 Sorted Blocks    | Distinct: 10000 | Comparisons: 22029995 | Shifts: 22020000
+
+=== EXPERIMENT B ===
+Uniform Sample       | Distinct:  6323 | Comparisons: 25004135 | Shifts: 24994147
+Zipf Sample (s=1.2)  | Distinct:  1585 | Comparisons: 23738856 | Shifts: 23728860</code></pre>
+
+    <h4>Experiment A: Ordering (Fixed Multiset $n = 10\,000$, Seed = 2026)</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Dataset</th>
+            <th>Prediction vs Random</th>
+            <th>Distinct Values</th>
+            <th>Comparisons</th>
+            <th>Shifts</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Random Permutation</strong></td>
+            <td><em>Baseline</em></td>
+            <td>10 000</td>
+            <td>24 953 600</td>
+            <td>24 943 610</td>
+        </tr>
+        <tr>
+            <td><strong>Sorted</strong></td>
+            <td>Fewer</td>
+            <td>10 000</td>
+            <td>9 999</td>
+            <td>0</td>
+        </tr>
+        <tr>
+            <td><strong>Reverse-Sorted</strong></td>
+            <td>More</td>
+            <td>10 000</td>
+            <td>49 995 000</td>
+            <td>49 995 000</td>
+        </tr>
+        <tr>
+            <td><strong>100 Sorted Blocks</strong></td>
+            <td>Similar (slightly fewer)</td>
+            <td>10 000</td>
+            <td>22 029 995</td>
+            <td>22 020 000</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h4>Experiment B: Frequency ($n = 10\,000$, Domain $1 \dots 10\,000$, Seed = 2026)</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Dataset</th>
+            <th>Prediction vs Uniform</th>
+            <th>Distinct Values</th>
+            <th>Comparisons</th>
+            <th>Shifts</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Uniform Sample</strong></td>
+            <td><em>Baseline</em></td>
+            <td>6 323</td>
+            <td>25 004 135</td>
+            <td>24 994 147</td>
+        </tr>
+        <tr>
+            <td><strong>Zipf Sample ($s = 1.2$)</strong></td>
+            <td>Fewer</td>
+            <td>1 585</td>
+            <td>23 738 856</td>
+            <td>23 728 860</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>The answers:</h2>
+    <ul>
+        <li>
+            <strong>Predictions vs Reality:</strong> all predictions were correct. Insertion sort depends directly on number of inversions and how far each element travels to the left.
+        </li>
+        <li>
+            <strong>Experiment A (Ordering):</strong>
+            <ul>
+                <li><strong>Sorted:</strong> best case $O(n)$, exactly $9\,999$ comparisons and <strong>0 shifts</strong> because loop breaks immediately on previous element.</li>
+                <li><strong>Reverse:</strong> worst case $O(n^2)$, exact maximum $\frac{n(n-1)}{2} = 49\,995\,000$ operations. Every element moves to index 0.</li>
+                <li><strong>100 Blocks:</strong> requires less shifts than random ($22.02\text{M}$ vs $24.94\text{M}$) because elements inside each 100-item block are already sorted and have 0 internal inversions.</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Experiment B (Frequency):</strong>
+            <strong>Zipf</strong> has fewer shifts than uniform ($23.73\text{M}$ vs $24.99\text{M}$). Because we have only $1\,585$ unique values and lots of duplicates, inner loop stops earlier on <code>array[j-1] &lt;= key</code> without shifting element too deep.
+        </li>
+        <li>
+            <strong>Difference between A and B:</strong> in <strong>A</strong> we keep exact same items and change only their <em>order</em>, while in <strong>B</strong> we keep same domain $[1, 10\,000]$ and change <em>frequency of duplicates</em>.
+        </li>
+    </ul>
+</details>
 </body>
 <script>
     window.addEventListener('load', () => {

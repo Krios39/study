@@ -1,25 +1,55 @@
-use rand::{RngExt, SeedableRng};
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
+use rand::{RngExt, SeedableRng};
+use std::collections::HashSet;
 const ARRAY_SIZE: usize = 10_000;
-const MAX_VALUE_1: i32 = 9999;
-const MAX_VALUE_2: i32 = 10_000;
-const ZIPF: f64 = 1.2;
+const ZIPF_S: f64 = 1.2;
+
 fn main() {
+    test_fn();
+
     let mut rng = StdRng::seed_from_u64(2026);
 
-    let mut array1_1: Vec<i32> = (0..ARRAY_SIZE).map(|_| rng.random_range(0..MAX_VALUE_1)).collect();
-    let mut array1_2: Vec<i32> =  (0..10_000).collect();
-    let mut array1_3: Vec<i32> =  (0..10_000).rev().collect();
 
-    let mut blocks: Vec<&[i32]> = array1_2.chunks_exact(100).collect();
+    let mut array_a1: Vec<i32> = (0..ARRAY_SIZE as i32).collect();
+    array_a1.shuffle(&mut rng);
+    let mut array_a2: Vec<i32> = (0..ARRAY_SIZE as i32).collect();
+    let mut array_a3: Vec<i32> = (0..ARRAY_SIZE as i32).rev().collect();
+
+    let base_sorted: Vec<i32> = (0..ARRAY_SIZE as i32).collect();
+    let mut blocks: Vec<&[i32]> = base_sorted.chunks_exact(100).collect();
     blocks.shuffle(&mut rng);
-    let array1_4: Vec<i32> = blocks.into_iter().flatten().copied().collect();
+    let mut array_a4: Vec<i32> = blocks.into_iter().flatten().copied().collect();
 
-    let mut array2_1: Vec<i32> = (0..ARRAY_SIZE).map(|_| rng.random_range(0..MAX_VALUE_2)).collect();
-    let mut array2_2: Vec<i32> = generate_zipf(ARRAY_SIZE,MAX_VALUE_2,ZIPF, &mut rng);
+    println!("=== EXPERIMENT A ===");
+    run_benchmark("Random Permutation", &mut array_a1);
+    run_benchmark("Sorted", &mut array_a2);
+    run_benchmark("Reverse-Sorted", &mut array_a3);
+    run_benchmark("100 Sorted Blocks", &mut array_a4);
 
+    let mut array_b1: Vec<i32> = (0..ARRAY_SIZE)
+        .map(|_| rng.random_range(1..=ARRAY_SIZE as i32))
+        .collect();
+    let mut array_b2: Vec<i32> = generate_zipf(ARRAY_SIZE, ARRAY_SIZE as i32, ZIPF_S, &mut rng);
 
+    println!("\n=== EXPERIMENT B ===");
+    run_benchmark("Uniform Sample", &mut array_b1);
+    run_benchmark(&format!("Zipf Sample (s={ZIPF_S})"), &mut array_b2);}
+
+fn run_benchmark(name: &str, array: &mut [i32]) {
+    let distinct = array.iter().copied().collect::<HashSet<_>>().len();
+
+    let mut expected = array.to_vec();
+    expected.sort();
+
+    let (result, comparisons, shifts) = insertion_sort_counter(array);
+
+    assert_eq!(result, &mut expected[..]);
+
+    println!(
+        "{:<20} | Distinct: {:>5} | Comparisons: {:>8} | Shifts: {:>8}",
+        name, distinct, comparisons, shifts
+    );
 }
 
 fn insertion_sort_counter(array: &mut [i32]) -> (&mut [i32], usize, usize) {
@@ -64,7 +94,7 @@ fn generate_zipf(len: usize, max_val: i32, s: f64, rng: &mut StdRng) -> Vec<i32>
         })
         .collect()
 }
-fn test_fn(){
+fn test_fn() {
     let tests: [Vec<i32>; 5] = [
         vec![],
         vec![1],
@@ -77,13 +107,7 @@ fn test_fn(){
         let mut expected = test.clone();
         expected.sort();
 
-        let (result, comparisons, shifts) = insertion_sort_counter(&mut test);
-
-        println!(
-            "Sorted: {:?}, Comparisons: {}, Shifts: {}",
-            result, comparisons, shifts
-        );
-
+        let (result, _, _) = insertion_sort_counter(&mut test);
         assert_eq!(result, &mut expected[..]);
     }
 }
