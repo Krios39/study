@@ -6,10 +6,12 @@
     <meta name="reference" content="Big_O_notation | https://en.wikipedia.org/wiki/Big_O_notation">
     <meta name="reference" content="Rust | https://doc.rust-lang.org/">
     <meta name="reference" content="Rust | https://doc.rust-lang.ru/">
-    <meta name="reference" content="Theta Notation for Analysis | https://www.geeksforgeeks.org/dsa/analysis-of-algorithms-big-theta-notation/">
+    <meta name="reference"
+          content="Theta Notation for Analysis | https://www.geeksforgeeks.org/dsa/analysis-of-algorithms-big-theta-notation/">
     <meta name="reference" content="Confused about Big-oh, Theta and Omega notations
  | https://www.reddit.com/r/algorithms/comments/13rcitf/confused_about_bigoh_theta_and_omega_notations/">
     <meta name="reference" content="Zipf's law |  https://en.wikipedia.org/wiki/Zipf%27s_law">
+    <meta name="reference" content="Mathway |  https://www.mathway.com/ru/Graph">
 
 
     <link rel="stylesheet" href="../../styles.css">
@@ -80,18 +82,25 @@
 
     <h4>Basic operations:</h4>
     <ul>
-        <li><strong>Linear scan:</strong> subtraction of neighboring items <code>array[i+1] - array[i]</code> (runs once per step).</li>
-        <li><strong>Naive inversion counter:</strong> comparison <code>array[i] > array[j]</code> (runs every time in inner loop).</li>
+        <li><strong>Linear scan:</strong> subtraction of neighboring items <code>array[i+1] - array[i]</code> (runs once
+            per step).
+        </li>
+        <li><strong>Naive inversion counter:</strong> comparison <code>array[i] > array[j]</code> (runs every time in
+            inner loop).
+        </li>
         <li><strong>Library sort:</strong> comparison of elements <code>a < b</code>.</li>
     </ul>
 
     <h4>Operation counts and formulas:</h4>
     <div class="math-left">
         $$C_{\text{scan}}(n) = n - 1\text{ (loop runs from 0 to n - 2)}$$
-        $$C_{\text{inv}}(n) = \sum_{i=0}^{n-1} (n - 1 - i) = \frac{n(n - 1)}{2} = \frac{n^2 - n}{2}\text{ (sum of arithmetic progression)}$$
+        $$C_{\text{inv}}(n) = \sum_{i=0}^{n-1} (n - 1 - i) = \frac{n(n - 1)}{2} = \frac{n^2 - n}{2}\text{ (sum of
+        arithmetic progression)}$$
     </div>
     <p>
-        For <strong>library sort</strong> we cannot write exact formula because Rust uses pdqsort. It is adaptive, so number of comparisons changes depending on how elements already ordered, chosen pivots and internal optimizations. We only know it is $\Theta(n \log n)$.
+        For <strong>library sort</strong> we cannot write exact formula because Rust uses pdqsort. It is adaptive, so
+        number of comparisons changes depending on how elements already ordered, chosen pivots and internal
+        optimizations. We only know it is $\Theta(n \log n)$.
     </p>
 
     <h4>Predictions before test:</h4>
@@ -142,11 +151,41 @@
         </tr>
         </thead>
         <tbody>
-        <tr><td>100</td><td>0</td><td>—</td><td>25</td><td>—</td></tr>
-        <tr><td>1 000</td><td>8</td><td>—</td><td>218</td><td>8.72</td></tr>
-        <tr><td>10 000</td><td>105</td><td>13.12</td><td>3 144</td><td>14.42</td></tr>
-        <tr><td>100 000</td><td>942</td><td>8.97</td><td>33 498</td><td>10.65</td></tr>
-        <tr><td>1 000 000</td><td>9 468</td><td>10.05</td><td>412 722</td><td>12.32</td></tr>
+        <tr>
+            <td>100</td>
+            <td>0</td>
+            <td>—</td>
+            <td>25</td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td>1 000</td>
+            <td>8</td>
+            <td>—</td>
+            <td>218</td>
+            <td>8.72</td>
+        </tr>
+        <tr>
+            <td>10 000</td>
+            <td>105</td>
+            <td>13.12</td>
+            <td>3 144</td>
+            <td>14.42</td>
+        </tr>
+        <tr>
+            <td>100 000</td>
+            <td>942</td>
+            <td>8.97</td>
+            <td>33 498</td>
+            <td>10.65</td>
+        </tr>
+        <tr>
+            <td>1 000 000</td>
+            <td>9 468</td>
+            <td>10.05</td>
+            <td>412 722</td>
+            <td>12.32</td>
+        </tr>
         </tbody>
     </table>
 
@@ -159,27 +198,52 @@
         </tr>
         </thead>
         <tbody>
-        <tr><td>1 000</td><td>2 764</td><td>—</td></tr>
-        <tr><td>2 000</td><td>11 419</td><td>4.13</td></tr>
-        <tr><td>4 000</td><td>45 902</td><td>4.02</td></tr>
-        <tr><td>8 000</td><td>192 374</td><td>4.19</td></tr>
-        <tr><td>16 000</td><td>818 186</td><td>4.25</td></tr>
+        <tr>
+            <td>1 000</td>
+            <td>2 764</td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td>2 000</td>
+            <td>11 419</td>
+            <td>4.13</td>
+        </tr>
+        <tr>
+            <td>4 000</td>
+            <td>45 902</td>
+            <td>4.02</td>
+        </tr>
+        <tr>
+            <td>8 000</td>
+            <td>192 374</td>
+            <td>4.19</td>
+        </tr>
+        <tr>
+            <td>16 000</td>
+            <td>818 186</td>
+            <td>4.25</td>
+        </tr>
         </tbody>
     </table>
 
     <h2>The answers:</h2>
     <ul>
         <li>
-            <strong>Linear scan:</strong> growing strictly linear. On big sizes ($100\,000$ and $1\,000\,000$) ratio is almost exact <strong>10</strong> ($8.97$ and $10.05$).
+            <strong>Linear scan:</strong> growing strictly linear. On big sizes ($100\,000$ and $1\,000\,000$) ratio is
+            almost exact <strong>10</strong> ($8.97$ and $10.05$).
         </li>
         <li>
-            <strong>Library sort:</strong> fits into $\Theta(n \log n)$. Ratios are between $10.65$ and $14.42$, which matches theoretical growth $\approx 10 \cdot \frac{\log_2(10n)}{\log_2(n)}$.
+            <strong>Library sort:</strong> fits into $\Theta(n \log n)$. Ratios are between $10.65$ and $14.42$, which
+            matches theoretical growth $\approx 10 \cdot \frac{\log_2(10n)}{\log_2(n)}$.
         </li>
         <li>
-            <strong>Naive inversions:</strong> clearly shows $\Theta(n^2)$. Every time size doubles, time grows $\approx \mathbf{4.1}\times$, which is very close to $2^2 = 4$. If we tried to run it for $1\,000\,000$, it would take around 50 minutes.
+            <strong>Naive inversions:</strong> clearly shows $\Theta(n^2)$. Every time size doubles, time grows $\approx
+            \mathbf{4.1}\times$, which is very close to $2^2 = 4$. If we tried to run it for $1\,000\,000$, it would
+            take around 50 minutes.
         </li>
         <li>
-            <strong>Correctness:</strong> all tests passed, manual test on <code>[4, 1, 3, 2]</code> gave exactly 4 inversions.
+            <strong>Correctness:</strong> all tests passed, manual test on <code>[4, 1, 3, 2]</code> gave exactly 4
+            inversions.
         </li>
     </ul>
 </details>
@@ -198,25 +262,93 @@
         </tr>
         </thead>
         <tbody>
-        <tr><td rowspan="5"><strong>Linear Scan</strong></td><td>100</td><td>500, 500, 500, 600, 700, 800, 800</td><td>600</td></tr>
-        <tr><td>1 000</td><td>4600, 4600, 4600, 4700, 5900, 6800, 6900</td><td>4 700</td></tr>
-        <tr><td>10 000</td><td>45100, 45300, 45900, 45900, 46000, 46200, 46200</td><td>45 900</td></tr>
-        <tr><td>100 000</td><td>450100, 450400, 451900, 455900, 457100, 463100, 463400</td><td>455 900</td></tr>
-        <tr><td>1 000 000</td><td>4602500, 4637200, 4701100, 4701400, 4701400, 4876300, 4942000</td><td>4 701 400</td></tr>
+        <tr>
+            <td rowspan="5"><strong>Linear Scan</strong></td>
+            <td>100</td>
+            <td>500, 500, 500, 600, 700, 800, 800</td>
+            <td>600</td>
+        </tr>
+        <tr>
+            <td>1 000</td>
+            <td>4600, 4600, 4600, 4700, 5900, 6800, 6900</td>
+            <td>4 700</td>
+        </tr>
+        <tr>
+            <td>10 000</td>
+            <td>45100, 45300, 45900, 45900, 46000, 46200, 46200</td>
+            <td>45 900</td>
+        </tr>
+        <tr>
+            <td>100 000</td>
+            <td>450100, 450400, 451900, 455900, 457100, 463100, 463400</td>
+            <td>455 900</td>
+        </tr>
+        <tr>
+            <td>1 000 000</td>
+            <td>4602500, 4637200, 4701100, 4701400, 4701400, 4876300, 4942000</td>
+            <td>4 701 400</td>
+        </tr>
 
-        <tr><td rowspan="5"><strong>Library Sort</strong></td><td>100</td><td>11300, 12900, 17100, 21100, 25200, 29700, 32800</td><td>21 100</td></tr>
-        <tr><td>1 000</td><td>174700, 175500, 182100, 182600, 184700, 185700, 186200</td><td>182 600</td></tr>
-        <tr><td>10 000</td><td>2437900, 2497500, 2498000, 2555600, 2628500, 2682600, 2716400</td><td>2 555 600</td></tr>
-        <tr><td>100 000</td><td>30235300, 30459800, 30655200, 30787700, 31186600, 31643200, 31687400</td><td>30 787 700</td></tr>
-        <tr><td>1 000 000</td><td>385753300, 387506300, 388373100, 388717200, 390733800, 396003300, 396350000</td><td>388 717 200</td></tr>
+        <tr>
+            <td rowspan="5"><strong>Library Sort</strong></td>
+            <td>100</td>
+            <td>11300, 12900, 17100, 21100, 25200, 29700, 32800</td>
+            <td>21 100</td>
+        </tr>
+        <tr>
+            <td>1 000</td>
+            <td>174700, 175500, 182100, 182600, 184700, 185700, 186200</td>
+            <td>182 600</td>
+        </tr>
+        <tr>
+            <td>10 000</td>
+            <td>2437900, 2497500, 2498000, 2555600, 2628500, 2682600, 2716400</td>
+            <td>2 555 600</td>
+        </tr>
+        <tr>
+            <td>100 000</td>
+            <td>30235300, 30459800, 30655200, 30787700, 31186600, 31643200, 31687400</td>
+            <td>30 787 700</td>
+        </tr>
+        <tr>
+            <td>1 000 000</td>
+            <td>385753300, 387506300, 388373100, 388717200, 390733800, 396003300, 396350000</td>
+            <td>388 717 200</td>
+        </tr>
 
-        <tr><td rowspan="5"><strong>Naive Inversions</strong></td><td>1 000</td><td>2747400, 2780500, 2935500, 2941000, 3011600, 3068600, 3204000</td><td>2 941 000</td></tr>
-        <tr><td>2 000</td><td>10975400, 11050800, 11093900, 11099800, 11139600, 11561300, 11677200</td><td>11 099 800</td></tr>
-        <tr><td>4 000</td><td>44187100, 45335300, 45453400, 45944400, 47786200, 47937900, 48909600</td><td>45 944 400</td></tr>
-        <tr><td>8 000</td><td>182086000, 188097800, 201732700, 206929900, 217648800, 226955200, 240333600</td><td>206 929 900</td></tr>
-        <tr><td>16 000</td><td>744021200, 768570700, 795452600, 804552000, 808771900, 833728400, 839332800</td><td>804 552 000</td></tr>
+        <tr>
+            <td rowspan="5"><strong>Naive Inversions</strong></td>
+            <td>1 000</td>
+            <td>2747400, 2780500, 2935500, 2941000, 3011600, 3068600, 3204000</td>
+            <td>2 941 000</td>
+        </tr>
+        <tr>
+            <td>2 000</td>
+            <td>10975400, 11050800, 11093900, 11099800, 11139600, 11561300, 11677200</td>
+            <td>11 099 800</td>
+        </tr>
+        <tr>
+            <td>4 000</td>
+            <td>44187100, 45335300, 45453400, 45944400, 47786200, 47937900, 48909600</td>
+            <td>45 944 400</td>
+        </tr>
+        <tr>
+            <td>8 000</td>
+            <td>182086000, 188097800, 201732700, 206929900, 217648800, 226955200, 240333600</td>
+            <td>206 929 900</td>
+        </tr>
+        <tr>
+            <td>16 000</td>
+            <td>744021200, 768570700, 795452600, 804552000, 808771900, 833728400, 839332800</td>
+            <td>804 552 000</td>
+        </tr>
 
-        <tr><td><strong>Held-out Inversions</strong></td><td>32 000</td><td>3227119300, 3247809500, 3308538900, 3383013200, 3426603600, 3436874700, 3460656500</td><td>3 383 013 200</td></tr>
+        <tr>
+            <td><strong>Held-out Inversions</strong></td>
+            <td>32 000</td>
+            <td>3227119300, 3247809500, 3308538900, 3383013200, 3426603600, 3436874700, 3460656500</td>
+            <td>3 383 013 200</td>
+        </tr>
         </tbody>
     </table>
 
@@ -234,26 +366,137 @@
         </tr>
         </thead>
         <tbody>
-        <tr><td colspan="6"><strong>Linear Scan:</strong></td></tr>
-        <tr><td>100</td><td>600</td><td>—</td><td>6.00</td><td>0.903</td><td>0.0600</td></tr>
-        <tr><td>1 000</td><td>4 700</td><td>7.83</td><td>4.70</td><td>0.472</td><td>0.0047</td></tr>
-        <tr><td>10 000</td><td>45 900</td><td>9.77</td><td><strong>4.59</strong></td><td>0.345</td><td>0.0004</td></tr>
-        <tr><td>100 000</td><td>455 900</td><td>9.93</td><td><strong>4.56</strong></td><td>0.275</td><td>0.00005</td></tr>
-        <tr><td>1 000 000</td><td>4 701 400</td><td>10.31</td><td><strong>4.70</strong></td><td>0.236</td><td>0.000005</td></tr>
+        <tr>
+            <td colspan="6"><strong>Linear Scan:</strong></td>
+        </tr>
+        <tr>
+            <td>100</td>
+            <td>600</td>
+            <td>—</td>
+            <td>6.00</td>
+            <td>0.903</td>
+            <td>0.0600</td>
+        </tr>
+        <tr>
+            <td>1 000</td>
+            <td>4 700</td>
+            <td>7.83</td>
+            <td>4.70</td>
+            <td>0.472</td>
+            <td>0.0047</td>
+        </tr>
+        <tr>
+            <td>10 000</td>
+            <td>45 900</td>
+            <td>9.77</td>
+            <td><strong>4.59</strong></td>
+            <td>0.345</td>
+            <td>0.0004</td>
+        </tr>
+        <tr>
+            <td>100 000</td>
+            <td>455 900</td>
+            <td>9.93</td>
+            <td><strong>4.56</strong></td>
+            <td>0.275</td>
+            <td>0.00005</td>
+        </tr>
+        <tr>
+            <td>1 000 000</td>
+            <td>4 701 400</td>
+            <td>10.31</td>
+            <td><strong>4.70</strong></td>
+            <td>0.236</td>
+            <td>0.000005</td>
+        </tr>
 
-        <tr><td colspan="6"><strong>Library Sort:</strong></td></tr>
-        <tr><td>100</td><td>21 100</td><td>—</td><td>211.0</td><td>31.76</td><td>2.110</td></tr>
-        <tr><td>1 000</td><td>182 600</td><td>8.65</td><td>182.6</td><td>18.32</td><td>0.1826</td></tr>
-        <tr><td>10 000</td><td>2 555 600</td><td>14.00</td><td>255.6</td><td><strong>19.23</strong></td><td>0.0256</td></tr>
-        <tr><td>100 000</td><td>30 787 700</td><td>12.05</td><td>307.9</td><td><strong>18.54</strong></td><td>0.0031</td></tr>
-        <tr><td>1 000 000</td><td>388 717 200</td><td>12.63</td><td>388.7</td><td><strong>19.50</strong></td><td>0.0004</td></tr>
+        <tr>
+            <td colspan="6"><strong>Library Sort:</strong></td>
+        </tr>
+        <tr>
+            <td>100</td>
+            <td>21 100</td>
+            <td>—</td>
+            <td>211.0</td>
+            <td>31.76</td>
+            <td>2.110</td>
+        </tr>
+        <tr>
+            <td>1 000</td>
+            <td>182 600</td>
+            <td>8.65</td>
+            <td>182.6</td>
+            <td>18.32</td>
+            <td>0.1826</td>
+        </tr>
+        <tr>
+            <td>10 000</td>
+            <td>2 555 600</td>
+            <td>14.00</td>
+            <td>255.6</td>
+            <td><strong>19.23</strong></td>
+            <td>0.0256</td>
+        </tr>
+        <tr>
+            <td>100 000</td>
+            <td>30 787 700</td>
+            <td>12.05</td>
+            <td>307.9</td>
+            <td><strong>18.54</strong></td>
+            <td>0.0031</td>
+        </tr>
+        <tr>
+            <td>1 000 000</td>
+            <td>388 717 200</td>
+            <td>12.63</td>
+            <td>388.7</td>
+            <td><strong>19.50</strong></td>
+            <td>0.0004</td>
+        </tr>
 
-        <tr><td colspan="6"><strong>Naive Inversions:</strong></td></tr>
-        <tr><td>1 000</td><td>2 941 000</td><td>—</td><td>2 941.0</td><td>295.1</td><td><strong>2.941</strong></td></tr>
-        <tr><td>2 000</td><td>11 099 800</td><td>3.77</td><td>5 549.9</td><td>506.1</td><td><strong>2.775</strong></td></tr>
-        <tr><td>4 000</td><td>45 944 400</td><td>4.14</td><td>11 486.1</td><td>960.0</td><td><strong>2.872</strong></td></tr>
-        <tr><td>8 000</td><td>206 929 900</td><td>4.50</td><td>25 866.2</td><td>1 995.0</td><td><strong>3.233</strong></td></tr>
-        <tr><td>16 000</td><td>804 552 000</td><td>3.89</td><td>50 284.5</td><td>3 599.9</td><td><strong>3.143</strong></td></tr>
+        <tr>
+            <td colspan="6"><strong>Naive Inversions:</strong></td>
+        </tr>
+        <tr>
+            <td>1 000</td>
+            <td>2 941 000</td>
+            <td>—</td>
+            <td>2 941.0</td>
+            <td>295.1</td>
+            <td><strong>2.941</strong></td>
+        </tr>
+        <tr>
+            <td>2 000</td>
+            <td>11 099 800</td>
+            <td>3.77</td>
+            <td>5 549.9</td>
+            <td>506.1</td>
+            <td><strong>2.775</strong></td>
+        </tr>
+        <tr>
+            <td>4 000</td>
+            <td>45 944 400</td>
+            <td>4.14</td>
+            <td>11 486.1</td>
+            <td>960.0</td>
+            <td><strong>2.872</strong></td>
+        </tr>
+        <tr>
+            <td>8 000</td>
+            <td>206 929 900</td>
+            <td>4.50</td>
+            <td>25 866.2</td>
+            <td>1 995.0</td>
+            <td><strong>3.233</strong></td>
+        </tr>
+        <tr>
+            <td>16 000</td>
+            <td>804 552 000</td>
+            <td>3.89</td>
+            <td>50 284.5</td>
+            <td>3 599.9</td>
+            <td><strong>3.143</strong></td>
+        </tr>
         </tbody>
     </table>
 
@@ -261,9 +504,11 @@
     <div class="math-left">
         <p>Calibration constant $c$ using $n = 8\,000$ and $n = 16\,000$:</p>
         $$c = \frac{3.233 + 3.143}{2} \approx 3.188\text{ ns per pair}$$
-        $$T_{\text{predicted}}(32\,000) = c \cdot (32\,000)^2 = 3.188 \cdot 1\,024\,000\,000 \approx \mathbf{3\,264\,512\,000}\text{ ns } (\approx 3.26\text{ s})$$
+        $$T_{\text{predicted}}(32\,000) = c \cdot (32\,000)^2 = 3.188 \cdot 1\,024\,000\,000 \approx
+        \mathbf{3\,264\,512\,000}\text{ ns } (\approx 3.26\text{ s})$$
         <p>Actual measured median: $\mathbf{3\,383\,013\,200}\text{ ns } (\approx 3.38\text{ s})$</p>
-        $$\text{Error} = \frac{|3\,383\,013\,200 - 3\,264\,512\,000|}{3\,383\,013\,200} \cdot 100\% = \frac{118\,501\,200}{3\,383\,013\,200} \cdot 100\% \approx \mathbf{3.50\%}$$
+        $$\text{Error} = \frac{|3\,383\,013\,200 - 3\,264\,512\,000|}{3\,383\,013\,200} \cdot 100\% =
+        \frac{118\,501\,200}{3\,383\,013\,200} \cdot 100\% \approx \mathbf{3.50\%}$$
     </div>
 
     <div style="max-width: 800px; margin: 30px auto;">
@@ -272,57 +517,26 @@
     <h2>Conclusions (Decision on Growth Claims):</h2>
     <p>
         All theoretical growth claims are supported by empirical data.
-        For linear scan, ratio $T(10n)/T(n)$ stabilizes around 9.9–10.3 on larger inputs, and normalisation $T(n)/n$ becomes flat at $\approx 4.6$ ns, confirming $\Theta(n)$.
+        For linear scan, ratio $T(10n)/T(n)$ stabilizes around 9.9–10.3 on larger inputs, and normalisation $T(n)/n$
+        becomes flat at $\approx 4.6$ ns, confirming $\Theta(n)$.
         At $n = 100$, higher $T(n)/n = 6.0$ is caused by fixed timer overhead and cold instructions.
-        For library sort, normalisation $T(n)/(n \log_2 n)$ becomes most stable around $18.5 - 19.5$ ns, while $T(n)/n$ keeps growing, fully confirming $\Theta(n \log n)$.
-        For naive inversions, doubling ratio stays between 3.8 and 4.5, and $T(n)/n^2$ stays stable around $2.8 - 3.2$ ns.
+        For library sort, normalisation $T(n)/(n \log_2 n)$ becomes most stable around $18.5 - 19.5$ ns, while $T(n)/n$
+        keeps growing, fully confirming $\Theta(n \log n)$.
+        For naive inversions, doubling ratio stays between 3.8 and 4.5, and $T(n)/n^2$ stays stable around $2.8 - 3.2$
+        ns.
         Calibrated model predicted $n = 32\,000$ runtime with only 3.5% error, confirming $\Theta(n^2)$.
         None of the predictions are contradicted.
     </p>
 </details>
-
-
-
-<details>
-    <summary>T4. How input structure changes insertion sort (1p, conceptual/experimental)</summary>
-
-    <div>
-        predictions
-
-        <ul>
-            <li>for sorted it would be fewer, because it doesnt need to shift something, it would be just traversal of the array (O(n))</li>
-            <li>for reverse-sorted it would be more, because each element would need to shift for array length n time (O(n^2))</li>
-            <li>for sorted-block it would be similar (slightly fewer), because blocks are randomly ordered, but elements within each block are already sorted and introduce zero internal inversions</li>
-        </ul>
-        <ul>
-            <li>
-                zipf would be fewer cause less unical items you have then less shifts you need
-            </li>
-        </ul>
-    </div>
-    <div>
-        pure output
-
-        === EXPERIMENT A ===
-        Random Permutation   | Distinct: 10000 | Comparisons: 24953600 | Shifts: 24943610
-        Sorted               | Distinct: 10000 | Comparisons:     9999 | Shifts:        0
-        Reverse-Sorted       | Distinct: 10000 | Comparisons: 49995000 | Shifts: 49995000
-        100 Sorted Blocks    | Distinct: 10000 | Comparisons: 22029995 | Shifts: 22020000
-
-        === EXPERIMENT B ===
-        Uniform Sample       | Distinct:  6323 | Comparisons: 25004135 | Shifts: 24994147
-        Zipf Sample (s=1.2)  | Distinct:  1585 | Comparisons: 23738856 | Shifts: 23728860
-
-    </div>
-</details>
-
 
 <details>
     <summary>T4. Insertion Sort Operation Counting & Sensitivity</summary>
 
     <h4>Basic operations counted:</h4>
     <ul>
-        <li><strong>Comparisons:</strong> condition <code>array[j - 1] <= key</code> evaluated inside the inner loop (plus boundary check).</li>
+        <li><strong>Comparisons:</strong> condition <code>array[j - 1] <= key</code> evaluated inside the inner loop
+            (plus boundary check).
+        </li>
         <li><strong>Shifts:</strong> assignment <code>array[j] = array[j - 1]</code> moving elements to the right.</li>
     </ul>
 
@@ -330,9 +544,15 @@
     <div>
         <strong>Experiment A (Ordering, baseline: Random):</strong>
         <ul>
-            <li>for sorted it would be fewer, because it doesnt need to shift something, it would be just traversal of the array (O(n))</li>
-            <li>for reverse-sorted it would be more, because each element would need to shift for array length n time (O(n^2))</li>
-            <li>for sorted-block it would be similar (slightly fewer), because blocks are randomly ordered, but elements within each block are already sorted and introduce zero internal inversions</li>
+            <li>for sorted it would be fewer, because it doesnt need to shift something, it would be just traversal of
+                the array (O(n))
+            </li>
+            <li>for reverse-sorted it would be more, because each element would need to shift for array length n time
+                (O(n^2))
+            </li>
+            <li>for sorted-block it would be similar (slightly fewer), because blocks are randomly ordered, but elements
+                within each block are already sorted and introduce zero internal inversions
+            </li>
         </ul>
         <strong>Experiment B (Frequency, baseline: Uniform):</strong>
         <ul>
@@ -426,24 +646,160 @@ Zipf Sample (s=1.2)  | Distinct:  1585 | Comparisons: 23738856 | Shifts: 2372886
     <h2>The answers:</h2>
     <ul>
         <li>
-            <strong>Predictions vs Reality:</strong> all predictions were correct. Insertion sort depends directly on number of inversions and how far each element travels to the left.
+            <strong>Predictions vs Reality:</strong> all predictions were correct. Insertion sort depends directly on
+            number of inversions and how far each element travels to the left.
         </li>
         <li>
             <strong>Experiment A (Ordering):</strong>
             <ul>
-                <li><strong>Sorted:</strong> best case $O(n)$, exactly $9\,999$ comparisons and <strong>0 shifts</strong> because loop breaks immediately on previous element.</li>
-                <li><strong>Reverse:</strong> worst case $O(n^2)$, exact maximum $\frac{n(n-1)}{2} = 49\,995\,000$ operations. Every element moves to index 0.</li>
-                <li><strong>100 Blocks:</strong> requires less shifts than random ($22.02\text{M}$ vs $24.94\text{M}$) because elements inside each 100-item block are already sorted and have 0 internal inversions.</li>
+                <li><strong>Sorted:</strong> best case $O(n)$, exactly $9\,999$ comparisons and <strong>0
+                    shifts</strong> because loop breaks immediately on previous element.
+                </li>
+                <li><strong>Reverse:</strong> worst case $O(n^2)$, exact maximum $\frac{n(n-1)}{2} = 49\,995\,000$
+                    operations. Every element moves to index 0.
+                </li>
+                <li><strong>100 Blocks:</strong> requires less shifts than random ($22.02\text{M}$ vs $24.94\text{M}$)
+                    because elements inside each 100-item block are already sorted and have 0 internal inversions.
+                </li>
             </ul>
         </li>
         <li>
             <strong>Experiment B (Frequency):</strong>
-            <strong>Zipf</strong> has fewer shifts than uniform ($23.73\text{M}$ vs $24.99\text{M}$). Because we have only $1\,585$ unique values and lots of duplicates, inner loop stops earlier on <code>array[j-1] &lt;= key</code> without shifting element too deep.
+            <strong>Zipf</strong> has fewer shifts than uniform ($23.73\text{M}$ vs $24.99\text{M}$). Because we have
+            only $1\,585$ unique values and lots of duplicates, inner loop stops earlier on <code>array[j-1] &lt;=
+            key</code> without shifting element too deep.
         </li>
         <li>
-            <strong>Difference between A and B:</strong> in <strong>A</strong> we keep exact same items and change only their <em>order</em>, while in <strong>B</strong> we keep same domain $[1, 10\,000]$ and change <em>frequency of duplicates</em>.
+            <strong>Difference between A and B:</strong> in <strong>A</strong> we keep exact same items and change only
+            their <em>order</em>, while in <strong>B</strong> we keep same domain $[1, 10\,000]$ and change <em>frequency
+            of duplicates</em>.
         </li>
     </ul>
+</details>
+
+<details>
+    <summary>T5</summary>
+
+    <div class="math-left">
+
+
+
+    <div>
+        <p>solution</p>
+
+        <ul>
+            <li>
+                $$f_{10}(n) = 2^{\log_2(n)} = n, the \ same \ as \ f_5$$
+                $$f_{11}(n) = n^{1 + \frac{1}{\log_2(n)}} = n^1 \cdot n^{\frac{1}{\log_2(n)}} = n \cdot \left(
+                2^{\log_2(n)} \right)^{\frac{1}{\log_2(n)}} = n \cdot 2^{\log_2(n) \cdot \frac{1}{\log_2(n)}} = n \cdot
+                2^1 = 2n$$
+                $$f_{12}(n) = \log_2(n^n) = n\log_2(n), the \ same \ as \ f_6$$
+            </li>
+            <li>
+                $$\{f_6(n), f_{12}(n)\} \in \Theta(n \log_2(n))$$
+                $$\{f_5(n), f_{10}(n), f_{11}(n)\} \in \Theta(n) \quad (n, \; 2n)$$
+            </li>
+            <li>
+                <ol>
+                    <li>
+                        $$f_1(n) = \log_2(\log_2(n))$$
+                    </li>
+                    <li>
+                        $$f_2(n) = \log_2(n)$$
+                    </li>
+
+                    <li>
+                        $$f_3(n) = (\log_2(n))^3$$
+                    </li>
+                    <li>
+                        $$f_4(n) = \sqrt{n}$$
+                    </li>
+                    <li>
+                        $$f_{5,10}(n) = n; f_{11}(n) = 2n$$
+                    </li>
+                    <li>
+                        $$f_{6,12}(n) = n \log_2(n)$$
+                    </li>
+
+                    <li>
+                        $$f_7(n) = n^2$$
+                    </li>
+                    <li>
+                        $$f_8(n) = n^{\log_2(n)}$$
+                    </li>
+                    <li>
+                        $$f_9(n) = 2^n$$
+                    </li>
+                </ol>
+            </li>
+            <li>
+                <h4>Justifications of little-o for each adjacent class:</h4>
+                <p>
+                    By definition, $f(n) = o(g(n)) \iff \lim_{n \to \infty} \frac{f(n)}{g(n)} = 0$. <br>
+                    We use the standard theorem: $(\log_2 n)^a = o(n^b)$ for any fixed constants $a, b > 0$, meaning $\lim_{n \to \infty} \frac{(\log_2 n)^a}{n^b} = 0$.
+                </p>
+                <ol>
+                    <li>
+                        <strong>$f_1(n) = o(f_2(n))$:</strong>
+                        $$\lim_{n \to \infty} \frac{\log_2(\log_2 n)}{\log_2 n} \quad \xrightarrow{u = \log_2 n} \quad \lim_{u \to \infty} \frac{\log_2 u}{u} = 0 \quad (\text{by theorem with } a=1, b=1)$$
+                    </li>
+                    <li>
+                        <strong>$f_2(n) = o(f_3(n))$:</strong>
+                        $$\lim_{n \to \infty} \frac{\log_2 n}{(\log_2 n)^3} = \lim_{n \to \infty} \frac{1}{(\log_2 n)^2} = 0$$
+                    </li>
+                    <li>
+                        <strong>$f_3(n) = o(f_4(n))$:</strong>
+                        $$\lim_{n \to \infty} \frac{(\log_2 n)^3}{\sqrt{n}} = \lim_{n \to \infty} \frac{(\log_2 n)^3}{n^{0.5}} = 0 \quad (\text{by theorem with } a=3, b=0.5)$$
+                    </li>
+                    <li>
+                        <strong>$f_4(n) = o(\Theta(n))$:</strong>
+                        $$\lim_{n \to \infty} \frac{\sqrt{n}}{n} = \lim_{n \to \infty} \frac{1}{\sqrt{n}} = 0$$
+                    </li>
+                    <li>
+                        <strong>$\Theta(n) = o(\Theta(n \log_2 n))$:</strong>
+                        $$\lim_{n \to \infty} \frac{n}{n \log_2 n} = \lim_{n \to \infty} \frac{1}{\log_2 n} = 0$$
+                    </li>
+                    <li>
+                        <strong>$\Theta(n \log_2 n) = o(f_7(n))$:</strong>
+                        $$\lim_{n \to \infty} \frac{n \log_2 n}{n^2} = \lim_{n \to \infty} \frac{\log_2 n}{n} = 0 \quad (\text{by theorem with } a=1, b=1)$$
+                    </li>
+                    <li>
+                        <strong>$f_7(n) = o(f_8(n))$:</strong>
+                        $$\lim_{n \to \infty} \frac{n^2}{n^{\log_2 n}} = \lim_{n \to \infty} n^{2 - \log_2 n} = 0 \quad (\text{since } 2 - \log_2 n \to -\infty)$$
+                    </li>
+                    <li>
+                        <strong>$f_8(n) = o(f_9(n))$:</strong>
+                        $$\text{Rewrite: } f_8(n) = n^{\log_2 n} = (2^{\log_2 n})^{\log_2 n} = 2^{(\log_2 n)^2}$$
+                        $$\lim_{n \to \infty} \frac{2^{(\log_2 n)^2}}{2^n} = \lim_{n \to \infty} 2^{(\log_2 n)^2 - n} = 0 \quad (\text{since } (\log_2 n)^2 = o(n) \implies (\log_2 n)^2 - n \to -\infty)$$
+                    </li>
+                </ol>
+            </li>
+            <li>
+                <h4>$\Theta$-equivalence vs Asymptotic Equivalence ($\sim$):</h4>
+                <ul>
+                    <li>
+                        <strong>Difference:</strong>
+                        <ul>
+                            <li>
+                                <strong>$\Theta$-class ($f(n) = \Theta(g(n))$):</strong> means functions have the same order of growth, bounded by positive constants: $0 < c_1 \le \frac{f(n)}{g(n)} \le c_2 < \infty$. The limit can be any positive constant, or might oscillate within these bounds.
+                            </li>
+                            <li>
+                                <strong>Asymptotic equivalence ($f(n) \sim g(n)$):</strong> strictly requires $\lim_{n \to \infty} \frac{f(n)}{g(n)} = 1$.
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Question:</strong> if $f(n) = \Theta(g(n))$, must $f(n)/g(n) \to 1$? <br>
+                        <strong>Answer:</strong> <strong>No.</strong>
+                    </li>
+                    <li>
+                        <strong>Counterexample from this task:</strong> take $f_{11}(n) = 2n$ and $f_5(n) = n$. <br>
+                        They belong to the same $\Theta$-class ($2n = \Theta(n)$), but their limit ratio is:
+                        $$\lim_{n \to \infty} \frac{f_{11}(n)}{f_5(n)} = \lim_{n \to \infty} \frac{2n}{n} = \mathbf{2 \neq 1}$$
+                    </li>
+                </ul>
+            </li>
+        </ul>
 </details>
 </body>
 <script>
@@ -603,8 +959,8 @@ Zipf Sample (s=1.2)  | Distinct:  1585 | Comparisons: 23738856 | Shifts: 2372886
                     title: {
                         display: true,
                         text: 'Model Selection for Library Sort: Which normalisation stabilizes?',
-                        font: { size: 15, weight: 'bold' },
-                        padding: { bottom: 15 }
+                        font: {size: 15, weight: 'bold'},
+                        padding: {bottom: 15}
                     }
                 },
                 scales: {
@@ -613,7 +969,7 @@ Zipf Sample (s=1.2)  | Distinct:  1585 | Comparisons: 23738856 | Shifts: 2372886
                             display: true,
                             text: 'Input size (n)'
                         },
-                        grid: { display: false }
+                        grid: {display: false}
                     },
                     y: {
                         title: {
