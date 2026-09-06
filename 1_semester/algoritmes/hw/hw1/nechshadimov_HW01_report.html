@@ -15,13 +15,286 @@
     <meta name="reference" content="Gemini |  https://gemini.google.com/">
 
 
-    <link rel="stylesheet" href="../../styles.css">
-    <script src="../../header.js" defer></script>
-    <script src="../../footer.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<style>
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
+    color: #111;
+    background-color: #fff;
+    max-width: 1280px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+h1 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+h2 {
+    font-size: 18px;
+    margin-top: 24px;
+    margin-bottom: 8px;
+}
+
+p {
+    margin: 8px 0;
+}
+
+.math {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 17px;
+    margin: 12px 0;
+    padding-left: 20px;
+}
+
+ul {
+    margin: 8px 0 16px 20px;
+}
+
+li {
+    margin-bottom: 4px;
+}
+
+/* Шапка отчёта */
+.report-header {
+    margin-bottom: 28px;
+}
+
+.report-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111;
+    margin-bottom: 12px;
+}
+
+.report-meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.report-meta-table th {
+    text-align: left;
+    font-weight: 600;
+    color: #4b5563;
+    width: 15%;
+    padding: 3px 6px 3px 0;
+    white-space: nowrap;
+}
+
+.report-meta-table td {
+    color: #111;
+    width: 35%;
+    padding: 3px 12px 3px 0;
+}
+
+.report-meta-table a {
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+.report-meta-table a:hover {
+    text-decoration: underline;
+}
+
+.report-divider {
+    border: 0;
+    border-top: 1px solid #d1d5db;
+    margin-top: 8px;
+}
+
+.math-left .katex-display {
+    text-align: left !important;
+}
+
+.math-left .katex-display > .katex {
+    text-align: left !important;
+    padding-left: 20px;
+}
+
+/* Сноски в тексте */
+a.ref-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 0 1px;
+}
+
+a.ref-link:hover {
+    text-decoration: underline;
+}
+
+.report-references {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.report-references h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.report-references ol {
+    padding-left: 20px;
+}
+
+.report-references li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.report-references .ref-title {
+    font-weight: 600;
+    color: #111;
+}
+
+.report-references a {
+    color: #1a73e8 !important;
+    text-decoration: underline !important;
+    word-break: break-all;
+    cursor: pointer;
+}
+
+details {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    margin: 16px 0;
+    background-color: #fff;
+    transition: all 0.2s ease;
+}
+
+details[open] {
+    border-color: #cbd5e1;
+}
+
+details > :not(summary) {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+summary {
+    cursor: pointer;
+    padding: 10px 14px;
+    user-select: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+summary:hover {
+    background-color: #f8fafc;
+}
+
+summary h2 {
+    display: inline;
+    font-size: 16px;
+    margin: 0 0 0 6px;
+}
+
+.details-content {
+    padding: 12px 16px 16px;
+    border-top: 1px solid #f1f5f9;
+}
+</style>
 </head>
 <body>
+<script>
+function loadKaTeXAndRender() {
+    const katexCSS = document.createElement("link");
+    katexCSS.rel = "stylesheet";
+    katexCSS.href = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+    document.head.appendChild(katexCSS);
+
+    const katexScript = document.createElement("script");
+    katexScript.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+    katexScript.defer = true;
+
+    katexScript.onload = () => {
+        const autoRenderScript = document.createElement("script");
+        autoRenderScript.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+        autoRenderScript.defer = true;
+
+        autoRenderScript.onload = () => {
+            if (window.renderMathInElement) {
+                window.renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: "$$", right: "$$", display: true },
+                        { left: "$", right: "$", display: false },
+                    ],
+                    throwOnError: false,
+                });
+            }
+        };
+        document.head.appendChild(autoRenderScript);
+    };
+
+    document.head.appendChild(katexScript);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    // --- Генерация шапки отчёта ---
+    const pageTitle = document.title.trim();
+    const hwMatch = pageTitle.match(/HW\s*(\d+)[:\s-]+(.*)/i);
+
+    let reportTitle = "";
+    if (hwMatch) {
+        const hwNumber = hwMatch[1];
+        const hwTheme = hwMatch[2].trim();
+        reportTitle = `Algorithmics (MTAT.03.238) - Homework ${hwNumber}: ${hwTheme}`;
+    } else {
+        reportTitle = `Algorithmics (MTAT.03.238) - ${pageTitle}`;
+    }
+
+    const metaDate = document.querySelector('meta[name="date"]')?.content;
+    const displayDate = metaDate || new Date().toISOString().slice(0, 10);
+
+    const studentInfo = {
+        name: "Ruslan Nechshadimov",
+        curriculum: "Computer Science (MSc)",
+        studyYear: "2026",
+        email: "ruslan.nechshadimov@ut.ee",
+    };
+
+    const headerHTML = `
+    <header class="report-header">
+      <div class="report-title">${reportTitle}</div>
+      <table class="report-meta-table">
+        <tr>
+          <th>Student:</th>
+          <td>${studentInfo.name}</td>
+          <th>Study year:</th>
+          <td>${studentInfo.studyYear}</td>
+        </tr>
+        <tr>
+          <th>Curriculum:</th>
+          <td>${studentInfo.curriculum}</td>
+          <th>Date:</th>
+          <td>${displayDate}</td>
+        </tr>
+        <tr>
+          <th>University email:</th>
+          <td colspan="3"><a href="mailto:${studentInfo.email}">${studentInfo.email}</a></td>
+        </tr>
+      </table>
+      <hr class="report-divider">
+    </header>
+  `;
+
+    document.body.insertAdjacentHTML("afterbegin", headerHTML);
+
+    // --- Загрузка и рендер формул KaTeX ---
+    loadKaTeXAndRender();
+});
+</script>
 
 
 <details>
@@ -953,6 +1226,56 @@ Corrected Conclusion: Row traversal is ~13.00x faster due to spatial cache local
         </ul>
         </p>
 </details>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const refMetas = document.querySelectorAll('meta[name="reference"]');
+    if (refMetas.length === 0) return;
+
+    const references = [];
+    const refMap = {};
+
+    refMetas.forEach((meta, index) => {
+        const rawContent = meta.getAttribute("content").trim();
+
+        const urlMatch = rawContent.match(/https?:\/\/[^\s]+/i);
+        const url = urlMatch ? urlMatch[0] : null;
+
+        let text = rawContent;
+        if (url) {
+            text = rawContent.replace(url, "").replace(/\|/g, "").trim();
+        }
+
+        const key = text.split(/\s+/)[0] || `ref-${index + 1}`;
+        const item = { index: index + 1, key, text: text || url, url };
+
+        references.push(item);
+        refMap[key] = item;
+    });
+
+    let bodyHTML = document.body.innerHTML;
+    bodyHTML = bodyHTML.replace(/\[ref:([a-zA-Z0-9_\-]+)\]/g, (match, key) => {
+        const ref = refMap[key];
+        return ref ? `<sup><a class="ref-link" href="#ref-${ref.index}">[${ref.index}]</a></sup>` : match;
+    });
+    document.body.innerHTML = bodyHTML;
+
+    const footerHTML = `
+    <footer class="report-references">
+      <h3>References</h3>
+      <ol>
+        ${references.map(ref => `
+          <li id="ref-${ref.index}">
+            <span class="ref-title">${ref.text.replace(/_/g, " ")}</span>
+            ${ref.url ? `— <a href="${ref.url}" target="_blank" rel="noopener noreferrer">${ref.url}</a>` : ""}
+          </li>
+        `).join("")}
+      </ol>
+    </footer>
+  `;
+
+    document.body.insertAdjacentHTML("beforeend", footerHTML);
+});
+</script>
 </body>
 <script>
     window.addEventListener('load', () => {
