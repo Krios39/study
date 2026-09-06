@@ -803,6 +803,155 @@ Zipf Sample (s=1.2)  | Distinct:  1585 | Comparisons: 23738856 | Shifts: 2372886
             </li>
         </ul>
 </details>
+
+<details>
+    <summary>B1. Construct incomparable monotone growth functions:</summary>
+    <p>
+        We construct two positive, nondecreasing functions $P(n)$ and $Q(n)$ analytically using integer division in exponents.
+    </p>
+
+    <p>
+        <strong>1. Unambiguous Definition for every $n \in \mathbb{N}$:</strong><br>
+        Let $k(n) = \lfloor \log_2(\log_2(n + 3)) \rfloor \ge 0$. We define:
+        $$P(n) = n^{\; 2 \cdot \lfloor \frac{k(n)}{2} \rfloor + 1}$$
+        $$Q(n) = n^{\; 2 \cdot \lfloor \frac{k(n) + 1}{2} \rfloor}$$
+        For all integers $n \ge 1$, $k(n)$ is a well-defined non-negative integer, so exponents are non-negative integers, and $P(n) \ge 1 > 0$, $Q(n) \ge 1 > 0$.
+    </p>
+
+    <p>
+        <strong>2. Proof of Monotonicity (Nondecreasing):</strong><br>
+        For any $n \ge 1$:
+    <ul>
+        <li>The base is strictly increasing: $n + 1 > n \ge 1$.</li>
+        <li>
+            The exponents are nondecreasing: the functions $\log_2$, floor division $\lfloor x \rfloor$, and integer division $\lfloor k / 2 \rfloor$ are monotonically nondecreasing with respect to $n$. Therefore:
+            $$E_P(n+1) \ge E_P(n) \quad \text{and} \quad E_Q(n+1) \ge E_Q(n)$$
+        </li>
+        <li>
+            Since for any $x_2 > x_1 \ge 1$ and $e_2 \ge e_1 \ge 0$ it holds that $x_2^{e_2} \ge x_1^{e_1}$, we obtain:
+            $$P(n+1) \ge P(n) \quad \text{and} \quad Q(n+1) \ge Q(n) \quad \forall n \ge 1$$
+        </li>
+    </ul>
+    </p>
+
+    <p>
+        <strong>3. Subsequences and Incomparability Proof:</strong>
+    <ul>
+        <li>
+            <strong>First subsequence ($P(n) \neq O(Q(n))$):</strong><br>
+            Choose the subsequence $n_m = \lceil 2^{2^{2m}} \rceil$ along which $k(n_m) = 2m$ (even).<br>
+            Here, $E_P(n_m) = 2m + 1$ and $E_Q(n_m) = 2m$. The ratio is:
+            $$\lim_{m \to \infty} \frac{P(n_m)}{Q(n_m)} = \lim_{m \to \infty} \frac{n_m^{2m+1}}{n_m^{2m}} = \lim_{m \to \infty} n_m = \infty$$
+            Since the ratio is unbounded, <strong>$P(n) \neq O(Q(n))$</strong>.
+        </li>
+        <li>
+            <strong>Second subsequence ($Q(n) \neq O(P(n))$):</strong><br>
+            Choose the subsequence $n'_m = \lceil 2^{2^{2m+1}} \rceil$ along which $k(n'_m) = 2m + 1$ (odd).<br>
+            Here, $E_P(n'_m) = 2m + 1$ and $E_Q(n'_m) = 2m + 2$. The ratio is:
+            $$\lim_{m \to \infty} \frac{P(n'_m)}{Q(n'_m)} = \lim_{m \to \infty} \frac{(n'_m)^{2m+1}}{(n'_m)^{2m+2}} = \lim_{m \to \infty} \frac{1}{n'_m} = 0$$
+            Since the ratio tends to $0$ (meaning $Q(n'_m)/P(n'_m) \to \infty$), <strong>$Q(n) \neq O(P(n))$</strong>.
+        </li>
+    </ul>
+    </p>
+</details>
+
+<details>
+    <summary>B2. Make a benchmark lie, then repair it</summary>
+        <p>
+            We investigate matrix traversal order (Row-major vs. Column-major summation) on an $N \times N$ matrix. While both methods perform the exact same $N^2$ additions with theoretical complexity $O(N^2)$, hardware cache behavior drastically differentiates them.
+        </p>
+
+        <p>
+            <strong>Execution Log (Raw Terminal Output):</strong>
+        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace;"><code>=== Protocol 1: Setup Pollution (Small matrix + allocation inside timer) ===
+Flawed 1 (Row + Setup):    207 µs
+Flawed 1 (Column + Setup): 202 µs
+Flawed Conclusion: Setup cost hides traversal impact completely.
+
+=== Protocol 2: Dead Code Elimination (Dev/Release trap, no black_box) ===
+Flawed 2 (Row without black_box):    0 µs
+Flawed 2 (Column without black_box): 38749 µs
+Flawed Conclusion: Row is 'infinitely' faster because compiler deleted the code.
+
+=== Protocol 3: Corrected Protocol (Warm-up, black_box, median of runs) ===
+Generating matrix 8192x8192 outside the timer...
+Warming up...
+Running 5 benchmark iterations...
+Raw Row times (µs): [23876, 24133, 27082, 27572, 28959]
+Raw Column times (µs): [314555, 345707, 352053, 377411, 380396]
+Median Row:    27082 µs
+Median Column: 352053 µs
+Corrected Conclusion: Row traversal is ~13.00x faster due to spatial cache locality.</code></pre>
+        </p>
+
+        <p>
+            <strong>1. Flawed Protocol 1 — Setup Cost Pollution & Small Input Size:</strong>
+        <ul>
+            <li><strong>Design:</strong> Matrix size is small ($N = 128$), and heap allocation (<code>generate_matrix</code>) is included inside the timing window.</li>
+            <li><strong>Raw Measurements:</strong>
+                <ul>
+                    <li>Row traversal + Setup: <strong>207 µs</strong></li>
+                    <li>Column traversal + Setup: <strong>202 µs</strong></li>
+                </ul>
+            </li>
+            <li><strong>Superficially Reasonable Conclusion:</strong> Column-major access is slightly faster or identical to row-major access; traversal pattern does not matter in practice.</li>
+        </ul>
+        </p>
+
+        <p>
+            <strong>2. Flawed Protocol 2 — Compiler Dead Code Elimination & Single-shot:</strong>
+        <ul>
+            <li><strong>Design:</strong> Matrix size is large ($N = 8192$), built in <code>--release</code> profile, but summation return values are discarded without <code>black_box</code>, executed in a single run without warm-up.</li>
+            <li><strong>Raw Measurements:</strong>
+                <ul>
+                    <li>Row traversal: <strong>0 µs</strong></li>
+                    <li>Column traversal: <strong>38,749 µs</strong></li>
+                </ul>
+            </li>
+            <li><strong>Superficially Reasonable Conclusion:</strong> Row-major summing takes $0$ time ($O(1)$) and is infinitely faster than column-major summing.</li>
+        </ul>
+        </p>
+
+        <p>
+            <strong>3. Diagnosis of Threats to Validity:</strong>
+        <ol>
+            <li>
+                <strong>Setup Cost Pollution:</strong> Including memory allocation (heap-allocating $N$ vector buffers) inside the benchmark timer dwarfs arithmetic computation. Allocation overhead consumes $>98\%$ of the measured interval, burying real algorithmic differences in allocator noise.
+            </li>
+            <li>
+                <strong>Dead Code Elimination (DCE):</strong> Optimizing compilers (LLVM in <code>--release</code>) detect that the row summation loop has no observable side effects and remove the entire computation, resulting in a false $0$ µs measurement.
+            </li>
+            <li>
+                <strong>Cache Scale & Hardware Obliviousness:</strong> Using tiny inputs ($N = 128$) fits the entire structure into the $L_1$ CPU cache, masking cache-line eviction costs. Conversely, single-shot executions without warm-up capture cold-start penalties and OS scheduler interference instead of steady-state execution.
+            </li>
+        </ol>
+        </p>
+
+        <p>
+            <strong>4. Corrected Protocol & Truthful Results:</strong>
+        <ul>
+            <li><strong>Design:</strong> Matrix allocation is isolated completely prior to measurement ($N = 8192$, $67,108,864$ elements). Calls are wrapped in <code>std::hint::black_box</code>. A warm-up phase stabilizes CPU frequency scaling, followed by 5 independent iterations where the <strong>median</strong> is reported.</li>
+            <li><strong>Raw Measurements ($N = 8192$):</strong>
+                <ul>
+                    <li>Raw Row times (µs): <code>[23876, 24133, 27082, 27572, 28959]</code> &rarr; <strong>Median: 27,082 µs</strong> (~27.1 ms)</li>
+                    <li>Raw Column times (µs): <code>[314555, 345707, 352053, 377411, 380396]</code> &rarr; <strong>Median: 352,053 µs</strong> (~352.1 ms)</li>
+                </ul>
+            </li>
+            <li><strong>Resulting Truthful Conclusion:</strong> Row traversal is <strong>~13.00x faster</strong> than column traversal. Because memory lines (typically 64 bytes) are fetched contiguously, sequential access maximizes spatial locality and hardware prefetching, whereas column-major stepping causes severe CPU cache misses across disjoint heap vectors.</li>
+        </ul>
+        </p>
+
+        <p>
+            <strong>5. Benchmark Validity Checklist:</strong>
+        <ul>
+            <li>[ ] <strong>Isolation:</strong> Exclude data structure generation, I/O, and setup allocations from the measurement loop.</li>
+            <li>[ ] <strong>Compiler Optimization:</strong> Benchmark in release/optimized mode while using <code>black_box</code> on inputs and outputs to prevent Dead Code Elimination.</li>
+            <li>[ ] <strong>Warm-up & Environment:</strong> Execute warm-up runs to settle CPU thermal scaling and instruction caches.</li>
+            <li>[ ] <strong>Input Range Representation:</strong> Test sizes that cross memory boundaries (e.g., beyond $L_1/L_2/L_3$ cache limits).</li>
+            <li>[ ] <strong>Robust Statistics:</strong> Collect multiple samples and evaluate the median rather than relying on a single run or a noise-sensitive mean.</li>
+        </ul>
+        </p>
+</details>
 </body>
 <script>
     window.addEventListener('load', () => {
