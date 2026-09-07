@@ -1,6 +1,3 @@
-# file: leastsquares.py
-# 2D point cloud fitting with a line
-# run with: $ python leastsquares.py
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
