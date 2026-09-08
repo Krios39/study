@@ -152,8 +152,7 @@ Recursive: 1.38298760 s  (function calls:   7049155)
 Speedup:   Iterative is ~58775.4x faster</pre>
 
             <p><strong>Question:</strong> Which one is faster? Can we make it run faster?</p>
-            <p><strong>Answer:</strong> The iterative algorithm is exponentially faster. The recursive method duplicates subproblems, scaling at O(phi^n) ~ O(1.618^n), requiring over 7 million calls at n = 32. The iterative version operates in linear time O(n). We can achieve even faster sublinear runtime O(log n) using matrix exponentiation via repeated squaring.</p>
-
+            <p><strong>Answer:</strong> The iterative algorithm is exponentially faster. The recursive approach repeatedly recalculates identical subproblems, resulting in an exponential time complexity of O(2^n) that requires over 7 million calls for n = 32. In contrast, the iterative approach scales linearly at O(n) and executes in microseconds. We can make it even faster by using matrix exponentiation (repeated squaring), which calculates Fibonacci numbers in sublinear O(log n) time.</p>
             <h3>1.3.2 Matrix-Theoretic Algorithm (Repeated Squaring)</h3>
             <p>Implementation of matrix repeated squaring evaluated in O(log n) matrix multiplications.</p>
 
