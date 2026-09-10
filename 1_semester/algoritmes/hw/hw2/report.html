@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>HW2. Dual-Pivot Quicksort, Binary Search, and Divide-and-ConquerT</title>
+
+    <meta name="reference" content="Dual Pivot Quicksort | https://www.geeksforgeeks.org/dsa/dual-pivot-quicksort/">
+
+
+    <link rel="stylesheet" href="../../styles.css">
+    <script src="../../header.js" defer></script>
+    <script src="../../footer.js" defer></script>
+
+</head>
+<body>
+
+<details<details>
+    <summary>T1. Implement and validate dual-pivot Quicksort</summary>
+
+    <h4>Algorithm Implementation & Strategy:</h4>
+    <p>
+        An in-place <strong>Dual-Pivot Quicksort</strong> (Yaroslavskiy-style partition) implemented in Rust without external sorting dependencies.
+        For a given slice range $[0, n-1]$, the algorithm deterministically designates the first element as $p$ and the last element as $q$.
+        If $p > q$, they are swapped immediately so that the precondition $p \le q$ strictly holds.
+    </p>
+
+    <h4>Partition Invariants:</h4>
+    <p>
+        During the partition loop, the active pointer $k$ traverses from $lt$ up to $gt$, maintaining the elements partitioned across four distinct regions:
+    </p>
+    <div class="math-left">
+        $$\forall i \in [1, lt - 1]: arr[i] < p \quad \text{(Region 1: strictly smaller than left pivot)}$$
+        $$\forall i \in [lt, k - 1]: p \le arr[i] \le q \quad \text{(Region 2: between pivots)}$$
+        $$\forall i \in [k, gt]: \text{uninspected elements (Region under active scanning)}$$
+        $$\forall i \in [gt + 1, n - 2]: arr[i] > q \quad \text{(Region 3: strictly greater than right pivot)}$$
+    </div>
+    <p>
+        Upon loop termination ($k > gt$), the pivots are swapped into their final positions:
+        $p$ is placed at $lt - 1$ (index $p_1$), and $q$ is placed at $gt + 1$ (index $p_2$).
+    </p>
+
+    <h4>Recursive Ranges & Duplicate Handling:</h4>
+    <ul>
+        <li>
+            <strong>Left subarray:</strong> $[0, p_1 - 1]$ contains elements $< p$ &rarr; recursively sorted.
+        </li>
+        <li>
+            <strong>Right subarray:</strong> $[p_2 + 1, n - 1]$ contains elements $> q$ &rarr; recursively sorted.
+        </li>
+        <li>
+            <strong>Middle subarray:</strong> $[p_1 + 1, p_2 - 1]$ contains elements $x \in [p, q]$.
+            <ul>
+                <li>
+                    <strong>Case $p < q$:</strong> recursively sorted.
+                </li>
+                <li>
+                    <strong>Case $p == q$:</strong> since $p \le x \le q$, every element in this region is guaranteed to be equal to $p$ (and $q$).
+                    <strong>Recursing on this range is skipped entirely.</strong> This eliminates $O(n^2)$ recursion degradation on duplicate-heavy and all-equal inputs.
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h4>Terminal Execution & Correctness Validation Output:</h4>
+    <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace;"><code>✓ PASS: Empty array
+✓ PASS: Single element
+✓ PASS: Two elements sorted
+✓ PASS: Two elements unsorted
+✓ PASS: Sorted array (1000)
+✓ PASS: Reversed array (1000)
+✓ PASS: All equal array (1000)
+✓ PASS: Duplicate-heavy array (1000)
+✓ PASS: Random array (1000)
+
+All test cases passed successfully!</code></pre>
+
+    <h4>Implementation Test Matrix:</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Test Input Category</th>
+            <th>Sample Size ($n$)</th>
+            <th>Special Boundary / Edge Characteristics</th>
+            <th>Status vs <code>std::slice::sort</code></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Empty array</strong></td>
+            <td>0</td>
+            <td>Base case $n \le 1$, immediate return</td>
+            <td><strong>PASS</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Single element</strong></td>
+            <td>1</td>
+            <td>Base case $n \le 1$, zero comparisons</td>
+            <td><strong>PASS</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Two elements sorted</strong></td>
+            <td>2</td>
+            <td>Base case $n = 2$, elements already in order</td>
+            <td><strong>PASS</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Two elements unsorted</strong></td>
+            <td>2</td>
+            <td>Base case $n = 2$, single conditional swap on $arr[0] > arr[1]$</td>
+            <td><strong>PASS</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Sorted array</strong></td>
+            <td>1 000</td>
+            <td>Ascending monotonicity ($p < q$ always)</td>
+            <td><strong>PASS</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Reversed array</strong></td>
+            <td>1 000</td>
+            <td>Initial swap fixes pivots, maximum movement of $gt$ and $lt$</td>
+            <td><strong>PASS</strong></td>
+        </tr>
+        <tr>
+            <td><strong>All equal array</strong></td>
+            <td>1 000</td>
+            <td>$p == q$ triggered, middle partition recursion skipped entirely</td>
+            <td><strong>PASS</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Duplicate-heavy array</strong></td>
+            <td>1 000</td>
+            <td>Domain $\in [0, 4]$, frequent $p == q$ subproblems</td>
+            <td><strong>PASS</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Random array</strong></td>
+            <td>1 000</td>
+            <td>Standard uniform distribution testing balanced branching</td>
+            <td><strong>PASS</strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>The answers:</h2>
+    <ul>
+        <li>
+            <strong>Partition Invariants:</strong> Pointer $k$ acts as the linear inspector, placing smaller values behind $lt$ (via left swap) and larger values behind $gt$ (via right swap). Uninspected elements shrink monotonically inside $[k, gt]$ until convergence.
+        </li>
+        <li>
+            <strong>Recursive Slicing:</strong> Subranges are safely split via <code>split_at_mut</code> to satisfy the Rust borrow checker without overlapping mutable references or unsafe pointer arithmetic. Pivots $p_1$ and $p_2$ are explicitly isolated from all sub-calls.
+        </li>
+        <li>
+            <strong>Termination on Duplicate/All-Equal Data:</strong> When $p == q$, all elements in the middle region are identical to the pivots. Bypassing the recursive call on the middle segment prevents infinite or quadratic recursion chains, guaranteeing termination on homogeneous datasets.
+        </li>
+    </ul>
+</details>
+</body>
+
+</html>
