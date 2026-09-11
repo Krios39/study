@@ -1,6 +1,6 @@
 .idea
 target
 
-algoritmes/hw/**/*.zip
+*.zip
 
 parcomp_key*
