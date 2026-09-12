@@ -5,7 +5,7 @@
     <title>HW2. Dual-Pivot Quicksort, Binary Search, and Divide-and-ConquerT</title>
 
     <meta name="reference" content="Dual Pivot Quicksort | https://www.geeksforgeeks.org/dsa/dual-pivot-quicksort/">
-
+    <meta name="reference" content="Eytzinger Binary Search | https://algorithmica.org/en/eytzinger/">
 
     <link rel="stylesheet" href="../../styles.css">
     <script src="../../header.js" defer></script>
@@ -500,6 +500,315 @@ Size   | Strategy         | Comparisons    | Max Depth    | Time (µs)
     </ul>
 </details>
 
+<details>
+    <summary>T3. Lower-Bound Binary Search & Memory Hierarchy Scaling</summary>
+
+    <h4>Algorithm Implementation & Strategy:</h4>
+    <p>
+        We implemented an in-place <strong>lower-bound binary search</strong> in Rust. Unlike exact-match binary search (which halts immediately upon hitting the searched key), lower-bound isolates the first index whose value is <strong>greater than or equal to</strong> the queried key ($arr[k] \ge \text{searched}$).
+        The slice is treated as a half-open interval $[left\_border, right\_border)$. If the pivot element is strictly smaller than the target, $left\_border$ advances to $k + 1$; otherwise, $right\_border$ collapses to $k$.
+    </p>
+
+    <h4>Instrumentation & Uniform Membership Queries:</h4>
+    <p>
+        The search was instrumented to return a tuple <code>(usize, usize)</code> representing <code>(index, comparisons)</code>.
+        To isolate pure algorithm execution from RNG overhead, <strong>2 000 000 query keys</strong> were pre-generated prior to timing using <code>rand::rngs::StdRng</code> initialized with a fixed seed (<code>2026</code>) over the range $[0, 2 \times n_0]$.
+    </p>
+
+    <h4>Array Representation & Memory Footprint:</h4>
+    <ul>
+        <li><strong>Data Structure:</strong> Contiguous buffer (<code>Vec&lt;u32&gt;</code>, inspected as <code>&amp;[u32]</code>).</li>
+        <li><strong>Numeric Type:</strong> 32-bit unsigned integer (<code>u32</code>).</li>
+        <li><strong>Baseline Memory Consumed ($n_0$):</strong> $10\,000\,000 \times 4\text{ bytes} \approx 38.15\text{ MB}$.</li>
+        <li><strong>Candidate Memory Consumed ($n$):</strong> $4\,410\,155 \times 4\text{ bytes} \approx 16.82\text{ MB}$.</li>
+        <li><strong>Hardware L3 Cache Capacity:</strong> <strong>12 MB</strong>.</li>
+    </ul>
+
+    <h4>Measurement Budget Allocation:</h4>
+    <ul>
+        <li><strong>Baseline Run:</strong> Full 10.0 s run on $n_0 = 10\,000\,000$ (Run 1 of 3).</li>
+        <li><strong>Pilot Measurements:</strong> 8 bisection steps of 0.5 s each = <strong>4.0 s total</strong> (well within the 10.0 s pilot allowance).</li>
+        <li><strong>Verification Run:</strong> Full 10.0 s run on the detected optimal candidate $n = 4\,410\,155$ (Run 2 of 3).</li>
+        <li><strong>Total full runs used:</strong> 2 out of maximum 3 allowed.</li>
+    </ul>
+
+    <h4>Pure Output:</h4>
+    <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px;"><code>Correctness tests passed!
+
+Array: Vec<u32>
+Elements: 10000000
+Memory: 38.15 MB
+
+[Run 1/3] Running 10s baseline for n0 = 10000000...
+Baseline searches in 10s: 7685226
+Average comparisons:      23.32
+Time per search:          1301.20 ns
+Target operations (2x):   15370452
+
+--- Outer Search Trace (Bisection with 0.5s pilot runs) ---
+Step  1 | Candidate n =  5499999 | Projected 10s:   13733210 (1.79x)
+Step  2 | Candidate n =  3249999 | Projected 10s:   18971958 (2.47x)
+Step  3 | Candidate n =  4374999 | Projected 10s:   15421740 (2.01x)
+Step  4 | Candidate n =  4937499 | Projected 10s:   10778913 (1.40x)
+Step  5 | Candidate n =  4656249 | Projected 10s:   14132797 (1.84x)
+Step  6 | Candidate n =  4515624 | Projected 10s:   13284298 (1.73x)
+Step  7 | Candidate n =  4445311 | Projected 10s:   13383474 (1.74x)
+Step  8 | Candidate n =  4410155 | Projected 10s:   16312024 (2.12x)
+
+[Run 2/3] Verification 10s run for n = 4410155...
+Final searches in 10s:    17627544
+Final comparisons:        22.04
+Final time per search:    567.29 ns
+Resulting size n:         4410155
+Reduction factor (n0 / n):2.27x
+Achieved throughput gain: 2.29x
+
+Process finished with exit code 0</code></pre>
+
+    <h4>Outer-Search Trace & Verification Summary:</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%; font-size: 13px; text-align: right;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.08); text-align: center;">
+            <th style="text-align: left;">Stage</th>
+            <th>Array Size ($n$)</th>
+            <th>Memory (MB)</th>
+            <th>Throughput (10s)</th>
+            <th>Avg Comparisons</th>
+            <th>Time per Search</th>
+            <th>Speedup Factor</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td style="text-align: left; font-weight: bold;">Baseline (Run 1)</td>
+            <td>10 000 000</td>
+            <td>38.15</td>
+            <td>7 685 226</td>
+            <td>23.32</td>
+            <td>1 301.20 ns</td>
+            <td>1.00x</td>
+        </tr>
+        <tr style="background-color: rgba(255, 255, 255, 0.02);">
+            <td style="text-align: left;">Bisection Step 1 (Pilot)</td>
+            <td>5 499 999</td>
+            <td>20.98</td>
+            <td>~13 733 210</td>
+            <td>—</td>
+            <td>~728.16 ns</td>
+            <td>1.79x</td>
+        </tr>
+        <tr style="background-color: rgba(255, 255, 255, 0.02);">
+            <td style="text-align: left;">Bisection Step 2 (Pilot)</td>
+            <td>3 249 999</td>
+            <td>12.40</td>
+            <td>~18 971 958</td>
+            <td>—</td>
+            <td>~527.10 ns</td>
+            <td>2.47x</td>
+        </tr>
+        <tr style="background-color: rgba(255, 255, 255, 0.02);">
+            <td style="text-align: left;">Bisection Step 3 (Pilot)</td>
+            <td>4 374 999</td>
+            <td>16.69</td>
+            <td>~15 421 740</td>
+            <td>—</td>
+            <td>~648.43 ns</td>
+            <td>2.01x</td>
+        </tr>
+        <tr style="background-color: rgba(16, 185, 129, 0.15); color: #6ee7b7; font-weight: bold;">
+            <td style="text-align: left;">Verification (Run 2)</td>
+            <td>4 410 155</td>
+            <td>16.82</td>
+            <td>17 627 544</td>
+            <td>22.04</td>
+            <td>567.29 ns</td>
+            <td>2.29x</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>The answers:</h2>
+    <ul>
+        <li>
+            <strong>Theoretical Prediction vs. Empirical Reality:</strong> Classical complexity $O(\log_2 n)$ posits that doubling throughput requires halving the comparison count: $\log_2(n) \approx \frac{1}{2}\log_2(10^7) \approx 11.66$, predicting $n \approx 3\,200$ (a reduction factor $>3\,000\times$). In practice, a $2.29\times$ speedup was achieved at $n = 4\,410\,155$—a reduction factor of only $2.27\times$, saving a mere $1.28$ comparisons per search.
+        </li>
+        <li>
+            <strong>Memory Hierarchy & Effective 12 MB L3 Residency:</strong> The baseline array ($38.15\text{ MB}$) massively exceeds the <strong>12 MB L3 cache</strong>, forcing almost every non-leaf lookup out into high-latency main memory (DRAM penalty $\approx 60\text{--}90\text{ ns}$). Reducing the dataset to $n = 4\,410\,155$ ($16.82\text{ MB}$) allows 12 MB of cache to cover $>71\%$ of the entire working set. Because the top 10+ levels of the binary search tree are hit repeatedly across all queries, they remain permanently hot in the cache hierarchy, while remaining accesses hit cache lines with vastly higher probability.
+        </li>
+        <li>
+            <strong>TLB Stress & Pipeline Stalls:</strong> The footprint reduction from $38.15\text{ MB}$ to $16.82\text{ MB}$ cuts 4 KB virtual memory page table coverage from $\sim 9\,766$ pages down to $\sim 4\,305$ pages. This substantially alleviates Translation Lookaside Buffer (TLB) thrashing. Execution latency is governed almost entirely by cache miss stalls and memory access penalties rather than raw ALU branch or comparison operations.
+        </li>
+    </ul>
+</details>
+
+<details>
+    <summary>T4. Query Sequence Crossover: Linear Search vs. Sort-Once + Lower-Bound</summary>
+
+    <h4>Experimental Setup & Strategies:</h4>
+    <p>
+        For a fixed random array of $n = 100\,000$ distinct values (32-bit unsigned integers shifted into <code>usize</code>), we compared two query-resolution strategies across $q$ membership queries:
+    </p>
+    <ul>
+        <li>
+            <strong>Strategy 1 (Linear Search):</strong> Queries are executed directly on the unsorted array sequentially. Terminating early when the element is matched, or scanning up to $n$ elements if absent.
+        </li>
+        <li>
+            <strong>Strategy 2 (Sort-Once + Binary Search):</strong> The array is sorted exactly once using the <strong>randomised Dual-Pivot Quicksort from T2</strong>, followed by <strong>lower-bound binary search from T3</strong> for every incoming query. The one-time sorting cost (both comparisons and wall-clock execution time) is strictly incorporated into Strategy 2.
+        </li>
+    </ul>
+    <p>
+        Queries were pre-generated with a 50/50 uniform distribution of present and absent elements. To evaluate reproducibility, the entire benchmark was evaluated across three distinct PRNG seeds (<code>42</code>, <code>2026</code>, <code>777</code>).
+    </p>
+
+    <h4>Theoretical vs. Empirical Crossover Models:</h4>
+    <ul>
+        <li>
+            <strong>Naive Theoretical Model:</strong>
+            Assuming $Cost_1 = q \cdot n$ and $Cost_2 = n \log_2(n) + q \log_2(n)$:
+            <div class="math-left">
+                $$q_{\text{naive}} = \frac{n \log_2(n)}{n - \log_2(n)} \approx \log_2(100\,000) \approx \mathbf{16.6\text{ queries}}$$
+            </div>
+        </li>
+        <li>
+            <strong>Empirical Comparison-Count Crossover ($q_{\text{comp}}$):</strong>
+            Because linear search aborts upon finding an element (averaging $\sim 0.75n$ comparisons on mixed inputs) and Dual-Pivot Quicksort requires $\sim 1.9 n \ln(n) \approx 2.0 \times 10^6$ comparisons:
+            <div class="math-left">
+                $$q_{\text{comp}} = \left\lceil \frac{C_{\text{sort}}}{\bar{C}_{\text{linear}} - \bar{C}_{\text{bin}}} \right\rceil \approx \frac{2.0 \times 10^6}{75\,000 - 17} \approx \mathbf{28\text{ queries}}$$
+            </div>
+        </li>
+        <li>
+            <strong>Empirical Wall-Clock Timing Crossover ($q_{\text{time}}$):</strong>
+            Determined by total elapsed real-world duration:
+            <div class="math-left">
+                $$q_{\text{time}} = \left\lceil \frac{T_{\text{sort}}}{\bar{T}_{\text{linear}} - \bar{T}_{\text{bin}}} \right\rceil \approx \mathbf{202 \text{ to } 276\text{ queries}}$$
+            </div>
+        </li>
+    </ul>
+
+    <h4>Pure Output:</h4>
+    <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px;"><code>PS C:\учёба\study\1_semester\algoritmes\hw\hw2> cargo run --release --bin T4
+   Compiling hw2 v0.1.0 (C:\учёба\study\1_semester\algoritmes\hw\hw2)
+    Finished `release` profile [optimized] target(s) in 1.22s
+     Running `target\release\T4.exe`
+
+===========================================================
+=== Running Experiment for SEED: 42 (n = 100000) ===
+===========================================================
+Sort Cost: 1971129 comparisons, 8635 µs
+Avg Linear Search: 71809.4 comps, 31622.0 ns
+Avg Binary Search: 16.6 comps, 227.5 ns
+Theoretical Naive Crossover:   ~16.6 queries
+Estimated Comparison Crossover: ~28 queries
+Estimated Time Crossover:       ~276 queries
+
+q      | Strat 1 Comps    | Strat 2 Comps (Sort+Bin) | Strat 1 Time(µs) | Strat 2 Time(µs)
+-------------------------------------------------------------------------------------
+10     | 579445           | 2075962              | 522             | 10468              [Comp: Strat 1, Time: Strat 1]
+18     | 1214662          | 2076097              | 1019            | 11260              [Comp: Strat 1, Time: Strat 1]
+28     | 1981124          | 2076264              | 969             | 9444               [Comp: Strat 1, Time: Strat 1]
+38     | 2676410          | 2076431              | 1354            | 9850               [Comp: Strat 2, Time: Strat 1]
+246    | 17842549         | 2079893              | 15413           | 10993              [Comp: Strat 2, Time: Strat 2]
+276    | 20367657         | 2080397              | 17942           | 11248              [Comp: Strat 2, Time: Strat 2]
+326    | 24134762         | 2081235              | 18941           | 8360               [Comp: Strat 2, Time: Strat 2]
+
+===========================================================
+=== Running Experiment for SEED: 2026 (n = 100000) ===
+===========================================================
+Sort Cost: 2068453 comparisons, 8257 µs
+Avg Linear Search: 74449.8 comps, 34325.5 ns
+Avg Binary Search: 16.7 comps, 244.5 ns
+Theoretical Naive Crossover:   ~16.6 queries
+Estimated Comparison Crossover: ~28 queries
+Estimated Time Crossover:       ~243 queries
+
+q      | Strat 1 Comps    | Strat 2 Comps (Sort+Bin) | Strat 1 Time(µs) | Strat 2 Time(µs)
+-------------------------------------------------------------------------------------
+10     | 815444           | 1911505              | 356             | 8636               [Comp: Strat 1, Time: Strat 1]
+18     | 1288288          | 1911639              | 1179            | 12097              [Comp: Strat 1, Time: Strat 1]
+28     | 2049329          | 1911806              | 1794            | 8612               [Comp: Strat 2, Time: Strat 1]
+38     | 2784545          | 1911973              | 1150            | 10502              [Comp: Strat 2, Time: Strat 1]
+213    | 15836367         | 1914888              | 6242            | 8699               [Comp: Strat 2, Time: Strat 1]
+243    | 18106932         | 1915386              | 15138           | 11243              [Comp: Strat 2, Time: Strat 2]
+293    | 21899835         | 1916220              | 14851           | 9588               [Comp: Strat 2, Time: Strat 2]
+
+===========================================================
+=== Running Experiment for SEED: 777 (n = 100000) ===
+===========================================================
+Sort Cost: 2126764 comparisons, 10907 µs
+Avg Linear Search: 78287.5 comps, 54562.5 ns
+Avg Binary Search: 16.6 comps, 417.0 ns
+Theoretical Naive Crossover:   ~16.6 queries
+Estimated Comparison Crossover: ~28 queries
+Estimated Time Crossover:       ~202 queries
+
+q      | Strat 1 Comps    | Strat 2 Comps (Sort+Bin) | Strat 1 Time(µs) | Strat 2 Time(µs)
+-------------------------------------------------------------------------------------
+10     | 764635           | 1968509              | 726             | 11645              [Comp: Strat 1, Time: Strat 1]
+18     | 1543735          | 1968638              | 1476            | 11711              [Comp: Strat 1, Time: Strat 1]
+28     | 2373272          | 1968806              | 2090            | 8907               [Comp: Strat 2, Time: Strat 1]
+38     | 3276045          | 1968976              | 2747            | 11308              [Comp: Strat 2, Time: Strat 1]
+172    | 13594790         | 1971205              | 10410           | 12410              [Comp: Strat 2, Time: Strat 1]
+202    | 15857497         | 1971702              | 14839           | 13079              [Comp: Strat 2, Time: Strat 2]
+252    | 19530001         | 1972535              | 10219           | 8814               [Comp: Strat 2, Time: Strat 2]</code></pre>
+
+    <h4>Crossover Summary Across Seeds ($n = 100\,000$):</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%; font-size: 13px; text-align: right;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.08); text-align: center;">
+            <th style="text-align: left;">Seed</th>
+            <th>Quicksort Comparisons</th>
+            <th>Sort Time ($T_{\text{sort}}$)</th>
+            <th>Naive $q_{\text{theory}}$</th>
+            <th style="background-color: rgba(16, 185, 129, 0.15); color: #6ee7b7;">Empirical $q_{\text{comp}}$</th>
+            <th style="background-color: rgba(59, 130, 246, 0.15); color: #93c5fd;">Empirical $q_{\text{time}}$</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td style="text-align: left; font-weight: bold;">42</td>
+            <td>1 971 129</td>
+            <td>8 635 &mu;s</td>
+            <td>16.6</td>
+            <td><strong>~28 &ndash; 38</strong></td>
+            <td><strong>~246 &ndash; 276</strong></td>
+        </tr>
+        <tr>
+            <td style="text-align: left; font-weight: bold;">2026</td>
+            <td>2 068 453</td>
+            <td>8 257 &mu;s</td>
+            <td>16.6</td>
+            <td><strong>~28</strong></td>
+            <td><strong>~243</strong></td>
+        </tr>
+        <tr>
+            <td style="text-align: left; font-weight: bold;">777</td>
+            <td>2 126 764</td>
+            <td>10 907 &mu;s</td>
+            <td>16.6</td>
+            <td><strong>~28</strong></td>
+            <td><strong>~202</strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>The answers:</h2>
+    <ul>
+        <li>
+            <strong>Theoretical vs. Empirical Comparison Crossover:</strong> The naive theoretical model predicts crossover at $q \approx 16.6$ queries. However, our measurements demonstrate that sorting becomes worthwhile by comparison count only around <strong>$q_{\text{comp}} \approx 28$ queries</strong>. This discrepancy occurs because Dual-Pivot Quicksort requires $\approx 1.9 n \ln(n)$ comparisons (rather than the ideal $n \log_2 n$), while early termination in linear search cuts the average per-query comparison cost down from $n$ to $\sim 0.74n$.
+        </li>
+        <li>
+            <strong>Comparison Crossover vs. Timing Crossover Disparity:</strong> While Strategy 2 wins on comparison count at $q \approx 28$, it does not break even in real execution time until <strong>$q_{\text{time}} \approx 202\text{--}276$ queries</strong> (nearly an order of magnitude later).
+        </li>
+        <li>
+            <strong>Hardware & Implementation Divergence:</strong>
+            <ul>
+                <li><strong>Hardware Prefetching in Linear Search:</strong> Linear search walks contiguous memory sequentially. The CPU hardware prefetcher predicts streaming cache lines flawlessly, avoiding memory stalls ($\sim 0.4\text{ ns}$ per comparison).</li>
+                <li><strong>Memory Moving & Swapping Overhead:</strong> Dual-Pivot Quicksort executes hundreds of thousands of write swaps alongside comparisons, incurring heavy pipeline branch penalties and cache writes.</li>
+                <li><strong>Memory Latency in Binary Search:</strong> Each step in <code>lower_bound</code> incurs unpredictable branches and scattered cache accesses. Consequently, a single comparison in Quicksort and Binary Search costs significantly more processor cycles than a streaming comparison in linear scan.</li>
+            </ul>
+        </li>
+    </ul>
+</details>
 </body>
 
 <script>

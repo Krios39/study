@@ -138,7 +138,6 @@ impl QuickSort {
         swap(arr, 0, p1_idx);
         swap(arr, arr.len() - 1, p2_idx);
 
-        // Рекурсивные вызовы с проверкой на аварийный выход
         let (left, rest) = arr.split_at_mut(p1_idx);
         let mid_len = p2_idx - p1_idx - 1;
         let (mid, right) = rest[1..].split_at_mut(mid_len);
