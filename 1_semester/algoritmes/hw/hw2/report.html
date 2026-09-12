@@ -6,6 +6,8 @@
 
     <meta name="reference" content="Dual Pivot Quicksort | https://www.geeksforgeeks.org/dsa/dual-pivot-quicksort/">
     <meta name="reference" content="Eytzinger Binary Search | https://algorithmica.org/en/eytzinger/">
+    <meta name="reference" content="Sorting, Searching, and Recurrences |    https://artifical.eu/algorithmics/notes/sorting-searching-recurrences/">
+    <meta name="reference" content="Gemini |  https://gemini.google.com/">
 
     <link rel="stylesheet" href="../../styles.css">
     <script src="../../header.js" defer></script>
@@ -806,6 +808,48 @@ q      | Strat 1 Comps    | Strat 2 Comps (Sort+Bin) | Strat 1 Time(µs) | Strat
                 <li><strong>Memory Moving & Swapping Overhead:</strong> Dual-Pivot Quicksort executes hundreds of thousands of write swaps alongside comparisons, incurring heavy pipeline branch penalties and cache writes.</li>
                 <li><strong>Memory Latency in Binary Search:</strong> Each step in <code>lower_bound</code> incurs unpredictable branches and scattered cache accesses. Consequently, a single comparison in Quicksort and Binary Search costs significantly more processor cycles than a streaming comparison in linear scan.</li>
             </ul>
+        </li>
+    </ul>
+</details>
+
+<details>
+    <summary>T5. Recurrences Behind the Experiments</summary>
+
+    <h4>1. Recurrence Derivations & Master Theorem Applicability:</h4>
+    <ul>
+        <li>
+            <strong>$L(n) = L(n/2) + 1$:</strong>
+            <ul>
+                <li><strong>Algorithmic Context:</strong> Models <em>lower-bound binary search</em> (T3/T4), halving the search space per comparison step.</li>
+                <li><strong>Master Theorem:</strong> <strong>Applies</strong>. Here $a = 1, b = 2, f(n) = 1$. Since $n^{\log_b a} = n^{\log_2 1} = n^0 = 1 = \Theta(f(n))$, Case 2 applies.</li>
+                <li><strong>Asymptotic Bound:</strong> $L(n) = \Theta(\log n)$.</li>
+            </ul>
+        </li>
+        <li>
+            <strong>$Q(n) = 3Q(n/3) + n$:</strong>
+            <ul>
+                <li><strong>Algorithmic Context:</strong> Models the <em>ideal balanced Dual-Pivot Quicksort</em> (T1/T2), where two pivots split the array into three equal subproblems of size $n/3$ with linear $\Theta(n)$ partitioning work.</li>
+                <li><strong>Master Theorem:</strong> <strong>Applies</strong>. Here $a = 3, b = 3, f(n) = n$. Since $n^{\log_b a} = n^{\log_3 3} = n^1 = \Theta(f(n))$, Case 2 applies.</li>
+                <li><strong>Asymptotic Bound:</strong> $Q(n) = \Theta(n \log n)$.</li>
+            </ul>
+        </li>
+        <li>
+            <strong>$W(n) = W(n - 2) + n$:</strong>
+            <ul>
+                <li><strong>Algorithmic Context:</strong> Models <em>worst-case deterministic Dual-Pivot Quicksort</em> on strictly ordered inputs, where endpoint pivots eliminate only 2 elements, leaving $n - 2$ elements in one recursive partition.</li>
+                <li><strong>Master Theorem:</strong> <strong>Does NOT apply</strong>. The Master Theorem requires divide-and-conquer recurrences of form $T(n) = aT(n/b) + f(n)$ where subproblem sizes scale by division ($b > 1$), not subtraction ($n - c$).</li>
+                <li><strong>Asymptotic Bound:</strong> By arithmetic unrolling: $W(n) = n + (n - 2) + (n - 4) + \dots + \Theta(1) = \sum_{i=0}^{n/2} (n - 2i) = \Theta(n^2)$.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>The answers:</h2>
+    <ul>
+        <li>
+            <strong>Deterministic Quicksort on Ordered Inputs:</strong> Matches $W(n) = \Theta(n^2)$. In T2, on <code>Sorted</code> arrays, deterministic pivot choice yielded $C \approx n^2 / 2$ ($499\,500$ at $n=1\,000$; $1\,999\,000$ at $n=2\,000$) and recursion depth grew linearly ($d = n/2$), triggering the $>1200$ stack abort at $n \ge 5\,000$.
+        </li>
+        <li>
+            <strong>Why Random Pivots Shift Behavior to $Q(n)$:</strong> Selecting random pivots guarantees expected relative ranks $\mathbb{E}[P_1] = 1/3$ and $\mathbb{E}[P_2] = 2/3$. This decorrelates pivot values from input topology, dividing the problem evenly on average. In T2, random selection held recursion depth to $d \le 18 \approx \log_3(n)$ and comparisons to $O(n \log n)$ across all distributions.
         </li>
     </ul>
 </details>
