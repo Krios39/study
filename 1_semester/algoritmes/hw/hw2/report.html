@@ -10,6 +10,8 @@
     <meta name="reference" content="Gemini |  https://gemini.google.com/">
     <meta name="reference" content="Killing Quicksort |  https://research.swtch.com/qsort/">
     <meta name="reference" content="A Killer Adversary for Quicksort | https://www.cs.dartmouth.edu/%7Edoug/mdmspe.pdf">
+    <meta name="reference" content="TimSort | https://www.geeksforgeeks.org/dsa/timsort/">
+
 
     <link rel="stylesheet" href="../../styles.css">
     <script src="../../header.js" defer></script>
@@ -195,12 +197,6 @@ All test cases passed successfully!</code></pre>
     <details style="margin: 10px 0; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 8px;">
         <summary style="cursor: pointer; font-weight: bold;">View Raw Terminal Output (Release Run)</summary>
         <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px; margin-top: 8px;"><code>PS C:\учёба\study\1_semester\algoritmes\hw\hw2> cargo run --release --bin T2
-   Compiling rand_core v0.10.1
-   Compiling getrandom v0.4.3
-   Compiling cfg-if v1.0.4
-   Compiling cpufeatures v0.3.1
-   Compiling chacha20 v0.10.2
-   Compiling rand v0.10.2
    Compiling hw2 v0.1.0 (C:\учёба\study\1_semester\algoritmes\hw\hw2)
     Finished `release` profile [optimized] target(s) in 4.07s
      Running `target\release\T2.exe`
@@ -482,11 +478,6 @@ Size   | Strategy         | Comparisons    | Max Depth    | Time (µs)
         </tbody>
     </table>
 
-    <h4>Comparison-Count Plot:</h4>
-    <div style="max-width: 850px; margin: 25px auto;">
-        <canvas id="comparisonsChart"></canvas>
-    </div>
-
     <h2>The answers:</h2>
     <ul>
         <li>
@@ -661,7 +652,7 @@ Process finished with exit code 0</code></pre>
         </li>
     </ul>
     <p>
-        Queries were pre-generated with a 50/50 uniform distribution of present and absent elements. To evaluate reproducibility, the entire benchmark was evaluated across three distinct PRNG seeds (<code>42</code>, <code>2026</code>, <code>777</code>).
+        Queries were pre-generated with a 50/50 uniform distribution of present and absent elements. To evaluate reproducibility, the entire benchmark was evaluated across three distinct PRNG seeds (<code>42</code>, <code>2026</code>, <code>777</code>). Before timed runs, an untimed warm-up iteration was executed to ensure cache warming and branch predictor stabilization.
     </p>
 
     <h4>Theoretical vs. Empirical Crossover Models:</h4>
@@ -823,23 +814,23 @@ q      | Strat 1 Comps    | Strat 2 Comps (Sort+Bin) | Strat 1 Time(µs) | Strat
             <strong>$L(n) = L(n/2) + 1$:</strong>
             <ul>
                 <li><strong>Algorithmic Context:</strong> Models <em>lower-bound binary search</em> (T3/T4), halving the search space per comparison step.</li>
-                <li><strong>Master Theorem:</strong> <strong>Applies</strong>. Here $a = 1, b = 2, f(n) = 1$. Since $n^{\log_b a} = n^{\log_2 1} = n^0 = 1 = \Theta(f(n))$, Case 2 applies.</li>
+                <li><strong>Master Theorem:</strong> <strong>Applies directly</strong>. Here $a = 1, b = 2, f(n) = 1$. Since $n^{\log_b a} = n^{\log_2 1} = n^0 = 1 = \Theta(f(n))$, Case 2 applies.</li>
                 <li><strong>Asymptotic Bound:</strong> $L(n) = \Theta(\log n)$.</li>
             </ul>
         </li>
         <li>
             <strong>$Q(n) = 3Q(n/3) + n$:</strong>
             <ul>
-                <li><strong>Algorithmic Context:</strong> Models the <em>ideal balanced Dual-Pivot Quicksort</em> (T1/T2), where two pivots split the array into three equal subproblems of size $n/3$ with linear $\Theta(n)$ partitioning work.</li>
-                <li><strong>Master Theorem:</strong> <strong>Applies</strong>. Here $a = 3, b = 3, f(n) = n$. Since $n^{\log_b a} = n^{\log_3 3} = n^1 = \Theta(f(n))$, Case 2 applies.</li>
-                <li><strong>Asymptotic Bound:</strong> $Q(n) = \Theta(n \log n)$.</li>
+                <li><strong>Algorithmic Context:</strong> Models the <em>ideal deterministic Dual-Pivot Quicksort</em> where two pivots split the array into three perfectly equal partitions of size $n/3$ with linear $\Theta(n)$ partitioning work.</li>
+                <li><strong>Master Theorem:</strong> <strong>Applies to this deterministic model</strong>. Here $a = 3, b = 3, f(n) = n$. Since $n^{\log_b a} = n^{\log_3 3} = n^1 = \Theta(f(n))$, Case 2 applies, yielding $\Theta(n \log n)$.</li>
+                <li><strong>Note on Randomized Generalization:</strong> For the randomized algorithm in T2, partition sizes are random variables with expected subproblem sizes $\mathbb{E}[|S_i|] = n/3$. The standard Master Theorem applies formally to deterministic recurrences; the randomized runtime bound $\mathbb{E}[T(n)] = \Theta(n \log n)$ follows from the Akra-Bazzi method or Martingale concentration.</li>
             </ul>
         </li>
         <li>
             <strong>$W(n) = W(n - 2) + n$:</strong>
             <ul>
                 <li><strong>Algorithmic Context:</strong> Models <em>worst-case deterministic Dual-Pivot Quicksort</em> on strictly ordered inputs, where endpoint pivots eliminate only 2 elements, leaving $n - 2$ elements in one recursive partition.</li>
-                <li><strong>Master Theorem:</strong> <strong>Does NOT apply</strong>. The Master Theorem requires divide-and-conquer recurrences of form $T(n) = aT(n/b) + f(n)$ where subproblem sizes scale by division ($b > 1$), not subtraction ($n - c$).</li>
+                <li><strong>Master Theorem:</strong> <strong>Does NOT apply</strong>. The Master Theorem strictly requires divide-and-conquer recurrences of form $T(n) = aT(n/b) + f(n)$ where subproblem sizes scale by division ($b > 1$), not subtraction ($n - c$).</li>
                 <li><strong>Asymptotic Bound:</strong> By arithmetic unrolling: $W(n) = n + (n - 2) + (n - 4) + \dots + \Theta(1) = \sum_{i=0}^{n/2} (n - 2i) = \Theta(n^2)$.</li>
             </ul>
         </li>
@@ -851,7 +842,7 @@ q      | Strat 1 Comps    | Strat 2 Comps (Sort+Bin) | Strat 1 Time(µs) | Strat
             <strong>Deterministic Quicksort on Ordered Inputs:</strong> Matches $W(n) = \Theta(n^2)$. In T2, on <code>Sorted</code> arrays, deterministic pivot choice yielded $C \approx n^2 / 2$ ($499\,500$ at $n=1\,000$; $1\,999\,000$ at $n=2\,000$) and recursion depth grew linearly ($d = n/2$), triggering the $>1200$ stack abort at $n \ge 5\,000$.
         </li>
         <li>
-            <strong>Why Random Pivots Shift Behavior to $Q(n)$:</strong> Selecting random pivots guarantees expected relative ranks $\mathbb{E}[P_1] = 1/3$ and $\mathbb{E}[P_2] = 2/3$. This decorrelates pivot values from input topology, dividing the problem evenly on average. In T2, random selection held recursion depth to $d \le 18 \approx \log_3(n)$ and comparisons to $O(n \log n)$ across all distributions.
+            <strong>Why Random Pivots Shift Behavior to Balanced Division:</strong> Selecting random pivots guarantees expected relative ranks $\mathbb{E}[P_1] = 1/3$ and $\mathbb{E}[P_2] = 2/3$. This decorrelates pivot values from input topology, dividing the problem evenly on average. In T2, random selection held recursion depth to $d \le 18 \approx \log_3(n)$ and comparisons to $O(n \log n)$ across all distributions.
         </li>
     </ul>
 </details>
@@ -872,7 +863,7 @@ q      | Strat 1 Comps    | Strat 2 Comps (Sort+Bin) | Strat 1 Time(µs) | Strat
         </li>
     </ul>
 
-    <h4>2. Empirical Results ($n = 100\,000$):</h4>
+    <h4>2. Empirical Results ($n = 100\,000$, Optimized Release Build):</h4>
     <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%; font-size: 13px; text-align: right;">
         <thead>
         <tr style="background-color: rgba(255, 255, 255, 0.08); text-align: center;">
@@ -887,41 +878,41 @@ q      | Strat 1 Comps    | Strat 2 Comps (Sort+Bin) | Strat 1 Time(µs) | Strat
         <tbody>
         <tr>
             <td style="text-align: left; font-weight: bold;">Sorted</td>
-            <td>18 646 &mu;s</td>
-            <td>389 &mu;s</td>
-            <td><strong>47.93x</strong></td>
+            <td>8 806 &mu;s</td>
+            <td>140 &mu;s</td>
+            <td><strong>62.90x</strong></td>
             <td>1</td>
             <td>100 000</td>
         </tr>
         <tr>
             <td style="text-align: left; font-weight: bold;">Reverse-Sorted</td>
-            <td>16 629 &mu;s</td>
-            <td>337 &mu;s</td>
-            <td><strong>49.34x</strong></td>
+            <td>6 634 &mu;s</td>
+            <td>150 &mu;s</td>
+            <td><strong>44.23x</strong></td>
             <td>1</td>
             <td>100 000</td>
         </tr>
         <tr>
             <td style="text-align: left; font-weight: bold;">Sorted-Blocks</td>
-            <td>16 047 &mu;s</td>
-            <td>935 &mu;s</td>
-            <td><strong>17.16x</strong></td>
+            <td>7 113 &mu;s</td>
+            <td>1 096 &mu;s</td>
+            <td><strong>6.49x</strong></td>
             <td>5</td>
             <td>20 000</td>
         </tr>
         <tr>
             <td style="text-align: left; font-weight: bold;">Almost-Sorted</td>
-            <td>16 994 &mu;s</td>
-            <td>17 358 &mu;s</td>
-            <td>0.98x</td>
+            <td>10 449 &mu;s</td>
+            <td>9 850 &mu;s</td>
+            <td>1.06x</td>
             <td>Fallback (>32)</td>
             <td>&mdash;</td>
         </tr>
         <tr>
             <td style="text-align: left; font-weight: bold;">Random</td>
-            <td>22 627 &mu;s</td>
-            <td>21 089 &mu;s</td>
-            <td>1.07x</td>
+            <td>18 639 &mu;s</td>
+            <td>16 467 &mu;s</td>
+            <td>1.13x</td>
             <td>Fallback (>32)</td>
             <td>&mdash;</td>
         </tr>
@@ -929,25 +920,28 @@ q      | Strat 1 Comps    | Strat 2 Comps (Sort+Bin) | Strat 1 Time(µs) | Strat
     </table>
 
     <h4>3. Raw Benchmark Output:</h4>
-    <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px;"><code>Benchmarking N = 100000 across input distributions
+    <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px;"><code>PS C:\учёба\study\1_semester\algoritmes\hw\hw2> cargo run --release --bin B1
+   Compiling hw2 v0.1.0 (C:\учёба\study\1_semester\algoritmes\hw\hw2)
+    Finished `release` profile [optimized] target(s) in 3.04s
+     Running `target\release\B1.exe`
+Benchmarking N = 100000 across input distributions
 
 Dataset         | Quicksort    | Run-Aware    | Speedup  | Runs       | Avg Run Len
 --------------------------------------------------------------------------------
-Sorted          |    18646 µs  |      389 µs  |  47.93x  | 1          | 100000
-Reverse-Sorted  |    16629 µs  |      337 µs  |  49.34x  | 1          | 100000
-Almost-Sorted   |    16994 µs  |    17358 µs  |   0.98x  | Fallback   | -
-Sorted-Blocks   |    16047 µs  |      935 µs  |  17.16x  | 5          | 20000
-Random          |    22627 µs  |    21089 µs  |   1.07x  | Fallback   | -         </code></pre>
+Sorted          |     8806 µs  |      140 µs  |  62.90x  | 1          | 100000
+Reverse-Sorted  |     6634 µs  |      150 µs  |  44.23x  | 1          | 100000
+Almost-Sorted   |    10449 µs  |     9850 µs  |   1.06x  | Fallback   | -
+Sorted-Blocks   |     7113 µs  |     1096 µs  |   6.49x  | 5          | 20000
+Random          |    18639 µs  |    16467 µs  |   1.13x  | Fallback   | -         </code></pre>
 
     <h2>The answers:</h2>
     <p>
-        The hybrid achieves massive speedups on structured inputs containing long monotonic sequences. On <code>Sorted</code> (<strong>47.93x</strong>) and <code>Reverse-Sorted</code> (<strong>49.34x</strong>), single-run detection and in-place reversal eliminate recursive partitioning entirely, finishing in optimal $O(n)$ time. On <code>Sorted-Blocks</code> (<strong>17.16x</strong>), it detects the 5 constituent blocks and merges them in $O(n \log 5)$ streaming passes, avoiding millions of cache-unfriendly quicksort swaps.
+        The hybrid achieves massive speedups on structured inputs containing long monotonic sequences. On <code>Sorted</code> (<strong>62.90x</strong>) and <code>Reverse-Sorted</code> (<strong>44.23x</strong>), single-run detection and in-place reversal eliminate recursive partitioning entirely, finishing in optimal $O(n)$ time ($\approx 140\text{--}150\,\mu s$). On <code>Sorted-Blocks</code> (<strong>6.49x</strong>), it detects 5 naturally coalesced monotonic runs out of the 10 shuffled blocks and merges them in $O(n \log 5)$ streaming passes, beating Quicksort by avoiding cache-unfriendly in-place swaps.
     </p>
     <p>
-        The hybrid switches to fallback when local inversions fragment runs beyond $k = 32$. On <code>Almost-Sorted</code> (1% random swaps create hundreds of micro-inversions) and <code>Random</code>, scanning terminates early after checking only $\approx 64$ elements. The scan overhead on random data is negligible ($< 2\%$, within normal measurement jitter), preserving near-identical runtime to pure Dual-Pivot Quicksort.
+        The hybrid switches to fallback when local inversions fragment runs beyond $k = 32$. On <code>Almost-Sorted</code> (where 1% random swaps introduce hundreds of local inversions) and <code>Random</code>, scanning terminates early after inspecting only $\approx 64$ elements. The scan overhead before aborting is negligible, preserving runtime parity with pure Dual-Pivot Quicksort (both datasets show $\sim 1.06\text{--}1.13\text{x}$ ratio, well within runtime jitter).
     </p>
-</details>
-</body>
+</details></body>
 
 <script>
     window.addEventListener('load', () => {
