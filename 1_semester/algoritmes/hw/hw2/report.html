@@ -8,6 +8,8 @@
     <meta name="reference" content="Eytzinger Binary Search | https://algorithmica.org/en/eytzinger/">
     <meta name="reference" content="Sorting, Searching, and Recurrences |    https://artifical.eu/algorithmics/notes/sorting-searching-recurrences/">
     <meta name="reference" content="Gemini |  https://gemini.google.com/">
+    <meta name="reference" content="Killing Quicksort |  https://research.swtch.com/qsort/">
+    <meta name="reference" content="A Killer Adversary for Quicksort | https://www.cs.dartmouth.edu/%7Edoug/mdmspe.pdf">
 
     <link rel="stylesheet" href="../../styles.css">
     <script src="../../header.js" defer></script>
@@ -852,6 +854,98 @@ q      | Strat 1 Comps    | Strat 2 Comps (Sort+Bin) | Strat 1 Time(µs) | Strat
             <strong>Why Random Pivots Shift Behavior to $Q(n)$:</strong> Selecting random pivots guarantees expected relative ranks $\mathbb{E}[P_1] = 1/3$ and $\mathbb{E}[P_2] = 2/3$. This decorrelates pivot values from input topology, dividing the problem evenly on average. In T2, random selection held recursion depth to $d \le 18 \approx \log_3(n)$ and comparisons to $O(n \log n)$ across all distributions.
         </li>
     </ul>
+</details>
+
+<details>
+    <summary>B1. Run-Aware Sorting Challenge (Bonus 1p)</summary>
+
+    <h4>1. Architecture & Design:</h4>
+    <ul>
+        <li>
+            <strong>Natural Run Detection ($O(n)$):</strong> Scans the array linearly to identify contiguous monotonic segments. Ascending runs ($\ge$) are preserved, while strictly descending runs ($<$) are inverted in-place via <code>reverse()</code> immediately upon discovery.
+        </li>
+        <li>
+            <strong>Adaptive Heuristic & Threshold Selection ($k \le 32$):</strong> Pairwise merging yields $d = \lceil\log_2 k\rceil$ levels of memory passes. If the scanner detects more than $32$ runs, the input is classified as unstructured noise. Scanning aborts immediately without allocating merge buffers, falling back to <strong>Randomised Dual-Pivot Quicksort (T2)</strong>.
+        </li>
+        <li>
+            <strong>Pairwise Merging:</strong> If $k \le 32$, runs are merged bottom-up in $O(n \log k)$ total comparisons and linear streaming memory accesses.
+        </li>
+    </ul>
+
+    <h4>2. Empirical Results ($n = 100\,000$):</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%; font-size: 13px; text-align: right;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.08); text-align: center;">
+            <th style="text-align: left;">Dataset</th>
+            <th>Quicksort Time</th>
+            <th>Run-Aware Time</th>
+            <th style="background-color: rgba(16, 185, 129, 0.15); color: #6ee7b7;">Speedup</th>
+            <th>Detected Runs</th>
+            <th>Avg Run Length</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td style="text-align: left; font-weight: bold;">Sorted</td>
+            <td>18 646 &mu;s</td>
+            <td>389 &mu;s</td>
+            <td><strong>47.93x</strong></td>
+            <td>1</td>
+            <td>100 000</td>
+        </tr>
+        <tr>
+            <td style="text-align: left; font-weight: bold;">Reverse-Sorted</td>
+            <td>16 629 &mu;s</td>
+            <td>337 &mu;s</td>
+            <td><strong>49.34x</strong></td>
+            <td>1</td>
+            <td>100 000</td>
+        </tr>
+        <tr>
+            <td style="text-align: left; font-weight: bold;">Sorted-Blocks</td>
+            <td>16 047 &mu;s</td>
+            <td>935 &mu;s</td>
+            <td><strong>17.16x</strong></td>
+            <td>5</td>
+            <td>20 000</td>
+        </tr>
+        <tr>
+            <td style="text-align: left; font-weight: bold;">Almost-Sorted</td>
+            <td>16 994 &mu;s</td>
+            <td>17 358 &mu;s</td>
+            <td>0.98x</td>
+            <td>Fallback (>32)</td>
+            <td>&mdash;</td>
+        </tr>
+        <tr>
+            <td style="text-align: left; font-weight: bold;">Random</td>
+            <td>22 627 &mu;s</td>
+            <td>21 089 &mu;s</td>
+            <td>1.07x</td>
+            <td>Fallback (>32)</td>
+            <td>&mdash;</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h4>3. Raw Benchmark Output:</h4>
+    <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px;"><code>Benchmarking N = 100000 across input distributions
+
+Dataset         | Quicksort    | Run-Aware    | Speedup  | Runs       | Avg Run Len
+--------------------------------------------------------------------------------
+Sorted          |    18646 µs  |      389 µs  |  47.93x  | 1          | 100000
+Reverse-Sorted  |    16629 µs  |      337 µs  |  49.34x  | 1          | 100000
+Almost-Sorted   |    16994 µs  |    17358 µs  |   0.98x  | Fallback   | -
+Sorted-Blocks   |    16047 µs  |      935 µs  |  17.16x  | 5          | 20000
+Random          |    22627 µs  |    21089 µs  |   1.07x  | Fallback   | -         </code></pre>
+
+    <h2>The answers:</h2>
+    <p>
+        The hybrid achieves massive speedups on structured inputs containing long monotonic sequences. On <code>Sorted</code> (<strong>47.93x</strong>) and <code>Reverse-Sorted</code> (<strong>49.34x</strong>), single-run detection and in-place reversal eliminate recursive partitioning entirely, finishing in optimal $O(n)$ time. On <code>Sorted-Blocks</code> (<strong>17.16x</strong>), it detects the 5 constituent blocks and merges them in $O(n \log 5)$ streaming passes, avoiding millions of cache-unfriendly quicksort swaps.
+    </p>
+    <p>
+        The hybrid switches to fallback when local inversions fragment runs beyond $k = 32$. On <code>Almost-Sorted</code> (1% random swaps create hundreds of micro-inversions) and <code>Random</code>, scanning terminates early after checking only $\approx 64$ elements. The scan overhead on random data is negligible ($< 2\%$, within normal measurement jitter), preserving near-identical runtime to pure Dual-Pivot Quicksort.
+    </p>
 </details>
 </body>
 

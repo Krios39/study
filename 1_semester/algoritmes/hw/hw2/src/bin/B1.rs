@@ -1,9 +1,10 @@
-use rand::rngs::StdRng;
-use rand::{Rng, RngExt, SeedableRng};
+
+use std::time::Instant;
 
 const MAX_DEPTH_LIMIT: usize = 1200;
 
-struct ArrayGenerator;
+pub struct ArrayGenerator;
+
 impl ArrayGenerator {
     fn random(n: usize) -> Vec<usize> {
         (0..n).map(|_| rand::random::<u32>() as usize).collect()
@@ -31,17 +32,38 @@ impl ArrayGenerator {
         (0..n).map(|_| (rand::random::<u32>() % 5) as usize).collect()
     }
 
-    fn generate(name: &str, n: usize) -> Vec<usize> {
+    fn sorted_blocks(n: usize) -> Vec<usize> {
+        let block_count = 10;
+        let block_size = n / block_count;
+        let mut blocks: Vec<Vec<usize>> = (0..block_count)
+            .map(|b| {
+                let start = b * block_size * 2;
+                (start..start + block_size).collect()
+            })
+            .collect();
+
+        // Fisher-Yates shuffle блоков
+        for i in (1..block_count).rev() {
+            let j = (rand::random::<u32>() as usize) % (i + 1);
+            blocks.swap(i, j);
+        }
+        blocks.into_iter().flatten().collect()
+    }
+
+    pub fn generate(name: &str, n: usize) -> Vec<usize> {
         match name {
             "Sorted" => Self::sorted(n),
             "Reverse-Sorted" => Self::reversed(n),
             "Almost-Sorted" => Self::almost_sorted(n),
             "Random" => Self::random(n),
             "Duplicates" => Self::duplicates(n),
+            "Sorted-Blocks" => Self::sorted_blocks(n),
             _ => unreachable!(),
         }
     }
 }
+
+
 #[derive(Default)]
 struct QuickSort {
     comparisons: usize,
@@ -55,6 +77,11 @@ impl QuickSort {
             is_random,
             ..Default::default()
         }
+    }
+
+    pub fn sort_random(arr: &mut [usize]) {
+        let mut qs = Self::new(true);
+        qs.sort(arr);
     }
 
     fn sort(&mut self, arr: &mut [usize]) {
@@ -158,103 +185,192 @@ impl QuickSort {
     }
 }
 
-fn generate_random_vec(n: usize) -> Vec<usize> {
-    let mut rng = rand::rng();
-    (0..n).map(|_| rng.random_range(0..100)).collect()
+// ==========================================
+// 3. Run-Aware Hybrid Sort (B1)
+// ==========================================
+#[derive(Debug, Clone, Copy)]
+pub struct Run {
+    pub start: usize,
+    pub len: usize,
 }
 
-fn main() {
-    let mut data = generate_random_vec(10_000);
+pub struct RunAwareSort;
 
- run_aware(&mut data)
-}
+impl RunAwareSort {
+    const MAX_RUNS: usize = 32;
 
-
-#[derive(Debug)]
-struct Run {
-    start: usize,
-    len: usize,
-}
-
-fn run_aware(arr: &mut [usize]) {
-    if arr.is_empty() {
-        return;
-    }
-
-    let mut runs: Vec<Run> = Vec::new();
-    let mut i = 0;
-
-    while i < arr.len() {
-        if i == arr.len() - 1 {
-            runs.push(Run { start: i, len: 1 });
-            break;
+    pub fn sort(arr: &mut [usize]) -> (usize, usize) {
+        let n = arr.len();
+        if n <= 1 {
+            return (n, n);
         }
 
-        let is_increasing = arr[i] <= arr[i + 1];
-        let start = i;
-        let mut len = 2;
-        i += 1;
+        match Self::detect_runs(arr, Self::MAX_RUNS) {
+            Some(runs) => {
+                let run_count = runs.len();
+                let avg_len = n / run_count;
 
-        if is_increasing {
-            while i < arr.len() - 1 && arr[i] <= arr[i + 1] {
-                len += 1;
-                i += 1;
+                if run_count > 1 {
+                    Self::merge_runs(arr, runs);
+                }
+                (run_count, avg_len)
             }
-        } else {
-            while i < arr.len() - 1 && arr[i] > arr[i + 1] {
-                len += 1;
-                i += 1;
+            None => {
+                QuickSort::sort_random(arr);
+                (0, 0)
             }
-            arr[start..start + len].reverse();
+        }
+    }
+
+    fn detect_runs(arr: &mut [usize], max_runs: usize) -> Option<Vec<Run>> {
+        let n = arr.len();
+        let mut runs = Vec::new();
+        let mut i = 0;
+
+        while i < n {
+            if i == n - 1 {
+                runs.push(Run { start: i, len: 1 });
+                break;
+            }
+
+            let is_increasing = arr[i] <= arr[i + 1];
+            let start = i;
+            let mut len = 2;
+            i += 1;
+
+            if is_increasing {
+                while i < n - 1 && arr[i] <= arr[i + 1] {
+                    len += 1;
+                    i += 1;
+                }
+            } else {
+                while i < n - 1 && arr[i] > arr[i + 1] {
+                    len += 1;
+                    i += 1;
+                }
+                arr[start..start + len].reverse();
+            }
+
+            runs.push(Run { start, len });
+
+            if runs.len() > max_runs {
+                return None;
+            }
+
+            i += 1;
         }
 
-        runs.push(Run { start, len });
-        i += 1;
+        Some(runs)
     }
 
-    print_runs_summary(&runs, Some(arr));
-}
+    fn merge_runs(arr: &mut [usize], mut runs: Vec<Run>) {
+        let mut buffer = vec![0; arr.len()];
 
-fn print_runs_summary(runs: &[Run], arr: Option<&[usize]>) {
-    if runs.is_empty() {
-        println!("No runs detected.");
-        return;
-    }
+        while runs.len() > 1 {
+            let mut next_runs = Vec::new();
+            let mut idx = 0;
 
-    let total_len: usize = runs.iter().map(|r| r.len).sum();
-    let min_len = runs.iter().map(|r| r.len).min().unwrap_or(0);
-    let max_len = runs.iter().map(|r| r.len).max().unwrap_or(0);
-    let avg_len = total_len as f64 / runs.len() as f64;
+            while idx < runs.len() {
+                if idx + 1 < runs.len() {
+                    let r1 = runs[idx];
+                    let r2 = runs[idx + 1];
 
-    println!("\n+-----+-------------+--------+------------------------------------+");
-    println!("|  #  | Range [a..b]| Length | Elements preview                   |");
-    println!("+-----+-------------+--------+------------------------------------+");
+                    Self::merge_two(
+                        &arr[r1.start..r1.start + r1.len],
+                        &arr[r2.start..r2.start + r2.len],
+                        &mut buffer[r1.start..r2.start + r2.len],
+                    );
 
-    for (idx, r) in runs.iter().enumerate() {
-        let end_idx = r.start + r.len;
-        let range_str = format!("[{:>3}..{:<3})", r.start, end_idx);
+                    arr[r1.start..r2.start + r2.len]
+                        .copy_from_slice(&buffer[r1.start..r2.start + r2.len]);
 
-        let preview = match arr {
-            Some(slice) if r.len > 0 && end_idx <= slice.len() => {
-                let items: Vec<String> = slice[r.start..end_idx]
-                    .iter()
-                    .take(6)
-                    .map(|x| x.to_string())
-                    .collect();
-                if r.len > 6 {
-                    format!("[{}, ...]", items.join(", "))
+                    next_runs.push(Run {
+                        start: r1.start,
+                        len: r1.len + r2.len,
+                    });
+                    idx += 2;
                 } else {
-                    format!("[{}]", items.join(", "))
+                    next_runs.push(runs[idx]);
+                    idx += 1;
                 }
             }
-            _ => "-".to_string(),
-        };
-
-        println!("| {:>3} | {:<11} | {:>6} | {:<34} |", idx + 1, range_str, r.len, preview);
+            runs = next_runs;
+        }
     }
 
-    println!("+-----+-------------+--------+------------------------------------+");
-    println!("Total Runs: {:<5} | Avg Length: {:<5.2} | Min: {:<4} | Max: {:<4}",
-             runs.len(), avg_len, min_len, max_len);
-    println!("Covered elements sum: {}\n", total_len);
+    fn merge_two(a: &[usize], b: &[usize], out: &mut [usize]) {
+        let (mut i, mut j, mut k) = (0, 0, 0);
+        while i < a.len() && j < b.len() {
+            if a[i] <= b[j] {
+                out[k] = a[i];
+                i += 1;
+            } else {
+                out[k] = b[j];
+                j += 1;
+            }
+            k += 1;
+        }
+        if i < a.len() {
+            out[k..].copy_from_slice(&a[i..]);
+        }
+        if j < b.len() {
+            out[k..].copy_from_slice(&b[j..]);
+        }
+    }
+}
+
+// ==========================================
+// 4. Точка входа
+// ==========================================
+fn main() {
+    let n = 100_000;
+    let distributions = [
+        "Sorted",
+        "Reverse-Sorted",
+        "Almost-Sorted",
+        "Sorted-Blocks",
+        "Random",
+    ];
+
+    println!("Benchmarking N = {} across input distributions\n", n);
+    println!(
+        "{:<15} | {:<12} | {:<12} | {:<8} | {:<10} | {:<10}",
+        "Dataset", "Quicksort", "Run-Aware", "Speedup", "Runs", "Avg Run Len"
+    );
+    println!("{}", "-".repeat(80));
+
+    for name in distributions {
+        let data = ArrayGenerator::generate(name, n);
+
+        // Quicksort
+        let mut arr_qs = data.clone();
+        let start_qs = Instant::now();
+        QuickSort::sort_random(&mut arr_qs);
+        let time_qs = start_qs.elapsed().as_micros();
+
+        // RunAware
+        let mut arr_ra = data.clone();
+        let start_ra = Instant::now();
+        let (run_cnt, avg_len) = RunAwareSort::sort(&mut arr_ra);
+        let time_ra = start_ra.elapsed().as_micros();
+
+        assert_eq!(arr_qs, arr_ra, "Validation failed for {}", name);
+
+        let speedup = time_qs as f64 / time_ra.max(1) as f64;
+        let runs_str = if run_cnt == 0 {
+            "Fallback".to_string()
+        } else {
+            run_cnt.to_string()
+        };
+        let avg_str = if run_cnt == 0 {
+            "-".to_string()
+        } else {
+            avg_len.to_string()
+        };
+
+        println!(
+            "{:<15} | {:>8} µs  | {:>8} µs  | {:>6.2}x  | {:<10} | {:<10}",
+            name, time_qs, time_ra, speedup, runs_str, avg_str
+        );
+    }
 }
