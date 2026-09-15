@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 1 Report - Parallel Computing</title>
+</head>
+<body>
+
+    <details open>
+            <summary>Task 2.2: OpenMP Matrix Multiplication Scaling & Scheduling</summary>
+            <div>
+                <p><strong>Environment & Setup:</strong></p>
+                <ul>
+                    <li><strong>Compiler:</strong> MinGW-w64 <code>g++</code> (GCC) with flags <code>-O3 -fopenmp -Wall -Wextra</code></li>
+                    <li><strong>OpenMP Specification:</strong> <code>_OPENMP = 202111</code> (OpenMP 5.2)</li>
+                    <li><strong>Thread Affinity:</strong> <code>OMP_PLACES=cores</code> and <code>OMP_PROC_BIND=close</code> were set. Note: MinGW GCC runtime on Windows returned <code>libgomp: Affinity not supported on this configuration</code>, falling back to OS-level thread scheduling.</li>
+                    <li><strong>Matrix Size & Memory Fix:</strong> Evaluated at $NRA = 500$, $NCA = 500$, $NCB = 500$. With fixed stack arrays, three $500 \times 500$ matrices of <code>double</code> require $\approx 6\text{ MB}$, exceeding the default Windows stack size ($1\text{ MB}$) and causing an immediate silent crash / stack overflow. To resolve this, memory allocation was rewritten using dynamic heap memory via <code>malloc()</code>/<code>free()</code> with flat 1D indexing.</li>
+                    <li><strong>Timing Methodology:</strong> 1 warm-up run + 5 measured runs; reported median time. Matrix initialization, verification, and console printing are excluded from timing via <code>omp_get_wtime()</code>.</li>
+                </ul>
+
+                <pre>PS C:\учёба\study\1_semester\parallel\hw2> .\benchmark.ps1
+    Testing p = 1...
+    Runs: 0.057, 0.056, 0.052, 0.055, 0.053 s
+    Median for p=1 : 0.055 s
+
+    Testing p = 2...
+    Runs: 0.026, 0.030, 0.028, 0.027, 0.030 s
+    Median for p=2 : 0.028 s
+
+    Testing p = 4...
+    Runs: 0.019, 0.020, 0.019, 0.023, 0.023 s
+    Median for p=4 : 0.020 s
+
+    Testing p = 6...
+    Runs: 0.022, 0.021, 0.017, 0.017, 0.016 s
+    Median for p=6 : 0.017 s</pre>
+
+                <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; margin-top: 10px; margin-bottom: 10px;">
+                    <thead>
+                        <tr style="background-color: #f2f2f2;">
+                            <th>Threads ($p$)</th>
+                            <th>Median Time ($T_p$)</th>
+                            <th>Speedup ($S_p = T_1 / T_p$)</th>
+                            <th>Efficiency ($E_p = S_p / p$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>0.055 s</td>
+                            <td>1.00&times;</td>
+                            <td>100.0%</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>0.028 s</td>
+                            <td>1.96&times;</td>
+                            <td>98.2%</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>0.020 s</td>
+                            <td>2.75&times;</td>
+                            <td>68.8%</td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>0.017 s</td>
+                            <td>3.24&times;</td>
+                            <td>53.9%</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p><strong>Deliverable Question 1: How do threads get scheduled?</strong></p>
+                <p>The code uses <code>#pragma omp for schedule(static, 10)</code>. The outer loop of 500 rows is split into chunks of 10 rows and distributed to threads in a round-robin fashion (Thread 0 takes rows 0–9, Thread 1 takes 10–19, etc.). Since each row requires the exact same amount of multiplication steps, all threads get an even amount of work without any extra scheduling overhead.</p>
+
+                <p><strong>Deliverable Question 2: Did you gain any (average) speedup?</strong></p>
+                <p>Yes, increasing the thread count consistently makes the program faster. We get almost ideal scaling on 2 threads (<strong>1.96&times;</strong>), reaching <strong>3.24&times;</strong> on 6 threads. However, scaling slows down after 2 threads for two simple reasons:</p>
+                <ul>
+                    <li><strong>Short Runtime:</strong> The whole computation takes only 17–55 milliseconds, so thread creation, synchronization, and barrier overhead start to eat up a noticeable chunk of the runtime.</li>
+                    <li><strong>Cache Misses:</strong> In the classic $i \to j \to k$ loop order, elements of matrix $B$ are accessed down columns rather than along rows, which causes frequent CPU cache misses and saturates memory bandwidth when several threads run in parallel.</li>
+                </ul>
+
+                <p><strong>Correctness Verification:</strong> Output matrix $C$ was verified using the closed-form summation formula:</p>
+                $$c_{i,j} = \sum_{k=0}^{NCA-1} (i + k)(k \cdot j) = j \left[ i \sum_{k=0}^{NCA-1} k + \sum_{k=0}^{NCA-1} k^2 \right]$$
+                <p>All matrix values matched the expected results within a $10^{-3}$ tolerance (<code>Correct: YES</code> on all runs).</p>
+            </div>
+        </details>
+
+</body>
+
+<script>
+function loadKaTeXAndRender() {
+    const katexCSS = document.createElement("link");
+    katexCSS.rel = "stylesheet";
+    katexCSS.href = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+    document.head.appendChild(katexCSS);
+
+    const katexScript = document.createElement("script");
+    katexScript.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+    katexScript.defer = true;
+
+    katexScript.onload = () => {
+        const autoRenderScript = document.createElement("script");
+        autoRenderScript.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+        autoRenderScript.defer = true;
+
+        autoRenderScript.onload = () => {
+            if (window.renderMathInElement) {
+                window.renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: "$$", right: "$$", display: true },
+                        { left: "$", right: "$", display: false },
+                    ],
+                    throwOnError: false,
+                });
+            }
+        };
+        document.head.appendChild(autoRenderScript);
+    };
+
+    document.head.appendChild(katexScript);
+}
+loadKaTeXAndRender()
+</script>
+</html>
+<style>
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
+    color: #111;
+    background-color: #fff;
+    max-width: 1280px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+h1 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+h2 {
+    font-size: 18px;
+    margin-top: 24px;
+    margin-bottom: 8px;
+}
+
+p {
+    margin: 8px 0;
+}
+
+.math {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 17px;
+    margin: 12px 0;
+    padding-left: 20px;
+}
+
+ul {
+    margin: 8px 0 16px 20px;
+}
+
+li {
+    margin-bottom: 4px;
+}
+
+.report-header {
+    margin-bottom: 28px;
+}
+
+.report-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111;
+    margin-bottom: 12px;
+}
+
+.report-meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.report-meta-table th {
+    text-align: left;
+    font-weight: 600;
+    color: #4b5563;
+    width: 15%;
+    padding: 3px 6px 3px 0;
+    white-space: nowrap;
+}
+
+.report-meta-table td {
+    color: #111;
+    width: 35%;
+    padding: 3px 12px 3px 0;
+}
+
+.report-meta-table a {
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+.report-meta-table a:hover {
+    text-decoration: underline;
+}
+
+.report-divider {
+    border: 0;
+    border-top: 1px solid #d1d5db;
+    margin-top: 8px;
+}
+
+.math-left .katex-display {
+    text-align: left !important;
+}
+
+.math-left .katex-display > .katex {
+    text-align: left !important;
+    padding-left: 20px;
+}
+
+/* Сноски в тексте */
+a.ref-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 0 1px;
+}
+
+a.ref-link:hover {
+    text-decoration: underline;
+}
+
+.report-references {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.report-references h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.report-references ol {
+    padding-left: 20px;
+}
+
+.report-references li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.report-references .ref-title {
+    font-weight: 600;
+    color: #111;
+}
+
+.report-references a {
+    color: #1a73e8 !important;
+    text-decoration: underline !important;
+    word-break: break-all;
+    cursor: pointer;
+}
+
+details {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    margin: 16px 0;
+    background-color: #fff;
+    transition: all 0.2s ease;
+}
+
+details[open] {
+    border-color: #cbd5e1;
+}
+
+details > :not(summary) {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+summary {
+    cursor: pointer;
+    padding: 10px 14px;
+    user-select: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+summary:hover {
+    background-color: #f8fafc;
+}
+
+summary h2 {
+    display: inline;
+    font-size: 16px;
+    margin: 0 0 0 6px;
+}
+
+.details-content {
+    padding: 12px 16px 16px;
+    border-top: 1px solid #f1f5f9;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 16px auto;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+img + p {
+    text-align: center;
+    font-size: 13px;
+    color: #57606a;
+    margin-top: -8px;
+    margin-bottom: 20px;
+}
+
+</style>
