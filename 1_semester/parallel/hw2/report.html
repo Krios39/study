@@ -63,206 +63,90 @@
             </div>
         </details>
 
-    <details>
-            <summary>Task 2.2: OpenMP Matrix Multiplication (omp_mm.c)</summary>
-            <div>
-                <p>For this task, I compiled the provided <code>omp_mm.c</code> on Windows using MinGW-w64 <code>g++ -O3 -fopenmp -Wall -Wextra</code> (_OPENMP = 202111).</p>
+        <details>
+                <summary>Task 2.2: OpenMP Matrix Multiplication (omp_mm.c)</summary>
+                <div>
+                    <p><strong>Setup & Environment:</strong> Compiled on Windows with MinGW-w64 <code>g++ -O3 -fopenmp -Wall -Wextra</code> (_OPENMP = 202111).</p>
 
-                <p>Setting <code>OMP_PLACES=cores</code> and <code>OMP_PROC_BIND=close</code> immediately threw warnings from MinGW runtime (<code>libgomp: Affinity not supported on this configuration</code>), so the thread affinity had to rely on the standard Windows OS scheduler.</p>
+                    <p>When running with <code>OMP_PLACES=cores</code> and <code>OMP_PROC_BIND=close</code>, the MinGW runtime threw warnings (<code>libgomp: Affinity not supported on this configuration</code>), so thread placement was left to the standard Windows OS scheduler.</p>
 
-                <p><strong>Stack overflow encounter:</strong> When increasing dimensions to 500 as recommended, the executable silently crashed on launch. Since Windows limits the default thread stack to just 1 MB, allocating three 500x500 <code>double</code> arrays locally (~6 MB) blew up the stack before reaching <code>main()</code>. To fix this without messing with linker flags, I rewrote array allocation in heap using <code>malloc()</code> with flat 1D indexing, which worked cleanly.</p>
+                    <p><strong>Stack overflow on N=500:</strong> Increasing matrix dimensions to 500 led to an immediate silent crash right on startup. On Windows, the default thread stack is only 1 MB, whereas three local 500x500 arrays of <code>double</code> require around 6 MB. Instead of passing linker flags to increase stack size, I rewrote the arrays to heap allocation using <code>malloc()</code> with flat 1D indexing.</p>
 
-                <pre>PS C:\учёба\study\1_semester\parallel\hw2> .\benchmark.ps1
-    Testing p = 1... Runs: 0.057, 0.056, 0.052, 0.055, 0.053 s -> Median: 0.055 s
-    Testing p = 2... Runs: 0.026, 0.030, 0.028, 0.027, 0.030 s -> Median: 0.028 s
-    Testing p = 4... Runs: 0.019, 0.020, 0.019, 0.023, 0.023 s -> Median: 0.020 s
-    Testing p = 6... Runs: 0.022, 0.021, 0.017, 0.017, 0.016 s -> Median: 0.017 s</pre>
+                    <pre>PS C:\учёба\study\1_semester\parallel\hw2> .\benchmark.ps1
+        Testing p = 1... Runs: 0.057, 0.056, 0.052, 0.055, 0.053 s -> Median: 0.055 s
+        Testing p = 2... Runs: 0.026, 0.030, 0.028, 0.027, 0.030 s -> Median: 0.028 s
+        Testing p = 4... Runs: 0.019, 0.020, 0.019, 0.023, 0.023 s -> Median: 0.020 s
+        Testing p = 6... Runs: 0.022, 0.021, 0.017, 0.017, 0.016 s -> Median: 0.017 s</pre>
 
-                <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; margin: 10px 0;">
-                    <thead>
-                        <tr style="background-color: #f2f2f2;">
-                            <th>Threads (p)</th>
-                            <th>Median Time (s)</th>
-                            <th>Speedup (T1 / Tp)</th>
-                            <th>Efficiency</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>1</td><td>0.055</td><td>1.00x</td><td>100.0%</td></tr>
-                        <tr><td>2</td><td>0.028</td><td>1.96x</td><td>98.2%</td></tr>
-                        <tr><td>4</td><td>0.020</td><td>2.75x</td><td>68.8%</td></tr>
-                        <tr><td>6</td><td>0.017</td><td>3.24x</td><td>53.9%</td></tr>
-                    </tbody>
-                </table>
+                    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; margin: 10px 0;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th>Threads (p)</th>
+                                <th>Median Time (s)</th>
+                                <th>Speedup (T1 / Tp)</th>
+                                <th>Parallel Efficiency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1</td><td>0.055</td><td>1.00x</td><td>100.0%</td></tr>
+                            <tr><td>2</td><td>0.028</td><td>1.96x</td><td>98.2%</td></tr>
+                            <tr><td>4</td><td>0.020</td><td>2.75x</td><td>68.8%</td></tr>
+                            <tr><td>6</td><td>0.017</td><td>3.24x</td><td>53.9%</td></tr>
+                        </tbody>
+                    </table>
 
-                <p><strong>Scheduling & Scaling observations:</strong></p>
-                <p>The loop splits work via <code>schedule(static, 10)</code>. Out of 500 rows, blocks of 10 rows are handed out sequentially (thread 0 gets rows 0-9, thread 1 gets 10-19, and so on). Because each row has the same computational cost, work distribution is perfectly balanced.</p>
-                <p>We do get a speedup (peaking at ~3.24x on 6 cores), but scaling falls off noticeably past 2 threads. The entire calculation takes only 17-55 ms, so thread synchronization and fork/join overhead become significant. On top of that, accessing matrix B column-wise triggers lots of cache misses, causing threads to bottleneck on memory access.</p>
-            </div>
-        </details>
+                    <p><strong>How threads get scheduled:</strong> The loop uses static scheduling: <code>schedule(static, 10)</code>. The 500 rows are chopped into chunks of 10 rows and distributed among available threads in round-robin fashion (thread 0 gets rows 0-9, thread 1 gets 10-19, etc.). Since multiplying each row takes roughly the same number of operations, work gets split evenly without any dynamic scheduling overhead.</p>
+
+                    <p><strong>Speedup analysis:</strong> Scaling starts off strong on 2 cores (~1.96x, almost linear), but flattens out on 4 and 6 cores, maxing out at 3.24x. Two things cause this drop in efficiency: first, the total runtime is tiny (under 50 ms), so thread creation and barrier synchronization take up a noticeable portion of the clock cycles. Second, multiplying matrices in simple i-j-k order accesses matrix B down columns, which constantly causes cache misses and makes threads fight over RAM bandwidth.</p>
+                </div>
+            </details>
+
+            <details>
+                    <summary>Exercise 2.3: Recursive Matrix Multiplication (Overview & Memory Handling)</summary>
+                    <div>
+                        <p><strong>Setup & Memory Allocation:</strong></p>
+                        <p>In this exercise, we switched from stack-based arrays to dynamic allocation using <code>Allocate2DArray()</code> from the provided <code>2DArray.h</code>. It allocates a continuous buffer for the entire data block plus an array of row pointers, completely avoiding the Windows stack size limits that caused crashes in Exercise 2.2.</p>
+
+                        <p><strong>How the Recursive Algorithm Works:</strong></p>
+                        <p>Instead of running three nested loops over the entire matrix, <code>matmultr()</code> splits matrices into four sub-blocks (quadrants) and calls itself recursively. Once the submatrix size drops below <code>GRAIN = 32768</code> elements (~256 KB), it stops dividing and computes the sub-block directly via <code>matmultleaf()</code>. This keeps active working data small enough to fit inside fast CPU cache levels rather than constantly thrashing main memory.</p>
+
+                        <p><strong>The Data Race Dependency in Recursion:</strong></p>
+                        <p>The mathematical formula for multiplying 2x2 block matrices requires 8 multiplications:</p>
+                        <ul>
+                            <li><code>C00 = A00*B00 + A01*B10</code></li>
+                            <li><code>C01 = A00*B01 + A01*B11</code></li>
+                            <li><code>C10 = A10*B00 + A11*B10</code></li>
+                            <li><code>C11 = A10*B01 + A11*B11</code></li>
+                        </ul>
+                        <p>Looking at the equations, these 8 calls are not mutually independent: each quadrant of matrix C gets updated by two separate multiplications. If we were to run all 8 tasks in parallel without coordination, they would try to write to the same memory addresses at the same time. To make this thread-safe later in OpenMP, the calculations have to be split into two separate 4-task rounds separated by a synchronization barrier.</p>
+                    </div>
+                </details>
+
 
         <details>
-            <summary>
-                Exercise 2.3: Recursive Matrix Multiplication (Cache-Oblivious
-                vs. Naive)
-            </summary>
-            <div>
-                <p><strong>Overview & Algorithm Analysis:</strong></p>
-                <ul>
-                    <li>
-                        <strong>Dynamic Allocation:</strong> Matrices are
-                        allocated dynamically using
-                        <code>Allocate2DArray()</code> (contiguous row buffer
-                        with row pointer table in <code>2DArray.h</code>),
-                        completely eliminating the stack memory limits
-                        encountered in Exercise 2.2.
-                    </li>
-                    <li>
-                        <strong>Cache-Oblivious Divide-and-Conquer:</strong>
-                        <code>matmultr</code> divides matrices into quadrants
-                        ($2 \times 2$ block partition) until the submatrix
-                        footprint drops below
-                        <code>GRAIN = 32768</code> ($\approx 256\text{ KB}$),
-                        where it switches to <code>matmultleaf</code>. This
-                        keeps active data within L2/L3 cache lines.
-                    </li>
-                    <li>
-                        <strong>Dependency / Data Race Observation:</strong> The
-                        8 recursive calls are not mutually independent. Pairs
-                        update identical target quadrants of matrix $C$:
-                        <ul>
-                            <li>$C_{00} = A_{00}B_{00} + A_{01}B_{10}$</li>
-                            <li>$C_{01} = A_{00}B_{01} + A_{01}B_{11}$</li>
-                            <li>$C_{10} = A_{10}B_{00} + A_{11}B_{10}$</li>
-                            <li>$C_{11} = A_{10}B_{01} + A_{11}B_{11}$</li>
-                        </ul>
-                        To parallelize this safely with OpenMP tasks without
-                        data races, execution must be split into two disjoint
-                        4-task phases separated by a
-                        <code>#pragma omp taskwait</code> barrier.
-                    </li>
-                </ul>
+                <summary>Task 2.3.1: Testing the Serial Program (Algorithmic Speedup)</summary>
+                <div>
+                    <p>Testing the recursive approach against the naive 3-loop implementation using <code>2DArray.h</code> from the session materials.</p>
 
-                <pre>
-PS C:\учёба\study\1_semester\parallel\hw2> .\task2_3.exe 500 500 500
+                    <p><em>Bug fix in helper function:</em> In the starter template, <code>dabs()</code> had a logical bug: <code>return (d &lt; 0.0 ? d : (-d));</code>, which made positive values negative and caused verification to fail on perfectly valid runs. I fixed it to <code>return (d &gt;= 0.0 ? d : (-d));</code>.</p>
+
+                    <pre>PS C:\учёба\study\1_semester\parallel\hw2> .\task2_3.exe 500 500 500
         Matrix Dimensions: M = 500  P = 500  N = 500
-        Execute matmult1
-        Time = 0.096000 seconds
-        Execute matmultr
-        Time = 0.055000 seconds
-        Checking...OKAY
-        Speedup =   1.7X
+        Execute matmult1: Time = 0.096000 seconds
+        Execute matmultr: Time = 0.055000 seconds
+        Checking...OKAY | Speedup = 1.7X
 
         PS C:\учёба\study\1_semester\parallel\hw2> .\task2_3.exe 1000 1000 1000
         Matrix Dimensions: M = 1000  P = 1000  N = 1000
-        Execute matmult1
-        Time = 0.908000 seconds
-        Execute matmultr
-        Time = 0.331000 seconds
-        Checking...OKAY
-        Speedup =   2.7X
+        Execute matmult1: Time = 0.908000 seconds
+        Execute matmultr: Time = 0.331000 seconds
+        Checking...OKAY | Speedup = 2.7X
 
         PS C:\учёба\study\1_semester\parallel\hw2> .\task2_3.exe 1500 1500 1500
         Matrix Dimensions: M = 1500  P = 1500  N = 1500
-        Execute matmult1
-        Time = 4.930000 seconds
-        Execute matmultr
-        Time = 5.131000 seconds
-        Checking...OKAY
-        Speedup =   1.0X</pre>
-
-                <table
-                    border="1"
-                    cellpadding="6"
-                    cellspacing="0"
-                    style="
-                        border-collapse: collapse;
-                        margin-top: 10px;
-                        margin-bottom: 10px;
-                    "
-                >
-                    <thead>
-                        <tr style="background-color: #f2f2f2">
-                            <th>Matrix Dimensions ($M \times P \times N$)</th>
-                            <th>Naive Time (<code>matmult1</code>)</th>
-                            <th>Recursive Time (<code>matmultr</code>)</th>
-                            <th>Algorithmic Speedup</th>
-                            <th>Verification</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>$500 \times 500 \times 500$</td>
-                            <td>0.096 s</td>
-                            <td>0.055 s</td>
-                            <td>1.7&times;</td>
-                            <td>OKAY</td>
-                        </tr>
-                        <tr>
-                            <td>$1000 \times 1000 \times 1000$</td>
-                            <td>0.908 s</td>
-                            <td>0.331 s</td>
-                            <td>2.7&times;</td>
-                            <td>OKAY</td>
-                        </tr>
-                        <tr>
-                            <td>$1500 \times 1500 \times 1500$</td>
-                            <td>4.930 s</td>
-                            <td>5.131 s</td>
-                            <td>1.0&times;</td>
-                            <td>OKAY</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p>
-                    <strong
-                        >Deliverable Observations & Performance
-                        Analysis:</strong
-                    >
-                </p>
-                <ul>
-                    <li>
-                        <strong
-                            >Small to Medium Matrices ($N = 500, 1000$):</strong
-                        >
-                        The recursive approach clearly outperforms the naive
-                        triple loop, delivering an algorithmic speedup of
-                        <strong>1.7&times;</strong> and up to
-                        <strong>2.7&times;</strong> purely through memory
-                        hierarchy efficiency. In <code>matmult1</code>, the
-                        column-strided traversal of matrix $B$ ($B[k][j]$)
-                        triggers non-stop cache misses once the matrix exceeds
-                        cache capacity. By breaking the matrix into sub-blocks
-                        smaller than <code>GRAIN = 32768</code>,
-                        <code>matmultr</code> ensures that working submatrices
-                        fit entirely into L2/L3 cache, maximizing spatial and
-                        temporal locality.
-                    </li>
-                    <li>
-                        <strong>Large Matrices ($N = 1500$):</strong> The
-                        speedup degrades to <strong>1.0&times;</strong> (5.131 s
-                        vs 4.930 s). At dimensions of $1500 \times 1500$,
-                        non-power-of-two matrix subdivisions create odd
-                        partitioning sizes and a significantly deeper recursion
-                        tree. The recursion call overhead, function frame setup,
-                        and index recalculation begin to rival the benefits of
-                        cache reuse. Furthermore, at this matrix size, the total
-                        memory working set exceeds available last-level cache,
-                        making main RAM memory bandwidth the governing
-                        bottleneck for both implementations.
-                    </li>
-                </ul>
-            </div>
-        </details>
-
-
-        <details>
-                <summary>Task 2.3.1: Testing Serial Matrix Multiplication</summary>
-                <div>
-                    <p>Testing the serial recursive code against the standard 3-loop implementation using <code>2DArray.h</code> provided in the worksheet.</p>
-
-                    <p><em>Note on initial code bug:</em> In the starter template, the helper function <code>dabs()</code> had a logic bug: <code>return (d < 0.0 ? d : (-d));</code>, which returned negative values for positive floats and made result verification fail on correct matrices. Fixed it to <code>d >= 0.0 ? d : -d</code> (or <code>fabs</code>).</p>
+        Execute matmult1: Time = 4.930000 seconds
+        Execute matmultr: Time = 5.131000 seconds
+        Checking...OKAY | Speedup = 1.0X</pre>
 
                     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; margin: 10px 0;">
                         <thead>
@@ -270,7 +154,7 @@ PS C:\учёба\study\1_semester\parallel\hw2> .\task2_3.exe 500 500 500
                                 <th>Matrix Size (M x N x P)</th>
                                 <th>Naive 3-loop (matmult1)</th>
                                 <th>Recursive (matmultr)</th>
-                                <th>S_algorithmic (T_naive / T_recur)</th>
+                                <th>Algorithmic Speedup (T_naive / T_recur)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -280,47 +164,57 @@ PS C:\учёба\study\1_semester\parallel\hw2> .\task2_3.exe 500 500 500
                         </tbody>
                     </table>
 
-                    <p><strong>Why recursive is faster at 1000x1000:</strong> Even without OpenMP, the recursive algorithm is ~2.74x faster solely due to CPU cache behavior. The naive loop jumps through matrix B by columns with big strides (8 KB per jump for N=1000), thrashing L1/L2 caches. The recursive approach cuts matrices down until blocks fit into <code>GRAIN = 32768</code> (~256 KB), allowing the CPU to reuse cached submatrices in fast memory.</p>
+                    <p><strong>Why recursive is faster on 1000x1000 (before any OpenMP):</strong><br>
+                    Both algorithms do the exact same arithmetic ($O(N^3)$ operations), so the speedup comes purely from how CPU cache works. In the naive loop, jumping down columns of matrix B means skipping $N \times 8$ bytes in memory on every step. For a 1000x1000 matrix, that completely wrecks spatial locality and CPU cache lines get thrown away before reuse. The recursive method chops matrices into quadrants until sub-blocks drop under <code>GRAIN = 32768</code> elements (~256 KB). Blocks of that size stay entirely inside L2 cache, allowing the CPU to reuse them without constantly stalling on reads from RAM.</p>
 
-                    <p>At 1500x1500 the advantage disappears (0.96x). Odd matrix sizes make recursive splitting uneven, recursion call overhead stacks up, and the working set exceeds L3 cache capacity, hitting main memory bandwidth limits either way.</p>
+                    <p>At 1500x1500 the speedup disappears completely (0.96x). The matrix no longer divides neatly by powers of two, recursion tree overhead builds up, and the working data becomes too large even for L3 cache, meaning memory bandwidth becomes the main limiter either way.</p>
                 </div>
             </details>
 
             <details>
                     <summary>Task 2.3.2: Parallelisation using OpenMP Tasks</summary>
                     <div>
-                        <p>To parallelize <code>matmultrec()</code>, we wrap the root call in <code>#pragma omp parallel</code> with <code>#pragma omp single</code>, then spawn subproblems via <code>#pragma omp task</code>.</p>
+                        <p>To parallelize the recursive code, I wrapped the initial call in <code>#pragma omp parallel</code> + <code>#pragma omp single</code>, and then turned the recursive branches into <code>#pragma omp task</code>.</p>
+                        <p><strong>Avoiding data races & variable scoping:</strong><br>
+                                    Pairs of recursive calls write into the exact same quadrant of matrix C (for instance, both <code>A00*B00</code> and <code>A01*B10</code> accumulate into <code>C00</code>). Spawning all 8 tasks simultaneously creates an obvious race condition. To solve this safely, execution is split into two distinct rounds of 4 independent tasks, separated by <code>#pragma omp taskwait</code>.</p>
 
-                        <p>Because pairs of calls update the same quadrants of matrix C (e.g., both <code>A00*B00</code> and <code>A01*B10</code> write to <code>C00</code>), running all 8 tasks at once creates a blatant data race. To avoid this, execution is split into two phases of 4 independent tasks separated by <code>#pragma omp taskwait</code>.</p>
+                                    <p><em>Task scoping note:</em> Unlike <code>#pragma omp for</code> (where loop variables must be manually declared <code>private</code> to prevent races), OpenMP treats local stack variables passed into <code>#pragma omp task</code> (like <code>mid_m, mid_n, mid_p</code>) as <code>firstprivate</code> by default. Each task captures its own snapshot of these coordinates automatically, so explicit scoping clauses are not needed here.</p>
+                        <pre>PS C:\учёба\study\1_semester\parallel\hw2> ./task2_3_2.exe 1000 1000 1000 1
+            Executing matmult1: Time = 0.909 s | matmultr: Time = 0.327 s -> Speedup: 2.8X
+            PS C:\учёба\study\1_semester\parallel\hw2> ./task2_3_2.exe 1000 1000 1000 2
+            Executing matmult1: Time = 0.903 s | matmultr: Time = 0.215 s -> Speedup: 4.2X
+            PS C:\учёба\study\1_semester\parallel\hw2> ./task2_3_2.exe 1000 1000 1000 4
+            Executing matmult1: Time = 1.051 s | matmultr: Time = 0.123 s -> Speedup: 8.5X
+            PS C:\учёба\study\1_semester\parallel\hw2> ./task2_3_2.exe 1000 1000 1000 6
+            Executing matmult1: Time = 0.932 s | matmultr: Time = 0.095 s -> Speedup: 9.8X</pre>
 
-                        <p><strong>What happens without <code>#pragma omp single</code>?</strong><br>
-                        If we omit <code>#pragma omp single</code>, every active thread executes the root call and starts recursively spawning tasks. With 6 threads, we get 6 identical task trees running simultaneously. They overwrite each other's accumulations in matrix C (causing <code>CheckResults</code> to fail) and choke the CPU with task scheduling overhead.</p>
-
-                        <p><strong>Scaling Benchmarks (1000 x 1000):</strong><br>
-                        <em>Baseline naive time fixed to single-thread run: T_naive = 0.909 s.</em></p>
+                        <p><em>Note on scaling baseline:</em> Because single-threaded naive runs show normal runtime jitter (0.903 to 1.051 s), total speedup is calculated against a fixed single-thread baseline of <strong>T_naive = 0.909 s</strong>.</p>
 
                         <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; margin: 10px 0;">
                             <thead>
                                 <tr style="background-color: #f2f2f2;">
                                     <th>Threads (p)</th>
-                                    <th>Time (s)</th>
-                                    <th>Speedup vs Recur-Serial (0.327 / Tp)</th>
+                                    <th>Recursive Time (s)</th>
+                                    <th>Parallel Speedup (0.327 / Tp)</th>
+                                    <th>Parallel Efficiency</th>
                                     <th>Total Speedup vs Naive (0.909 / Tp)</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td>1</td><td>0.327 s</td><td>1.00x</td><td>2.78x</td></tr>
-                                <tr><td>2</td><td>0.215 s</td><td>1.52x</td><td>4.23x</td></tr>
-                                <tr><td>4</td><td>0.123 s</td><td>2.66x</td><td>7.39x</td></tr>
-                                <tr><td>6</td><td>0.095 s</td><td>3.44x</td><td>9.57x</td></tr>
+                                <tr><td>1</td><td>0.327</td><td>1.00x</td><td>100.0%</td><td>2.78x</td></tr>
+                                <tr><td>2</td><td>0.215</td><td>1.52x</td><td>76.0%</td><td>4.23x</td></tr>
+                                <tr><td>4</td><td>0.123</td><td>2.66x</td><td>66.5%</td><td>7.39x</td></tr>
+                                <tr><td>6</td><td>0.095</td><td>3.44x</td><td>57.3%</td><td>9.57x</td></tr>
                             </tbody>
                         </table>
 
                         <div style="margin: 15px 0;">
-                                        <img src="task2_3_terminal.png" alt="OpenMP Recursive Tasks Speedup Graph" style="max-width: 100%; border: 1px solid #ccc; border-radius: 4px;">
-                                        <p><em>Figure: Relative parallel speedup of recursive matrix multiplication on up to 6 threads.</em></p>
-                                    </div>
-                        <p>Combining cache-friendly recursion with task parallelization drops runtime from 0.909 s down to 0.095 s, giving an overall <strong>~9.6x speedup</strong> on 6 cores.</p>
+                            <img src="task2_3_terminal.png" style="max-width: 100%; border: 1px solid #ccc; border-radius: 4px;">
+                            <p><em>Figure: Parallel speedup of recursive matrix multiplication across 1 to 6 threads.</em></p>
+                        </div>
+
+                        <p><strong>What happens if we omit <code>#pragma omp single</code>?</strong><br>
+                        If you remove <code>#pragma omp single</code>, every thread in the team runs the root call independently and builds its own full recursion tree. With 6 threads, you end up spawning 6 times as many tasks. They all try to add values into the same elements of matrix C at the same time, which immediately corrupts the data (making <code>CheckResults</code> fail with numerical mismatches) and slows everything down due to task queue thrashing.</p>
                     </div>
                 </details>
     </body>
