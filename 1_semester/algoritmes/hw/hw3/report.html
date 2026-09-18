@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>HW3. Trees and Balanced Search</title>
+
+    <meta name="reference" content="Collatz conjecture | https://en.wikipedia.org/wiki/Collatz_conjecture">
+
+
+    <link rel="stylesheet" href="../../styles.css">
+    <script src="../../header.js" defer></script>
+    <script src="../../footer.js" defer></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"/>
+
+
+</head>
+<body>
+
+</body>
+
+<script>
+    window.addEventListener('load', () => {
+        const ctx = document.getElementById('comparisonsChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'Deterministic: Sorted (Worst Case, O(n²))',
+                        data: [
+                            { x: 1000, y: 499500 },
+                            { x: 2000, y: 1999000 }
+                        ],
+                        borderColor: '#ef4444',
+                        backgroundColor: '#ef4444',
+                        borderWidth: 3,
+                        pointRadius: 6,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Deterministic: Aborted (Stack limit >= 1200)',
+                        data: [
+                            { x: 5000, y: 2000000 },
+                            { x: 10000, y: 2000000 }
+                        ],
+                        borderColor: '#dc2626',
+                        backgroundColor: '#dc2626',
+                        pointStyle: 'crossRot',
+                        pointRadius: 11,
+                        pointBorderWidth: 3,
+                        showLine: false
+                    },
+                    {
+                        label: 'Deterministic: Random data (Normal, O(n log n))',
+                        data: [
+                            { x: 1000, y: 10276 },
+                            { x: 2000, y: 23169 },
+                            { x: 5000, y: 73057 },
+                            { x: 10000, y: 152478 }
+                        ],
+                        borderColor: '#9ca3af',
+                        backgroundColor: '#9ca3af',
+                        borderWidth: 2,
+                        borderDash: [6, 6],
+                        pointRadius: 4,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Randomized: All datasets (Always O(n log n))',
+                        data: [
+                            { x: 1000, y: 10442 },
+                            { x: 2000, y: 24306 },
+                            { x: 5000, y: 69268 },
+                            { x: 10000, y: 154923 }
+                        ],
+                        borderColor: '#10b981',
+                        backgroundColor: '#10b981',
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Pivot Strategy Impact: Deterministic Collapse vs Randomized Stability',
+                        font: { size: 15, weight: 'bold' }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        title: { display: true, text: 'Array Size (n)' },
+                        ticks: { callback: v => v.toLocaleString() }
+                    },
+                    y: {
+                        type: 'logarithmic',
+                        title: { display: true, text: 'Comparisons (log scale)' },
+                        ticks: { callback: v => Number(v).toLocaleString() }
+                    }
+                }
+            }
+        });
+    });
+</script>
+</html>
