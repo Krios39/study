@@ -11,13 +11,290 @@
     <script src="../../header.js" defer></script>
     <script src="../../footer.js" defer></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"/>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 
 
 </head>
 <body>
+<script>
+    mermaid.initialize({ startOnLoad: true });
+</script>
+<details>
+    <summary>T1. Create and characterise four unbalanced BSTs</summary>
 
-</body>
+    <h4>Algorithm Implementation & Sequence Generation:</h4>
+    <p>
+        Three initial Collatz sequences were generated starting from 7, 9, and 51, terminating right before the $4 \rightarrow 2 \rightarrow 1$ repeating cycle. The sequences were then sequentially inserted into initially empty, unbalanced Binary Search Trees (BST). Duplicate values were strictly ignored during insertion, and the trees were deliberately kept unbalanced with no rotational optimizations applied.
+    </p>
+    <p><strong>Given Sequences:</strong></p>
+    <ul>
+        <li><strong>7:</strong> <code>[7, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1]</code></li>
+        <li><strong>9:</strong> <code>[9, 28, 14, 7, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1]</code></li>
+        <li><strong>51:</strong> <code>[51, 154, 77, 232, 116, 58, 29, 88, 44, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1]</code></li>
+    </ul>
+
+    <h4>Pure Output:</h4>
+    <details style="margin: 10px 0; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 8px;">
+        <summary style="cursor: pointer; font-weight: bold;">View Raw Terminal Output</summary>
+        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px; margin-top: 8px;"><code>C:/Users/User/.cargo/bin/cargo.exe run --color=always --package hw3 --bin T1 --profile dev
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running `target\debug\T1.exe`
+=== 1. GIVEN SEQUENCES ===
+7: [7, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1]
+9: [9, 28, 14, 7, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1]
+51: [51, 154, 77, 232, 116, 58, 29, 88, 44, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1]
+
+=== 2. COMPACT TREES ===
+Tree 7:
+            52
+                40
+        34
+            26
+    22
+                20
+            17
+                    16
+                13
+        11
+            10
+                8
+7
+    5
+        4
+            2
+                1
+-------------------
+Tree 9:
+            52
+                40
+        34
+    28
+                26
+            22
+                    20
+                17
+                    16
+        14
+                13
+            11
+                10
+9
+        8
+    7
+        5
+            4
+                2
+                    1
+-------------------
+Tree 51:
+        232
+    154
+            116
+                88
+        77
+            58
+                52
+51
+        44
+                40
+            34
+    29
+            26
+        22
+                    20
+                17
+                        16
+                    13
+            11
+                10
+                        8
+                    5
+                        4
+                            2
+                                1
+-------------------
+
+=== 3. SEARCH TRACE IN TREE 51 ===
+Searching for 16:
+51 (left) -> 29 (left) -> 22 (left) -> 11 (right) -> 17 (left) -> 13 (right) -> 16 -> FOUND!
+Searching for 100:
+51 (right) -> 154 (left) -> 77 (right) -> 116 (left) -> 88 (right) -> -> NOT FOUND.
+
+=== 4. FOURTH SEQUENCE SEARCH ===
+Searched interval: 4 ..= 100_004
+Selected starting value: 77031
+Sequence length: 351
+Largest reached value: 21933016
+
+=== 5. STRUCTURAL COMPARISON TABLE ===
+Tree       | Node Count | Height     | Max Width       | Depth Distribution (Successful Search)
+----------------------------------------------------------------------------------------------------
+7          | 17         | 6          | 5               | [1, 2, 3, 5, 5, 1]
+9          | 20         | 6          | 6               | [1, 2, 4, 4, 6, 3]
+51         | 25         | 9          | 5               | [1, 2, 4, 5, 5, 3, 3, 1, 1]
+77031      | 351        | 27         | 35              | See below
+
+Depth distribution for Tree 77031:
+[1, 2, 4, 8, 12, 23, 34, 35, 28, 28, 33, 33, 24, 22, 21, 12, 3, 3, 2, 4, 3, 2, 2, 4, 5, 2, 1]</code></pre>
+    </details>
+
+    <h4>Compact Visualization of the Three Trees:</h4>
+    <div style="display: flex; flex-direction: column;">
+        <details>
+            <summary>Tree 7</summary>
+            <div style="background: #ffffff; padding: 20px; border-radius: 6px; width: 100%; overflow-x: auto;">
+<!--                <h5 style="text-align: center; margin-top: 0; margin-bottom: 15px; color: #1e1e1e;">Tree 7</h5>-->
+                <div class="mermaid" style="text-align: center;">
+                    graph TD
+                    7 --> 5
+                    7 --> 22
+                    5 --> 4
+                    4 --> 2
+                    2 --> 1
+                    22 --> 11
+                    22 --> 34
+                    11 --> 10
+                    11 --> 17
+                    10 --> 8
+                    17 --> 13
+                    17 --> 20
+                    13 --> 16
+                    34 --> 26
+                    34 --> 52
+                    52 --> 40
+                </div>
+            </div>
+
+        </details>
+        <details>
+            <summary>Tree 9</summary>
+            <div style="padding: 20px; border-radius: 6px; width: 100%; overflow-x: auto;">
+                <div class="mermaid" style="text-align: center;">
+                    graph TD
+                    9 --> 7
+                    9 --> 28
+                    7 --> 5
+                    7 --> 8
+                    5 --> 4
+                    4 --> 2
+                    2 --> 1
+                    28 --> 14
+                    28 --> 34
+                    14 --> 11
+                    14 --> 22
+                    11 --> 10
+                    11 --> 13
+                    22 --> 17
+                    22 --> 26
+                    17 --> 16
+                    17 --> 20
+                    34 --> 52
+                    52 --> 40
+                </div>
+            </div>
+
+        </details>
+        <details>
+            <summary>Tree 51</summary>
+            <div style="background: #ffffff; padding: 20px; border-radius: 6px; width: 100%; overflow-x: auto;">
+                <div class="mermaid" style="text-align: center;">
+                    graph TD
+                    51 --> 29
+                    51 --> 154
+                    29 --> 22
+                    29 --> 44
+                    22 --> 11
+                    22 --> 26
+                    11 --> 10
+                    11 --> 17
+                    10 --> 8
+                    8 --> 5
+                    5 --> 4
+                    4 --> 2
+                    2 --> 1
+                    17 --> 13
+                    17 --> 20
+                    13 --> 16
+                    44 --> 34
+                    34 --> 40
+                    154 --> 77
+                    154 --> 232
+                    77 --> 58
+                    77 --> 116
+                    58 --> 52
+                    116 --> 88
+                </div>
+            </div>
+
+        </details>
+    </div>
+
+    <h4>Fourth Sequence Search & Documentation:</h4>
+    <p>
+        To construct the fourth tree, an automated exhaustive search was conducted over a documented interval of positive integers from $4$ to $100,004$. The <strong>sequence length</strong> was defined precisely as the total number of elements generated before the cycle condition (reaching the value $1$) is met. The starting value that yielded the absolute maximum length in this interval was recorded.
+    </p>
+    <ul>
+        <li><strong>Selected starting value:</strong> 77,031</li>
+        <li><strong>Sequence length:</strong> 351 elements</li>
+        <li><strong>Largest reached value in the chain:</strong> 21,933,016</li>
+    </ul>
+
+    <h4>Structural Comparison Table:</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%; text-align: left;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.08);">
+            <th>Tree (Starting Val)</th>
+            <th>Node Count</th>
+            <th>Tree Height</th>
+            <th>Max Width</th>
+            <th>Depth Distribution (Successful Search Depths)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>7</strong></td>
+            <td>17</td>
+            <td>6</td>
+            <td>5</td>
+            <td><code>[1, 2, 3, 5, 5, 1]</code></td>
+        </tr>
+        <tr>
+            <td><strong>9</strong></td>
+            <td>20</td>
+            <td>6</td>
+            <td>6</td>
+            <td><code>[1, 2, 4, 4, 6, 3]</code></td>
+        </tr>
+        <tr>
+            <td><strong>51</strong></td>
+            <td>25</td>
+            <td>9</td>
+            <td>5</td>
+            <td><code>[1, 2, 4, 5, 5, 3, 3, 1, 1]</code></td>
+        </tr>
+        <tr style="background-color: rgba(16, 185, 129, 0.15); color: #6ee7b7;">
+            <td><strong>77,031 (Large)</strong></td>
+            <td>351</td>
+            <td>27</td>
+            <td>35</td>
+            <td><code>[1, 2, 4, 8, 12, 23, 34, 35, 28, 28, 33, 33, 24, 22, 21, 12, 3, 3, 2, 4, 3, 2, 2, 4, 5, 2, 1]</code></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>The answers:</h2>
+    <ul>
+        <li>
+            <strong>BST Invariant Verification:</strong> The invariant dictates that for any given node, all elements located in its left sub-tree must be strictly smaller, and all elements in its right sub-tree must be strictly greater. To ensure structural integrity, an automated recursive validation function <code>check_invariant()</code> was executed after every single insertion operation, successfully asserting that no violations occurred across all four trees.
+        </li>
+        <li>
+            <strong>Special Property of In-order Traversal:</strong> An in-order traversal (Left &rarr; Root &rarr; Right) executed on a valid Binary Search Tree inherently outputs the contained elements in a <strong>strictly monotonically increasing (sorted) order</strong>. This occurs as a direct mathematical consequence of the BST invariant: the algorithm exhausts all smaller values by recursively drilling down the left branches, outputs the current median/root value, and then processes the strictly greater values residing in the right branches.
+        </li>
+        <li>
+            <strong>Comparison of the Large Tree:</strong> The tree generated from <code>77031</code> acts as a stark demonstration of unbalanced BST degradation. While small trees maintained reasonable heights ($h \le 9$), the large sequence produced a highly skewed structure with a height of $27$ and a node count of $351$. The depth distribution reveals a heavily bloated mid-section (maximum width of $35$ at depth 7), highlighting that without rebalancing mechanisms (like AVL rotations), structural operations trend toward worst-case linear time.
+        </li>
+    </ul>
+</details></body>
 
 <script>
     window.addEventListener('load', () => {
@@ -30,8 +307,8 @@
                     {
                         label: 'Deterministic: Sorted (Worst Case, O(n²))',
                         data: [
-                            { x: 1000, y: 499500 },
-                            { x: 2000, y: 1999000 }
+                            {x: 1000, y: 499500},
+                            {x: 2000, y: 1999000}
                         ],
                         borderColor: '#ef4444',
                         backgroundColor: '#ef4444',
@@ -42,8 +319,8 @@
                     {
                         label: 'Deterministic: Aborted (Stack limit >= 1200)',
                         data: [
-                            { x: 5000, y: 2000000 },
-                            { x: 10000, y: 2000000 }
+                            {x: 5000, y: 2000000},
+                            {x: 10000, y: 2000000}
                         ],
                         borderColor: '#dc2626',
                         backgroundColor: '#dc2626',
@@ -55,10 +332,10 @@
                     {
                         label: 'Deterministic: Random data (Normal, O(n log n))',
                         data: [
-                            { x: 1000, y: 10276 },
-                            { x: 2000, y: 23169 },
-                            { x: 5000, y: 73057 },
-                            { x: 10000, y: 152478 }
+                            {x: 1000, y: 10276},
+                            {x: 2000, y: 23169},
+                            {x: 5000, y: 73057},
+                            {x: 10000, y: 152478}
                         ],
                         borderColor: '#9ca3af',
                         backgroundColor: '#9ca3af',
@@ -70,10 +347,10 @@
                     {
                         label: 'Randomized: All datasets (Always O(n log n))',
                         data: [
-                            { x: 1000, y: 10442 },
-                            { x: 2000, y: 24306 },
-                            { x: 5000, y: 69268 },
-                            { x: 10000, y: 154923 }
+                            {x: 1000, y: 10442},
+                            {x: 2000, y: 24306},
+                            {x: 5000, y: 69268},
+                            {x: 10000, y: 154923}
                         ],
                         borderColor: '#10b981',
                         backgroundColor: '#10b981',
@@ -89,19 +366,19 @@
                     title: {
                         display: true,
                         text: 'Pivot Strategy Impact: Deterministic Collapse vs Randomized Stability',
-                        font: { size: 15, weight: 'bold' }
+                        font: {size: 15, weight: 'bold'}
                     }
                 },
                 scales: {
                     x: {
                         type: 'linear',
-                        title: { display: true, text: 'Array Size (n)' },
-                        ticks: { callback: v => v.toLocaleString() }
+                        title: {display: true, text: 'Array Size (n)'},
+                        ticks: {callback: v => v.toLocaleString()}
                     },
                     y: {
                         type: 'logarithmic',
-                        title: { display: true, text: 'Comparisons (log scale)' },
-                        ticks: { callback: v => Number(v).toLocaleString() }
+                        title: {display: true, text: 'Comparisons (log scale)'},
+                        ticks: {callback: v => Number(v).toLocaleString()}
                     }
                 }
             }
