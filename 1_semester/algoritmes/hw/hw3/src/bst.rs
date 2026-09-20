@@ -140,6 +140,39 @@ impl<T: Ord + std::fmt::Debug> BST<T> {
             None => 0,
         }
     }
+
+    pub fn insert_iterative(&mut self, value: T) -> usize {
+        let mut comps = 0;
+        let mut current = &mut self.root;
+        while let Some(node) = current {
+            comps += 1;
+            if value < node.value {
+                current = &mut node.left;
+            } else if value > node.value {
+                current = &mut node.right;
+            } else {
+                return comps; // Игнорируем дубликаты
+            }
+        }
+        *current = Some(Box::new(Node::new(value)));
+        comps
+    }
+
+    pub fn search_iterative_comps(&self, value: &T) -> usize {
+        let mut comps = 0;
+        let mut current = &self.root;
+        while let Some(node) = current {
+            comps += 1;
+            if *value == node.value {
+                return comps;
+            } else if *value < node.value {
+                current = &node.left;
+            } else {
+                current = &node.right;
+            }
+        }
+        comps
+    }
 }
 
 
@@ -180,7 +213,6 @@ impl<'a, T: Ord + std::fmt::Debug> TreeAnalyzer<'a, T> {
         if self.tree.root.is_none() { return dist; }
 
         let mut queue = VecDeque::new();
-        // В очереди храним кортеж: (ссылка_на_узел, текущая_глубина)
         queue.push_back((self.tree.root.as_ref().unwrap(), 0));
 
         while let Some((node, depth)) = queue.pop_front() {
@@ -218,5 +250,58 @@ impl<'a, T: Ord + std::fmt::Debug> TreeAnalyzer<'a, T> {
         }
         println!("-> NOT FOUND.");
         false
+    }
+
+    pub fn mean_search_depth(&self) -> f64 {
+        let (total_depth, count) = Self::depth_sum(&self.tree.root, 1);
+        if count == 0 { 0.0 } else { total_depth as f64 / count as f64 }
+    }
+
+    fn depth_sum(node: &Option<Box<Node<T>>>, depth: usize) -> (usize, usize) {
+        match node {
+            Some(n) => {
+                let (l_sum, l_count) = Self::depth_sum(&n.left, depth + 1);
+                let (r_sum, r_count) = Self::depth_sum(&n.right, depth + 1);
+                (depth + l_sum + r_sum, 1 + l_count + r_count)
+            },
+            None => (0, 0)
+        }
+    }
+
+    pub fn get_all_depths(&self) -> Vec<usize> {
+        let mut depths = Vec::new();
+        Self::collect_depths(&self.tree.root, 1, &mut depths);
+        depths
+    }
+
+    fn collect_depths(node: &Option<Box<Node<T>>>, depth: usize, depths: &mut Vec<usize>) {
+        if let Some(n) = node {
+            depths.push(depth);
+            Self::collect_depths(&n.left, depth + 1, depths);
+            Self::collect_depths(&n.right, depth + 1, depths);
+        }
+    }
+
+    pub fn percentile_95_depth(&self) -> usize {
+        let mut depths = self.get_all_depths();
+        if depths.is_empty() { return 0; }
+        depths.sort_unstable();
+        let index = (0.95 * depths.len() as f64).ceil() as usize - 1;
+        depths[index]
+    }
+
+    pub fn get_inorder(&self) -> Vec<T> where T: Clone {
+        let mut result = Vec::new();
+        Self::inorder_rec(&self.tree.root, &mut result);
+        result
+    }
+
+    fn inorder_rec(node: &Option<Box<Node<T>>>, result: &mut Vec<T>) where T: Clone
+    {
+        if let Some(n) = node {
+            Self::inorder_rec(&n.left, result);
+            result.push(n.value.clone());
+            Self::inorder_rec(&n.right, result);
+        }
     }
 }
