@@ -1,5 +1,6 @@
 
 use hw3::bst::{BST, TreeAnalyzer};
+use hw3::collatz::{collatz_conjecture};
 
 fn main() {
     let colatz7 = collatz_conjecture(7);
@@ -57,21 +58,7 @@ fn main() {
 }
 
 
-fn collatz_conjecture(n: i32) -> Vec<i32> {
-    let mut v = vec![n];
-    let mut next_step = n;
 
-    while next_step != 1 {
-        if next_step % 2 == 0 {
-            next_step /= 2;
-        } else {
-            next_step = 3 * next_step + 1;
-        }
-        v.push(next_step);
-    }
-
-    return v;
-}
 
 fn longest_collatz() -> i32 {
     let mut longest_index: i32 = 0;

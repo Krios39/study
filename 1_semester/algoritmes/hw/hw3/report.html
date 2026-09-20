@@ -294,7 +294,187 @@ Depth distribution for Tree 77031:
             <strong>Comparison of the Large Tree:</strong> The tree generated from <code>77031</code> acts as a stark demonstration of unbalanced BST degradation. While small trees maintained reasonable heights ($h \le 9$), the large sequence produced a highly skewed structure with a height of $27$ and a node count of $351$. The depth distribution reveals a heavily bloated mid-section (maximum width of $35$ at depth 7), highlighting that without rebalancing mechanisms (like AVL rotations), structural operations trend toward worst-case linear time.
         </li>
     </ul>
-</details></body>
+</details>
+
+<details>
+    <summary>T2. Maximum path sum: local return versus global answer</summary>
+
+    <h4>Algorithm Implementation & Sign Transformation:</h4>
+    <p>
+        To create mixed-sign trees, the original Collatz trees were duplicated, preserving their exact structural parent-child links. A breadth-first search (BFS) traversal was applied, and every third node visited had its value multiplied by -1. Nodes were neither reinserted nor reordered.
+    </p>
+    <p>
+        Consequently, these modified structures immediately violate the core Binary Search Tree (BST) invariant. In a valid BST, every node in the left subtree must be strictly less than its parent, and every node in the right subtree must be strictly greater. Negating arbitrary nodes breaks this strict monotonic ordering. For instance, a positive right child negated into a negative value becomes smaller than its parent, invalidating the search property. Therefore, they are now ordinary binary trees utilized solely for structural path-sum evaluation.
+    </p>
+
+    <h4>Pure Output:</h4>
+    <details style="margin: 10px 0; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 8px;">
+        <summary style="cursor: pointer; font-weight: bold;">View Raw Terminal Output</summary>
+        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px; margin-top: 8px;"><code>C:/Users/User/.cargo/bin/cargo.exe run --color=always --package hw3 --bin T2 --profile dev
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.01s
+     Running `target\debug\T2.exe`
+===========================================================
+=== PART 1: VALIDATING ON SMALL HAND-BUILT TREES (<= 12 nodes) ===
+===========================================================
+
+Test 1 (All negative tree):
+  Optimal O(N): Sum =   -5, Path = [-5]
+  Brute-Force:  Sum =   -5, Path = [-5]
+
+Test 2 (Arch across the root):
+  Optimal O(N): Sum =   30, Path = [5, 10, 15]
+  Brute-Force:  Sum =   30, Path = [5, 10, 15]
+
+Test 3 (Deep arch ignoring the root):
+  Optimal O(N): Sum =   60, Path = [15, 20, 25]
+  Brute-Force:  Sum =   60, Path = [25, 20, 15]
+
+Test 4 (Best one-ended path choice):
+  Optimal O(N): Sum =   35, Path = [5, 10, 20]
+  Brute-Force:  Sum =   35, Path = [20, 10, 5]
+
+===========================================================
+=== PART 2: MAXIMUM PATH IN MIXED-SIGN COLLATZ TREES ===
+===========================================================
+
+Collatz 7 Mixed-Sign Tree (Total nodes: 17):
+  Max Path Sum: 92
+  Reconstructed Path: [40, 52]
+
+Collatz 9 Mixed-Sign Tree (Total nodes: 20):
+  Max Path Sum: 132
+  Reconstructed Path: [26, 22, -14, -28, 34, 52, 40]
+
+Collatz 51 Mixed-Sign Tree (Total nodes: 25):
+  Max Path Sum: 237
+  Reconstructed Path: [16, 13, 17, 11, 22, 29, 51, -154, 232]
+
+===========================================================
+=== PART 3: THE HUGE COLLATZ TREE ===
+===========================================================
+
+Collatz 77031 Mixed-Sign Tree (Total nodes: 351):
+  Max Path Sum: 89218146
+  Path length: 11 nodes
+  Reconstructed Path: [5483254, 5776594, 5336554, -4743602, 6324802, 9487204, 9748006, 14622010, 10966508, 12337324, 13879492]</code></pre>
+    </details>
+
+    <h4>Visualizing Mixed-Sign Trees (Every 3rd node negated):</h4>
+    <div style="display: flex; flex-direction: column;">
+        <details>
+            <summary>Tree 7 (Mixed Signs)</summary>
+            <div style="background: #ffffff; padding: 20px; border-radius: 6px; width: 100%; overflow-x: auto;">
+                <p style="text-align: center; font-size: 12px; color: #666; margin-bottom: 15px;">Negated (BFS pos): 22 (3rd), 34 (6th), 17 (9th), 1 (12th), 20 (15th)</p>
+                <div class="mermaid" style="text-align: center;">
+                    graph TD
+                    id7["7"] --> id5["5"]
+                    id7["7"] --> id22["-22"]
+                    id5["5"] --> id4["4"]
+                    id4["4"] --> id2["2"]
+                    id2["2"] --> id1["-1"]
+                    id22["-22"] --> id11["11"]
+                    id22["-22"] --> id34["-34"]
+                    id11["11"] --> id10["10"]
+                    id11["11"] --> id17["-17"]
+                    id10["10"] --> id8["8"]
+                    id17["-17"] --> id13["13"]
+                    id17["-17"] --> id20["-20"]
+                    id13["13"] --> id16["16"]
+                    id34["-34"] --> id26["26"]
+                    id34["-34"] --> id52["52"]
+                    id52["52"] --> id40["40"]
+
+                    classDef negative fill:#ffebee,stroke:#ff5252,stroke-width:2px;
+                    class id22,id34,id17,id1,id20 negative;
+                </div>
+            </div>
+        </details>
+
+        <details>
+            <summary>Tree 9 (Mixed Signs)</summary>
+            <div style="background: #ffffff; padding: 20px; border-radius: 6px; width: 100%; overflow-x: auto;">
+                <p style="text-align: center; font-size: 12px; color: #666; margin-bottom: 15px;">Negated (BFS pos): 28 (3rd), 14 (6th), 11 (9th), 2 (12th), 17 (15th), 1 (18th)</p>
+                <div class="mermaid" style="text-align: center;">
+                    graph TD
+                    id9["9"] --> id7["7"]
+                    id9["9"] --> id28["-28"]
+                    id7["7"] --> id5["5"]
+                    id7["7"] --> id8["8"]
+                    id5["5"] --> id4["4"]
+                    id4["4"] --> id2["-2"]
+                    id2["-2"] --> id1["-1"]
+                    id28["-28"] --> id14["-14"]
+                    id28["-28"] --> id34["34"]
+                    id14["-14"] --> id11["-11"]
+                    id14["-14"] --> id22["22"]
+                    id11["-11"] --> id10["10"]
+                    id11["-11"] --> id13["13"]
+                    id22["22"] --> id17["-17"]
+                    id22["22"] --> id26["26"]
+                    id17["-17"] --> id16["16"]
+                    id17["-17"] --> id20["20"]
+                    id34["34"] --> id52["52"]
+                    id52["52"] --> id40["40"]
+
+                    classDef negative fill:#ffebee,stroke:#ff5252,stroke-width:2px;
+                    class id28,id14,id11,id2,id17,id1 negative;
+                </div>
+            </div>
+        </details>
+
+        <details>
+            <summary>Tree 51 (Mixed Signs)</summary>
+            <div style="background: #ffffff; padding: 20px; border-radius: 6px; width: 100%; overflow-x: auto;">
+                <p style="text-align: center; font-size: 12px; color: #666; margin-bottom: 15px;">Negated (BFS pos): 154 (3rd), 77 (6th), 26 (9th), 116 (12th), 40 (15th), 8 (18th), 5 (21st), 2 (24th)</p>
+                <div class="mermaid" style="text-align: center;">
+                    graph TD
+                    id51["51"] --> id29["29"]
+                    id51["51"] --> id154["-154"]
+                    id29["29"] --> id22["22"]
+                    id29["29"] --> id44["44"]
+                    id22["22"] --> id11["11"]
+                    id22["22"] --> id26["-26"]
+                    id11["11"] --> id10["10"]
+                    id11["11"] --> id17["17"]
+                    id10["10"] --> id8["-8"]
+                    id8["-8"] --> id5["-5"]
+                    id5["-5"] --> id4["4"]
+                    id4["4"] --> id2["-2"]
+                    id2["-2"] --> id1["1"]
+                    id17["17"] --> id13["13"]
+                    id17["17"] --> id20["20"]
+                    id13["13"] --> id16["16"]
+                    id44["44"] --> id34["34"]
+                    id34["34"] --> id40["-40"]
+                    id154["-154"] --> id77["-77"]
+                    id154["-154"] --> id232["232"]
+                    id77["-77"] --> id58["58"]
+                    id77["-77"] --> id116["-116"]
+                    id58["58"] --> id52["52"]
+                    id116["-116"] --> id88["88"]
+
+                    classDef negative fill:#ffebee,stroke:#ff5252,stroke-width:2px;
+                    class id154,id77,id26,id116,id40,id8,id5,id2 negative;
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <h2>The answers (Independent Reasoning):</h2>
+    <ul>
+        <li>
+            <strong>Best one-ended path (Local Return to Parent):</strong> A recursive call must return the maximum path extending strictly downward through <em>only one</em> of its children (or just itself if children yield negative sums). It cannot return a branching path, because the parent node can only connect to one continuous line without violating the non-repeating node constraint.
+        </li>
+        <li>
+            <strong>Best complete path (Global Answer for the Tree):</strong> Simultaneously, the algorithm evaluates if the current node acts as the peak of an "arch" connecting its left and right subtrees. This complete path sum (<code>left_branch + node + right_branch</code>) is functionally closed and cannot be extended upward. If this local arch exceeds the historically recorded maximum, it updates a global variable maintained across the entire tree traversal.
+        </li>
+        <li>
+            <strong>Exhaustive Validation Result:</strong> The O(N) recursive algorithm's outputs match the deliberately slow $O(V!)$ brute-force method perfectly across all small hand-built trees, confirming that dropping negative branches and globally recording isolated arches accurately captures the maximum possible sum in non-BST structures.
+        </li>
+    </ul>
+</details>
+
+</body>
 
 <script>
     window.addEventListener('load', () => {

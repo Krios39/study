@@ -1,10 +1,11 @@
 use std::collections::VecDeque;
 use std::cmp::max;
 
+#[derive(Clone)]
 pub struct BST<T> {
     pub root: Option<Box<Node<T>>>,
 }
-
+#[derive(Clone)]
 pub struct Node<T> {
     pub value: T,
     pub left: Option<Box<Node<T>>>,
@@ -126,6 +127,17 @@ impl<T: Ord + std::fmt::Debug> BST<T> {
             println!("{}{:?}", "    ".repeat(depth), n.value);
 
             Self::print_rec(&n.left, depth + 1);
+        }
+    }
+
+    pub fn node_count(&self) -> usize {
+        Self::count_recursive(&self.root)
+    }
+
+    fn count_recursive(node_opt: &Option<Box<Node<T>>>) -> usize {
+        match node_opt {
+            Some(node) => 1 + Self::count_recursive(&node.left) + Self::count_recursive(&node.right),
+            None => 0,
         }
     }
 }
