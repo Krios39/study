@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homework 3 Report - Parallel Computing</title>
+    </head>
+    <body>
+        <details>
+            <summary>Exercise 3.1: Numpy conversion (NumPy warm-up)</summary>
+            <div>
+                <p><strong>Setup & Vectorization Strategy:</strong></p>
+                <p>The objective was to replace the slow, interpreter-bound nested Python loops of a standard LU decomposition algorithm with highly optimized NumPy array operations. The primary vectorization improvement occurs during the submatrix update. Instead of manually iterating through rows and columns to compute <code>a[i][j] = a[i][j] - a[i][k] * a[k][j]</code>, I replaced the two inner loops with a single vectorized outer product assignment: <code>a[k+1:, k+1:] -= np.outer(a[k+1:, k], a[k, k+1:])</code>. This pushes the heavy arithmetic down to NumPy's underlying C backend.</p>
+
+                <p><strong>Performance Anomaly (Local vs. Remote Execution):</strong></p>
+                <p>During the initial benchmarking on my local environment, the execution times-especially for the highly optimized <code>np.linalg.solve()</code> - exhibited severe variance and inexplicable spikes[cite: 1]. This jitter is typical when running micro-benchmarks on a consumer OS, where the CPU scheduler dynamically scales frequencies or interrupts the thread for background tasks, polluting the median timings of sub-millisecond operations. To get clean, asymptotic scaling data, I re-ran the exact same benchmark on a remote machine with a more stable execution environment[cite: 2].</p>
+
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; margin-bottom: 20px;">
+                    <div style="flex: 1; min-width: 300px;">
+                        <img src="3_1_local_result.png" alt="Local Benchmark with High Variance" style="max-width: 100%; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="text-align: center; font-size: 13px; color: #57606a;"><em>Figure: Local execution showing severe scheduler interference and unstable benchmarking times[cite: 1].</em></p>
+                    </div>
+                    <div style="flex: 1; min-width: 300px;">
+                        <img src="3_1_result.png" alt="Remote Benchmark with Clean Scaling" style="max-width: 100%; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="text-align: center; font-size: 13px; color: #57606a;"><em>Figure: Remote execution revealing smooth logarithmic scaling of $O(n^3)$ complexity[cite: 2].</em></p>
+                    </div>
+                </div>
+
+                <p><strong>Scaling Analysis (Based on Remote Execution):</strong></p>
+                <ul>
+                    <li><strong>1. Python Lists (Baseline):</strong> The raw Python implementation scales exactly as expected for an $O(n^3)$ algorithm, but with a massive overhead penalty. By $n=500$, the pure Python code takes roughly $10^1$ seconds to complete[cite: 2]. The interpreter overhead dominates because every single arithmetic operation requires dynamic type checking and memory fetching.</li>
+                    <li><strong>2. NumPy Vectorized:</strong> Manually vectorizing the loops yields a performance improvement of approximately two orders of magnitude (100x speedup). At $n=500$, execution drops to around $10^{-1}$ seconds[cite: 2]. This proves that while the asymptotic time complexity remains $O(n^3)$, drastically reducing the constant factor via contiguous memory access and C-level execution is critical.</li>
+                    <li><strong>3. np.linalg.solve():</strong> The built-in NumPy solver outperforms the manual vectorized version by yet another order of magnitude (~$10^{-2}$ seconds at $n=500$)[cite: 2]. This is because <code>np.linalg.solve()</code> delegates the math directly to heavily optimized BLAS/LAPACK Fortran libraries, which utilize CPU-specific SIMD instructions and superior cache-blocking algorithms that a simple outer-product approach cannot match.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Exercise 3.2. Brief introduction to MPI (Part C)</summary>
+
+            <h4>Raw Terminal Output:</h4>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px; margin-top: 8px;"><code>nechshadimov@parcomp2026:~/sources/hw3$ mpiexec -n 4 python3 task3_2.py
+        Hello from rank 2 of 4
+        Hello from rank 3 of 4
+        Hello from rank 0 of 4
+        Hello from rank 1 of 4
+        nechshadimov@parcomp2026:~/sources/hw3$ mpiexec -n 10 python3 task3_2.py
+        Hello from rank 3 of 10
+        Hello from rank 6 of 10
+        Hello from rank 1 of 10
+        Hello from rank 4 of 10
+        Hello from rank 7 of 10
+        Hello from rank 9 of 10
+        Hello from rank 8 of 10
+        Hello from rank 0 of 10
+        Hello from rank 2 of 10
+        Hello from rank 5 of 10</code></pre>
+
+            <h2>The answers:</h2>
+            <ul>
+                <li>
+                    <strong>Will the lines always appear in rank order?</strong><br>
+                    No. The terminal output clearly demonstrates that the execution order is non-deterministic. MPI spawns separate processes that run asynchronously and concurrently across the available CPU cores. Because there is no explicit synchronization (such as an MPI barrier) or coordinated message passing prior to the <code>print</code> statement, the order in which the output reaches the terminal depends entirely on the operating system's process scheduler, individual process startup times, and I/O buffering. It is essentially a race condition to <code>stdout</code>.
+                </li>
+            </ul>
+        </details>
+
+        <details>
+            <summary>Exercise 3.2.1: Sending Python objects (Pickle under the hood)</summary>
+            <div class="details-content">
+                <p><strong>Implementation of <code>return_3rd</code>:</strong></p>
+                <p>The function uses standard lower-case <code>comm.send()</code> and <code>comm.recv()</code> which automatically pickle and unpickle generic Python objects. It handles the distinct roles of the <code>source</code>, <code>dest</code>, and all other idle processes strictly based on their MPI rank.</p>
+
+                <p><strong>Raw Terminal Output:</strong></p>
+                <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>nechshadimov@parcomp2026:~/sources/hw3$ mpiexec -n 3 python3 task3_2_1.py
+        [Rank 1] Dest received full list: [0.1, 'Yes', 'Kolmas', 0.001]
+        [Rank 2] Other process returned: None
+        [Rank 0] Source received correct 3rd item: Kolmas</code></pre>
+
+                <h2>Answers & Verification</h2>
+                <ul>
+                    <li><strong>Correctness:</strong> The script was executed successfully via <code>mpiexec -n 3 python3 task3_2_1.py</code>. The assertions <code>numpy.testing.assert_equal()</code> passed silently without throwing any <code>AssertionError</code>.</li>
+                    <li><strong>Behavior Verified:</strong> Rank 0 (source) successfully transmitted the generic list and correctly extracted the string <code>'Kolmas'</code> upon the return trip. Rank 1 (dest) successfully intercepted the message, accessed the item at index 2, shipped it back over the network, and returned the unmodified list. Rank 2 correctly ignored the exchange and returned <code>None</code>.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Exercise 3.2.2: Sending Python objects with non-blocking communication</summary>
+            <div class="details-content">
+                <p><strong>Implementation of <code>return_3rd_nonblocking</code>:</strong></p>
+                <p>The blocking calls were replaced with non-blocking <code>comm.isend()</code> and <code>comm.irecv()</code>. These methods return a <code>Request</code> object immediately, allowing the process to continue its execution independently. To safely finalize the data transfer and avoid race conditions, explicit <code>request.wait()</code> calls are made. Diagnostic print statements were injected right before each wait operation to trace the asynchronous execution flow.</p>
+
+                <p><strong>Raw Terminal Output:</strong></p>
+                <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>nechshadimov@parcomp2026:~/sources/hw3$ mpiexec -n 3 python3 task3_2_2.py
+        process 0 starting first wait
+        process 0 starting second wait
+        process 1 starting first wait
+        process 1 starting second wait
+        [Rank 2] Other process returned: None
+        [Rank 0] Source received correct 3rd item: Kolmas
+        [Rank 1] Dest received full list: [0.1, 'Yes', 'Kolmas', 0.001]</code></pre>
+
+                <h2>Answers & Verification</h2>
+                <ul>
+                    <li><strong>Correctness:</strong> The script executed successfully across 3 nodes. The <code>numpy.testing.assert_equal()</code> assertions passed silently without throwing any errors, confirming data integrity.</li>
+                    <li><strong>Behavior Verified:</strong> The terminal output perfectly captures the asynchronous nature of non-blocking MPI calls. Rank 0 reaches its second wait state before Rank 1's standard output even registers on the console. Despite this non-deterministic console logging, the underlying network exchange is strictly synchronized by the <code>.wait()</code> barriers, ensuring Rank 0 correctly extracts the string <code>'Kolmas'</code> and Rank 1 safely retrieves the full list. Rank 2 correctly remained idle and returned <code>None</code>.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Exercise 3.2.3: Sending NumPy arrays (the fast way!)</summary>
+            <div class="details-content">
+                <p><strong>Implementation Strategy & Memory Layout:</strong></p>
+                <p>To avoid the overhead of Python object pickling, communication was handled using the capitalized MPI methods (<code>comm.Send()</code> and <code>comm.Recv()</code>). These methods bypass the interpreter and transmit raw, contiguous C-level memory buffers directly across the network, which is drastically faster for large numerical matrices. To handle dynamic array sizes safely, a lightweight lowercase <code>comm.send()</code> is used first to transmit the shape tuple, allowing the receiving process to pre-allocate an empty NumPy buffer before triggering the heavy <code>comm.Recv()</code>.</p>
+
+                <p><strong>Handling Strided Data (The <code>.copy()</code> requirement):</strong></p>
+                <p>When the destination process extracts every third element via slicing (<code>data[::3]</code>), NumPy creates a "view" of the original array with memory gaps (non-contiguous stride). Passing this view directly to <code>comm.Send()</code> raises an exception because MPI expects a continuous block of bytes. To solve this, the slice was chained with a <code>.copy()</code> operation, forcing NumPy to allocate a fresh, tightly packed array in memory before sending it back to the source.</p>
+
+                <p><strong>Raw Terminal Output:</strong></p>
+                <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>nechshadimov@parcomp2026:~/sources/hw3$ mpiexec -n 3 python3 task3_2_3.py
+        [Rank 0] Verification passed! arr[3] == returned_arr[1] == 0.5987
+        [Rank 1] Dest successfully received full array of length 5
+        [Rank 2] Other process correctly returned: None</code></pre>
+
+                <h2>Answers & Verification</h2>
+                <ul>
+                    <li><strong>Correctness:</strong> The script executed successfully. The <code>numpy.testing.assert_equal()</code> assertions passed silently without throwing any errors.</li>
+                    <li><strong>Data Integrity Verified:</strong> The test logic generated a 5-element float array on Rank 0 and transmitted it via C-level memory buffers. Rank 1 intercepted it, repacked the <code>[::3]</code> view into contiguous memory using <code>.copy()</code>, and shipped it back. Rank 0 successfully verified that the element at index 3 of the original array perfectly matched index 1 of the returned sub-array. Rank 2 correctly ignored the transaction and returned <code>None</code>.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Exercise 3.2.4: Debugging mpi4py programs</summary>
+            <div class="details-content">
+                <h3>Task A: Barrier Statements</h3>
+                <p><strong>The Barrier Command:</strong></p>
+                <p>In <code>mpi4py</code>, synchronization is handled via <code>comm.Barrier()</code>. Execution pauses at this statement until all processes in the communicator reach this exact point.</p>
+
+                <p><strong>Rules on Using Barriers:</strong></p>
+                <ul>
+                    <li><strong>Collective Execution:</strong> A barrier must be called by <em>all</em> processes in the communicator. Placing it inside a rank-specific conditional branch (e.g., <code>if rank == 0:</code>) results in an immediate deadlock.</li>
+                    <li><strong>Debugging vs. Production:</strong> Excellent for preventing interleaved stdout logs during debugging, but can degrade performance in production by forcing fast nodes to idle.</li>
+                </ul>
+
+                <hr style="border: 0; border-top: 1px solid #d1d5db; margin: 20px 0;">
+
+                <h3>Task B: Parallel Debugging with ipdb3</h3>
+                <p><strong>Debugging Session Overview & Environment Notes:</strong></p>
+                <p>Getting graphical windows to pop up smoothly from a Linux environment on Windows turned out to be quite a challenge involving WSL and X11 forwarding configurations. Ultimately, utilizing WSLg made it possible to spawn multiple interactive debuggers seamlessly.</p>
+                <p>Running the command <code>mpirun -n 6 xterm -e ipdb3 trapParallel_1.py 0.0 1.0 10000</code> spawned six isolated terminal windows simultaneously. Setting a breakpoint right before the communication block (<code>b 51</code>) allowed step-by-step inspection of point-to-point communication where Rank 0 acts as a blocking listener (<code>comm.Recv()</code>) while the remaining ranks transmit their local integration results.</p>
+
+                <div style="margin: 20px 0; text-align: center;">
+                    <img src="debaging_windows.png" alt="Parallel ipdb3 debugging session across 6 processes" style="max-width: 100%; border: 1px solid #ccc; border-radius: 4px;">
+                    <p style="font-size: 13px; color: #57606a; margin-top: 8px;"><em>Figure: Simultaneous <code>ipdb3</code> sessions across 6 parallel processes tracking communication steps at program lines 54 and 58.</em></p>
+                </div>
+            </div>
+        </details>
+
+
+    </body>
+    <script>
+        function loadKaTeXAndRender() {
+            const katexCSS = document.createElement("link");
+            katexCSS.rel = "stylesheet";
+            katexCSS.href =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(katexCSS);
+
+            const katexScript = document.createElement("script");
+            katexScript.src =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+            katexScript.defer = true;
+
+            katexScript.onload = () => {
+                const autoRenderScript = document.createElement("script");
+                autoRenderScript.src =
+                    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                autoRenderScript.defer = true;
+
+                autoRenderScript.onload = () => {
+                    if (window.renderMathInElement) {
+                        window.renderMathInElement(document.body, {
+                            delimiters: [
+                                { left: "$$", right: "$$", display: true },
+                                { left: "$", right: "$", display: false },
+                            ],
+                            throwOnError: false,
+                        });
+                    }
+                };
+                document.head.appendChild(autoRenderScript);
+            };
+
+            document.head.appendChild(katexScript);
+        }
+        loadKaTeXAndRender();
+    </script>
+</html>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.6;
+        color: #111;
+        background-color: #fff;
+        max-width: 1280px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 8px 0;
+    }
+
+    .math {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 17px;
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+
+    ul {
+        margin: 8px 0 16px 20px;
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    .report-header {
+        margin-bottom: 28px;
+    }
+
+    .report-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #111;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table th {
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        width: 15%;
+        padding: 3px 6px 3px 0;
+        white-space: nowrap;
+    }
+
+    .report-meta-table td {
+        color: #111;
+        width: 35%;
+        padding: 3px 12px 3px 0;
+    }
+
+    .report-meta-table a {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .report-meta-table a:hover {
+        text-decoration: underline;
+    }
+
+    .report-divider {
+        border: 0;
+        border-top: 1px solid #d1d5db;
+        margin-top: 8px;
+    }
+
+    .math-left .katex-display {
+        text-align: left !important;
+    }
+
+    .math-left .katex-display > .katex {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    /* Сноски в тексте */
+    a.ref-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0 1px;
+    }
+
+    a.ref-link:hover {
+        text-decoration: underline;
+    }
+
+    .report-references {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .report-references h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .report-references ol {
+        padding-left: 20px;
+    }
+
+    .report-references li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
+
+    .report-references .ref-title {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .report-references a {
+        color: #1a73e8 !important;
+        text-decoration: underline !important;
+        word-break: break-all;
+        cursor: pointer;
+    }
+
+    details {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin: 16px 0;
+        background-color: #fff;
+        transition: all 0.2s ease;
+    }
+
+    details[open] {
+        border-color: #cbd5e1;
+    }
+
+    details > :not(summary) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    summary {
+        cursor: pointer;
+        padding: 10px 14px;
+        user-select: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    summary:hover {
+        background-color: #f8fafc;
+    }
+
+    summary h2 {
+        display: inline;
+        font-size: 16px;
+        margin: 0 0 0 6px;
+    }
+
+    .details-content {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 16px auto;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    img + p {
+        text-align: center;
+        font-size: 13px;
+        color: #57606a;
+        margin-top: -8px;
+        margin-bottom: 20px;
+    }
+</style>
