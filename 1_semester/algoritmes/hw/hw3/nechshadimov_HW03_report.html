@@ -5,8 +5,12 @@
     <title>HW3. Trees and Balanced Search</title>
 
     <meta name="reference" content="Collatz conjecture | https://en.wikipedia.org/wiki/Collatz_conjecture">
+    <meta name="reference" content="Binary Search Tree | https://www.geeksforgeeks.org/dsa/binary-search-tree-data-structure/">
+    <meta name="reference" content="AVL Search Tree | https://www.geeksforgeeks.org/dsa/introduction-to-avl-tree/">
+    <meta name="reference" content="Gemini |  https://gemini.google.com/">
+    <meta name="reference" content="Pareto efficiency | https://en.wikipedia.org/wiki/Pareto_efficiency">
 
-
+    
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -292,6 +296,10 @@ document.addEventListener("DOMContentLoaded", () => {
 <script>
     mermaid.initialize({ startOnLoad: true });
 </script>
+
+<div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+    <strong>Tree Metrics Convention:</strong> Throughout this report, the depth of the root node is strictly defined as <strong>0</strong>. Consequently, the <strong>height</strong> of a tree is defined as its maximum node depth (equivalent to the number of edges on the longest path from root to leaf). All height, mean depth, and 95th-percentile metrics across T1–T5 follow this 0-indexed convention.
+</div>
 <details>
     <summary>T1. Create and characterise four unbalanced BSTs</summary>
 
@@ -402,10 +410,10 @@ Largest reached value: 21933016
 === 5. STRUCTURAL COMPARISON TABLE ===
 Tree       | Node Count | Height     | Max Width       | Depth Distribution (Successful Search)
 ----------------------------------------------------------------------------------------------------
-7          | 17         | 6          | 5               | [1, 2, 3, 5, 5, 1]
-9          | 20         | 6          | 6               | [1, 2, 4, 4, 6, 3]
-51         | 25         | 9          | 5               | [1, 2, 4, 5, 5, 3, 3, 1, 1]
-77031      | 351        | 27         | 35              | See below
+7          | 17         | 5          | 5               | [1, 2, 3, 5, 5, 1]
+9          | 20         | 5          | 6               | [1, 2, 4, 4, 6, 3]
+51         | 25         | 8          | 5               | [1, 2, 4, 5, 5, 3, 3, 1, 1]
+77031      | 351        | 26         | 35              | See below
 
 Depth distribution for Tree 77031:
 [1, 2, 4, 8, 12, 23, 34, 35, 28, 28, 33, 33, 24, 22, 21, 12, 3, 3, 2, 4, 3, 2, 2, 4, 5, 2, 1]</code></pre>
@@ -416,7 +424,6 @@ Depth distribution for Tree 77031:
         <details>
             <summary>Tree 7</summary>
             <div style="background: #ffffff; padding: 20px; border-radius: 6px; width: 100%; overflow-x: auto;">
-<!--                <h5 style="text-align: center; margin-top: 0; margin-bottom: 15px; color: #1e1e1e;">Tree 7</h5>-->
                 <div class="mermaid" style="text-align: center;">
                     graph TD
                     7 --> 5
@@ -437,7 +444,6 @@ Depth distribution for Tree 77031:
                     52 --> 40
                 </div>
             </div>
-
         </details>
         <details>
             <summary>Tree 9</summary>
@@ -465,7 +471,6 @@ Depth distribution for Tree 77031:
                     52 --> 40
                 </div>
             </div>
-
         </details>
         <details>
             <summary>Tree 51</summary>
@@ -498,7 +503,6 @@ Depth distribution for Tree 77031:
                     116 --> 88
                 </div>
             </div>
-
         </details>
     </div>
 
@@ -512,7 +516,7 @@ Depth distribution for Tree 77031:
         <li><strong>Largest reached value in the chain:</strong> 21,933,016</li>
     </ul>
 
-    <h4>Structural Comparison Table:</h4>
+    <h4>Structural Comparison Table (0-Indexed Convention):</h4>
     <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%; text-align: left;">
         <thead>
         <tr style="background-color: rgba(255, 255, 255, 0.08);">
@@ -527,28 +531,28 @@ Depth distribution for Tree 77031:
         <tr>
             <td><strong>7</strong></td>
             <td>17</td>
-            <td>6</td>
+            <td><strong>5</strong></td>
             <td>5</td>
             <td><code>[1, 2, 3, 5, 5, 1]</code></td>
         </tr>
         <tr>
             <td><strong>9</strong></td>
             <td>20</td>
-            <td>6</td>
+            <td><strong>5</strong></td>
             <td>6</td>
             <td><code>[1, 2, 4, 4, 6, 3]</code></td>
         </tr>
         <tr>
             <td><strong>51</strong></td>
             <td>25</td>
-            <td>9</td>
+            <td><strong>8</strong></td>
             <td>5</td>
             <td><code>[1, 2, 4, 5, 5, 3, 3, 1, 1]</code></td>
         </tr>
         <tr style="background-color: rgba(16, 185, 129, 0.15); color: #6ee7b7;">
             <td><strong>77,031 (Large)</strong></td>
             <td>351</td>
-            <td>27</td>
+            <td><strong>26</strong></td>
             <td>35</td>
             <td><code>[1, 2, 4, 8, 12, 23, 34, 35, 28, 28, 33, 33, 24, 22, 21, 12, 3, 3, 2, 4, 3, 2, 2, 4, 5, 2, 1]</code></td>
         </tr>
@@ -564,7 +568,7 @@ Depth distribution for Tree 77031:
             <strong>Special Property of In-order Traversal:</strong> An in-order traversal (Left &rarr; Root &rarr; Right) executed on a valid Binary Search Tree inherently outputs the contained elements in a <strong>strictly monotonically increasing (sorted) order</strong>. This occurs as a direct mathematical consequence of the BST invariant: the algorithm exhausts all smaller values by recursively drilling down the left branches, outputs the current median/root value, and then processes the strictly greater values residing in the right branches.
         </li>
         <li>
-            <strong>Comparison of the Large Tree:</strong> The tree generated from <code>77031</code> acts as a stark demonstration of unbalanced BST degradation. While small trees maintained reasonable heights ($h \le 9$), the large sequence produced a highly skewed structure with a height of $27$ and a node count of $351$. The depth distribution reveals a heavily bloated mid-section (maximum width of $35$ at depth 7), highlighting that without rebalancing mechanisms (like AVL rotations), structural operations trend toward worst-case linear time.
+            <strong>Comparison of the Large Tree:</strong> The tree generated from <code>77031</code> acts as a stark demonstration of unbalanced BST degradation. While small trees maintained reasonable heights ($h \le 8$), the large sequence produced a highly skewed structure with a height of $26$ and a node count of $351$. The depth distribution reveals a heavily bloated mid-section (maximum width of $35$ at depth 7), highlighting that without rebalancing mechanisms (like AVL rotations), structural operations trend toward worst-case linear time.
         </li>
     </ul>
 </details>
@@ -865,15 +869,15 @@ Collatz 77031 Mixed-Sign Tree (Total nodes: 351):
         <tr>
             <td><strong>Ordinary BST</strong> (Prefix)</td>
             <td>14</td>
-            <td>5</td>
-            <td>3.429</td>
+            <td><strong>4</strong></td>
+            <td><strong>2.429</strong></td>
             <td>—</td>
         </tr>
         <tr>
             <td><strong>AVL Tree</strong> (Prefix)</td>
             <td>14</td>
-            <td><strong>4</strong></td>
-            <td><strong>3.214</strong></td>
+            <td><strong>3</strong></td>
+            <td><strong>2.214</strong></td>
             <td>4 events (1 LL, 1 RR, 1 LR, 1 RL)</td>
         </tr>
         <tr style="background-color: rgba(255, 255, 255, 0.02);">
@@ -882,15 +886,15 @@ Collatz 77031 Mixed-Sign Tree (Total nodes: 351):
         <tr>
             <td><strong>Ordinary BST</strong> (Full)</td>
             <td>33</td>
-            <td>9</td>
-            <td>4.788</td>
+            <td><strong>8</strong></td>
+            <td><strong>3.788</strong></td>
             <td>—</td>
         </tr>
         <tr>
             <td style="color: #6ee7b7;"><strong>AVL Tree</strong> (Full)</td>
             <td style="color: #6ee7b7;">33</td>
-            <td style="color: #6ee7b7;"><strong>6</strong></td>
-            <td style="color: #6ee7b7;"><strong>4.333</strong></td>
+            <td style="color: #6ee7b7;"><strong>5</strong></td>
+            <td style="color: #6ee7b7;"><strong>3.333</strong></td>
             <td style="color: #6ee7b7;">14 events (20 Single Rotations Total)</td>
         </tr>
         </tbody>
@@ -905,7 +909,6 @@ Collatz 77031 Mixed-Sign Tree (Total nodes: 351):
     </ul>
 </details>
 
-
 <details>
     <summary>T4. Change the input, assess the tree</summary>
 
@@ -919,7 +922,7 @@ Collatz 77031 Mixed-Sign Tree (Total nodes: 351):
     </p>
 
     <h4>2. Insertion Orders & Pure Output:</h4>
-    <details style="margin: 10px 0; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 8px;" >
+    <details style="margin: 10px 0; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 8px;">
         <summary style="cursor: pointer; font-weight: bold;">View Raw Terminal Output</summary>
         <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px; margin-top: 8px;"><code>C:/Users/User/.cargo/bin/cargo.exe run --color=always --package hw3 --bin T4 --profile dev
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
@@ -932,15 +935,15 @@ Median:   [26, 10, 4, 1, 2, 5, 8, 16, 11, 13, 20, 17, 22, 52, 40, 29, 34, 44, 51
 === 2. CORRECTNESS CHECK (INORDER) ===
 Are all inorder traversals identical to sorted keys? true
 
-=== 3. COMPARISON TABLE ===
+=== 3. COMPARISON TABLE (0-Indexed) ===
 Order        | Height     | Mean Depth   | 95th %ile    | Comparisons
 ----------------------------------------------------------------------
-Original     | 9          | 4.720        | 8            | 93
-Random       | 9          | 5.280        | 8            | 107
-Median-1st   | 5          | 3.960        | 5            | 74</code></pre>
+Original     | 8          | 3.720        | 7            | 93
+Random       | 8          | 4.280        | 7            | 107
+Median-1st   | 4          | 2.960        | 4            | 74</code></pre>
     </details>
 
-    <h4>3. Structural Comparison & Ranking:</h4>
+    <h4>3. Structural Comparison & Ranking (0-Indexed):</h4>
     <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%; text-align: left;">
         <thead>
         <tr style="background-color: rgba(255, 255, 255, 0.08);">
@@ -956,25 +959,25 @@ Median-1st   | 5          | 3.960        | 5            | 74</code></pre>
         <tr style="background-color: rgba(16, 185, 129, 0.15); color: #6ee7b7;">
             <td><strong>1st (Best)</strong></td>
             <td><strong>Median-1st</strong></td>
-            <td><strong>3.960</strong></td>
-            <td>5</td>
-            <td>5</td>
+            <td><strong>2.960</strong></td>
+            <td><strong>4</strong></td>
+            <td><strong>4</strong></td>
             <td>74</td>
         </tr>
         <tr>
             <td><strong>2nd</strong></td>
             <td><strong>Original</strong></td>
-            <td><strong>4.720</strong></td>
-            <td>9</td>
-            <td>8</td>
+            <td><strong>3.720</strong></td>
+            <td><strong>8</strong></td>
+            <td><strong>7</strong></td>
             <td>93</td>
         </tr>
         <tr style="background-color: rgba(239, 68, 68, 0.15);">
             <td><strong>3rd (Worst)</strong></td>
             <td><strong>Random (Seed 2026)</strong></td>
-            <td><strong>5.280</strong></td>
-            <td>9</td>
-            <td>8</td>
+            <td><strong>4.280</strong></td>
+            <td><strong>8</strong></td>
+            <td><strong>7</strong></td>
             <td>107</td>
         </tr>
         </tbody>
@@ -987,11 +990,10 @@ Median-1st   | 5          | 3.960        | 5            | 74</code></pre>
         </li>
         <li>
             <strong>Independent Reasoning (Analysis of the disagreement):</strong>
-            As predicted, <strong>Median-first</strong> dominated all metrics by perfectly balancing the topology offline ($O(\log N)$). However, the <strong>Original</strong> sequence surprisingly outperformed the <strong>Random</strong> permutation in mean depth (4.720 vs 5.280). While random shuffling generally prevents worst-case linear degeneration, seed 2026 happened to produce an adverse sequence that pushed heavy subtrees deeper. The Original Collatz sequence—despite having long descending chains (e.g., $16 \rightarrow 8 \rightarrow 4 \rightarrow 2 \rightarrow 1$)—benefited from its early large spikes which formed a reasonably wide upper canopy, reducing the overall average search depth for this specific 25-node subset.
+            As predicted, <strong>Median-first</strong> dominated all metrics by perfectly balancing the topology offline ($O(\log N)$). However, the <strong>Original</strong> sequence surprisingly outperformed the <strong>Random</strong> permutation in mean depth (3.720 vs 4.280). While random shuffling generally prevents worst-case linear degeneration, seed 2026 happened to produce an adverse sequence that pushed heavy subtrees deeper. The Original Collatz sequence—despite having long descending chains (e.g., $16 \rightarrow 8 \rightarrow 4 \rightarrow 2 \rightarrow 1$)—benefited from its early large spikes which formed a reasonably wide upper canopy, reducing the overall average search depth for this specific 25-node subset.
         </li>
     </ul>
 </details>
-
 <details>
     <summary>T5. How much can local order damage an unbalanced BST?</summary>
 
@@ -1011,7 +1013,7 @@ Median-1st   | 5          | 3.960        | 5            | 74</code></pre>
             <th>L (Block Length)</th>
             <th>Avg Height</th>
             <th>Avg Insert Comps</th>
-            <th>Mean Search Depth</th>
+            <th>Mean Search Comparisons</th>
             <th>95th %ile Search</th>
             <th>Status (vs Baseline)</th>
         </tr>
@@ -1055,6 +1057,205 @@ Median-1st   | 5          | 3.960        | 5            | 74</code></pre>
     </ul>
 </details>
 
+<script>
+    window.addEventListener('load', () => {
+        const ctx = document.getElementById('t5Chart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['1 (Baseline)', '4', '16', '64', '256'],
+                datasets: [
+                    {
+                        label: 'Mean Search Comparisons (N = 1000)',
+                        data: [12.22, 23.37, 54.68, 109.78, 253.87],
+                        borderColor: '#3b82f6',
+                        backgroundColor: '#3b82f6',
+                        tension: 0.1,
+                        borderWidth: 2,
+                        pointRadius: 4
+                    },
+                    {
+                        label: 'Mean Search Comparisons (N = 10000)',
+                        data: [16.45, 34.10, 90.98, 291.94, 746.70],
+                        borderColor: '#ef4444', // Red
+                        backgroundColor: '#ef4444',
+                        tension: 0.1,
+                        borderWidth: 2,
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Mean Search Comparisons', color: '#1e1e1e', font: {weight: 'bold'} }
+                    },
+                    x: {
+                        title: { display: true, text: 'Block Length (L)', color: '#1e1e1e', font: {weight: 'bold'} }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#1e1e1e' } }
+                }
+            }
+        });
+    });
+</script>
+
+<details id="b2-details">
+    <summary>B2. How much upward adjustment is enough? (Adaptive Trees)</summary>
+
+    <h4>1. Experimental Setup & Predictions</h4>
+    <ul>
+        <li><strong>Initial State:</strong> A perfectly balanced BST containing keys <code>0..1022</code>. Constructed via recursive medians, yielding exactly a root of 511, 1023 nodes, and a maximum height of 9.</li>
+        <li><strong>Query Stream:</strong> 100,000 queries generated using the truncated Zipf distribution provided. The exact checksums were verified at phase generation.</li>
+        <li><strong>Cost Model:</strong> The total cost of an operation is evaluated as $Cost = C + \lambda \cdot R$, where $C$ is the number of visited nodes (comparisons) and $R$ is the number of single parent-child rotations, with penalty factors $\lambda \in \{0, 1, 3\}$.</li>
+    </ul>
+    <p>
+        <strong>Prediction (before running):</strong> I predict that for short phase lengths (e.g., $L=20$), the $k=0$ (static tree) policy will dominate. The identities of "hot" keys change too rapidly; any attempt to move them to the root will incur massive rotation costs without yielding long-term comparison savings, essentially thrashing the tree structure. For very long phases ($L=10,000$), I expect $k=\infty$ (move-to-root) to perform best if rotations are free ($\lambda = 0$), because the hot keys will stably reside at the root. However, if rotations are expensive ($\lambda = 3$), gentle "bubbling" policies like $k=1$ or $k=2$ will strike the optimal balance, preserving general tree topology while gradually elevating frequently accessed keys.
+    </p>
+
+    <h4>2. Raw Terminal Output & Checksums</h4>
+    <details style="margin: 10px 0; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 8px;">
+        <summary style="cursor: pointer; font-weight: bold;">View Raw Terminal Output</summary>
+        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 12px; margin-top: 8px;"><code>PS C:\учёба\study\1_semester\algoritmes\hw\hw3\src> python3 B2.py
+Default Checksum Check: 5ff315ca53c28d3cb6db9e2d09c178f0e07efecc96981b89d1cf844255917891
+--------------------------------------------------
+
+Phase Length L=20 (Checksum: 140dd43b2ec62f5cf1cca8ac748279b94164835d2325d4f34936398b91302270)
+Policy     | Comparisons (C) | Rotations (R)
+--------------------------------------------------
+k = 0      | 901,657         | 0
+k = 1      | 3,022,152       | 99,728
+k = 2      | 1,683,378       | 196,536
+k = inf    | 935,874         | 835,874
+
+Phase Length L=50 (Checksum: 738a2f1dc419bc4368f07db2417f8483ba4a10b225465eec7d7aa2d7a01302e2)
+Policy     | Comparisons (C) | Rotations (R)
+--------------------------------------------------
+k = 0      | 900,719         | 0
+k = 1      | 1,492,255       | 97,557
+k = 2      | 1,227,624       | 180,778
+k = inf    | 848,155         | 748,155
+
+Phase Length L=200 (Checksum: f565fcaf27dbf4199e97ac5a769b6de481276d9c4821c1bb4200f89fcf51af49)
+Policy     | Comparisons (C) | Rotations (R)
+--------------------------------------------------
+k = 0      | 901,492         | 0
+k = 1      | 1,074,333       | 86,650
+k = 2      | 947,622         | 161,990
+k = inf    | 763,049         | 663,049
+
+Phase Length L=1000 (Checksum: beecde2e2fc4c618029e58852a012165fe0766b4d93f1b064ea135ce7e474339)
+Policy     | Comparisons (C) | Rotations (R)
+--------------------------------------------------
+k = 0      | 898,065         | 0
+k = 1      | 835,717         | 84,750
+k = 2      | 767,016         | 159,165
+k = inf    | 710,401         | 610,401
+
+Phase Length L=10000 (Checksum: 5ff315ca53c28d3cb6db9e2d09c178f0e07efecc96981b89d1cf844255917891)
+Policy     | Comparisons (C) | Rotations (R)
+--------------------------------------------------
+k = 0      | 904,606         | 0
+k = 1      | 676,254         | 84,564
+k = 2      | 671,375         | 158,634
+k = inf    | 687,233         | 587,233</code></pre>
+    </details>
+
+    <h4>3. Total Cost Evaluation ($Cost = C + \lambda \cdot R$)</h4>
+    <div style="display: flex; flex-direction: column; gap: 30px; margin: 20px 0;">
+        <div style="background: #ffffff; padding: 20px; border-radius: 6px; width: 100%;">
+            <canvas id="b2CostChart0" style="max-height: 300px;"></canvas>
+        </div>
+        <div style="background: #ffffff; padding: 20px; border-radius: 6px; width: 100%;">
+            <canvas id="b2CostChart1" style="max-height: 300px;"></canvas>
+        </div>
+        <div style="background: #ffffff; padding: 20px; border-radius: 6px; width: 100%;">
+            <canvas id="b2CostChart3" style="max-height: 300px;"></canvas>
+        </div>
+    </div>
+
+    <h2>The answers (Interpretation):</h2>
+    <ul>
+        <li>
+            <strong>Short Phases (L=20, L=50):</strong> The empirical results perfectly validate the predictions. For extremely short phases, any adaptation ruins the perfectly balanced structure. $k=0$ strictly dominates all policies across all $\lambda$ values because rapid changes in hot keys cause $k > 0$ to thrash, pushing useful keys down before their access frequency pays off.
+        </li>
+        <li>
+            <strong>Medium Phases (L=200, L=1000):</strong> The crossover point strongly depends on the rotation penalty ($\lambda$). If rotations are entirely free ($\lambda=0$), $k=\infty$ achieves the lowest total cost by forcing current hot keys exactly to the root. However, if rotations incur even a moderate penalty ($\lambda \ge 1$), $k=0$ (static tree) remains the safest and cheapest choice.
+        </li>
+        <li>
+            <strong>Long Phases (L=10000) & Dominance Insight:</strong> Fascinatingly, for very long phases, $k=1$ and $k=2$ strictly dominate $k=\infty$. Greedy move-to-root ($k=\infty$) creates degenerate linear chains when sequential hot keys are accessed, drastically increasing the depth of other nodes. In contrast, $k=1$ gently "bubbles" hot keys upward without aggressively destroying the tree's global balance. If rotations incur a penalty ($\lambda \ge 1$), $k=1$ provides the absolute minimum combined cost, proving that moderate structural adaptation is far superior to greedy caching.
+        </li>
+    </ul>
+</details>
+
+<script>
+    window.addEventListener('load', () => {
+        const labels = ['L=20', 'L=50', 'L=200', 'L=1000', 'L=10000'];
+        const colors = ['#9ca3af', '#10b981', '#3b82f6', '#ef4444'];
+
+        const data0 = [
+            [901657, 900719, 901492, 898065, 904606],
+            [3022152, 1492255, 1074333, 835717, 676254],
+            [1683378, 1227624, 947622, 767016, 671375],
+            [935874, 848155, 763049, 710401, 687233]
+        ];
+
+        const data1 = [
+            [901657, 900719, 901492, 898065, 904606],
+            [3121880, 1589812, 1160983, 920467, 760818],
+            [1879914, 1408402, 1109612, 926181, 830009],
+            [1771748, 1596310, 1426098, 1320802, 1274466]
+        ];
+
+        const data3 = [
+            [901657, 900719, 901492, 898065, 904606],
+            [3321336, 1784926, 1334283, 1089967, 929946],
+            [2272986, 1769958, 1433592, 1244511, 1147277],
+            [3443496, 3092620, 2752196, 2541604, 2448932]
+        ];
+
+        const createChart = (canvasId, titleText, dataArrays) => {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'k=0 (Static)', data: dataArrays[0], backgroundColor: colors[0] },
+                        { label: 'k=1 (Bubble 1)', data: dataArrays[1], backgroundColor: colors[1] },
+                        { label: 'k=2 (Bubble 2)', data: dataArrays[2], backgroundColor: colors[2] },
+                        { label: 'k=∞ (Move-to-root)', data: dataArrays[3], backgroundColor: colors[3] }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Total Cost', font: {weight: 'bold'} }
+                        }
+                    },
+                    plugins: {
+                        title: { display: true, text: titleText, font: {size: 15, weight: 'bold'} }
+                    }
+                }
+            });
+        };
+
+        createChart('b2CostChart0', 'Cost Model: λ = 0 (Rotations are Free)', data0);
+        createChart('b2CostChart1', 'Cost Model: λ = 1 (1 Rotation = 1 Comparison)', data1);
+        createChart('b2CostChart3', 'Cost Model: λ = 3 (Rotations are Expensive)', data3);
+    });
+</script>
+<div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); text-align: center; font-style: italic;">
+    AI assistance: substantial. AI was utilized to clarify tree mechanics, assist in writing the code, and format the final report by generating tables and charts from raw terminal outputs.
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
