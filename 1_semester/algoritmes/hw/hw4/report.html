@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>HW4. Heaps, Priority Queues, and Succinct Trees</title>
+    <meta name="reference" content="Heap Data Structure | https://www.geeksforgeeks.org/dsa/heap-data-structure/">
+    <meta name="reference" content="Building Heap from Array | https://www.geeksforgeeks.org/dsa/building-heap-from-array/">
+    <meta name="reference" content="Binary heap | https://en.wikipedia.org/wiki/Binary_heap/">
+    <meta name="reference" content="Rust | https://doc.rust-lang.ru/">
+
+
+    <link rel="stylesheet" href="../../styles.css">
+    <script src="../../header.js" defer></script>
+    <script src="../../footer.js" defer></script>
+</head>
+<body>
+
+<details>
+    <summary>T1. How difficult can bottom-up heapify be?</summary>
+
+    <h4>1. Adversarial Input Array</h4>
+    <p>
+        Elements from $0$ through $14$ distributed so that every internal node key strictly exceeds all descendants in its subtree, forcing maximal downward movement:
+    </p>
+    <pre style="background-color: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 4px; overflow-x: auto;"><code>[14, 13, 12, 11, 10, 9, 8, 0, 1, 2, 3, 4, 5, 6, 7]</code></pre>
+
+    <h4>2. Upper Bound on Swaps & Proof of Maximality</h4>
+    <p>
+        In a complete binary tree of $n = 15$ nodes, the maximal depth of sift-down for any node is bounded by its height $h$:
+    </p>
+    <div class="math-left">
+        $$\text{4 subheaps of size 3 (height 1, roots at indices 3–6): } 4 \times 1 = 4\text{ swaps}$$
+        $$\text{2 subheaps of size 7 (height 2, roots at indices 1–2): } 2 \times 2 = 4\text{ swaps}$$
+        $$\text{1 subheap of size 15 (height 3, root at index 0): } 1 \times 3 = 3\text{ swaps}$$
+        $$S_{\max} = \sum_{h=1}^{\lfloor \log_2 15 \rfloor} h \cdot 2^{3 - h} = (4 \times 1) + (2 \times 2) + (1 \times 3) = \mathbf{11\text{ swaps}}$$
+    </div>
+    <p>
+        Since each sift-down step can exchange a node at most once per tree level, $S_{\max} = 11$ is an absolute upper bound. Because our array achieves exactly 11 swaps, it reaches this bound and is provably as difficult as possible.
+    </p>
+
+    <h4>3. Seven-Row Bottom-Up Trace (Floyd's Heapify)</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Step</th>
+            <th>Processed Index</th>
+            <th>Array State After Step</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Initial</strong></td>
+            <td>—</td>
+            <td><code>[14, 13, 12, 11, 10, 9, 8, 0, 1, 2, 3, 4, 5, 6, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 1</strong></td>
+            <td>$i = 6$</td>
+            <td><code>[14, 13, 12, 11, 10, 9, 6, 0, 1, 2, 3, 4, 5, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 2</strong></td>
+            <td>$i = 5$</td>
+            <td><code>[14, 13, 12, 11, 10, 4, 6, 0, 1, 2, 3, 9, 5, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 3</strong></td>
+            <td>$i = 4$</td>
+            <td><code>[14, 13, 12, 11, 2, 4, 6, 0, 1, 10, 3, 9, 5, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 4</strong></td>
+            <td>$i = 3$</td>
+            <td><code>[14, 13, 12, 0, 2, 4, 6, 11, 1, 10, 3, 9, 5, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 5</strong></td>
+            <td>$i = 2$</td>
+            <td><code>[14, 13, 4, 0, 2, 5, 6, 11, 1, 10, 3, 9, 12, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 6</strong></td>
+            <td>$i = 1$</td>
+            <td><code>[14, 0, 4, 1, 2, 5, 6, 11, 13, 10, 3, 9, 12, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 7</strong></td>
+            <td>$i = 0$</td>
+            <td><code>[0, 1, 4, 11, 2, 5, 6, 14, 13, 10, 3, 9, 12, 8, 7]</code></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h4>4. Invariant Verification & Method Comparison</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Method</th>
+            <th>Final Heap Array</th>
+            <th>Key Comparisons</th>
+            <th>Swaps</th>
+            <th>Min-Heap Invariant Valid</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Bottom-Up (Floyd)</strong></td>
+            <td><code>[0, 1, 4, 11, 2, 5, 6, 14, 13, 10, 3, 9, 12, 8, 7]</code></td>
+            <td>22</td>
+            <td>11</td>
+            <td><strong>true</strong> ($\forall i: A[i] \le A[2i+1], A[2i+2]$)</td>
+        </tr>
+        <tr>
+            <td><strong>Sequential Insertion (Williams)</strong></td>
+            <td><code>[0, 1, 4, 8, 2, 5, 6, 14, 11, 12, 3, 13, 9, 10, 7]</code></td>
+            <td>27</td>
+            <td>20</td>
+            <td><strong>true</strong> ($\forall i: A[i] \le A[2i+1], A[2i+2]$)</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>The answers (Argument & Comparison):</h2>
+    <p>
+        Every internal node in the adversarial input exceeds all keys in its subtree, while leaves hold $\{0, \dots, 7\}$. Each sift-down path follows smaller children directly to the leaves, executing $4 \times 1 + 2 \times 2 + 1 \times 3 = 11$ swaps and matching the theoretical upper bound.
+        Williams' insertion processes the same array via sift-up. Because small leaf values are inserted last, they bubble up repeatedly across deep branches, resulting in 20 swaps and 27 comparisons. Floyd's bottom-up method proves far more efficient (11 swaps, 22 comparisons) because it bounds movement by tree height rather than node depth.
+    </p>
+</details>
+
+</body>
+<script>
+    window.addEventListener('load', () => {
+        const ctx = document.getElementById('t5Chart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['1 (Baseline)', '4', '16', '64', '256'],
+                datasets: [
+                    {
+                        label: 'Mean Search Depth (N = 1000)',
+                        data: [12.22, 23.37, 54.68, 109.78, 253.87],
+                        borderColor: '#3b82f6', // Blue
+                        backgroundColor: '#3b82f6',
+                        tension: 0.1,
+                        borderWidth: 2,
+                        pointRadius: 4
+                    },
+                    {
+                        label: 'Mean Search Depth (N = 10000)',
+                        data: [16.45, 34.10, 90.98, 291.94, 746.70],
+                        borderColor: '#ef4444', // Red
+                        backgroundColor: '#ef4444',
+                        tension: 0.1,
+                        borderWidth: 2,
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Mean Search Comparisons', color: '#1e1e1e', font: {weight: 'bold'} }
+                    },
+                    x: {
+                        title: { display: true, text: 'Block Length (L)', color: '#1e1e1e', font: {weight: 'bold'} }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#1e1e1e' } }
+                }
+            }
+        });
+    });
+</script>
+</html>
