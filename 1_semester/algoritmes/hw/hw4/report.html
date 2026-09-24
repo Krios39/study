@@ -126,7 +126,100 @@
         Williams' insertion processes the same array via sift-up. Because small leaf values are inserted last, they bubble up repeatedly across deep branches, resulting in 20 swaps and 27 comparisons. Floyd's bottom-up method proves far more efficient (11 swaps, 22 comparisons) because it bounds movement by tree height rather than node depth.
     </p>
 </details>
+<details>
+    <summary>T2. Construct a left-heavy min-heap</summary>
 
+    <h4>1. Final Array, Insertion Order & Construction Formula</h4>
+    <p>
+        To achieve the left-heavy condition without violating the min-heap property, we start with a sorted array $A = [1, 2, \dots, 20]$ and reverse the elements at each depth level $d \ge 1$ (where the root is at $d=0$). For a 0-indexed array of size $N$, the elements at level $d$ span the index range:
+    </p>
+    <div class="math-left">
+        $$\text{Level } d \text{ indices: } [\, 2^d - 1, \min(2^{d+1} - 2, N - 1) \,]$$
+    </div>
+    <p>
+        Reversing these specific sub-arrays systematically shifts the heaviest available values to the left branches. This permutation serves as both the final min-heap array and the sequential insertion order:
+    </p>
+    <pre style="background-color: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 4px; overflow-x: auto;"><code>[1, 3, 2, 7, 6, 5, 4, 15, 14, 13, 12, 11, 10, 9, 8, 20, 19, 18, 17, 16]</code></pre>
+
+    <h4>2. Final Tree Structure</h4>
+    <p>
+        Visual representation of the complete binary min-heap (root on the left, left children denoted by <code>┌──</code> and right children by <code>└──</code>). Heavy values are systematically shifted to the left subtrees.
+    </p>
+    <pre style="background-color: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 4px; overflow-x: auto;"><code>│           ┌── 8
+│       ┌── 4
+│       │   └── 9
+│   ┌── 2
+│   │   │   ┌── 10
+│   │   └── 5
+│   │       └── 11
+1
+    │       ┌── 12
+    │   ┌── 6
+    │   │   └── 13
+    │   │       └── 16
+    └── 3
+        │       ┌── 17
+        │   ┌── 14
+        │   │   └── 18
+        └── 7
+            │   ┌── 19
+            └── 15
+                └── 20</code></pre>
+
+    <h4>3. Compact Subtree-Sum Table</h4>
+    <p>
+        Verification of the additional "left-heavy" condition. The table includes only the internal nodes that have exactly two non-empty subtrees.
+    </p>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Index $i$</th>
+            <th>Node Value $A[i]$</th>
+            <th>$\text{Sum(Left)}$</th>
+            <th>$\text{Sum(Right)}$</th>
+            <th>Condition $\text{L} > \text{R}$</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr><td>0</td><td>1</td><td>160</td><td>49</td><td><strong>true</strong></td></tr>
+        <tr><td>1</td><td>3</td><td>110</td><td>47</td><td><strong>true</strong></td></tr>
+        <tr><td>2</td><td>2</td><td>26</td><td>21</td><td><strong>true</strong></td></tr>
+        <tr><td>3</td><td>7</td><td>54</td><td>49</td><td><strong>true</strong></td></tr>
+        <tr><td>4</td><td>6</td><td>29</td><td>12</td><td><strong>true</strong></td></tr>
+        <tr><td>5</td><td>5</td><td>11</td><td>10</td><td><strong>true</strong></td></tr>
+        <tr><td>6</td><td>4</td><td>9</td><td>8</td><td><strong>true</strong></td></tr>
+        <tr><td>7</td><td>15</td><td>20</td><td>19</td><td><strong>true</strong></td></tr>
+        <tr><td>8</td><td>14</td><td>18</td><td>17</td><td><strong>true</strong></td></tr>
+        </tbody>
+    </table>
+
+    <h4>4. Automatic Replay (Insertion Simulation)</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Metric</th>
+            <th>Result</th>
+            <th>Min-Heap Invariant Valid</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Total Elements Inserted</strong></td>
+            <td>20</td>
+            <td rowspan="2"><strong>true</strong> ($\forall i: A[i] \le A[2i+1], A[2i+2]$)</td>
+        </tr>
+        <tr>
+            <td><strong>Total Swaps Required</strong></td>
+            <td><strong>0</strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>The answer (Argument):</h2>
+    <p>
+        Standard binary heap insertion adds elements level by level from left to right. A swap (sift-up) only occurs if a newly inserted child is strictly less than its parent. Since our array is perfectly pre-constructed so that every child is strictly greater than its parent (intrinsically satisfying the min-heap property), the sift-up condition is never met. Therefore, inserting this sequence element by element naturally builds the exact final heap without requiring a single swap operation.
+    </p>
+</details>
 </body>
 <script>
     window.addEventListener('load', () => {

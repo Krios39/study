@@ -14,8 +14,6 @@ fn main() {
 
     let mut total_swaps = 0;
     let mut total_comps = 0;
-
-    // Проходим внутренние вершины от 6 вниз до 0
     for i in (0..=6).rev() {
         let (comps, swaps) = sift_down(&mut heap, i, 15);
         total_comps += comps;
