@@ -158,7 +158,69 @@
                 </div>
             </div>
         </details>
+        <details>
+            <summary>Bonus Exercise 3: Communication Performance (Pickle vs. Raw Buffers)</summary>
+            <div class="details-content">
+                <p><strong>Overview & Benchmark Objective:</strong></p>
+                <p>This bonus test evaluates the performance trade-offs between Python object serialization (using lowercase <code>comm.send()</code> / <code>comm.recv()</code> powered by <code>pickle</code>) and direct C-level memory communication (using capitalized <code>comm.Send()</code> / <code>comm.Recv()</code> with NumPy memory buffers).</p>
 
+                <p><strong>Empirical Benchmark Results:</strong></p>
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace;">
+                    <thead>
+                        <tr style="background: #2d2d2d; color: #fff; text-align: left;">
+                            <th style="padding: 8px; border: 1px solid #444;">Test Case</th>
+                            <th style="padding: 8px; border: 1px solid #444;">Pickle (comm.send) [s]</th>
+                            <th style="padding: 8px; border: 1px solid #444;">Raw Buffer (comm.Send) [s]</th>
+                            <th style="padding: 8px; border: 1px solid #444;">Speedup</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 6px; border: 1px solid #ddd;">Small 1D (10^2 elements)</td>
+                            <td style="padding: 6px; border: 1px solid #ddd;">0.000067</td>
+                            <td style="padding: 6px; border: 1px solid #ddd;">0.000013</td>
+                            <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold; color: #2e7d32;">5.4x</td>
+                        </tr>
+                        <tr style="background: #f9f9f9;">
+                            <td style="padding: 6px; border: 1px solid #ddd;">Medium 1D (10^5 elements)</td>
+                            <td style="padding: 6px; border: 1px solid #ddd;">0.000774</td>
+                            <td style="padding: 6px; border: 1px solid #ddd;">0.000448</td>
+                            <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold; color: #2e7d32;">1.7x</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px; border: 1px solid #ddd;">Large 1D (10^7 elements)</td>
+                            <td style="padding: 6px; border: 1px solid #ddd;">0.084133</td>
+                            <td style="padding: 6px; border: 1px solid #ddd;">0.034635</td>
+                            <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold; color: #2e7d32;">2.4x</td>
+                        </tr>
+                        <tr style="background: #f9f9f9;">
+                            <td style="padding: 6px; border: 1px solid #ddd;">2D Matrix (1000x1000 float)</td>
+                            <td style="padding: 6px; border: 1px solid #ddd;">0.008175</td>
+                            <td style="padding: 6px; border: 1px solid #ddd;">0.002125</td>
+                            <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold; color: #2e7d32;">3.8x</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px; border: 1px solid #ddd;">Integer Datatype (10^6 elements)</td>
+                            <td style="padding: 6px; border: 1px solid #ddd;">0.003565</td>
+                            <td style="padding: 6px; border: 1px solid #ddd;">0.000513</td>
+                            <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold; color: #2e7d32;">6.9x</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Conclusions & Best Practices</h2>
+                <ul>
+                    <li><strong>Array Sizes & Datatypes:</strong> Direct raw buffer transfers consistently outperform Python's pickling mechanism across all tested payloads, showing significant speedups (up to ~6.9x for integer arrays). The performance gain stems from bypassing the Python interpreter serialization layer and leveraging direct C-level memory copying.</li>
+                    <li><strong>Data Dimensions & Layout:</strong> Multi-dimensional structures (like the 2D matrix) and contiguous arrays translate well to MPI memory maps, provided they maintain C-contiguity.</li>
+                    <li><strong>When to use which:</strong>
+                        <ul style="margin-top: 5px;">
+                            <li>Use <strong>Raw Buffers (<code>comm.Send</code> / <code>comm.Recv</code>)</strong> for performance-critical numerical pipelines, large matrices, and heavy scientific computations.</li>
+                            <li>Use <strong>Pickle-based methods (<code>comm.send</code> / <code>comm.recv</code>)</strong> only when transmitting arbitrary, non-contiguous Python objects (dictionaries, nested lists, strings) where flexibility matters more than peak throughput.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </details>
 
     </body>
     <script>
