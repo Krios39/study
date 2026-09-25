@@ -220,6 +220,56 @@
         Standard binary heap insertion adds elements level by level from left to right. A swap (sift-up) only occurs if a newly inserted child is strictly less than its parent. Since our array is perfectly pre-constructed so that every child is strictly greater than its parent (intrinsically satisfying the min-heap property), the sift-up condition is never met. Therefore, inserting this sequence element by element naturally builds the exact final heap without requiring a single swap operation.
     </p>
 </details>
+
+<details>
+<summary>T3. Heapify, sorting, and draining a heap</summary>
+
+<h4>1. Environment, Setup, and Prediction</h4>
+<p>
+<strong>Environment:</strong> Python 3 (Windows), execution timed via <code>time.perf_counter()</code>.<br>
+<strong>Setup:</strong> Random permutations of distinct integers. Each size was repeated 5 times using independent input copies prepared before starting the timer. Only the specific operation was timed.<br>
+<strong>Prediction:</strong> <code>heapify</code> + <code>heappop</code> drain will be the slowest due to Python loop overhead. The <code>sorted()</code> function is highly optimized in C (Timsort), but since its complexity is $\Theta(n \log n)$, the $\Theta(n)$ <code>heapify</code> should eventually overtake it.
+</p>
+
+<h4>2. Median Timing Table</h4>
+<table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+<thead>
+<tr style="background-color: rgba(255, 255, 255, 0.05);">
+<th>Input Size ($n$)</th>
+<th><code>heapq.heapify</code> (s)</th>
+<th><code>sorted()</code> (s)</th>
+<th><code>heapify</code> + drain (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>10,000</td><td>0.000232</td><td>0.001031</td><td>0.002842</td></tr>
+<tr><td>50,000</td><td>0.001161</td><td>0.006511</td><td>0.017512</td></tr>
+<tr><td>100,000</td><td>0.006135</td><td>0.021635</td><td>0.060654</td></tr>
+<tr><td>500,000</td><td>0.016832</td><td>0.115728</td><td>0.523506</td></tr>
+<tr><td>1,000,000</td><td>0.035599</td><td>0.260711</td><td>1.374629</td></tr>
+<tr><td>2,000,000</td><td>0.074252</td><td>0.602061</td><td>3.349698</td></tr>
+</tbody>
+</table>
+
+<h4>3. Crossover Result & Correctness Check</h4>
+<ul>
+<li><strong>Crossover Point:</strong> <code>heapq.heapify</code> proved strictly faster than <code>sorted()</code> starting at the very first tested size of <strong>$n = 10,000$</strong> and maintained this lead throughout, successfully demonstrating the advantage of its linear time complexity over Timsort's $O(n \log n)$ bound.</li>
+<li><strong>Correctness:</strong> Automated checks confirmed that Method 2 (<code>sorted()</code>) and Method 3 (<code>heapify</code> + drain) produced perfectly identical sorted arrays across all iterations.</li>
+</ul>
+
+<h4>4. Performance Plot</h4>
+<p>
+<em>Note: Ensure the generated image file is in the same directory as this HTML file.</em><br>
+<img src="T3_plot.png" alt="Heapify vs Sorted vs Heap Draining Performance Plot" style="max-width: 100%; height: auto; border: 1px solid #ccc; border-radius: 4px; margin-top: 10px;">
+</p>
+
+<h2>The answer (Argument connecting measurements with asymptotic bounds):</h2>
+<p>
+Bottom-up <code>heapify</code> runs in strict $\Theta(n)$ time because the maximum distance any node can sift down depends on its height. In a complete binary tree, most nodes are leaves requiring zero operations. The sum of heights for all nodes in an $n$-element tree is mathematically bounded by $O(n)$, making the structural reorganization purely linear. This is evident in the table, where <code>heapify</code> scales linearly and consistently beats <code>sorted()</code>.
+<br><br>
+Conversely, emptying the heap via $n$ calls to <code>extract-min</code> takes $\Theta(n \log n)$ time. Each extraction removes the root, replaces it with a leaf, and forces a sift-down operation spanning the tree's depth ($\Theta(\log n)$). Repeating this $n$ times intrinsically scales the cost to $\Theta(n \log n)$. Thus, heapify plus draining constitutes a complete sorting algorithm, while heapify alone does not sort the array.
+</p>
+</details>
 </body>
 <script>
     window.addEventListener('load', () => {
