@@ -1,0 +1,39 @@
+{
+  "run": "full_s10240_v32_r1",
+  "rep": 1,
+  "config": "full",
+  "target": "xroad",
+  "size": 10240,
+  "vus": 32,
+  "n": 1000,
+  "warmup": 200,
+  "wall_s": 27.113,
+  "started": "2026-09-23T13:29:58.638Z",
+  "finished": "2026-09-23T13:30:26.568Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 34080263,
+      "tx": 33527515
+    },
+    "ss2": {
+      "rx": 32870972,
+      "tx": 34300286
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 33054720,
+    "ss2": 34635776
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 2,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 0.0185
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]"
+  },
+  "k6_stdout": "full\txroad\tsize=10240\tvus=32\trep=1\tp50=626.6\tp90=885.3\tp99=1094.0\terrors=0"
+}

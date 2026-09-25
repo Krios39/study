@@ -1,0 +1,4 @@
+# Доп. access-лог testca с номером порта: чтобы различать OCSP (8888) и TSA (8899) при подсчёте обращений за прогон.
+# Монтируется в /etc/nginx/sites-enabled/ контейнера ca (см. docker-compose.yml). Штатный combined-лог остаётся.
+log_format ports '$server_port $remote_addr [$time_iso8601] "$request" $status $body_bytes_sent $request_time';
+access_log /dev/stdout ports;
