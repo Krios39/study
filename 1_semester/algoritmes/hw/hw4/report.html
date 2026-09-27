@@ -5,13 +5,14 @@
     <title>HW4. Heaps, Priority Queues, and Succinct Trees</title>
     <meta name="reference" content="Heap Data Structure | https://www.geeksforgeeks.org/dsa/heap-data-structure/">
     <meta name="reference" content="Building Heap from Array | https://www.geeksforgeeks.org/dsa/building-heap-from-array/">
-    <meta name="reference" content="Binary heap | https://en.wikipedia.org/wiki/Binary_heap/">
+    <meta name="reference" content="Binary heap | https://en.wikipedia.org/wiki/Binary_heap">
     <meta name="reference" content="Rust | https://doc.rust-lang.ru/">
-
+    <meta name="reference" content="Binary heap | https://www.geeksforgeeks.org/dsa/k-ary-heap/">
 
     <link rel="stylesheet" href="../../styles.css">
     <script src="../../header.js" defer></script>
     <script src="../../footer.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -220,7 +221,6 @@
         Standard binary heap insertion adds elements level by level from left to right. A swap (sift-up) only occurs if a newly inserted child is strictly less than its parent. Since our array is perfectly pre-constructed so that every child is strictly greater than its parent (intrinsically satisfying the min-heap property), the sift-up condition is never met. Therefore, inserting this sequence element by element naturally builds the exact final heap without requiring a single swap operation.
     </p>
 </details>
-
 <details>
 <summary>T3. Heapify, sorting, and draining a heap</summary>
 
@@ -270,6 +270,231 @@ Bottom-up <code>heapify</code> runs in strict $\Theta(n)$ time because the maxim
 Conversely, emptying the heap via $n$ calls to <code>extract-min</code> takes $\Theta(n \log n)$ time. Each extraction removes the root, replaces it with a leaf, and forces a sift-down operation spanning the tree's depth ($\Theta(\log n)$). Repeating this $n$ times intrinsically scales the cost to $\Theta(n \log n)$. Thus, heapify plus draining constitutes a complete sorting algorithm, while heapify alone does not sort the array.
 </p>
 </details>
+<details>
+    <summary>T4. Which heap arity works for a streaming top-m filter?</summary>
+
+    <h4>1. Formulas and Implementation</h4>
+    <p>
+        For a zero-indexed array-based $k$-ary min-heap, the mathematical relationships between nodes are defined as:
+    </p>
+    <div class="math-left">
+        $$\text{Parent index of node } i \text{ (where } i > 0): \lfloor (i - 1) / k \rfloor$$
+        $$\text{Index of the } j\text{-th child of node } i \text{ (where } 1 \le j \le k): (k \times i) + j$$
+    </div>
+    <p>
+        The implemented <code>sift_down</code> identifies the minimum among existing children by comparing elements strictly within the bounds of $m$, exchanging the parent if a smaller child exists, and iteratively cascading down.
+    </p>
+
+    <h4>2. Pre-experiment Predictions</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Parameter</th>
+            <th>Hypothesis / Prediction</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Stream A (Stable, centered)</strong></td>
+            <td>Replacements will become <strong>rarer</strong>. The heap quickly fills with extreme positive outliers, raising the root threshold so high that subsequent numbers are easily rejected.</td>
+        </tr>
+        <tr>
+            <td><strong>Stream B (Steady linear growth)</strong></td>
+            <td>Replacements will remain <strong>sustained</strong>. Because the baseline constantly shifts upward, new elements consistently outpace older retained elements.</td>
+        </tr>
+        <tr>
+            <td><strong>Stream C (Variable velocity)</strong></td>
+            <td>Replacements will occur in <strong>active and quiet periods</strong>, mirroring the shifts in trend velocity.</td>
+        </tr>
+        <tr>
+            <td><strong>Increasing arity $k$</strong></td>
+            <td>Higher $k$ flattens the tree (height $\approx \log_k m$), significantly reducing the number of <em>moved items</em>. However, it increases the <em>child comparisons</em> per level, shifting the bottleneck from memory swaps to CPU comparisons.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h4>3. Compact Comparison Table (Seed 2026, N = 1,000,000, m = 10,000)</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%; text-align: right;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05); text-align: center;">
+            <th>Stream</th>
+            <th>Arity ($k$)</th>
+            <th>Accepted Replacements</th>
+            <th>Child Comparisons</th>
+            <th>Moved Items</th>
+            <th>Time (ms)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Stream A -->
+        <tr><td rowspan="3" style="text-align: center;"><strong>Stream A</strong></td>
+            <td>$k=2$</td><td>46,215</td><td>557,582</td><td>532,711</td><td>137</td></tr>
+        <tr><td>$k=4$</td><td>46,215</td><td>914,072</td><td>292,725</td><td><strong>135</strong></td></tr>
+        <tr><td>$k=16$</td><td>46,215</td><td>2,502,982</td><td>163,944</td><td>178</td></tr>
+        <!-- Stream B -->
+        <tr><td rowspan="3" style="text-align: center;"><strong>Stream B</strong></td>
+            <td>$k=2$</td><td>499,510</td><td>6,013,732</td><td>5,814,269</td><td>596</td></tr>
+        <tr><td>$k=4$</td><td>499,510</td><td>9,825,120</td><td>3,184,469</td><td>700</td></tr>
+        <tr><td>$k=16$</td><td>499,510</td><td>26,955,814</td><td>1,776,577</td><td>1035</td></tr>
+        <!-- Stream C -->
+        <tr><td rowspan="3" style="text-align: center;"><strong>Stream C</strong></td>
+            <td>$k=2$</td><td>516,348</td><td>6,241,100</td><td>6,052,750</td><td>592</td></tr>
+        <tr><td>$k=4$</td><td>516,348</td><td>10,169,255</td><td>3,307,552</td><td><strong>565</strong></td></tr>
+        <tr><td>$k=16$</td><td>516,348</td><td>27,871,544</td><td>1,839,947</td><td>1052</td></tr>
+        </tbody>
+    </table>
+
+    <h4>4. Correctness & Validation</h4>
+    <ul>
+        <li><strong>Automated Invariant Check:</strong> Verified aggressively on the first 100 replacements and at the end of every complete run. No violations found.</li>
+        <li><strong>Ground Truth Validation:</strong> Every single $(k, m, \text{stream})$ combination produced an array mathematically identical to <code>sorted(stream)[-m:]</code>. Different arities yielded identical accepted counts and final multisets.</li>
+        <li><strong>Stability:</strong> Rerunning the optimal arities ($k=4, k=8$) with seeds 2027 and 2028 confirmed that the temporal dynamics and relative performance rankings are stable and not seed anomalies.</li>
+    </ul>
+
+    <h4>5. Replacements Plot (Blockwise)</h4>
+    <p>
+        <em>Note: Chart generated using Chart.js based on 10,000-value blocks.</em><br>
+
+    <div style="position: relative; height: 400px; width: 100%;">
+        <canvas id="t4Chart"></canvas>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => {
+            // Создаем метки для оси X (блоки от 1 до 100)
+            const labels = Array.from({length: 100}, (_, i) => `Block ${i + 1}`);
+
+            // Данные для m=10000, собранные из Rust-вывода
+            const streamA = [0, 6941, 3979, 2935, 2240, 1802, 1581, 1332, 1234, 1037, 940, 815, 819, 730, 656, 698, 603, 590, 555, 506, 514, 443, 419, 433, 401, 380, 357, 344, 329, 348, 348, 310, 345, 277, 296, 280, 265, 277, 262, 266, 221, 226, 273, 225, 212, 219, 208, 193, 220, 188, 200, 191, 208, 200, 195, 184, 192, 186, 157, 164, 143, 151, 171, 154, 168, 148, 173, 144, 153, 157, 153, 147, 142, 150, 136, 134, 132, 138, 125, 118, 139, 136, 136, 117, 132, 126, 109, 110, 105, 110, 103, 111, 107, 121, 109, 117, 131, 87, 107, 116];
+            const streamB = [0, 7897, 5957, 5353, 5150, 5032, 4916, 5037, 5000, 4919, 5037, 4899, 5044, 5049, 4944, 5031, 4950, 5053, 4899, 4922, 5054, 5081, 5017, 5048, 4954, 5044, 5022, 5075, 5056, 5014, 5013, 5010, 5067, 5050, 5061, 4970, 5023, 5014, 4993, 4974, 5052, 5068, 4986, 5010, 4928, 4962, 4994, 5006, 5128, 5113, 4923, 4931, 5105, 5011, 5050, 4953, 5042, 4948, 4958, 4994, 4942, 5016, 5134, 4953, 5001, 4961, 4989, 5006, 4968, 4997, 5038, 4981, 4977, 4957, 5011, 5032, 4965, 5005, 4953, 5016, 4933, 4989, 5037, 4987, 4957, 4950, 5014, 4885, 4945, 5035, 4951, 5006, 5036, 4998, 5011, 4966, 5081, 5033, 5037, 4966];
+            const streamC = [0, 8341, 6217, 5274, 5045, 6284, 7340, 6225, 5688, 4827, 5391, 6890, 8011, 8503, 9336, 9525, 9277, 8723, 6873, 5840, 5343, 4438, 3556, 3203, 3172, 3756, 4328, 5727, 5726, 5156, 4378, 3694, 3417, 2095, 1746, 2335, 2730, 2857, 1657, 769, 676, 793, 2134, 5249, 7827, 8751, 8277, 8213, 7644, 7555, 7708, 7313, 6994, 7171, 7767, 8063, 8338, 9121, 8798, 6839, 5432, 5430, 5015, 5438, 6843, 6922, 6602, 7592, 7074, 5143, 4048, 2758, 2971, 3385, 3644, 5354, 7150, 8273, 8721, 9142, 8761, 7319, 5263, 3944, 3762, 4486, 6047, 6475, 5233, 3154, 1527, 1078, 840, 447, 161, 87, 114, 211, 454, 1124];
+
+            const ctx = document.getElementById('t4Chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Stream A (Stable, centered)',
+                            data: streamA,
+                            borderColor: '#10b981', // green
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 1
+                        },
+                        {
+                            label: 'Stream B (Steady linear growth)',
+                            data: streamB,
+                            borderColor: '#3b82f6', // blue
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 1
+                        },
+                        {
+                            label: 'Stream C (Variable velocity)',
+                            data: streamC,
+                            borderColor: '#ef4444', // red
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Accepted Replacements', font: {weight: 'bold'} }
+                        },
+                        x: {
+                            title: { display: true, text: 'Blocks (10,000 values each)', font: {weight: 'bold'} },
+                            ticks: { maxTicksLimit: 20 }
+                        }
+                    },
+                    plugins: {
+                        title: { display: true, text: 'Accepted Replacements per 10,000 values (m=10,000)', font: {size: 15, weight: 'bold'} }
+                    }
+                }
+            });
+        });
+    </script>
+    </p>
+
+    <h2>The answer (Recommendations and Interpretation):</h2>
+    <p>
+        Arity heavily impacts performance depending on the stream's distribution and replacement frequency.
+        <br><br>
+        For <strong>Stream A</strong>, arity has negligible impact on total time (135–178 ms). Because ~95% of incoming values (at $m=10,000$) are rejected immediately at the root, expensive <code>sift_down</code> operations are rare, rendering memory and comparison overheads practically irrelevant.
+        <br><br>
+        For <strong>Streams B and C</strong>, accepted replacements are frequent (~50%). Here, a standard binary heap ($k=2$) is overly deep, causing excessive vertical data movement (>5.8M swaps). Conversely, high arities ($k=16$) flatten the tree too much, heavily inflating the number of child comparisons (>26M) required to find the local minimum at each shallow level.
+        <br><br>
+        Intermediate arities, particularly <strong>$k=4$</strong>, provide the optimal balance. They significantly reduce memory writes compared to $k=2$ while avoiding the extreme comparison bloat of $k=16$. Across our stability tests, $k=4$ consistently delivered the best or near-best execution times (e.g., 565 ms for Stream C). Therefore, we recommend <strong>$k=4$</strong> for aggressive top-$m$ streaming filters with active, upward-trending workloads.
+    </p>
+</details>
+<details>
+    <summary>T5. Encode an HW3 search tree in 2n+1 bits</summary>
+
+    <h4>1. Unbalanced BST Drawing</h4>
+    <p>
+        The ordinary unbalanced BST obtained by sequentially inserting the 14-value Collatz-59 prefix:
+        <code>59, 178, 89, 268, 134, 67, 202, 101, 304, 152, 76, 38, 19, 58</code>
+    </p>
+    <pre style="background-color: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 4px; overflow-x: auto; line-height: 1.2;"><code>            59
+          /    \
+        38      178
+       /  \     /  \
+     19    58  89  268
+              / \  / \
+            67 134 202 304
+             \   \
+             101 152
+             /
+            76</code></pre>
+
+    <h4>2. Encoded Data Structures</h4>
+    <p>
+        <strong>Breadth-First Key Array:</strong><br>
+        <code style="background-color: rgba(255, 255, 255, 0.05); padding: 2px 6px; border-radius: 4px;">[59, 38, 178, 19, 58, 89, 268, 67, 134, 202, 304, 101, 152, 76]</code>
+    </p>
+    <p>
+        <strong>29-bit Shape Vector:</strong> (Formatted with spaces for readability, representing node children)<br>
+        <code style="background-color: rgba(255, 255, 255, 0.05); padding: 2px 6px; border-radius: 4px;">1 11 11 11 00 00 11 11 01 01 00 00 10 00 00</code> &rarr; <strong><code>11111110000111101010000100000</code></strong>
+    </p>
+
+    <h4>3. Navigation Traces (Using <code>rank1</code> and <code>select1</code>)</h4>
+    <ul>
+        <li>
+            <strong>Locate both children of key 89:</strong><br>
+            Key 89 is at 1-based index $i = 6$. Its bit position in the shape vector is $x = \text{select}_1(6) = 6$.
+            The child bits are at $2i = 12$ and $2i+1 = 13$. Both bits 12 and 13 are <code>1</code>. <br>
+            - Left child index: $\text{rank}_1(12) = 8 \rightarrow$ <strong>Key 67</strong>.<br>
+            - Right child index: $\text{rank}_1(13) = 9 \rightarrow$ <strong>Key 134</strong>.
+        </li>
+        <li style="margin-top: 10px;">
+            <strong>Identify which side of key 67 contains key 76:</strong><br>
+            Key 76 is at index $i = 14$. Its bit position is $x = \text{select}_1(14) = 24$. Its parent's index is $\lfloor 24/2 \rfloor = 12$ (Key 101). Key 101's bit position is $x = \text{select}_1(12) = 17$. Its parent is $\lfloor 17/2 \rfloor = 8$ (Key 67). Because 17 is an odd number ($2 \times 8 + 1$), Key 101 is the <strong>right</strong> child of 67. Since 76 descends from 101, it is strictly on the <strong>right side</strong> of 67.
+        </li>
+        <li style="margin-top: 10px;">
+            <strong>Recover the parent of key 76:</strong><br>
+            Key 76 is at index $i = 14$. Its exact bit position is $x = \text{select}_1(14) = 24$. The parent's node index in the breadth-first array is derived by $\lfloor x/2 \rfloor = \lfloor 24/2 \rfloor = 12$. The key at index 12 is <strong>101</strong>.
+        </li>
+    </ul>
+
+    <h2>The answer (Explanation of the Encodings):</h2>
+    <p>
+        The shape vector replaces standard memory pointers (which cost 64 bits each per child), significantly saving structural overhead by compressing the entire tree topology into just $2n+1$ bits. However, it only stores the skeleton; it does not store the keys themselves, which must be kept in a separate dense array.
+        <br><br>
+        Because every <code>1</code> in the vector represents a real node, <code>rank1(x)</code> counts the <code>1</code>s up to bit $x$ to directly map a node's bit position to its 1-based index $i$ in the key array. Conversely, <code>select1(i)</code> finds the bit position $x$ of the $i$-th node. This mapping lets us dynamically compute child positions ($2i$ and $2i+1$) without storing physical pointers.
+    </p>
+</details>
+
 </body>
 <script>
     window.addEventListener('load', () => {

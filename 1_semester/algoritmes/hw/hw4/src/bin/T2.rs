@@ -1,5 +1,4 @@
 fn main() {
-    // Генерируем идеальный массив через вашу идею с переворотом уровней
     let base_arr: Vec<i32> = (1..=20).collect();
     let final_heap = reverse_all_tree_levels(&base_arr);
 
