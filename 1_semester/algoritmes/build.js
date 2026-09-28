@@ -77,8 +77,31 @@ if (footerContent && !html.includes('id="footer"') && !html.includes('class="foo
 fs.writeFileSync(finalReportPath, html, 'utf-8');
 console.log(`Success! Created HTML report: ${finalReportPath}`);
 
-function getRsFiles(dir, baseDir = dir) {
+const srcDir = path.join(hwDir, 'src');
+const tempDirName = '.temp_build_files';
+
+// Everything under src/, kept with its original structure (so files that
+// share a name in different subfolders, e.g. mod.rs, don't collide).
+function copyDirRecursive(src, dest) {
+    if (path.basename(src) === 'target') return;
+    fs.mkdirSync(dest, { recursive: true });
+    for (const entry of fs.readdirSync(src)) {
+        const srcPath = path.join(src, entry);
+        const destPath = path.join(dest, entry);
+        const stat = fs.statSync(srcPath);
+        if (stat.isDirectory()) {
+            copyDirRecursive(srcPath, destPath);
+        } else {
+            fs.copyFileSync(srcPath, destPath);
+        }
+    }
+}
+
+// All .png files anywhere in the homework folder, except inside src/
+// (already covered above) and the build's own scratch/output dirs.
+function findPngFiles(dir, baseDir = dir) {
     let results = [];
+    const skipDirs = new Set(['target', 'src', tempDirName]);
     const list = fs.readdirSync(dir);
 
     for (const file of list) {
@@ -86,47 +109,64 @@ function getRsFiles(dir, baseDir = dir) {
         const stat = fs.statSync(filePath);
 
         if (stat && stat.isDirectory()) {
-            if (file !== 'target') {
-                results = results.concat(getRsFiles(filePath, baseDir));
+            if (!skipDirs.has(file)) {
+                results = results.concat(findPngFiles(filePath, baseDir));
             }
-        } else if (file.endsWith('.rs')) {
+        } else if (path.extname(file).toLowerCase() === '.png') {
             results.push(path.relative(baseDir, filePath));
         }
     }
     return results;
 }
 
-const rsFiles = getRsFiles(hwDir);
+const pngFiles = findPngFiles(hwDir);
+const hasSrc = fs.existsSync(srcDir);
 
-if (rsFiles.length > 0) {
+if (hasSrc || pngFiles.length > 0) {
     if (fs.existsSync(zipPath)) {
         fs.unlinkSync(zipPath);
     }
 
-    const tempDir = path.join(hwDir, '.temp_rs_files');
+    const tempDir = path.join(hwDir, tempDirName);
     if (fs.existsSync(tempDir)) {
         fs.rmSync(tempDir, { recursive: true, force: true });
     }
     fs.mkdirSync(tempDir);
 
-    const flatFilesList = [];
+    if (hasSrc) {
+        copyDirRecursive(srcDir, path.join(tempDir, 'src'));
+    }
 
-    rsFiles.forEach(relPath => {
-        const fileName = path.basename(relPath);
-        fs.copyFileSync(path.join(hwDir, relPath), path.join(tempDir, fileName));
-        flatFilesList.push(`"${fileName}"`);
+    pngFiles.forEach(relPath => {
+        const destPath = path.join(tempDir, relPath);
+        fs.mkdirSync(path.dirname(destPath), { recursive: true });
+        fs.copyFileSync(path.join(hwDir, relPath), destPath);
     });
 
     const zipFileName = `${baseName}_code.zip`;
 
+    // Zip the temp dir's TOP-LEVEL entries by name, not the directory itself
+    // ("tar -f zip ." makes bsdtar write a "./" root entry using streamed
+    // (data-descriptor) sizes; Windows Explorer's built-in zip viewer chokes
+    // on that combination and shows the archive as empty, even though the
+    // data is all there -- 7-Zip/WinRAR/unzip open it fine). Passing the
+    // entry names explicitly avoids the "./" entry and produces a zip
+    // Explorer reads normally.
+    const topLevelEntries = fs.readdirSync(tempDir);
+
     try {
-        execSync(`tar -a -c -f "../${zipFileName}" ${flatFilesList.join(' ')}`, { cwd: tempDir });
-        console.log(`Success! Created flat ZIP archive: ${zipPath}`);
+        if (topLevelEntries.length > 0) {
+            const args = topLevelEntries.map(e => `"${e}"`).join(' ');
+            execSync(`tar -a -c -f "../${zipFileName}" ${args}`, { cwd: tempDir });
+            console.log(`Success! Created ZIP archive: ${zipPath}`);
+        } else {
+            console.log('Nothing to archive after collecting files.');
+        }
     } catch (err) {
         console.error('Error creating ZIP archive:', err.message);
     } finally {
         fs.rmSync(tempDir, { recursive: true, force: true });
     }
 } else {
-    console.log('No .rs files found in the directory. ZIP archive not created.');
+    console.log('No src/ folder or .png files found in the directory. ZIP archive not created.');
 }
