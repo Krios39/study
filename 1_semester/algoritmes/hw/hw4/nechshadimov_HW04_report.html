@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>HW4. Heaps, Priority Queues, and Succinct Trees</title>
+    <meta name="reference" content="Heap Data Structure | https://www.geeksforgeeks.org/dsa/heap-data-structure/">
+    <meta name="reference" content="Building Heap from Array | https://www.geeksforgeeks.org/dsa/building-heap-from-array/">
+    <meta name="reference" content="Binary heap | https://en.wikipedia.org/wiki/Binary_heap">
+    <meta name="reference" content="Rust | https://doc.rust-lang.ru/">
+    <meta name="reference" content="Binary heap | https://www.geeksforgeeks.org/dsa/k-ary-heap/">
+    <meta name="reference" content="Kamp, Poul-Henning. 'You're doing it wrong.' ACM Queue 8, no. 6 (2010): 14-22 | https://queue.acm.org/doi/10.1145/1810226.1814327">    <meta name="reference" content="Gemini | https://gemini.google.com/">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
+    color: #111;
+    background-color: #fff;
+    max-width: 1280px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+h1 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+h2 {
+    font-size: 18px;
+    margin-top: 24px;
+    margin-bottom: 8px;
+}
+
+p {
+    margin: 8px 0;
+}
+
+.math {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 17px;
+    margin: 12px 0;
+    padding-left: 20px;
+}
+
+ul {
+    margin: 8px 0 16px 20px;
+}
+
+li {
+    margin-bottom: 4px;
+}
+
+/* Шапка отчёта */
+.report-header {
+    margin-bottom: 28px;
+}
+
+.report-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111;
+    margin-bottom: 12px;
+}
+
+.report-meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.report-meta-table th {
+    text-align: left;
+    font-weight: 600;
+    color: #4b5563;
+    width: 15%;
+    padding: 3px 6px 3px 0;
+    white-space: nowrap;
+}
+
+.report-meta-table td {
+    color: #111;
+    width: 35%;
+    padding: 3px 12px 3px 0;
+}
+
+.report-meta-table a {
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+.report-meta-table a:hover {
+    text-decoration: underline;
+}
+
+.report-divider {
+    border: 0;
+    border-top: 1px solid #d1d5db;
+    margin-top: 8px;
+}
+
+.math-left .katex-display {
+    text-align: left !important;
+}
+
+.math-left .katex-display > .katex {
+    text-align: left !important;
+    padding-left: 20px;
+}
+
+/* Сноски в тексте */
+a.ref-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 0 1px;
+}
+
+a.ref-link:hover {
+    text-decoration: underline;
+}
+
+.report-references {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.report-references h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.report-references ol {
+    padding-left: 20px;
+}
+
+.report-references li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.report-references .ref-title {
+    font-weight: 600;
+    color: #111;
+}
+
+.report-references a {
+    color: #1a73e8 !important;
+    text-decoration: underline !important;
+    word-break: break-all;
+    cursor: pointer;
+}
+
+details {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    margin: 16px 0;
+    background-color: #fff;
+    transition: all 0.2s ease;
+}
+
+details[open] {
+    border-color: #cbd5e1;
+}
+
+details > :not(summary) {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+summary {
+    cursor: pointer;
+    padding: 10px 14px;
+    user-select: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+summary:hover {
+    background-color: #f8fafc;
+}
+
+summary h2 {
+    display: inline;
+    font-size: 16px;
+    margin: 0 0 0 6px;
+}
+
+.details-content {
+    padding: 12px 16px 16px;
+    border-top: 1px solid #f1f5f9;
+}
+</style>
+</head>
+<body>
+<script>
+function loadKaTeXAndRender() {
+    const katexCSS = document.createElement("link");
+    katexCSS.rel = "stylesheet";
+    katexCSS.href = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+    document.head.appendChild(katexCSS);
+
+    const katexScript = document.createElement("script");
+    katexScript.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+    katexScript.defer = true;
+
+    katexScript.onload = () => {
+        const autoRenderScript = document.createElement("script");
+        autoRenderScript.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+        autoRenderScript.defer = true;
+
+        autoRenderScript.onload = () => {
+            if (window.renderMathInElement) {
+                window.renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: "$$", right: "$$", display: true },
+                        { left: "$", right: "$", display: false },
+                    ],
+                    throwOnError: false,
+                });
+            }
+        };
+        document.head.appendChild(autoRenderScript);
+    };
+
+    document.head.appendChild(katexScript);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    // --- Генерация шапки отчёта ---
+    const pageTitle = document.title.trim();
+    const hwMatch = pageTitle.match(/HW\s*(\d+)[:\s-]+(.*)/i);
+
+    let reportTitle = "";
+    if (hwMatch) {
+        const hwNumber = hwMatch[1];
+        const hwTheme = hwMatch[2].trim();
+        reportTitle = `Algorithmics (MTAT.03.238) - Homework ${hwNumber}: ${hwTheme}`;
+    } else {
+        reportTitle = `Algorithmics (MTAT.03.238) - ${pageTitle}`;
+    }
+
+    const metaDate = document.querySelector('meta[name="date"]')?.content;
+    const displayDate = metaDate || new Date().toISOString().slice(0, 10);
+
+    const studentInfo = {
+        name: "Ruslan Nechshadimov",
+        curriculum: "Computer Science (MSc)",
+        studyYear: "2026",
+        email: "ruslan.nechshadimov@ut.ee",
+    };
+
+    const headerHTML = `
+    <header class="report-header">
+      <div class="report-title">${reportTitle}</div>
+      <table class="report-meta-table">
+        <tr>
+          <th>Student:</th>
+          <td>${studentInfo.name}</td>
+          <th>Study year:</th>
+          <td>${studentInfo.studyYear}</td>
+        </tr>
+        <tr>
+          <th>Curriculum:</th>
+          <td>${studentInfo.curriculum}</td>
+          <th>Date:</th>
+          <td>${displayDate}</td>
+        </tr>
+        <tr>
+          <th>University email:</th>
+          <td colspan="3"><a href="mailto:${studentInfo.email}">${studentInfo.email}</a></td>
+        </tr>
+      </table>
+      <hr class="report-divider">
+    </header>
+  `;
+
+    document.body.insertAdjacentHTML("afterbegin", headerHTML);
+
+    // --- Загрузка и рендер формул KaTeX ---
+    loadKaTeXAndRender();
+});
+</script>
+<div style="padding: 15px; background-color: rgba(255, 255, 255, 0.05); border-left: 4px solid #3b82f6; margin-bottom: 25px;">
+    <h3 style="margin-top: 0;">General Disclosures & Indexing Conventions</h3>
+    <p><strong>AI Assistance Disclosure:</strong> Substantial AI assistance (Google Gemini) was used in the preparation of this report. It assisted in drafting HTML layouts, structuring analytical arguments, and providing boilerplate for the Rust experimental benchmarks. I fully understand the underlying data structures, algorithms, and metric outputs, and am prepared to explain all submitted code and conclusions.</p>
+    <p><strong>Counting Conventions:</strong>
+    <ul style="margin-bottom: 0;">
+        <li><strong>Key Comparison:</strong> Any logical comparison evaluating the relative order of two elements. In the streaming filter (T4), this is strictly divided into <em>Root Comparisons</em> (comparing an incoming stream item against the heap minimum) and <em>Child Comparisons</em> (comparing children against each other or against a parent during a <code>sift_down</code> operation).</li>
+        <li><strong>Moved Item / Swap:</strong> A swap is defined as the mutual physical exchange of two elements in the array. A "moved item" increments each time an element is written to a new physical index (e.g., inside <code>sift_down</code>).</li>
+    </ul>
+    </p>
+</div>
+<details>
+    <summary>T1. How difficult can bottom-up heapify be?</summary>
+
+    <h4>1. Adversarial Input Array</h4>
+    <p>
+        Elements from $0$ through $14$ distributed so that every internal node key strictly exceeds all descendants in its subtree, forcing maximal downward movement:
+    </p>
+    <pre style="background-color: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 4px; overflow-x: auto;"><code>[14, 13, 12, 11, 10, 9, 8, 0, 1, 2, 3, 4, 5, 6, 7]</code></pre>
+
+    <h4>2. Upper Bound on Swaps & Proof of Maximality</h4>
+    <p>
+        In a complete binary tree of $n = 15$ nodes, the maximal depth of sift-down for any node is bounded by its height $h$:
+    </p>
+    <div class="math-left">
+        $$\text{4 subheaps of size 3 (height 1, roots at indices 3–6): } 4 \times 1 = 4\text{ swaps}$$
+        $$\text{2 subheaps of size 7 (height 2, roots at indices 1–2): } 2 \times 2 = 4\text{ swaps}$$
+        $$\text{1 subheap of size 15 (height 3, root at index 0): } 1 \times 3 = 3\text{ swaps}$$
+        $$S_{\max} = \sum_{h=1}^{\lfloor \log_2 15 \rfloor} h \cdot 2^{3 - h} = (4 \times 1) + (2 \times 2) + (1 \times 3) = \mathbf{11\text{ swaps}}$$
+    </div>
+    <p>
+        Since each sift-down step can exchange a node at most once per tree level, $S_{\max} = 11$ is an absolute upper bound. Because our array achieves exactly 11 swaps, it reaches this bound and is provably as difficult as possible.
+    </p>
+
+    <h4>3. Seven-Row Bottom-Up Trace (Floyd's Heapify)</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Step</th>
+            <th>Processed Index</th>
+            <th>Array State After Step</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Initial</strong></td>
+            <td>—</td>
+            <td><code>[14, 13, 12, 11, 10, 9, 8, 0, 1, 2, 3, 4, 5, 6, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 1</strong></td>
+            <td>$i = 6$</td>
+            <td><code>[14, 13, 12, 11, 10, 9, 6, 0, 1, 2, 3, 4, 5, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 2</strong></td>
+            <td>$i = 5$</td>
+            <td><code>[14, 13, 12, 11, 10, 4, 6, 0, 1, 2, 3, 9, 5, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 3</strong></td>
+            <td>$i = 4$</td>
+            <td><code>[14, 13, 12, 11, 2, 4, 6, 0, 1, 10, 3, 9, 5, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 4</strong></td>
+            <td>$i = 3$</td>
+            <td><code>[14, 13, 12, 0, 2, 4, 6, 11, 1, 10, 3, 9, 5, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 5</strong></td>
+            <td>$i = 2$</td>
+            <td><code>[14, 13, 4, 0, 2, 5, 6, 11, 1, 10, 3, 9, 12, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 6</strong></td>
+            <td>$i = 1$</td>
+            <td><code>[14, 0, 4, 1, 2, 5, 6, 11, 13, 10, 3, 9, 12, 8, 7]</code></td>
+        </tr>
+        <tr>
+            <td><strong>Row 7</strong></td>
+            <td>$i = 0$</td>
+            <td><code>[0, 1, 4, 11, 2, 5, 6, 14, 13, 10, 3, 9, 12, 8, 7]</code></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h4>4. Invariant Verification & Method Comparison</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Method</th>
+            <th>Final Heap Array</th>
+            <th>Key Comparisons</th>
+            <th>Swaps</th>
+            <th>Min-Heap Invariant Valid</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Bottom-Up (Floyd)</strong></td>
+            <td><code>[0, 1, 4, 11, 2, 5, 6, 14, 13, 10, 3, 9, 12, 8, 7]</code></td>
+            <td>22</td>
+            <td>11</td>
+            <td><strong>true</strong> ($\forall i: A[i] \le A[2i+1], A[2i+2]$)</td>
+        </tr>
+        <tr>
+            <td><strong>Sequential Insertion (Williams)</strong></td>
+            <td><code>[0, 1, 4, 8, 2, 5, 6, 14, 11, 12, 3, 13, 9, 10, 7]</code></td>
+            <td>27</td>
+            <td>20</td>
+            <td><strong>true</strong> ($\forall i: A[i] \le A[2i+1], A[2i+2]$)</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>The answers (Argument & Comparison):</h2>
+    <p>
+        Every internal node in the adversarial input exceeds all keys in its subtree, while leaves hold $\{0, \dots, 7\}$. Each sift-down path follows smaller children directly to the leaves, executing $4 \times 1 + 2 \times 2 + 1 \times 3 = 11$ swaps and matching the theoretical upper bound.
+        Williams' insertion processes the same array via sift-up. Because small leaf values are inserted last, they bubble up repeatedly across deep branches, resulting in 20 swaps and 27 comparisons. Floyd's bottom-up method proves far more efficient (11 swaps, 22 comparisons) because it bounds movement by tree height rather than node depth.
+    </p>
+</details>
+<details>
+    <summary>T2. Construct a left-heavy min-heap</summary>
+
+    <h4>1. Final Array, Insertion Order & Construction Formula</h4>
+    <p>
+        To achieve the left-heavy condition without violating the min-heap property, we start with a sorted array $A = [1, 2, \dots, 20]$ and reverse the elements at each depth level $d \ge 1$ (where the root is at $d=0$). For a 0-indexed array of size $N$, the elements at level $d$ span the index range:
+    </p>
+    <div class="math-left">
+        $$\text{Level } d \text{ indices: } [\, 2^d - 1, \min(2^{d+1} - 2, N - 1) \,]$$
+    </div>
+    <p>
+        Reversing these specific sub-arrays systematically shifts the heaviest available values to the left branches. This permutation serves as both the final min-heap array and the sequential insertion order:
+    </p>
+    <pre style="background-color: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 4px; overflow-x: auto;"><code>[1, 3, 2, 7, 6, 5, 4, 15, 14, 13, 12, 11, 10, 9, 8, 20, 19, 18, 17, 16]</code></pre>
+
+    <h4>2. Final Tree Structure</h4>
+    <p>
+        Visual representation of the complete binary min-heap (root on the left, left children denoted by <code>┌──</code> and right children by <code>└──</code>). Heavy values are systematically shifted to the left subtrees.
+    </p>
+    <pre style="background-color: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 4px; overflow-x: auto;"><code>│           ┌── 8
+│       ┌── 4
+│       │   └── 9
+│   ┌── 2
+│   │   │   ┌── 10
+│   │   └── 5
+│   │       └── 11
+1
+    │       ┌── 12
+    │   ┌── 6
+    │   │   └── 13
+    │   │       └── 16
+    └── 3
+        │       ┌── 17
+        │   ┌── 14
+        │   │   └── 18
+        └── 7
+            │   ┌── 19
+            └── 15
+                └── 20</code></pre>
+
+    <h4>3. Compact Subtree-Sum Table</h4>
+    <p>
+        Verification of the additional "left-heavy" condition. The table includes only the internal nodes that have exactly two non-empty subtrees.
+    </p>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Index $i$</th>
+            <th>Node Value $A[i]$</th>
+            <th>$\text{Sum(Left)}$</th>
+            <th>$\text{Sum(Right)}$</th>
+            <th>Condition $\text{L} > \text{R}$</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr><td>0</td><td>1</td><td>160</td><td>49</td><td><strong>true</strong></td></tr>
+        <tr><td>1</td><td>3</td><td>110</td><td>47</td><td><strong>true</strong></td></tr>
+        <tr><td>2</td><td>2</td><td>26</td><td>21</td><td><strong>true</strong></td></tr>
+        <tr><td>3</td><td>7</td><td>54</td><td>49</td><td><strong>true</strong></td></tr>
+        <tr><td>4</td><td>6</td><td>29</td><td>12</td><td><strong>true</strong></td></tr>
+        <tr><td>5</td><td>5</td><td>11</td><td>10</td><td><strong>true</strong></td></tr>
+        <tr><td>6</td><td>4</td><td>9</td><td>8</td><td><strong>true</strong></td></tr>
+        <tr><td>7</td><td>15</td><td>20</td><td>19</td><td><strong>true</strong></td></tr>
+        <tr><td>8</td><td>14</td><td>18</td><td>17</td><td><strong>true</strong></td></tr>
+        </tbody>
+    </table>
+
+    <h4>4. Automatic Replay (Insertion Simulation)</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Metric</th>
+            <th>Result</th>
+            <th>Min-Heap Invariant Valid</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Total Elements Inserted</strong></td>
+            <td>20</td>
+            <td rowspan="2"><strong>true</strong> ($\forall i: A[i] \le A[2i+1], A[2i+2]$)</td>
+        </tr>
+        <tr>
+            <td><strong>Total Swaps Required</strong></td>
+            <td><strong>0</strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>The answer (Argument):</h2>
+    <p>
+        Standard binary heap insertion adds elements level by level from left to right. A swap (sift-up) only occurs if a newly inserted child is strictly less than its parent. Since our array is perfectly pre-constructed so that every child is strictly greater than its parent (intrinsically satisfying the min-heap property), the sift-up condition is never met. Therefore, inserting this sequence element by element naturally builds the exact final heap without requiring a single swap operation.
+    </p>
+</details>
+<details>
+<summary>T3. Heapify, sorting, and draining a heap</summary>
+
+<h4>1. Environment, Setup, and Prediction</h4>
+<p>
+<strong>Environment:</strong> Python 3 (Windows), execution timed via <code>time.perf_counter()</code>.<br>
+<strong>Setup:</strong> Random permutations of distinct integers. Each size was repeated 5 times using independent input copies prepared before starting the timer. Only the specific operation was timed.<br>
+<strong>Prediction:</strong> <code>heapify</code> + <code>heappop</code> drain will be the slowest due to Python loop overhead. The <code>sorted()</code> function is highly optimized in C (Timsort), but since its complexity is $\Theta(n \log n)$, the $\Theta(n)$ <code>heapify</code> should eventually overtake it.
+</p>
+
+<h4>2. Median Timing Table</h4>
+<table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+<thead>
+<tr style="background-color: rgba(255, 255, 255, 0.05);">
+<th>Input Size ($n$)</th>
+<th><code>heapq.heapify</code> (s)</th>
+<th><code>sorted()</code> (s)</th>
+<th><code>heapify</code> + drain (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>10,000</td><td>0.000232</td><td>0.001031</td><td>0.002842</td></tr>
+<tr><td>50,000</td><td>0.001161</td><td>0.006511</td><td>0.017512</td></tr>
+<tr><td>100,000</td><td>0.006135</td><td>0.021635</td><td>0.060654</td></tr>
+<tr><td>500,000</td><td>0.016832</td><td>0.115728</td><td>0.523506</td></tr>
+<tr><td>1,000,000</td><td>0.035599</td><td>0.260711</td><td>1.374629</td></tr>
+<tr><td>2,000,000</td><td>0.074252</td><td>0.602061</td><td>3.349698</td></tr>
+</tbody>
+</table>
+
+<h4>3. Crossover Result & Correctness Check</h4>
+<ul>
+<li><strong>Crossover Point:</strong> <code>heapq.heapify</code> proved strictly faster than <code>sorted()</code> starting at the very first tested size of <strong>$n = 10,000$</strong> and maintained this lead throughout, successfully demonstrating the advantage of its linear time complexity over Timsort's $O(n \log n)$ bound.</li>
+<li><strong>Correctness:</strong> Automated checks confirmed that Method 2 (<code>sorted()</code>) and Method 3 (<code>heapify</code> + drain) produced perfectly identical sorted arrays across all iterations.</li>
+</ul>
+
+<h4>4. Performance Plot</h4>
+<p>
+<em>Note: Ensure the generated image file is in the same directory as this HTML file.</em><br>
+<img src="T3_plot.png" alt="Heapify vs Sorted vs Heap Draining Performance Plot" style="max-width: 100%; height: auto; border: 1px solid #ccc; border-radius: 4px; margin-top: 10px;">
+</p>
+
+<h2>The answer (Argument connecting measurements with asymptotic bounds):</h2>
+<p>
+Bottom-up <code>heapify</code> runs in strict $\Theta(n)$ time because the maximum distance any node can sift down depends on its height. In a complete binary tree, most nodes are leaves requiring zero operations. The sum of heights for all nodes in an $n$-element tree is mathematically bounded by $O(n)$, making the structural reorganization purely linear. This is evident in the table, where <code>heapify</code> scales linearly and consistently beats <code>sorted()</code>.
+<br><br>
+Conversely, emptying the heap via $n$ calls to <code>extract-min</code> takes $\Theta(n \log n)$ time. Each extraction removes the root, replaces it with a leaf, and forces a sift-down operation spanning the tree's depth ($\Theta(\log n)$). Repeating this $n$ times intrinsically scales the cost to $\Theta(n \log n)$. Thus, heapify plus draining constitutes a complete sorting algorithm, while heapify alone does not sort the array.
+</p>
+</details>
+<details>
+    <summary>T4. Which heap arity works for a streaming top-m filter?</summary>
+
+    <h4>1. Formulas and Implementation</h4>
+    <p>
+        For a zero-indexed array-based $k$-ary min-heap, the mathematical relationships between nodes are defined as:
+    </p>
+    <div class="math-left">
+        $$\text{Parent index of node } i \text{ (where } i > 0): \lfloor (i - 1) / k \rfloor$$
+        $$\text{Index of the } j\text{-th child of node } i \text{ (where } 1 \le j \le k): (k \times i) + j$$
+    </div>
+    <p>
+        The implemented <code>sift_down</code> identifies the minimum among existing children by comparing elements strictly within the bounds of $m$, exchanging the parent if a smaller child exists, and iteratively cascading down.
+    </p>
+
+    <h4>2. Pre-experiment Predictions</h4>
+    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05);">
+            <th>Parameter</th>
+            <th>Hypothesis / Prediction</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Stream A (Stable, centered)</strong></td>
+            <td>Replacements will become <strong>rarer</strong>. The heap quickly fills with extreme positive outliers, raising the root threshold so high that subsequent numbers are easily rejected.</td>
+        </tr>
+        <tr>
+            <td><strong>Stream B (Steady linear growth)</strong></td>
+            <td>Replacements will remain <strong>sustained</strong>. Because the baseline constantly shifts upward, new elements consistently outpace older retained elements.</td>
+        </tr>
+        <tr>
+            <td><strong>Stream C (Variable velocity)</strong></td>
+            <td>Replacements will occur in <strong>active and quiet periods</strong>, mirroring the shifts in trend velocity.</td>
+        </tr>
+        <tr>
+            <td><strong>Increasing arity $k$</strong></td>
+            <td>Higher $k$ flattens the tree (height $\approx \log_k m$), significantly reducing the number of <em>moved items</em>. However, it increases the <em>child comparisons</em> per level, shifting the bottleneck from memory swaps to CPU comparisons.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h4>3. Comprehensive Experimental Results (N = 1,000,000, Seed = 2026)</h4>
+    <table border="1" cellpadding="4" style="border-collapse: collapse; margin: 15px 0; width: 100%; text-align: right; font-size: 0.9em;">
+        <thead>
+        <tr style="background-color: rgba(255, 255, 255, 0.05); text-align: center;">
+            <th>m</th>
+            <th>Stream</th>
+            <th>Arity ($k$)</th>
+            <th>Root Comps</th>
+            <th>Accepted</th>
+            <th>Child Comps</th>
+            <th>Moved Items</th>
+            <th>Time (ms)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- m = 100 -->
+        <tr><td rowspan="15" style="text-align: center; vertical-align: top;"><strong>100</strong></td>
+            <td rowspan="5" style="text-align: center;"><strong>A</strong></td>
+            <td>2</td><td>999,900</td><td>934</td><td>4,944</td><td>4,468</td><td>16</td></tr>
+        <tr><td>3</td><td>999,900</td><td>934</td><td>7,090</td><td>3,201</td><td>20</td></tr>
+        <tr><td>4</td><td>999,900</td><td>934</td><td>8,832</td><td>2,685</td><td>22</td></tr>
+        <tr><td>8</td><td>999,900</td><td>934</td><td>14,804</td><td>2,006</td><td>20</td></tr>
+        <tr><td>16</td><td>999,900</td><td>934</td><td>26,214</td><td>1,714</td><td>20</td></tr>
+
+        <tr><td rowspan="5" style="text-align: center; border-top: 2px solid #555;"><strong>B</strong></td>
+            <td style="border-top: 2px solid #555;">2</td><td style="border-top: 2px solid #555;">999,900</td><td style="border-top: 2px solid #555;">12,012</td><td style="border-top: 2px solid #555;">63,984</td><td style="border-top: 2px solid #555;">58,580</td><td style="border-top: 2px solid #555;">37</td></tr>
+        <tr><td>3</td><td>999,900</td><td>12,012</td><td>90,630</td><td>41,630</td><td>35</td></tr>
+        <tr><td>4</td><td>999,900</td><td>12,012</td><td>112,780</td><td>34,980</td><td><strong>30</strong></td></tr>
+        <tr><td>8</td><td>999,900</td><td>12,012</td><td>190,820</td><td>26,210</td><td>32</td></tr>
+        <tr><td>16</td><td>999,900</td><td>12,012</td><td>335,262</td><td>21,997</td><td>30</td></tr>
+
+        <tr><td rowspan="5" style="text-align: center; border-top: 2px solid #555;"><strong>C</strong></td>
+            <td style="border-top: 2px solid #555;">2</td><td style="border-top: 2px solid #555;">999,900</td><td style="border-top: 2px solid #555;">14,666</td><td style="border-top: 2px solid #555;">78,103</td><td style="border-top: 2px solid #555;">71,528</td><td style="border-top: 2px solid #555;">40</td></tr>
+        <tr><td>3</td><td>999,900</td><td>14,666</td><td>110,664</td><td>50,794</td><td>42</td></tr>
+        <tr><td>4</td><td>999,900</td><td>14,666</td><td>137,830</td><td>42,801</td><td><strong>35</strong></td></tr>
+        <tr><td>8</td><td>999,900</td><td>14,666</td><td>233,723</td><td>32,088</td><td>36</td></tr>
+        <tr><td>16</td><td>999,900</td><td>14,666</td><td>408,432</td><td>26,814</td><td>37</td></tr>
+
+        <!-- m = 10000 -->
+        <tr><td rowspan="15" style="text-align: center; vertical-align: top; border-top: 4px solid #555;"><strong>10,000</strong></td>
+            <td rowspan="5" style="text-align: center; border-top: 4px solid #555;"><strong>A</strong></td>
+            <td style="border-top: 4px solid #555;">2</td><td style="border-top: 4px solid #555;">990,000</td><td style="border-top: 4px solid #555;">46,215</td><td style="border-top: 4px solid #555;">557,582</td><td style="border-top: 4px solid #555;">532,711</td><td style="border-top: 4px solid #555;">137</td></tr>
+        <tr><td>3</td><td>990,000</td><td>46,215</td><td>736,022</td><td>351,719</td><td>137</td></tr>
+        <tr><td>4</td><td>990,000</td><td>46,215</td><td>914,072</td><td>292,725</td><td><strong>135</strong></td></tr>
+        <tr><td>8</td><td>990,000</td><td>46,215</td><td>1,495,490</td><td>207,620</td><td>147</td></tr>
+        <tr><td>16</td><td>990,000</td><td>46,215</td><td>2,502,982</td><td>163,944</td><td>178</td></tr>
+
+        <tr><td rowspan="5" style="text-align: center; border-top: 2px solid #555;"><strong>B</strong></td>
+            <td style="border-top: 2px solid #555;">2</td><td style="border-top: 2px solid #555;">990,000</td><td style="border-top: 2px solid #555;">499,510</td><td style="border-top: 2px solid #555;">6,013,732</td><td style="border-top: 2px solid #555;">5,814,269</td><td style="border-top: 2px solid #555;">596</td></tr>
+        <tr><td>3</td><td>990,000</td><td>499,510</td><td>7,915,672</td><td>3,833,274</td><td>775</td></tr>
+        <tr><td>4</td><td>990,000</td><td>499,510</td><td>9,825,120</td><td>3,184,469</td><td>700</td></tr>
+        <tr><td>8</td><td>990,000</td><td>499,510</td><td>16,077,568</td><td>2,254,414</td><td><strong>673</strong></td></tr>
+        <tr><td>16</td><td>990,000</td><td>499,510</td><td>26,955,814</td><td>1,776,577</td><td>1035</td></tr>
+
+        <tr><td rowspan="5" style="text-align: center; border-top: 2px solid #555;"><strong>C</strong></td>
+            <td style="border-top: 2px solid #555;">2</td><td style="border-top: 2px solid #555;">990,000</td><td style="border-top: 2px solid #555;">516,348</td><td style="border-top: 2px solid #555;">6,241,100</td><td style="border-top: 2px solid #555;">6,052,750</td><td style="border-top: 2px solid #555;">592</td></tr>
+        <tr><td>3</td><td>990,000</td><td>516,348</td><td>8,199,796</td><td>3,984,844</td><td>884</td></tr>
+        <tr><td>4</td><td>990,000</td><td>516,348</td><td>10,169,255</td><td>3,307,552</td><td><strong>565</strong></td></tr>
+        <tr><td>8</td><td>990,000</td><td>516,348</td><td>16,627,314</td><td>2,337,571</td><td>794</td></tr>
+        <tr><td>16</td><td>990,000</td><td>516,348</td><td>27,871,544</td><td>1,839,947</td><td>1052</td></tr>
+        </tbody>
+    </table>
+
+    <h4>4. Correctness & Validation</h4>
+    <ul>
+        <li><strong>Automated Invariant Check:</strong> Verified aggressively on the first 100 replacements and at the end of every complete run. No violations found.</li>
+        <li><strong>Ground Truth Validation:</strong> Every $(k, m, \text{stream})$ combination produced an array mathematically identical to <code>sorted(stream)[-m:]</code>. Varying $k$ yielded identical accepted counts and final multisets.</li>
+        <li><strong>Stability:</strong> Rerunning the most promising mid-range arities ($k=4, k=8$) with distinct seeds (2027 and 2028) confirmed the temporal dynamics and relative performance rankings are stable.</li>
+    </ul>
+
+    <h4>5. Replacements Plot (Blockwise)</h4>
+    <p>
+        <em>Note: Chart generated using Chart.js based on 10,000-value blocks.</em>
+    </p>
+
+=    <div style="position: relative; height: 400px; width: 100%; margin-bottom: 20px;">
+        <canvas id="t4Chart"></canvas>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => {
+            const canvas = document.getElementById('t4Chart');
+            if (!canvas) return;
+
+            const labels = Array.from({length: 100}, (_, i) => `Block ${i + 1}`);
+
+            // Data for m=10000 extracted from Rust output
+            const streamA = [0, 6941, 3979, 2935, 2240, 1802, 1581, 1332, 1234, 1037, 940, 815, 819, 730, 656, 698, 603, 590, 555, 506, 514, 443, 419, 433, 401, 380, 357, 344, 329, 348, 348, 310, 345, 277, 296, 280, 265, 277, 262, 266, 221, 226, 273, 225, 212, 219, 208, 193, 220, 188, 200, 191, 208, 200, 195, 184, 192, 186, 157, 164, 143, 151, 171, 154, 168, 148, 173, 144, 153, 157, 153, 147, 142, 150, 136, 134, 132, 138, 125, 118, 139, 136, 136, 117, 132, 126, 109, 110, 105, 110, 103, 111, 107, 121, 109, 117, 131, 87, 107, 116];
+            const streamB = [0, 7897, 5957, 5353, 5150, 5032, 4916, 5037, 5000, 4919, 5037, 4899, 5044, 5049, 4944, 5031, 4950, 5053, 4899, 4922, 5054, 5081, 5017, 5048, 4954, 5044, 5022, 5075, 5056, 5014, 5013, 5010, 5067, 5050, 5061, 4970, 5023, 5014, 4993, 4974, 5052, 5068, 4986, 5010, 4928, 4962, 4994, 5006, 5128, 5113, 4923, 4931, 5105, 5011, 5050, 4953, 5042, 4948, 4958, 4994, 4942, 5016, 5134, 4953, 5001, 4961, 4989, 5006, 4968, 4997, 5038, 4981, 4977, 4957, 5011, 5032, 4965, 5005, 4953, 5016, 4933, 4989, 5037, 4987, 4957, 4950, 5014, 4885, 4945, 5035, 4951, 5006, 5036, 4998, 5011, 4966, 5081, 5033, 5037, 4966];
+            const streamC = [0, 8341, 6217, 5274, 5045, 6284, 7340, 6225, 5688, 4827, 5391, 6890, 8011, 8503, 9336, 9525, 9277, 8723, 6873, 5840, 5343, 4438, 3556, 3203, 3172, 3756, 4328, 5727, 5726, 5156, 4378, 3694, 3417, 2095, 1746, 2335, 2730, 2857, 1657, 769, 676, 793, 2134, 5249, 7827, 8751, 8277, 8213, 7644, 7555, 7708, 7313, 6994, 7171, 7767, 8063, 8338, 9121, 8798, 6839, 5432, 5430, 5015, 5438, 6843, 6922, 6602, 7592, 7074, 5143, 4048, 2758, 2971, 3385, 3644, 5354, 7150, 8273, 8721, 9142, 8761, 7319, 5263, 3944, 3762, 4486, 6047, 6475, 5233, 3154, 1527, 1078, 840, 447, 161, 87, 114, 211, 454, 1124];
+
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Stream A (Stable, centered)', data: streamA, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointRadius: 1 },
+                        { label: 'Stream B (Steady linear growth)', data: streamB, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 2, pointRadius: 1 },
+                        { label: 'Stream C (Variable velocity)', data: streamC, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 2, pointRadius: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Accepted Replacements', font: {weight: 'bold'} } },
+                        x: { title: { display: true, text: 'Blocks (10,000 values each)', font: {weight: 'bold'} }, ticks: { maxTicksLimit: 20 } }
+                    },
+                    plugins: {
+                        title: { display: true, text: 'Accepted Replacements per 10,000 values (m=10,000)', font: {size: 15, weight: 'bold'} }
+                    }
+                }
+            });
+        });
+    </script>
+
+    <h2>The answer (Recommendations and Interpretation):</h2>
+    <p>
+        The table demonstrates that the choice of arity ($k$) becomes critical only when $m$ is large and the stream causes frequent accepted replacements.
+        <br><br>
+        For a small heap ($m=100$), time complexity is largely masked by fast execution ($< 42$ ms) across all arities because the maximum depth is extremely shallow regardless of $k$. Similarly, for <strong>Stream A</strong> at $m=10,000$, incoming elements are rejected $>95\%$ of the time after a single $O(1)$ root comparison. Because <code>sift_down</code> is rarely triggered, memory and child comparison overheads are negligible, rendering $k$ relatively unimportant.
+        <br><br>
+        However, for active workloads (<strong>Streams B and C</strong> at $m=10,000$), replacements occur $\sim 50\%$ of the time. Here, a binary heap ($k=2$) is overly deep, forcing over 5.8 million vertical swap moves. Conversely, flat arities ($k=16$) reduce moves but explode the number of <em>child comparisons</em> (jumping from 6 million up to 26 million), shifting the bottleneck to the CPU.
+        <br><br>
+        Mid-range arities—specifically <strong>$k=4$ and $k=8$</strong>—provide the optimal mathematical compromise. They halve the memory writes compared to $k=2$ while avoiding the extreme comparison bloat of $k=16$. Based on execution times ($30–35$ ms for small heaps, $565–673$ ms for large heaps), $k=4$ and $k=8$ consistently proved to be the most resilient structures for heavy streaming filters.
+    </p>
+</details>
+<details>
+    <summary>T5. Encode an HW3 search tree in 2n+1 bits</summary>
+
+    <h4>1. Unbalanced BST Drawing</h4>
+    <p>
+        The ordinary unbalanced BST obtained by sequentially inserting the 14-value Collatz-59 prefix:
+        <code>59, 178, 89, 268, 134, 67, 202, 101, 304, 152, 76, 38, 19, 58</code>
+    </p>
+    <pre style="background-color: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 4px; overflow-x: auto; line-height: 1.2;"><code>            59
+          /    \
+        38      178
+       /  \     /  \
+     19    58  89  268
+              / \  / \
+            67 134 202 304
+             \   \
+             101 152
+             /
+            76</code></pre>
+
+    <h4>2. Encoded Data Structures</h4>
+    <p>
+        <strong>Breadth-First Key Array:</strong><br>
+        <code style="background-color: rgba(255, 255, 255, 0.05); padding: 2px 6px; border-radius: 4px;">[59, 38, 178, 19, 58, 89, 268, 67, 134, 202, 304, 101, 152, 76]</code>
+    </p>
+    <p>
+        <strong>29-bit Shape Vector:</strong> (Formatted with spaces for readability, representing node children)<br>
+        <code style="background-color: rgba(255, 255, 255, 0.05); padding: 2px 6px; border-radius: 4px;">1 11 11 11 00 00 11 11 01 01 00 00 10 00 00</code> &rarr; <strong><code>11111110000111101010000100000</code></strong>
+    </p>
+
+    <h4>3. Navigation Traces (Using <code>rank1</code> and <code>select1</code>)</h4>
+    <ul>
+        <li>
+            <strong>Locate both children of key 89:</strong><br>
+            Key 89 is at 1-based index $i = 6$. Its bit position in the shape vector is $x = \text{select}_1(6) = 6$.
+            The child bits are at $2i = 12$ and $2i+1 = 13$. Both bits 12 and 13 are <code>1</code>. <br>
+            - Left child index: $\text{rank}_1(12) = 8 \rightarrow$ <strong>Key 67</strong>.<br>
+            - Right child index: $\text{rank}_1(13) = 9 \rightarrow$ <strong>Key 134</strong>.
+        </li>
+        <li style="margin-top: 10px;">
+            <strong>Identify which side of key 67 contains key 76:</strong><br>
+            Key 76 is at index $i = 14$. Its bit position is $x = \text{select}_1(14) = 24$. Its parent's index is $\lfloor 24/2 \rfloor = 12$ (Key 101). Key 101's bit position is $x = \text{select}_1(12) = 17$. Its parent is $\lfloor 17/2 \rfloor = 8$ (Key 67). Because 17 is an odd number ($2 \times 8 + 1$), Key 101 is the <strong>right</strong> child of 67. Since 76 descends from 101, it is strictly on the <strong>right side</strong> of 67.
+        </li>
+        <li style="margin-top: 10px;">
+            <strong>Recover the parent of key 76:</strong><br>
+            Key 76 is at index $i = 14$. Its exact bit position is $x = \text{select}_1(14) = 24$. The parent's node index in the breadth-first array is derived by $\lfloor x/2 \rfloor = \lfloor 24/2 \rfloor = 12$. The key at index 12 is <strong>101</strong>.
+        </li>
+    </ul>
+
+    <h2>The answer (Explanation of the Encodings):</h2>
+    <p>
+        The shape vector replaces standard memory pointers (which cost 64 bits each per child), significantly saving structural overhead by compressing the entire tree topology into just $2n+1$ bits. However, it only stores the skeleton; it does not store the keys themselves, which must be kept in a separate dense array.
+        <br><br>
+        Because every <code>1</code> in the vector represents a real node, <code>rank1(x)</code> counts the <code>1</code>s up to bit $x$ to directly map a node's bit position to its 1-based index $i$ in the key array. Conversely, <code>select1(i)</code> finds the bit position $x$ of the $i$-th node. This mapping lets us dynamically compute child positions ($2i$ and $2i+1$) without storing physical pointers.
+    </p>
+</details>
+<details>
+    <summary>B1. Read and evaluate the B-heap paper</summary>
+
+    <h4>1. Layout Diagram: Ordinary vs. B-Heap</h4>
+    <p>
+        The fundamental difference lies in how a vertical tree path maps to a horizontal memory array.
+    </p>
+
+    <div style="background-color: #1e293b; color: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; font-family: monospace;">
+        <!-- Standard Heap -->
+        <div style="margin-bottom: 12px; font-weight: bold; color: #94a3b8;">Standard Binary Heap (Breadth-First Layout)</div>
+        <div style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px;">
+            <div style="padding: 6px 10px; background-color: #3b82f6; border-radius: 4px;" title="Root">N0</div>
+            <div style="padding: 6px 10px; background-color: #10b981; border-radius: 4px;" title="Depth 1">N1</div>
+            <div style="padding: 6px 10px; background-color: #10b981; border-radius: 4px;" title="Depth 1">N2</div>
+            <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;" title="Depth 2">N3</div>
+            <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;" title="Depth 2">N4</div>
+            <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;" title="Depth 2">N5</div>
+            <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;" title="Depth 2">N6</div>
+            <div style="padding: 6px 10px; background-color: #ef4444; border-radius: 4px;" title="Depth 3">N7...</div>
+        </div>
+        <div style="font-size: 0.85rem; color: #f87171; margin-bottom: 24px;">
+            &#10008; <strong>Issue:</strong> The memory distance between parent $i$ and child $2i$ doubles at each level. Jumping from N3 down to N7 exponentially crosses memory bounds.
+        </div>
+
+        <!-- B-Heap -->
+        <div style="margin-bottom: 12px; font-weight: bold; color: #94a3b8;">B-Heap (Subtree Paging Layout)</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
+            <!-- Page 0 -->
+            <div style="border: 2px dashed #6366f1; border-radius: 6px; padding: 8px; background-color: rgba(99, 102, 241, 0.1);">
+                <div style="font-size: 0.75rem; color: #818cf8; text-transform: uppercase; margin-bottom: 6px;">Page 0 (Top Subtree)</div>
+                <div style="display: flex; gap: 4px;">
+                    <div style="padding: 6px 10px; background-color: #3b82f6; border-radius: 4px;">N0</div>
+                    <div style="padding: 6px 10px; background-color: #10b981; border-radius: 4px;">N1</div>
+                    <div style="padding: 6px 10px; background-color: #10b981; border-radius: 4px;">N2</div>
+                    <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;">N3</div>
+                    <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;">...</div>
+                </div>
+            </div>
+            <!-- Page 1 -->
+            <div style="border: 2px dashed #14b8a6; border-radius: 6px; padding: 8px; background-color: rgba(20, 184, 166, 0.1);">
+                <div style="font-size: 0.75rem; color: #2dd4bf; text-transform: uppercase; margin-bottom: 6px;">Page 1 (Left Subtree)</div>
+                <div style="display: flex; gap: 4px;">
+                    <div style="padding: 6px 10px; background-color: #ef4444; border-radius: 4px;">N7</div>
+                    <div style="padding: 6px 10px; background-color: #ef4444; border-radius: 4px;">N8</div>
+                    <div style="padding: 6px 10px; background-color: #ef4444; border-radius: 4px;">N9</div>
+                    <div style="padding: 6px 10px; background-color: #ef4444; border-radius: 4px;">...</div>
+                </div>
+            </div>
+        </div>
+        <div style="font-size: 0.85rem; color: #34d399;">
+            &#10004; <strong>Fix:</strong> Entire subtrees are packed into contiguous virtual memory pages. Multiple vertical steps stay safely inside the exact same cache line or page!
+        </div>
+    </div>
+
+    <h4>2. Direct Evaluation</h4>
+
+    <p><strong>Q1: Why can vertical movement through an ordinary array-based binary heap touch many virtual-memory pages or cache regions?</strong></p>
+    <p>
+        In an ordinary binary heap, a node at index $i$ has children at $2i$ and $2i+1$. As you descend the tree, the memory distance between a parent and its child doubles at each level. Near the leaves of a large heap, a single <code>sift_down</code> step leaps across megabytes of memory, guaranteeing a cache miss or a virtual memory page fault for almost every comparison at the bottom of the tree.
+    </p>
+
+    <p><strong>Q2: How does the B-heap layout change locality, and what extra work can it introduce?</strong></p>
+    <p>
+        The B-heap packs self-contained subtrees (e.g., depths 0–9) into fixed-size memory pages (e.g., 4KB). This guarantees that multiple consecutive vertical steps in a <code>sift_down</code> operation occur within the exact same memory page, massively improving temporal and spatial locality. The extra work introduced is computational: navigating between parents and children requires complex bitwise arithmetic and branch logic to detect page boundaries and jump to the correct physical offset in a different page.
+    </p>
+
+    <p><strong>Q3: Reconstruct the paper's principal workload and memory-model parameters. Win/Loss situations?</strong></p>
+    <p>
+        <strong>Workload & Model:</strong> The simulation inserts $N$ random items, performs $N$ pairs of (extract-min, insert) to simulate steady-state queue operations at capacity, and finally drains the heap. The memory model assumes an aggressively paged virtual memory environment (representing spinning hard disks).<br>
+        <strong>B-heap Wins:</strong> On extremely large heaps that exceed physical RAM, where standard heaps thrash the swap file. Eliminating disk I/O drastically outweighs CPU overhead.<br>
+        <strong>B-heap Loses:</strong> On small heaps that fit entirely within the CPU cache. Here, memory latency is negligible, and the B-heap's complex index arithmetic wastes CPU cycles compared to the standard $2i$ bitshift.
+    </p>
+
+    <p><strong>Q4: Which asymptotic bounds remain unchanged? Explain why the paper's result does not contradict comparison-based heap analysis.</strong></p>
+    <p>
+        The algorithmic time complexity remains strictly $O(\log n)$ for insertions and extractions, and the number of logical comparisons is identical. The paper does not contradict standard analysis because standard Big-O notation assumes the Uniform Cost Memory Model (RAM model), where every memory access costs $O(1)$. Kamp’s paper optimizes for the External Memory Model (I/O model), reducing the hidden hardware constant factors (cache misses and page faults) without altering the asymptotic step count.
+    </p>
+
+    <p><strong>Q5: Identify one assumption or claim that should be retested on a current computer, and propose a measurement for it.</strong></p>
+    <p>
+        <strong>Assumption:</strong> The paper focuses heavily on virtual memory paging to slow spinning disks as the primary performance cliff. Today, machines have immense physical RAM and incredibly fast NVMe SSDs. The modern performance cliff is dropping out of the CPU's L3 cache into main RAM.<br>
+        <strong>Measurement:</strong> Retest the crossover point strictly entirely within physical RAM on a modern CPU. Run the same workload at sizes exceeding the L3 cache (e.g., 32MB to 128MB) and measure hardware cache misses using performance counters (e.g., <code>perf stat -e cache-misses</code> on Linux) to see if B-heap navigation logic still pays off against modern DDR5 memory bandwidth.
+    </p>
+</details>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const refMetas = document.querySelectorAll('meta[name="reference"]');
+    if (refMetas.length === 0) return;
+
+    const references = [];
+    const refMap = {};
+
+    refMetas.forEach((meta, index) => {
+        const rawContent = meta.getAttribute("content").trim();
+
+        const urlMatch = rawContent.match(/https?:\/\/[^\s]+/i);
+        const url = urlMatch ? urlMatch[0] : null;
+
+        let text = rawContent;
+        if (url) {
+            text = rawContent.replace(url, "").replace(/\|/g, "").trim();
+        }
+
+        const key = text.split(/\s+/)[0] || `ref-${index + 1}`;
+        const item = { index: index + 1, key, text: text || url, url };
+
+        references.push(item);
+        refMap[key] = item;
+    });
+
+    let bodyHTML = document.body.innerHTML;
+    bodyHTML = bodyHTML.replace(/\[ref:([a-zA-Z0-9_\-]+)\]/g, (match, key) => {
+        const ref = refMap[key];
+        return ref ? `<sup><a class="ref-link" href="#ref-${ref.index}">[${ref.index}]</a></sup>` : match;
+    });
+    document.body.innerHTML = bodyHTML;
+
+    const footerHTML = `
+    <footer class="report-references">
+      <h3>References</h3>
+      <ol>
+        ${references.map(ref => `
+          <li id="ref-${ref.index}">
+            <span class="ref-title">${ref.text.replace(/_/g, " ")}</span>
+            ${ref.url ? `— <a href="${ref.url}" target="_blank" rel="noopener noreferrer">${ref.url}</a>` : ""}
+          </li>
+        `).join("")}
+      </ol>
+    </footer>
+  `;
+
+    document.body.insertAdjacentHTML("beforeend", footerHTML);
+});
+</script>
+</body>
+<script>
+    window.addEventListener('load', () => {
+        const ctx = document.getElementById('t5Chart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['1 (Baseline)', '4', '16', '64', '256'],
+                datasets: [
+                    {
+                        label: 'Mean Search Depth (N = 1000)',
+                        data: [12.22, 23.37, 54.68, 109.78, 253.87],
+                        borderColor: '#3b82f6', // Blue
+                        backgroundColor: '#3b82f6',
+                        tension: 0.1,
+                        borderWidth: 2,
+                        pointRadius: 4
+                    },
+                    {
+                        label: 'Mean Search Depth (N = 10000)',
+                        data: [16.45, 34.10, 90.98, 291.94, 746.70],
+                        borderColor: '#ef4444', // Red
+                        backgroundColor: '#ef4444',
+                        tension: 0.1,
+                        borderWidth: 2,
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Mean Search Comparisons', color: '#1e1e1e', font: {weight: 'bold'} }
+                    },
+                    x: {
+                        title: { display: true, text: 'Block Length (L)', color: '#1e1e1e', font: {weight: 'bold'} }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#1e1e1e' } }
+                }
+            }
+        });
+    });
+</script>
+</html>
