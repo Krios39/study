@@ -1,0 +1,39 @@
+{
+  "run": "synctsa_s10240_v32_r1",
+  "rep": 1,
+  "config": "synctsa",
+  "target": "xroad",
+  "size": 10240,
+  "vus": 32,
+  "n": 1000,
+  "warmup": 4000,
+  "wall_s": 597.976,
+  "started": "2026-09-28T09:46:19.648Z",
+  "finished": "2026-09-28T09:56:18.523Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 151964522,
+      "tx": 136302512
+    },
+    "ss2": {
+      "rx": 143215719,
+      "tx": 144102087
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 260227072,
+    "ss2": 259702784
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 7620,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 0.6523301837270321
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\ntimestamp-immediately = true",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\ntimestamp-immediately = true"
+  },
+  "k6_stdout": "time=\"2026-09-28T09:48:39Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:48:41Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:48:42Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:50:12Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:51:53Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:52:11Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:52:16Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:52:19Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:53:57Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:54:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:54:37Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:54:39Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:54:42Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:54:52Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:55:32Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\ntime=\"2026-09-28T09:56:11Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=10240&fill=random\\\": request timeout\"\nsynctsa\txroad\tsize=10240\tvus=32\trep=1\tp50=2589.3\tp90=7082.0\tp99=21547.8\terrors=2"
+}

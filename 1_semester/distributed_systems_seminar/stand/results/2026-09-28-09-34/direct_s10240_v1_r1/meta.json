@@ -1,0 +1,39 @@
+{
+  "run": "direct_s10240_v1_r1",
+  "rep": 1,
+  "config": "direct",
+  "target": "direct",
+  "size": 10240,
+  "vus": 1,
+  "n": 1000,
+  "warmup": 100,
+  "wall_s": 4.855,
+  "started": "2026-09-28T09:43:24.256Z",
+  "finished": "2026-09-28T09:43:30.035Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 252,
+      "tx": 0
+    },
+    "ss2": {
+      "rx": 276,
+      "tx": 132
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 0,
+    "ss2": 0
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 0,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": null
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh"
+  },
+  "k6_stdout": "direct\tdirect\tsize=10240\tvus=1\trep=1\tp50=0.3\tp90=0.6\tp99=0.8\terrors=0"
+}

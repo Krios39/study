@@ -1,0 +1,39 @@
+{
+  "run": "synctsa_s1024_v1_r1",
+  "rep": 1,
+  "config": "synctsa",
+  "target": "xroad",
+  "size": 1024,
+  "vus": 1,
+  "n": 1000,
+  "warmup": 200,
+  "wall_s": 292.054,
+  "started": "2026-09-28T10:03:28.679Z",
+  "finished": "2026-09-28T10:08:22.683Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 26119360,
+      "tx": 21792299
+    },
+    "ss2": {
+      "rx": 23547727,
+      "tx": 24572755
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 46465024,
+    "ss2": 46456832
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 4802,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 0.02286068304873027
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\ntimestamp-immediately = true",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\ntimestamp-immediately = true"
+  },
+  "k6_stdout": "synctsa\txroad\tsize=1024\tvus=1\trep=1\tp50=239.2\tp90=277.2\tp99=315.7\terrors=0"
+}

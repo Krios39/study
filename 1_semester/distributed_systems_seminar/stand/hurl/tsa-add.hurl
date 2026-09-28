@@ -23,4 +23,7 @@ Content-Type: application/json
   "url": "{{tsa_url}}",
   "cost_type": "{{tsa_cost}}"
 }
-HTTP 201
+# 201 — добавлен, 409 — уже был (идемпотентность)
+HTTP *
+[Asserts]
+status toString matches "^(201|409)$"

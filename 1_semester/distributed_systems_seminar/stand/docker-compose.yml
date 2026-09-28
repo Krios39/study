@@ -5,7 +5,7 @@ x-ss-common: &ss-common
     XROAD_ADMIN_USER: xrd
     XROAD_ADMIN_PASSWORD: secret
     XROAD_LOG_LEVEL: INFO
-  # одинаковые лимиты на ноуте и на VM — иначе среды несравнимы (план, 8.2)
+
   deploy:
     resources:
       limits:
@@ -60,6 +60,7 @@ services:
       retries: 40
     volumes:
       - ca-volume:/home/ca
+      - ./ca/00-logformat.nginx:/etc/nginx/sites-enabled/00-logformat.nginx:ro   # лог с портом для подсчёта OCSP/TSA
     networks:
       - xroad-network
 
@@ -134,7 +135,6 @@ services:
     networks:
       - xroad-network
 
-  # hurl — инициализация через REST API. Не стартует с `up`, только `docker compose run --rm hurl ...`
   hurl:
     image: ghcr.io/orange-opensource/hurl:8.0.1
     profiles: ["init"]
