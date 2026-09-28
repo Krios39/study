@@ -8,6 +8,7 @@
     <meta name="reference" content="Binary heap | https://en.wikipedia.org/wiki/Binary_heap">
     <meta name="reference" content="Rust | https://doc.rust-lang.ru/">
     <meta name="reference" content="Binary heap | https://www.geeksforgeeks.org/dsa/k-ary-heap/">
+    <meta name="reference" content="You’re Doing It Wrong | https://queue.acm.org/doi/10.1145/1810226.1814327">
 
     <link rel="stylesheet" href="../../styles.css">
     <script src="../../header.js" defer></script>
@@ -494,7 +495,91 @@ Conversely, emptying the heap via $n$ calls to <code>extract-min</code> takes $\
         Because every <code>1</code> in the vector represents a real node, <code>rank1(x)</code> counts the <code>1</code>s up to bit $x$ to directly map a node's bit position to its 1-based index $i$ in the key array. Conversely, <code>select1(i)</code> finds the bit position $x$ of the $i$-th node. This mapping lets us dynamically compute child positions ($2i$ and $2i+1$) without storing physical pointers.
     </p>
 </details>
+<details>
+    <summary>B1. Read and evaluate the B-heap paper</summary>
 
+    <h4>1. Layout Diagram: Ordinary vs. B-Heap</h4>
+    <p>
+        The fundamental difference lies in how a vertical tree path maps to a horizontal memory array.
+    </p>
+
+    <div style="background-color: #1e293b; color: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; font-family: monospace;">
+        <!-- Standard Heap -->
+        <div style="margin-bottom: 12px; font-weight: bold; color: #94a3b8;">Standard Binary Heap (Breadth-First Layout)</div>
+        <div style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px;">
+            <div style="padding: 6px 10px; background-color: #3b82f6; border-radius: 4px;" title="Root">N0</div>
+            <div style="padding: 6px 10px; background-color: #10b981; border-radius: 4px;" title="Depth 1">N1</div>
+            <div style="padding: 6px 10px; background-color: #10b981; border-radius: 4px;" title="Depth 1">N2</div>
+            <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;" title="Depth 2">N3</div>
+            <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;" title="Depth 2">N4</div>
+            <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;" title="Depth 2">N5</div>
+            <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;" title="Depth 2">N6</div>
+            <div style="padding: 6px 10px; background-color: #ef4444; border-radius: 4px;" title="Depth 3">N7...</div>
+        </div>
+        <div style="font-size: 0.85rem; color: #f87171; margin-bottom: 24px;">
+            &#10008; <strong>Issue:</strong> The memory distance between parent $i$ and child $2i$ doubles at each level. Jumping from N3 down to N7 exponentially crosses memory bounds.
+        </div>
+
+        <!-- B-Heap -->
+        <div style="margin-bottom: 12px; font-weight: bold; color: #94a3b8;">B-Heap (Subtree Paging Layout)</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
+            <!-- Page 0 -->
+            <div style="border: 2px dashed #6366f1; border-radius: 6px; padding: 8px; background-color: rgba(99, 102, 241, 0.1);">
+                <div style="font-size: 0.75rem; color: #818cf8; text-transform: uppercase; margin-bottom: 6px;">Page 0 (Top Subtree)</div>
+                <div style="display: flex; gap: 4px;">
+                    <div style="padding: 6px 10px; background-color: #3b82f6; border-radius: 4px;">N0</div>
+                    <div style="padding: 6px 10px; background-color: #10b981; border-radius: 4px;">N1</div>
+                    <div style="padding: 6px 10px; background-color: #10b981; border-radius: 4px;">N2</div>
+                    <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;">N3</div>
+                    <div style="padding: 6px 10px; background-color: #f59e0b; border-radius: 4px;">...</div>
+                </div>
+            </div>
+            <!-- Page 1 -->
+            <div style="border: 2px dashed #14b8a6; border-radius: 6px; padding: 8px; background-color: rgba(20, 184, 166, 0.1);">
+                <div style="font-size: 0.75rem; color: #2dd4bf; text-transform: uppercase; margin-bottom: 6px;">Page 1 (Left Subtree)</div>
+                <div style="display: flex; gap: 4px;">
+                    <div style="padding: 6px 10px; background-color: #ef4444; border-radius: 4px;">N7</div>
+                    <div style="padding: 6px 10px; background-color: #ef4444; border-radius: 4px;">N8</div>
+                    <div style="padding: 6px 10px; background-color: #ef4444; border-radius: 4px;">N9</div>
+                    <div style="padding: 6px 10px; background-color: #ef4444; border-radius: 4px;">...</div>
+                </div>
+            </div>
+        </div>
+        <div style="font-size: 0.85rem; color: #34d399;">
+            &#10004; <strong>Fix:</strong> Entire subtrees are packed into contiguous virtual memory pages. Multiple vertical steps stay safely inside the exact same cache line or page!
+        </div>
+    </div>
+
+    <h4>2. Direct Evaluation</h4>
+
+    <p><strong>Q1: Why can vertical movement through an ordinary array-based binary heap touch many virtual-memory pages or cache regions?</strong></p>
+    <p>
+        In an ordinary binary heap, a node at index $i$ has children at $2i$ and $2i+1$. As you descend the tree, the memory distance between a parent and its child doubles at each level. Near the leaves of a large heap, a single <code>sift_down</code> step leaps across megabytes of memory, guaranteeing a cache miss or a virtual memory page fault for almost every comparison at the bottom of the tree.
+    </p>
+
+    <p><strong>Q2: How does the B-heap layout change locality, and what extra work can it introduce?</strong></p>
+    <p>
+        The B-heap packs self-contained subtrees (e.g., depths 0–9) into fixed-size memory pages (e.g., 4KB). This guarantees that multiple consecutive vertical steps in a <code>sift_down</code> operation occur within the exact same memory page, massively improving temporal and spatial locality. The extra work introduced is computational: navigating between parents and children requires complex bitwise arithmetic and branch logic to detect page boundaries and jump to the correct physical offset in a different page.
+    </p>
+
+    <p><strong>Q3: Reconstruct the paper's principal workload and memory-model parameters. Win/Loss situations?</strong></p>
+    <p>
+        <strong>Workload & Model:</strong> The simulation inserts $N$ random items, performs $N$ pairs of (extract-min, insert) to simulate steady-state queue operations at capacity, and finally drains the heap. The memory model assumes an aggressively paged virtual memory environment (representing spinning hard disks).<br>
+        <strong>B-heap Wins:</strong> On extremely large heaps that exceed physical RAM, where standard heaps thrash the swap file. Eliminating disk I/O drastically outweighs CPU overhead.<br>
+        <strong>B-heap Loses:</strong> On small heaps that fit entirely within the CPU cache. Here, memory latency is negligible, and the B-heap's complex index arithmetic wastes CPU cycles compared to the standard $2i$ bitshift.
+    </p>
+
+    <p><strong>Q4: Which asymptotic bounds remain unchanged? Explain why the paper's result does not contradict comparison-based heap analysis.</strong></p>
+    <p>
+        The algorithmic time complexity remains strictly $O(\log n)$ for insertions and extractions, and the number of logical comparisons is identical. The paper does not contradict standard analysis because standard Big-O notation assumes the Uniform Cost Memory Model (RAM model), where every memory access costs $O(1)$. Kamp’s paper optimizes for the External Memory Model (I/O model), reducing the hidden hardware constant factors (cache misses and page faults) without altering the asymptotic step count.
+    </p>
+
+    <p><strong>Q5: Identify one assumption or claim that should be retested on a current computer, and propose a measurement for it.</strong></p>
+    <p>
+        <strong>Assumption:</strong> The paper focuses heavily on virtual memory paging to slow spinning disks as the primary performance cliff. Today, machines have immense physical RAM and incredibly fast NVMe SSDs. The modern performance cliff is dropping out of the CPU's L3 cache into main RAM.<br>
+        <strong>Measurement:</strong> Retest the crossover point strictly entirely within physical RAM on a modern CPU. Run the same workload at sizes exceeding the L3 cache (e.g., 32MB to 128MB) and measure hardware cache misses using performance counters (e.g., <code>perf stat -e cache-misses</code> on Linux) to see if B-heap navigation logic still pays off against modern DDR5 memory bandwidth.
+    </p>
+</details>
 </body>
 <script>
     window.addEventListener('load', () => {
