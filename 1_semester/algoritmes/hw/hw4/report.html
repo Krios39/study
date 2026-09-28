@@ -8,7 +8,7 @@
     <meta name="reference" content="Binary heap | https://en.wikipedia.org/wiki/Binary_heap">
     <meta name="reference" content="Rust | https://doc.rust-lang.ru/">
     <meta name="reference" content="Binary heap | https://www.geeksforgeeks.org/dsa/k-ary-heap/">
-    <meta name="reference" content="You’re Doing It Wrong | https://queue.acm.org/doi/10.1145/1810226.1814327">
+    <meta name="reference" content="Kamp, Poul-Henning. 'You're doing it wrong.' ACM Queue 8, no. 6 (2010): 14-22 | https://queue.acm.org/doi/10.1145/1810226.1814327">    <meta name="reference" content="Gemini | https://gemini.google.com/">
 
     <link rel="stylesheet" href="../../styles.css">
     <script src="../../header.js" defer></script>
@@ -16,7 +16,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-
+<div style="padding: 15px; background-color: rgba(255, 255, 255, 0.05); border-left: 4px solid #3b82f6; margin-bottom: 25px;">
+    <h3 style="margin-top: 0;">General Disclosures & Indexing Conventions</h3>
+    <p><strong>AI Assistance Disclosure:</strong> Substantial AI assistance (Google Gemini) was used in the preparation of this report. It assisted in drafting HTML layouts, structuring analytical arguments, and providing boilerplate for the Rust experimental benchmarks. I fully understand the underlying data structures, algorithms, and metric outputs, and am prepared to explain all submitted code and conclusions.</p>
+    <p><strong>Counting Conventions:</strong>
+    <ul style="margin-bottom: 0;">
+        <li><strong>Key Comparison:</strong> Any logical comparison evaluating the relative order of two elements. In the streaming filter (T4), this is strictly divided into <em>Root Comparisons</em> (comparing an incoming stream item against the heap minimum) and <em>Child Comparisons</em> (comparing children against each other or against a parent during a <code>sift_down</code> operation).</li>
+        <li><strong>Moved Item / Swap:</strong> A swap is defined as the mutual physical exchange of two elements in the array. A "moved item" increments each time an element is written to a new physical index (e.g., inside <code>sift_down</code>).</li>
+    </ul>
+    </p>
+</div>
 <details>
     <summary>T1. How difficult can bottom-up heapify be?</summary>
 
@@ -314,110 +323,114 @@ Conversely, emptying the heap via $n$ calls to <code>extract-min</code> takes $\
         </tbody>
     </table>
 
-    <h4>3. Compact Comparison Table (Seed 2026, N = 1,000,000, m = 10,000)</h4>
-    <table border="1" cellpadding="6" style="border-collapse: collapse; margin: 15px 0; width: 100%; text-align: right;">
+    <h4>3. Comprehensive Experimental Results (N = 1,000,000, Seed = 2026)</h4>
+    <table border="1" cellpadding="4" style="border-collapse: collapse; margin: 15px 0; width: 100%; text-align: right; font-size: 0.9em;">
         <thead>
         <tr style="background-color: rgba(255, 255, 255, 0.05); text-align: center;">
+            <th>m</th>
             <th>Stream</th>
             <th>Arity ($k$)</th>
-            <th>Accepted Replacements</th>
-            <th>Child Comparisons</th>
+            <th>Root Comps</th>
+            <th>Accepted</th>
+            <th>Child Comps</th>
             <th>Moved Items</th>
             <th>Time (ms)</th>
         </tr>
         </thead>
         <tbody>
-        <!-- Stream A -->
-        <tr><td rowspan="3" style="text-align: center;"><strong>Stream A</strong></td>
-            <td>$k=2$</td><td>46,215</td><td>557,582</td><td>532,711</td><td>137</td></tr>
-        <tr><td>$k=4$</td><td>46,215</td><td>914,072</td><td>292,725</td><td><strong>135</strong></td></tr>
-        <tr><td>$k=16$</td><td>46,215</td><td>2,502,982</td><td>163,944</td><td>178</td></tr>
-        <!-- Stream B -->
-        <tr><td rowspan="3" style="text-align: center;"><strong>Stream B</strong></td>
-            <td>$k=2$</td><td>499,510</td><td>6,013,732</td><td>5,814,269</td><td>596</td></tr>
-        <tr><td>$k=4$</td><td>499,510</td><td>9,825,120</td><td>3,184,469</td><td>700</td></tr>
-        <tr><td>$k=16$</td><td>499,510</td><td>26,955,814</td><td>1,776,577</td><td>1035</td></tr>
-        <!-- Stream C -->
-        <tr><td rowspan="3" style="text-align: center;"><strong>Stream C</strong></td>
-            <td>$k=2$</td><td>516,348</td><td>6,241,100</td><td>6,052,750</td><td>592</td></tr>
-        <tr><td>$k=4$</td><td>516,348</td><td>10,169,255</td><td>3,307,552</td><td><strong>565</strong></td></tr>
-        <tr><td>$k=16$</td><td>516,348</td><td>27,871,544</td><td>1,839,947</td><td>1052</td></tr>
+        <!-- m = 100 -->
+        <tr><td rowspan="15" style="text-align: center; vertical-align: top;"><strong>100</strong></td>
+            <td rowspan="5" style="text-align: center;"><strong>A</strong></td>
+            <td>2</td><td>999,900</td><td>934</td><td>4,944</td><td>4,468</td><td>16</td></tr>
+        <tr><td>3</td><td>999,900</td><td>934</td><td>7,090</td><td>3,201</td><td>20</td></tr>
+        <tr><td>4</td><td>999,900</td><td>934</td><td>8,832</td><td>2,685</td><td>22</td></tr>
+        <tr><td>8</td><td>999,900</td><td>934</td><td>14,804</td><td>2,006</td><td>20</td></tr>
+        <tr><td>16</td><td>999,900</td><td>934</td><td>26,214</td><td>1,714</td><td>20</td></tr>
+
+        <tr><td rowspan="5" style="text-align: center; border-top: 2px solid #555;"><strong>B</strong></td>
+            <td style="border-top: 2px solid #555;">2</td><td style="border-top: 2px solid #555;">999,900</td><td style="border-top: 2px solid #555;">12,012</td><td style="border-top: 2px solid #555;">63,984</td><td style="border-top: 2px solid #555;">58,580</td><td style="border-top: 2px solid #555;">37</td></tr>
+        <tr><td>3</td><td>999,900</td><td>12,012</td><td>90,630</td><td>41,630</td><td>35</td></tr>
+        <tr><td>4</td><td>999,900</td><td>12,012</td><td>112,780</td><td>34,980</td><td><strong>30</strong></td></tr>
+        <tr><td>8</td><td>999,900</td><td>12,012</td><td>190,820</td><td>26,210</td><td>32</td></tr>
+        <tr><td>16</td><td>999,900</td><td>12,012</td><td>335,262</td><td>21,997</td><td>30</td></tr>
+
+        <tr><td rowspan="5" style="text-align: center; border-top: 2px solid #555;"><strong>C</strong></td>
+            <td style="border-top: 2px solid #555;">2</td><td style="border-top: 2px solid #555;">999,900</td><td style="border-top: 2px solid #555;">14,666</td><td style="border-top: 2px solid #555;">78,103</td><td style="border-top: 2px solid #555;">71,528</td><td style="border-top: 2px solid #555;">40</td></tr>
+        <tr><td>3</td><td>999,900</td><td>14,666</td><td>110,664</td><td>50,794</td><td>42</td></tr>
+        <tr><td>4</td><td>999,900</td><td>14,666</td><td>137,830</td><td>42,801</td><td><strong>35</strong></td></tr>
+        <tr><td>8</td><td>999,900</td><td>14,666</td><td>233,723</td><td>32,088</td><td>36</td></tr>
+        <tr><td>16</td><td>999,900</td><td>14,666</td><td>408,432</td><td>26,814</td><td>37</td></tr>
+
+        <!-- m = 10000 -->
+        <tr><td rowspan="15" style="text-align: center; vertical-align: top; border-top: 4px solid #555;"><strong>10,000</strong></td>
+            <td rowspan="5" style="text-align: center; border-top: 4px solid #555;"><strong>A</strong></td>
+            <td style="border-top: 4px solid #555;">2</td><td style="border-top: 4px solid #555;">990,000</td><td style="border-top: 4px solid #555;">46,215</td><td style="border-top: 4px solid #555;">557,582</td><td style="border-top: 4px solid #555;">532,711</td><td style="border-top: 4px solid #555;">137</td></tr>
+        <tr><td>3</td><td>990,000</td><td>46,215</td><td>736,022</td><td>351,719</td><td>137</td></tr>
+        <tr><td>4</td><td>990,000</td><td>46,215</td><td>914,072</td><td>292,725</td><td><strong>135</strong></td></tr>
+        <tr><td>8</td><td>990,000</td><td>46,215</td><td>1,495,490</td><td>207,620</td><td>147</td></tr>
+        <tr><td>16</td><td>990,000</td><td>46,215</td><td>2,502,982</td><td>163,944</td><td>178</td></tr>
+
+        <tr><td rowspan="5" style="text-align: center; border-top: 2px solid #555;"><strong>B</strong></td>
+            <td style="border-top: 2px solid #555;">2</td><td style="border-top: 2px solid #555;">990,000</td><td style="border-top: 2px solid #555;">499,510</td><td style="border-top: 2px solid #555;">6,013,732</td><td style="border-top: 2px solid #555;">5,814,269</td><td style="border-top: 2px solid #555;">596</td></tr>
+        <tr><td>3</td><td>990,000</td><td>499,510</td><td>7,915,672</td><td>3,833,274</td><td>775</td></tr>
+        <tr><td>4</td><td>990,000</td><td>499,510</td><td>9,825,120</td><td>3,184,469</td><td>700</td></tr>
+        <tr><td>8</td><td>990,000</td><td>499,510</td><td>16,077,568</td><td>2,254,414</td><td><strong>673</strong></td></tr>
+        <tr><td>16</td><td>990,000</td><td>499,510</td><td>26,955,814</td><td>1,776,577</td><td>1035</td></tr>
+
+        <tr><td rowspan="5" style="text-align: center; border-top: 2px solid #555;"><strong>C</strong></td>
+            <td style="border-top: 2px solid #555;">2</td><td style="border-top: 2px solid #555;">990,000</td><td style="border-top: 2px solid #555;">516,348</td><td style="border-top: 2px solid #555;">6,241,100</td><td style="border-top: 2px solid #555;">6,052,750</td><td style="border-top: 2px solid #555;">592</td></tr>
+        <tr><td>3</td><td>990,000</td><td>516,348</td><td>8,199,796</td><td>3,984,844</td><td>884</td></tr>
+        <tr><td>4</td><td>990,000</td><td>516,348</td><td>10,169,255</td><td>3,307,552</td><td><strong>565</strong></td></tr>
+        <tr><td>8</td><td>990,000</td><td>516,348</td><td>16,627,314</td><td>2,337,571</td><td>794</td></tr>
+        <tr><td>16</td><td>990,000</td><td>516,348</td><td>27,871,544</td><td>1,839,947</td><td>1052</td></tr>
         </tbody>
     </table>
 
     <h4>4. Correctness & Validation</h4>
     <ul>
         <li><strong>Automated Invariant Check:</strong> Verified aggressively on the first 100 replacements and at the end of every complete run. No violations found.</li>
-        <li><strong>Ground Truth Validation:</strong> Every single $(k, m, \text{stream})$ combination produced an array mathematically identical to <code>sorted(stream)[-m:]</code>. Different arities yielded identical accepted counts and final multisets.</li>
-        <li><strong>Stability:</strong> Rerunning the optimal arities ($k=4, k=8$) with seeds 2027 and 2028 confirmed that the temporal dynamics and relative performance rankings are stable and not seed anomalies.</li>
+        <li><strong>Ground Truth Validation:</strong> Every $(k, m, \text{stream})$ combination produced an array mathematically identical to <code>sorted(stream)[-m:]</code>. Varying $k$ yielded identical accepted counts and final multisets.</li>
+        <li><strong>Stability:</strong> Rerunning the most promising mid-range arities ($k=4, k=8$) with distinct seeds (2027 and 2028) confirmed the temporal dynamics and relative performance rankings are stable.</li>
     </ul>
 
     <h4>5. Replacements Plot (Blockwise)</h4>
     <p>
-        <em>Note: Chart generated using Chart.js based on 10,000-value blocks.</em><br>
+        <em>Note: Chart generated using Chart.js based on 10,000-value blocks.</em>
+    </p>
 
-    <div style="position: relative; height: 400px; width: 100%;">
+=    <div style="position: relative; height: 400px; width: 100%; margin-bottom: 20px;">
         <canvas id="t4Chart"></canvas>
     </div>
 
     <script>
         window.addEventListener('load', () => {
-            // Создаем метки для оси X (блоки от 1 до 100)
+            const canvas = document.getElementById('t4Chart');
+            if (!canvas) return;
+
             const labels = Array.from({length: 100}, (_, i) => `Block ${i + 1}`);
 
-            // Данные для m=10000, собранные из Rust-вывода
+            // Data for m=10000 extracted from Rust output
             const streamA = [0, 6941, 3979, 2935, 2240, 1802, 1581, 1332, 1234, 1037, 940, 815, 819, 730, 656, 698, 603, 590, 555, 506, 514, 443, 419, 433, 401, 380, 357, 344, 329, 348, 348, 310, 345, 277, 296, 280, 265, 277, 262, 266, 221, 226, 273, 225, 212, 219, 208, 193, 220, 188, 200, 191, 208, 200, 195, 184, 192, 186, 157, 164, 143, 151, 171, 154, 168, 148, 173, 144, 153, 157, 153, 147, 142, 150, 136, 134, 132, 138, 125, 118, 139, 136, 136, 117, 132, 126, 109, 110, 105, 110, 103, 111, 107, 121, 109, 117, 131, 87, 107, 116];
             const streamB = [0, 7897, 5957, 5353, 5150, 5032, 4916, 5037, 5000, 4919, 5037, 4899, 5044, 5049, 4944, 5031, 4950, 5053, 4899, 4922, 5054, 5081, 5017, 5048, 4954, 5044, 5022, 5075, 5056, 5014, 5013, 5010, 5067, 5050, 5061, 4970, 5023, 5014, 4993, 4974, 5052, 5068, 4986, 5010, 4928, 4962, 4994, 5006, 5128, 5113, 4923, 4931, 5105, 5011, 5050, 4953, 5042, 4948, 4958, 4994, 4942, 5016, 5134, 4953, 5001, 4961, 4989, 5006, 4968, 4997, 5038, 4981, 4977, 4957, 5011, 5032, 4965, 5005, 4953, 5016, 4933, 4989, 5037, 4987, 4957, 4950, 5014, 4885, 4945, 5035, 4951, 5006, 5036, 4998, 5011, 4966, 5081, 5033, 5037, 4966];
             const streamC = [0, 8341, 6217, 5274, 5045, 6284, 7340, 6225, 5688, 4827, 5391, 6890, 8011, 8503, 9336, 9525, 9277, 8723, 6873, 5840, 5343, 4438, 3556, 3203, 3172, 3756, 4328, 5727, 5726, 5156, 4378, 3694, 3417, 2095, 1746, 2335, 2730, 2857, 1657, 769, 676, 793, 2134, 5249, 7827, 8751, 8277, 8213, 7644, 7555, 7708, 7313, 6994, 7171, 7767, 8063, 8338, 9121, 8798, 6839, 5432, 5430, 5015, 5438, 6843, 6922, 6602, 7592, 7074, 5143, 4048, 2758, 2971, 3385, 3644, 5354, 7150, 8273, 8721, 9142, 8761, 7319, 5263, 3944, 3762, 4486, 6047, 6475, 5233, 3154, 1527, 1078, 840, 447, 161, 87, 114, 211, 454, 1124];
 
-            const ctx = document.getElementById('t4Chart').getContext('2d');
+            const ctx = canvas.getContext('2d');
             new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [
-                        {
-                            label: 'Stream A (Stable, centered)',
-                            data: streamA,
-                            borderColor: '#10b981', // green
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 2,
-                            pointRadius: 1
-                        },
-                        {
-                            label: 'Stream B (Steady linear growth)',
-                            data: streamB,
-                            borderColor: '#3b82f6', // blue
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 2,
-                            pointRadius: 1
-                        },
-                        {
-                            label: 'Stream C (Variable velocity)',
-                            data: streamC,
-                            borderColor: '#ef4444', // red
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            borderWidth: 2,
-                            pointRadius: 1
-                        }
+                        { label: 'Stream A (Stable, centered)', data: streamA, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointRadius: 1 },
+                        { label: 'Stream B (Steady linear growth)', data: streamB, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 2, pointRadius: 1 },
+                        { label: 'Stream C (Variable velocity)', data: streamC, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 2, pointRadius: 1 }
                     ]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Accepted Replacements', font: {weight: 'bold'} }
-                        },
-                        x: {
-                            title: { display: true, text: 'Blocks (10,000 values each)', font: {weight: 'bold'} },
-                            ticks: { maxTicksLimit: 20 }
-                        }
+                        y: { beginAtZero: true, title: { display: true, text: 'Accepted Replacements', font: {weight: 'bold'} } },
+                        x: { title: { display: true, text: 'Blocks (10,000 values each)', font: {weight: 'bold'} }, ticks: { maxTicksLimit: 20 } }
                     },
                     plugins: {
                         title: { display: true, text: 'Accepted Replacements per 10,000 values (m=10,000)', font: {size: 15, weight: 'bold'} }
@@ -426,17 +439,16 @@ Conversely, emptying the heap via $n$ calls to <code>extract-min</code> takes $\
             });
         });
     </script>
-    </p>
 
     <h2>The answer (Recommendations and Interpretation):</h2>
     <p>
-        Arity heavily impacts performance depending on the stream's distribution and replacement frequency.
+        The table demonstrates that the choice of arity ($k$) becomes critical only when $m$ is large and the stream causes frequent accepted replacements.
         <br><br>
-        For <strong>Stream A</strong>, arity has negligible impact on total time (135–178 ms). Because ~95% of incoming values (at $m=10,000$) are rejected immediately at the root, expensive <code>sift_down</code> operations are rare, rendering memory and comparison overheads practically irrelevant.
+        For a small heap ($m=100$), time complexity is largely masked by fast execution ($< 42$ ms) across all arities because the maximum depth is extremely shallow regardless of $k$. Similarly, for <strong>Stream A</strong> at $m=10,000$, incoming elements are rejected $>95\%$ of the time after a single $O(1)$ root comparison. Because <code>sift_down</code> is rarely triggered, memory and child comparison overheads are negligible, rendering $k$ relatively unimportant.
         <br><br>
-        For <strong>Streams B and C</strong>, accepted replacements are frequent (~50%). Here, a standard binary heap ($k=2$) is overly deep, causing excessive vertical data movement (>5.8M swaps). Conversely, high arities ($k=16$) flatten the tree too much, heavily inflating the number of child comparisons (>26M) required to find the local minimum at each shallow level.
+        However, for active workloads (<strong>Streams B and C</strong> at $m=10,000$), replacements occur $\sim 50\%$ of the time. Here, a binary heap ($k=2$) is overly deep, forcing over 5.8 million vertical swap moves. Conversely, flat arities ($k=16$) reduce moves but explode the number of <em>child comparisons</em> (jumping from 6 million up to 26 million), shifting the bottleneck to the CPU.
         <br><br>
-        Intermediate arities, particularly <strong>$k=4$</strong>, provide the optimal balance. They significantly reduce memory writes compared to $k=2$ while avoiding the extreme comparison bloat of $k=16$. Across our stability tests, $k=4$ consistently delivered the best or near-best execution times (e.g., 565 ms for Stream C). Therefore, we recommend <strong>$k=4$</strong> for aggressive top-$m$ streaming filters with active, upward-trending workloads.
+        Mid-range arities—specifically <strong>$k=4$ and $k=8$</strong>—provide the optimal mathematical compromise. They halve the memory writes compared to $k=2$ while avoiding the extreme comparison bloat of $k=16$. Based on execution times ($30–35$ ms for small heaps, $565–673$ ms for large heaps), $k=4$ and $k=8$ consistently proved to be the most resilient structures for heavy streaming filters.
     </p>
 </details>
 <details>
