@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homework 4 Report - Parallel Computing</title>
+    </head>
+    <body>
+        <details>
+                    <summary>Exercise 4.1.1: Replace point-to-point communication with collectives</summary>
+                    <div class="details-content">
+                        <p><strong>Implementation & Validation Strategy:</strong></p>
+                        <p>The manual point-to-point message passing (using <code>comm.Send</code> and <code>comm.Recv</code>) was completely removed. After each process computes its local trapezoidal integral, the results are aggregated using a collective reduction. Furthermore, to ensure mathematical correctness, a sequential reference calculation was added exclusively to Rank 0. The parallel result is compared against this serial reference using <code>numpy.isclose()</code>. If the validation fails (exceeding the floating-point tolerance), the program immediately aborts with a non-zero exit status via <code>sys.exit(1)</code>.</p>
+
+                        <p><strong>Raw Terminal Output:</strong></p>
+                        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 task4_1_1.py 0.0 1.0 10000
+With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33333334]</code></pre>
+
+                        <h2>The answer (Collective Communication Role):</h2>
+                        <p>
+                            I used the <code>MPI.Reduce</code> collective combined with the <code>MPI.SUM</code> operator. This collective efficiently gathers the locally computed integral values from all parallel ranks and automatically calculates their sum directly onto the root rank (Rank 0). This effectively replaces the manual point-to-point receive loop with a single, highly optimized internal MPI operation.
+                        </p>
+                    </div>
+                </details>
+                <details>
+                            <summary>Exercise 4.1.2: Parallel repeated matrix-vector multiplication</summary>
+                            <div class="details-content">
+                                <p><strong>Implementation & Validation Strategy:</strong></p>
+                                <p>The square matrix $A$ was distributed row-wise across the available processes, while the initial vector $x$ was broadcasted to all ranks. During each iteration $K$, each process computes the dot product of its local rows of $A$ against the full current vector $x$. To ensure mathematical correctness without explicitly forming the matrix power $A^K$, a sequential reference loop was executed exclusively on Rank 0. The aggregated parallel result was then validated against this serial reference using <code>numpy.allclose()</code>, with a strict rule to terminate the program via <code>sys.exit(1)</code> if the values diverged.</p>
+
+                                <p><strong>Raw Terminal Output:</strong></p>
+                                <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 task4_1_2.py 1000 10
+[Rank 0] Validation passed! Parallel result perfectly matches serial reference for N=1000, K=10.</code></pre>
+
+                                <h2>The answer (Choice of Collectives):</h2>
+                                <p>
+                                    I distributed the matrix $A$ across processes by rows using <code>MPI.Scatter</code>, while giving every process a full copy of the initial vector $x$ via <code>MPI.Bcast</code>. Inside the iteration loop, after each process computes its local segment of the new vector, I used the <strong><code>MPI.Allgather</code></strong> collective. This collective is structurally necessary here because it gathers the newly computed segments from all ranks and immediately reconstructs the complete, updated vector onto every single process simultaneously, seamlessly satisfying the data dependencies for the next $j+1$ multiplication step.
+                                </p>
+                            </div>
+                        </details>
+                        <details>
+                                    <summary>Exercise 4.2: Row-block implementation</summary>
+                                    <div class="details-content">
+                                        <p><strong>Implementation & Testing Strategy:</strong></p>
+                                        <p>The solution was rigorously validated against the provided <code>a4_test.py</code> script across multiple valid process counts ($P=1, 2, 4, 8$) that cleanly divide the fixed matrix size $N=64$. Because my local environment has a limited number of physical CPU cores, attempting to spawn more than 4 processes initially triggered an OpenMPI allocation error (<code>prte-rmaps-base:alloc-error</code>). To successfully execute the test for 8 processes, I utilized the <code>--oversubscribe</code> flag, which forces MPI to map multiple virtual processes onto the available physical cores.</p>
+
+                                        <p><strong>Raw Terminal Output:</strong></p>
+                                        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 1 python3 a4_test.py task4_2.py
+                        Testing task4_2.py: Ax_rowblock with P=1 rank(s), N=64
+                        [PASS] N=64, K=0
+                        [PASS] N=64, K=1
+                        [PASS] N=64, K=5
+                        [PASS] N=64, K=10
+                        All correctness tests passed for this process count.
+                        user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 2 python3 a4_test.py task4_2.py
+                        Testing task4_2.py: Ax_rowblock with P=2 rank(s), N=64
+                        [PASS] N=64, K=0
+                        [PASS] N=64, K=1
+                        [PASS] N=64, K=5
+                        [PASS] N=64, K=10
+                        All correctness tests passed for this process count.
+                        user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 a4_test.py task4_2.py
+                        Testing task4_2.py: Ax_rowblock with P=4 rank(s), N=64
+                        [PASS] N=64, K=0
+                        [PASS] N=64, K=1
+                        [PASS] N=64, K=5
+                        [PASS] N=64, K=10
+                        All correctness tests passed for this process count.
+                        user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec --oversubscribe -n 8 python3 a4_test.py task4_2.py
+                        Testing task4_2.py: Ax_rowblock with P=8 rank(s), N=64
+                        [PASS] N=64, K=0
+                        [PASS] N=64, K=1
+                        [PASS] N=64, K=5
+                        [PASS] N=64, K=10
+                        All correctness tests passed for this process count.</code></pre>
+
+                                        <h2>Design Note:</h2>
+                                        <p>
+                                            Initially, the root rank distributes matrix <code>A</code> using <code>MPI.Scatter</code> so each rank allocates and receives only its contiguous <code>(N//P) x N</code> row block. The initial vector <code>x</code> is shared to all ranks using <code>MPI.Bcast</code>.
+                                        </p>
+                                        <p>
+                                            During each iteration, every rank computes the dot product of its local row block and the current full vector <code>x</code>, yielding a local segment of the new vector. Because the next iteration requires the complete updated vector, these local segments are concatenated and shared globally using the <code>MPI.Allgather</code> collective.
+                                        </p>
+                                        <p>
+                                            Before an iteration, every rank holds its fixed matrix block and the full current vector <code>x</code>. After the iteration's <code>Allgather</code>, all ranks simultaneously possess the fully updated vector $x_{j+1}$. This design is strictly correct because it satisfies data dependencies for consecutive multiplications without requiring full matrix replication or explicitly computing the matrix power $A^K$.
+                                        </p>
+                                    </div>
+                                </details>
+
+    </body>
+    <script>
+        function loadKaTeXAndRender() {
+            const katexCSS = document.createElement("link");
+            katexCSS.rel = "stylesheet";
+            katexCSS.href =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(katexCSS);
+
+            const katexScript = document.createElement("script");
+            katexScript.src =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+            katexScript.defer = true;
+
+            katexScript.onload = () => {
+                const autoRenderScript = document.createElement("script");
+                autoRenderScript.src =
+                    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                autoRenderScript.defer = true;
+
+                autoRenderScript.onload = () => {
+                    if (window.renderMathInElement) {
+                        window.renderMathInElement(document.body, {
+                            delimiters: [
+                                { left: "$$", right: "$$", display: true },
+                                { left: "$", right: "$", display: false },
+                            ],
+                            throwOnError: false,
+                        });
+                    }
+                };
+                document.head.appendChild(autoRenderScript);
+            };
+
+            document.head.appendChild(katexScript);
+        }
+        loadKaTeXAndRender();
+    </script>
+</html>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.6;
+        color: #111;
+        background-color: #fff;
+        max-width: 1280px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 8px 0;
+    }
+
+    .math {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 17px;
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+
+    ul {
+        margin: 8px 0 16px 20px;
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    .report-header {
+        margin-bottom: 28px;
+    }
+
+    .report-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #111;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table th {
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        width: 15%;
+        padding: 3px 6px 3px 0;
+        white-space: nowrap;
+    }
+
+    .report-meta-table td {
+        color: #111;
+        width: 35%;
+        padding: 3px 12px 3px 0;
+    }
+
+    .report-meta-table a {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .report-meta-table a:hover {
+        text-decoration: underline;
+    }
+
+    .report-divider {
+        border: 0;
+        border-top: 1px solid #d1d5db;
+        margin-top: 8px;
+    }
+
+    .math-left .katex-display {
+        text-align: left !important;
+    }
+
+    .math-left .katex-display > .katex {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    /* Сноски в тексте */
+    a.ref-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0 1px;
+    }
+
+    a.ref-link:hover {
+        text-decoration: underline;
+    }
+
+    .report-references {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .report-references h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .report-references ol {
+        padding-left: 20px;
+    }
+
+    .report-references li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
+
+    .report-references .ref-title {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .report-references a {
+        color: #1a73e8 !important;
+        text-decoration: underline !important;
+        word-break: break-all;
+        cursor: pointer;
+    }
+
+    details {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin: 16px 0;
+        background-color: #fff;
+        transition: all 0.2s ease;
+    }
+
+    details[open] {
+        border-color: #cbd5e1;
+    }
+
+    details > :not(summary) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    summary {
+        cursor: pointer;
+        padding: 10px 14px;
+        user-select: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    summary:hover {
+        background-color: #f8fafc;
+    }
+
+    summary h2 {
+        display: inline;
+        font-size: 16px;
+        margin: 0 0 0 6px;
+    }
+
+    .details-content {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 16px auto;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    img + p {
+        text-align: center;
+        font-size: 13px;
+        color: #57606a;
+        margin-top: -8px;
+        margin-bottom: 20px;
+    }
+</style>
