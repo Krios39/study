@@ -51,6 +51,8 @@ services:
   ca:
     image: ghcr.io/nordic-institute/xrddev-testca:latest
     container_name: ca
+    environment:
+      TSA_WORKERS: "4"      # параллельных openssl ts -reply в ca/tsa_server.py
     ports:
       - 8888:8888   # CA: POST /testca/sign, OCSP на /, сертификаты на /testca/certs/
       - 8899:8899   # TSA
@@ -61,6 +63,7 @@ services:
     volumes:
       - ca-volume:/home/ca
       - ./ca/00-logformat.nginx:/etc/nginx/sites-enabled/00-logformat.nginx:ro   # лог с портом для подсчёта OCSP/TSA
+      - ./ca/tsa_server.py:/home/ca/TSA/tsa_server.py:ro                          # многопоточный TSA вместо однопоточного (см. файл)
     networks:
       - xroad-network
 

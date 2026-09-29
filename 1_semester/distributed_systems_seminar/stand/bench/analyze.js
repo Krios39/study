@@ -42,6 +42,9 @@ if (!runs.length) { console.error('no runs'); process.exit(1); }
 const median = (a) => { const b = a.slice().sort((x, y) => x - y); const k = b.length; return k ? (k % 2 ? b[(k - 1) / 2] : (b[k / 2 - 1] + b[k / 2]) / 2) : NaN; };
 const fmt = (v, d = 1) => (Number.isFinite(v) ? v.toFixed(d) : '—');
 
+// негодный прогон: >10 % ошибок или p50 > 10 с (TSA умер, всё упёрлось в 60-секундные таймауты) — в медианы не входит, считается в колонке invalid
+const isInvalid = (r) => r.errors > 0.1 * r.n || r.p50 > 10000;
+
 // группировка: config × size × vus (контрольные прогоны — отдельно, в сводку не входят)
 const groups = new Map();
 for (const r of runs) {
@@ -52,10 +55,13 @@ for (const r of runs) {
 }
 const rows = [];
 for (const g of groups.values()) {
+  const invalid = g.runs.filter(isInvalid).length;
+  g.runs = g.runs.filter((r) => !isInvalid(r));
+  if (!g.runs.length) { rows.push({ config: g.config, size: g.size, vus: g.vus, reps: 0, invalid, errors: NaN }); continue; }
   const per = (f) => median(g.runs.map(f));
   const n = g.runs[0].n;
   rows.push({
-    config: g.config, size: g.size, vus: g.vus, reps: g.runs.length,
+    config: g.config, size: g.size, vus: g.vus, reps: g.runs.length, invalid,
     p50: per((r) => r.p50), p90: per((r) => r.p90), p99: per((r) => r.p99), avg: per((r) => r.avg),
     rps: per((r) => r.rps_measured), errors: g.runs.reduce((a, r) => a + r.errors, 0),
     // байты на проводе: tx ss1 / число запросов (прогрев включён в счётчик → делим на warmup+n)
@@ -64,6 +70,7 @@ for (const g of groups.values()) {
     log_ss1: per((r) => (r.meta.messagelog_growth_bytes?.ss1 ?? NaN) / (r.warmup + r.n)),
     log_ss2: per((r) => (r.meta.messagelog_growth_bytes?.ss2 ?? NaN) / (r.warmup + r.n)),
     ocsp: per((r) => r.meta.ca_calls?.ocsp ?? NaN), tsa: per((r) => r.meta.ca_calls?.tsa ?? NaN),
+    tsa_flags: g.runs.filter((r) => r.meta.tsa_restarted_before || (r.meta.tsa_probe_after && r.meta.tsa_probe_after !== '200')).length,
     spread_p50: (() => { const v = g.runs.map((r) => r.p50); return v.length > 1 ? (Math.max(...v) - Math.min(...v)) / median(v) * 100 : NaN; })(),
   });
 }
@@ -78,12 +85,12 @@ for (const r of rows) {
   r.d_p90 = cmp ? r.p90 - f.p90 : NaN;
 }
 
-const cols = ['config', 'size', 'vus', 'reps', 'p50', 'p90', 'p99', 'd_p50', 'd_p90', 'rps', 'spread_p50', 'wire_tx_ss1', 'log_ss1', 'ocsp', 'tsa', 'errors'];
-const head = ['config', 'size', 'vus', 'reps', 'p50 ms', 'p90 ms', 'p99 ms', 'Δp50 vs full', 'Δp90 vs full', 'req/s', 'разброс p50 %', 'tx ss1 B/req', 'log ss1 B/req', 'OCSP/run', 'TSA/run', 'errors'];
+const cols = ['config', 'size', 'vus', 'reps', 'p50', 'p90', 'p99', 'd_p50', 'd_p90', 'rps', 'spread_p50', 'wire_tx_ss1', 'log_ss1', 'ocsp', 'tsa', 'errors', 'tsa_flags', 'invalid'];
+const head = ['config', 'size', 'vus', 'reps', 'p50 ms', 'p90 ms', 'p99 ms', 'Δp50 vs full', 'Δp90 vs full', 'req/s', 'разброс p50 %', 'tx ss1 B/req', 'log ss1 B/req', 'OCSP/run', 'TSA/run', 'errors', 'TSA-сбои', 'негодных'];
 let md = `| ${head.join(' | ')} |\n| ${head.map(() => '---').join(' | ')} |\n`;
 let csv = cols.join(',') + '\n';
 for (const r of rows) {
-  const intCols = new Set(['size', 'vus', 'reps', 'errors', 'ocsp', 'tsa', 'wire_tx_ss1', 'wire_rx_ss2', 'log_ss1', 'log_ss2']);
+  const intCols = new Set(['size', 'vus', 'reps', 'errors', 'tsa_flags', 'invalid', 'ocsp', 'tsa', 'wire_tx_ss1', 'wire_rx_ss2', 'log_ss1', 'log_ss2']);
   const vals = cols.map((c) => (typeof r[c] === 'number' ? fmt(r[c], intCols.has(c) ? 0 : 1) : r[c]));
   md += `| ${vals.join(' | ')} |\n`;
   csv += cols.map((c) => (typeof r[c] === 'number' ? (Number.isFinite(r[c]) ? r[c] : '') : r[c])).join(',') + '\n';

@@ -81,7 +81,7 @@ function startStats(file) {
 }
 
 // ---------- один прогон ----------
-async function runOne(r, dir, warmup) {
+async function runOne(r, dir, warmup, extra = {}) {
   const n = r.tag === 'burnin' ? M.burnin.n : r.size >= M.large_from ? M.n_large : M.n;
   fs.mkdirSync(dir, { recursive: true });
   const before = { t: new Date().toISOString(), net: {}, db: {} };
@@ -110,6 +110,8 @@ async function runOne(r, dir, warmup) {
     ca_calls: ca,
     local_ini: Object.fromEntries(L.MEASURED_SS.map((c) => [c, L.iniDump(c)])),
     k6_stdout: res,
+    tsa_probe_after: r.target === 'xroad' ? L.tsaProbe() : null,   // '200' = TSA пережил прогон
+    ...extra,
   };
   L.writeJson(path.join(dir, 'meta.json'), meta);
   const s = summary || {};
@@ -158,7 +160,8 @@ function controlVerdict() {
     if (r.size >= M.large_from) warmup = Math.ceil(warmup / 5);
     if (r.target === 'direct') warmup = 100;
     clean();
-    await runOne(r, path.join(RESULTS, runName(r)), warmup);
+    const tsaRestarted = r.target === 'xroad' ? await L.ensureTsa() : false;   // TSA жив? иначе restart ca (помечается в meta)
+    await runOne(r, path.join(RESULTS, runName(r)), warmup, { tsa_restarted_before: tsaRestarted });
     if (r.tag === `control${M.control.repeats}`) controlVerdict();
   }
   if (current && current !== 'full') { L.log('restoring config full'); await applyConfig('full'); }

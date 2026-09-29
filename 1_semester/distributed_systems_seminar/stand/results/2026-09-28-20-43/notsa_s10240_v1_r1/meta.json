@@ -1,0 +1,39 @@
+{
+  "run": "notsa_s10240_v1_r1",
+  "rep": 1,
+  "config": "notsa",
+  "target": "xroad",
+  "size": 10240,
+  "vus": 1,
+  "n": 1000,
+  "warmup": 200,
+  "wall_s": 58.131,
+  "started": "2026-09-28T23:04:56.099Z",
+  "finished": "2026-09-28T23:05:55.322Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 33951197,
+      "tx": 31582753
+    },
+    "ss2": {
+      "rx": 30960337,
+      "tx": 34146523
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 40517632,
+    "ss2": 40534016
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 0,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": null
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]"
+  },
+  "k6_stdout": "notsa\txroad\tsize=10240\tvus=1\trep=1\tp50=46.0\tp90=57.6\tp99=72.0\terrors=0"
+}

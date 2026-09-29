@@ -60,6 +60,21 @@ function smokeErr(provider = PROVIDERS.ss2) {
   const i = out.lastIndexOf('\n');
   return { code: out.slice(i + 1), body: out.slice(0, i).replace(/\s+/g, ' ').slice(0, 300) };
 }
+// настоящий запрос метки времени к testca (запрос делает openssl на ss1): "200" = TSA жив
+function tsaProbe() {
+  const q = dexecOk('ss1', 'sh', '-c', 'openssl ts -query -data /etc/hostname -sha256 | base64 -w0');
+  if (!q) return 'noquery';
+  return sh('docker', ['run', '--rm', '--network', NET, 'curlimages/curl', 'sh', '-c',
+    `echo ${q} | base64 -d > /tmp/q && curl -s -m 10 -o /dev/null -w '%{http_code}' -H 'Content-Type: application/timestamp-query' --data-binary @/tmp/q http://ca:8899/`], { ok: true });
+}
+// TSA не отвечает → перезапустить контейнер ca и дождаться ответа; вернёт true, если пришлось перезапускать
+async function ensureTsa() {
+  if (tsaProbe() === '200') return false;
+  log('TSA not answering — docker compose restart ca');
+  compose('restart', 'ca');
+  for (let i = 0; i < 20; i++) { await sleep(3000); if (tsaProbe() === '200') return true; }
+  throw new Error('TSA still not answering after restart of ca');
+}
 // прямой запрос к эхо-сервису мимо X-Road: "<код> <байт>"
 function smokeDirect(size = 16) {
   return sh('docker', ['run', '--rm', '--network', NET, 'curlimages/curl', '-s', '-o', '/dev/null', '-m', '10',
@@ -80,7 +95,16 @@ async function waitSmoke(timeoutS = 120) {
 async function restartProxy(containers = MEASURED_SS) {
   for (const c of containers) dexec(c, 'supervisorctl', 'restart', 'xroad-proxy');
   await sleep(8000);
-  await waitSmoke();
+  try {
+    await waitSmoke(300);                       // холодный старт proxy иногда дольше 2 мин
+  } catch (e) {
+    // диагностика в журнал: состояние процессов и хвост proxy.log на измеряемых SS
+    for (const c of containers) {
+      log(`--- ${c} supervisorctl status:\n` + dexecOk(c, 'supervisorctl', 'status'));
+      log(`--- ${c} proxy.log tail:\n` + dexecOk(c, 'tail', '-n', '40', '/var/log/xroad/proxy.log'));
+    }
+    throw e;
+  }
 }
 
 // local.ini: crudini --set / --del
@@ -167,7 +191,7 @@ function writeJson(p, obj) { fs.mkdirSync(path.dirname(p), { recursive: true });
 
 module.exports = {
   STAND, NET, CLIENT, PROVIDERS, MEASURED_SS,
-  setLogFile, tee, sh, shCode, docker, dexec, dexecOk, compose, health, sleep, log, smoke, smokeErr, smokeDirect, waitSmoke, restartProxy,
+  setLogFile, tee, sh, shCode, docker, dexec, dexecOk, compose, health, sleep, log, smoke, smokeErr, smokeDirect, tsaProbe, ensureTsa, waitSmoke, restartProxy,
   iniSet, iniDel, iniDump, hurl, psql, pgSchema, pgTable, csParamSet, csParamDel, csParamDump,
   netBytes, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
 };

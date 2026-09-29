@@ -1,0 +1,40 @@
+{
+  "run": "notsa_s10240_v4_r1_burnin",
+  "rep": 1,
+  "config": "notsa",
+  "target": "xroad",
+  "size": 10240,
+  "vus": 4,
+  "tag": "burnin",
+  "n": 2000,
+  "warmup": 1000,
+  "wall_s": 139.247,
+  "started": "2026-09-28T22:59:45.777Z",
+  "finished": "2026-09-28T23:02:06.088Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 85259551,
+      "tx": 80061336
+    },
+    "ss2": {
+      "rx": 78640886,
+      "tx": 85954607
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 101310464,
+    "ss2": 101392384
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 2,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 60.028
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]"
+  },
+  "k6_stdout": "notsa\txroad\tsize=10240\tvus=4\trep=1\tp50=152.5\tp90=210.7\tp99=296.9\terrors=0"
+}

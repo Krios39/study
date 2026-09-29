@@ -4,7 +4,7 @@
 //   node bench/check.js --quick     # без hurl-диагностики SS (быстрее, ~15 с)
 'use strict';
 const L = require('./lib');
-const { CONFIGS } = require('./config');
+const path = require('node:path');
 
 const quick = process.argv.includes('--quick');
 const results = [];
@@ -30,6 +30,9 @@ for (const img of ['grafana/k6:latest', 'curlimages/curl:latest']) {
 check('echo direct (baseline-0)', () => { const r = L.smokeDirect(16); return { ok: r === '200 16', note: r }; });
 check('X-Road ss1 → ss2 (provider A)', () => { const r = L.smoke(L.PROVIDERS.ss2); return { ok: r === '200', note: `HTTP ${r}` }; });
 check('X-Road ss1 → ss3 (provider B)', () => { const r = L.smoke(L.PROVIDERS.ss3); return { ok: r === '200', note: `HTTP ${r}` }; });
+
+check('TSA (openssl ts -query → ca:8899)', () => { const r = L.tsaProbe(); return { ok: r === '200', note: `HTTP ${r}${r !== '200' ? ' — docker compose restart ca' : ''}` }; });
+check('ca tsa_server.py многопоточный', () => { const l = L.sh('docker', ['logs', 'ca'], { ok: true }); const m = /tsa_server: (\d+) workers/.exec(l); return { ok: !!m, note: m ? `${m[1]} workers` : 'оригинальный однопоточный — docker compose up -d ca' }; });
 
 // --- доступ к БД, которым пользуются clean.js и config.js
 for (const c of ['ss0', 'ss1', 'ss2', 'ss3']) check(`${c} messagelog db`, () => ({ ok: true, note: L.pgTable(c, 'messagelog', 'logrecord') }));
@@ -71,5 +74,5 @@ if (!quick) {
 
 const failed = results.filter((r) => !r.ok);
 console.log(failed.length ? `\n${failed.length} FAIL — стенд не готов` : `\nвсё ok — можно: node bench/run.js`);
-console.log(`конфигурации: ${CONFIGS.join(', ')}`);
+console.log(`конфигурации: ${L.readJson(path.join(__dirname, 'matrix.json')).configs.join(', ')}`);
 process.exit(failed.length ? 1 : 0);

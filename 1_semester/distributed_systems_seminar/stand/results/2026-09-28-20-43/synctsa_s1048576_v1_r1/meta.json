@@ -1,0 +1,39 @@
+{
+  "run": "synctsa_s1048576_v1_r1",
+  "rep": 1,
+  "config": "synctsa",
+  "target": "xroad",
+  "size": 1048576,
+  "vus": 1,
+  "n": 200,
+  "warmup": 40,
+  "wall_s": 1802.257,
+  "started": "2026-09-28T21:33:32.528Z",
+  "finished": "2026-09-28T22:03:35.773Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 395906,
+      "tx": 559118
+    },
+    "ss2": {
+      "rx": 514960,
+      "tx": 260874
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 688128,
+    "ss2": 0
+  },
+  "ca_calls": {
+    "ocsp": 16,
+    "tsa": 84,
+    "sign": 0,
+    "ocsp_rt_mean_s": 0.0124375,
+    "tsa_rt_mean_s": 32.16784523809524
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\ntimestamp-immediately = true",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\ntimestamp-immediately = true"
+  },
+  "k6_stdout": "time=\"2026-09-28T21:34:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:35:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:36:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:37:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:38:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:39:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:40:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:41:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:42:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:43:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:44:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:45:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:46:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:47:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:48:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:49:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:50:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:51:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:52:34Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:53:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:54:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:55:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:56:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:57:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:58:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T21:59:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T22:00:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T22:01:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T22:02:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\ntime=\"2026-09-28T22:03:35Z\" level=warning msg=\"Request Failed\" error=\"Get \\\"http://ss1:8080/r1/DEV/MEMBER/SS2-CODE/ECHO/echo?size=1048576&fill=random\\\": request timeout\"\nsynctsa\txroad\tsize=1048576\tvus=1\trep=1\tp50=59996.5\tp90=59999.1\tp99=60000.4\terrors=29"
+}
