@@ -6,6 +6,7 @@
 //   node bench/run.js --resume results/X   # продолжить: прогоны с готовым summary.json пропускаются
 //   node bench/run.js --only full,nobody   # подмножество конфигураций
 //   node bench/run.js --dry                # показать порядок прогонов, ничего не запускать
+//   node bench/run.js --out results/X      # писать в заданный каталог (для night.js)
 // На каждый прогон: конфигурация (если сменилась) → clean → счётчики до → k6 → счётчики после → meta.json
 'use strict';
 const fs = require('node:fs');
@@ -21,6 +22,7 @@ const opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : nu
 
 const M = L.readJson(path.join(__dirname, 'matrix.json'));
 const RESULTS = opt('--resume') ? path.resolve(opt('--resume'))
+  : opt('--out') ? path.resolve(opt('--out'))
   : path.join(L.STAND, 'results', new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-'));
 if (!flag('--dry')) {
   fs.mkdirSync(RESULTS, { recursive: true });
