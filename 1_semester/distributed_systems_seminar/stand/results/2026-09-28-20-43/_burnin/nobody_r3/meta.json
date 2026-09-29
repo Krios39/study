@@ -1,0 +1,40 @@
+{
+  "run": "nobody_s10240_v4_r3_burnin",
+  "rep": 3,
+  "config": "nobody",
+  "target": "xroad",
+  "size": 10240,
+  "vus": 4,
+  "tag": "burnin",
+  "n": 2000,
+  "warmup": 1000,
+  "wall_s": 125.314,
+  "started": "2026-09-29T06:03:09.716Z",
+  "finished": "2026-09-29T06:05:15.922Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 85089949,
+      "tx": 80100078
+    },
+    "ss2": {
+      "rx": 78724143,
+      "tx": 85824717
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 73670656,
+    "ss2": 74334208
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 4,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 0.03
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\nmessage-body-logging = false",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\nmessage-body-logging = false"
+  },
+  "k6_stdout": "nobody\txroad\tsize=10240\tvus=4\trep=3\tp50=130.9\tp90=205.0\tp99=287.2\terrors=0"
+}
