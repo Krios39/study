@@ -1,9 +1,9 @@
 x-ss-common: &ss-common
   image: niis/xroad-security-server-sidecar:7.8.3
   environment: &ss-env
-    XROAD_TOKEN_PIN: 123456xrd!
-    XROAD_ADMIN_USER: xrd
-    XROAD_ADMIN_PASSWORD: secret
+    XROAD_TOKEN_PIN: ${XROAD_TOKEN_PIN:?set in .env}
+    XROAD_ADMIN_USER: ${XROAD_ADMIN_USER:?set in .env}
+    XROAD_ADMIN_PASSWORD: ${XROAD_ADMIN_PASSWORD:?set in .env}
     XROAD_LOG_LEVEL: INFO
 
   deploy:
@@ -28,7 +28,7 @@ services:
     image: niis/xroad-central-server:noble-7.8.3
     container_name: cs
     environment:
-      XROAD_TOKEN_PIN: 123456xrd!
+      XROAD_TOKEN_PIN: ${XROAD_TOKEN_PIN:?set in .env}
     ports:
       - 4000:4000
     deploy:

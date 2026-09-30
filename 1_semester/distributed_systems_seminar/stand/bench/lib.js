@@ -26,7 +26,8 @@ function sh(cmd, args, opts = {}) {
     tee(out);
   }
   if (r.status !== 0 && !ok) {
-    throw new Error(`${cmd} ${args.join(' ')} → exit ${r.status}\n${r.stderr || ''}`);
+    const shown = args.map((a) => a.replace(/^(admin_password|token_pin)=.*/, '$1=***'));   // не светить секреты в run.log
+    throw new Error(`${cmd} ${shown.join(' ')} → exit ${r.status}\n${r.stderr || ''}`);
   }
   return (r.stdout || '').trim();
 }
@@ -112,11 +113,23 @@ function iniSet(c, section, key, value) { dexec(c, 'crudini', '--set', '/etc/xro
 function iniDel(c, section, key) { dexecOk(c, 'crudini', '--del', '/etc/xroad/conf.d/local.ini', section, key); }
 function iniDump(c) { return dexecOk(c, 'cat', '/etc/xroad/conf.d/local.ini'); }
 
+// логин/пароль/PIN стенда — из .env (не в git, шаблон .env.example); тот же файл читает docker compose
+function secrets() {
+  const file = path.join(STAND, '.env');
+  if (!fs.existsSync(file)) throw new Error(`${file} not found — copy .env.example to .env and fill it in`);
+  const env = {};
+  for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/);
+    if (m) env[m[1]] = m[2];
+  }
+  return { admin_user: env.XROAD_ADMIN_USER, admin_password: env.XROAD_ADMIN_PASSWORD, token_pin: env.XROAD_TOKEN_PIN };
+}
+
 // hurl-файл против стенда (для API SS/CS)
 function hurl(file, vars = {}, opts = {}) {
   const args = ['compose', 'run', '--rm', '--no-deps', 'hurl', '--insecure', '--variables-file', '/hurl-src/vars.env',
     '--file-root', '/hurl-files', '--retry', String(opts.retry ?? 10), '--retry-interval', String(opts.interval ?? 5000), '--test'];
-  for (const [k, v] of Object.entries(vars)) args.push('--variable', `${k}=${v}`);
+  for (const [k, v] of Object.entries({ ...secrets(), ...vars })) args.push('--variable', `${k}=${v}`);
   args.push(`/hurl-src/${file}`);
   if (opts.ok) return sh('docker', args, { cwd: STAND, inherit: !opts.quiet, ok: true }) !== null && lastStatus === 0;
   sh('docker', args, { cwd: STAND, inherit: true });

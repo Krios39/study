@@ -12,7 +12,7 @@
 | `ss3` | provider B | DEV:MEMBER:SS3-CODE | ECHO | :4400 | :4410 / :4411 |
 | `is-provider` | эхо-сервис (`./echo`, Rust/axum) | — | — | — | :8081 (baseline-0) |
 
-Логин везде `xrd` / `secret`, PIN токена `123456xrd!` (в `docker-compose.yml` и `hurl/vars.env` — менять синхронно).
+Логин, пароль админки и PIN токена — в `.env` (не в git): `cp .env.example .env` и заполнить до первого `up.js`. Его читают и `docker compose`, и `bench/lib.js` (передаёт в hurl). Ключи и сертификаты CA и SS генерируются при развёртывании (`up.js --fresh`), в репозитории их нет.
 Admin UI **только по https**, серт самоподписанный.
 
 ## Четыре команды

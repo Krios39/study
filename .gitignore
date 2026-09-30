@@ -7,6 +7,8 @@ parcomp_key*
 
 # снимки docker-volume'ов — 100+ МБ tar, восстанавливаются через volumes.ps1 / up.js --fresh
 1_semester/distributed_systems_seminar/stand/snapshots/
+# логин/пароль/PIN стенда — шаблон в .env.example
+1_semester/distributed_systems_seminar/stand/.env
 # по-запросные логи k6 и docker stats: десятки МБ на сетку; summary.json/meta.json/summary.md остаются
 1_semester/distributed_systems_seminar/stand/results/**/requests.csv.gz
 1_semester/distributed_systems_seminar/stand/results/**/stats.csv
