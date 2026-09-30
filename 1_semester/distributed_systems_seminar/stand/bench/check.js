@@ -17,7 +17,10 @@ function check(name, fn) {
 }
 
 // --- контейнеры
+// ss3 в измеряемом пути не участвует, run.js останавливает его на время сетки — остановленный ss3 не ошибка
+const ss3 = L.running('ss3');
 for (const c of ['cs', 'ca', 'ss0', 'ss1', 'ss2', 'ss3', 'is-provider']) {
+  if (c === 'ss3' && !ss3) { check('ss3 stopped', () => ({ ok: true, note: 'not in the measured path; node bench/up.js starts it' })); continue; }
   check(`${c} healthy`, () => { const h = L.health(c); return { ok: h === 'healthy', note: h }; });
 }
 
@@ -29,13 +32,15 @@ for (const img of ['grafana/k6:latest', 'curlimages/curl:latest']) {
 // --- сеть и сервисы
 check('echo direct (baseline-0)', () => { const r = L.smokeDirect(16); return { ok: r === '200 16', note: r }; });
 check('X-Road ss1 → ss2 (provider A)', () => { const r = L.smoke(L.PROVIDERS.ss2); return { ok: r === '200', note: `HTTP ${r}` }; });
-check('X-Road ss1 → ss3 (provider B)', () => { const r = L.smoke(L.PROVIDERS.ss3); return { ok: r === '200', note: `HTTP ${r}` }; });
+if (ss3) check('X-Road ss1 → ss3 (provider B)', () => { const r = L.smoke(L.PROVIDERS.ss3); return { ok: r === '200', note: `HTTP ${r}` }; });
 
 check('TSA (openssl ts -query → ca:8899)', () => { const r = L.tsaProbe(); return { ok: r === '200', note: `HTTP ${r}${r !== '200' ? ' — docker compose restart ca' : ''}` }; });
 check('ca tsa_server.py многопоточный', () => { const l = L.sh('docker', ['logs', 'ca'], { ok: true }); const m = /tsa_server: (\d+) workers/.exec(l); return { ok: !!m, note: m ? `${m[1]} workers` : 'оригинальный однопоточный — docker compose up -d ca' }; });
 
+check('link counters ss1 <-> ss2 (iptables, stand-netcount)', () => { const b = L.linkBytes(); return { ok: 'xroad_tx' in b, note: JSON.stringify(b) }; });
+
 // --- доступ к БД, которым пользуются clean.js и config.js
-for (const c of ['ss0', 'ss1', 'ss2', 'ss3']) check(`${c} messagelog db`, () => ({ ok: true, note: L.pgTable(c, 'messagelog', 'logrecord') }));
+for (const c of ['ss0', 'ss1', 'ss2', ...(ss3 ? ['ss3'] : [])]) check(`${c} messagelog db`, () => ({ ok: true, note: L.pgTable(c, 'messagelog', 'logrecord') }));
 check('cs system_parameters', () => ({ ok: true, note: L.pgTable('cs', 'centerui_production', 'system_parameters') }));
 
 // --- конфигурация доверия = full

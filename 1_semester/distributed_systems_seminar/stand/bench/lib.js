@@ -43,6 +43,8 @@ function health(c) {
   const r = spawnSync('docker', ['inspect', '-f', '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}', c], { encoding: 'utf8' });
   return r.status === 0 ? r.stdout.trim() : 'missing';
 }
+// контейнер запущен (остановленный ss3 — нормально во время сетки)
+const running = (c) => spawnSync('docker', ['inspect', '-f', '{{.State.Running}}', c], { encoding: 'utf8' }).stdout.trim() === 'true';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (...a) => { const line = `${new Date().toISOString().slice(11, 19)} ${a.join(' ')}`; console.log(line); tee(line); };
@@ -172,6 +174,54 @@ function netBytes(c) {
   return { rx, tx };
 }
 
+// байты на канале consumer SS <-> provider SS: iptables-счётчики в namespace ss1 (образ stand-netcount, ss1 не меняется).
+// IP-уровень (с заголовками IP/TCP). xroad — только обмен сообщениями (ss2:5500), link — весь трафик ss1 <-> ss2
+// (плюс 5577: OCSP-ответы между SS). Правила ставятся при первом вызове и живут до рестарта контейнера ss1.
+const LINK_RULES = [
+  ['OUTPUT', '-d', 'IP', '-p', 'tcp', '--dport', '5500', 'xroad_tx'],
+  ['INPUT', '-s', 'IP', '-p', 'tcp', '--sport', '5500', 'xroad_rx'],
+  ['OUTPUT', '-d', 'IP', 'link_tx'],
+  ['INPUT', '-s', 'IP', 'link_rx'],
+];
+function linkBytes(from = 'ss1', to = 'ss2') {
+  if (shCode('docker', ['image', 'inspect', 'stand-netcount']) !== 0) {
+    sh('docker', ['compose', '--profile', 'tools', 'build', 'netcount'], { cwd: STAND, inherit: true });
+  }
+  const ip = dexec(from, 'getent', 'hosts', to).split(/\s+/)[0];
+  const ensure = LINK_RULES.map((r) => {
+    const [chain, ...rest] = r;
+    const spec = [...rest.slice(0, -1).map((x) => (x === 'IP' ? ip : x)), '-m', 'comment', '--comment', r[r.length - 1]].join(' ');
+    return `iptables -C ${chain} ${spec} 2>/dev/null || iptables -A ${chain} ${spec}`;
+  }).join('; ');
+  const out = sh('docker', ['run', '--rm', '--net', `container:${from}`, '--cap-add', 'NET_ADMIN', 'stand-netcount', 'sh', '-c',
+    `${ensure}; iptables -L INPUT -v -x -n; iptables -L OUTPUT -v -x -n`]);
+  const res = {};
+  for (const line of out.split('\n')) {
+    const m = /^\s*\d+\s+(\d+)\s.*\/\* (\w+) \*\//.exec(line);
+    if (m) res[m[2]] = Number(m[1]);
+  }
+  return res;
+}
+
+// сообщения в messagelog без метки времени (пакетное проставление ещё не дошло до них)
+function unstamped(c) {
+  return Number(psql(c, 'messagelog', `select count(*) from ${pgTable(c, 'messagelog', 'logrecord')} where discriminator='m' and timestamprecord is null`));
+}
+
+// дождаться, пока пакетное проставление меток закроет все сообщения прогона (до чистки messagelog).
+// timeStampingIntervalSeconds по умолчанию 60 → обычно ≤ 1–2 интервала. Вернёт по SS: сколько было и за сколько дождались.
+async function waitStamped(containers = MEASURED_SS, timeoutS = 300) {
+  const t0 = Date.now();
+  const res = Object.fromEntries(containers.map((c) => [c, { unstamped_after_run: unstamped(c), unstamped_final: null }]));
+  for (;;) {
+    for (const c of containers) res[c].unstamped_final = unstamped(c);
+    const done = containers.every((c) => res[c].unstamped_final === 0);
+    const waited = (Date.now() - t0) / 1000;
+    if (done || waited > timeoutS) return { completed: done, wait_s: Math.round(waited), ...res };
+    await sleep(5000);
+  }
+}
+
 // размер БД messagelog, байты
 function messagelogBytes(c) {
   return Number(psql(c, 'messagelog', `select pg_database_size('messagelog')`, { ok: true }) || 0);
@@ -204,7 +254,7 @@ function writeJson(p, obj) { fs.mkdirSync(path.dirname(p), { recursive: true });
 
 module.exports = {
   STAND, NET, CLIENT, PROVIDERS, MEASURED_SS,
-  setLogFile, tee, sh, shCode, docker, dexec, dexecOk, compose, health, sleep, log, smoke, smokeErr, smokeDirect, tsaProbe, ensureTsa, waitSmoke, restartProxy,
+  setLogFile, tee, sh, shCode, docker, dexec, dexecOk, compose, health, running, sleep, log, smoke, smokeErr, smokeDirect, tsaProbe, ensureTsa, waitSmoke, restartProxy,
   iniSet, iniDel, iniDump, hurl, psql, pgSchema, pgTable, csParamSet, csParamDel, csParamDump,
-  netBytes, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
+  netBytes, linkBytes, unstamped, waitStamped, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
 };

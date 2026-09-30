@@ -1,5 +1,5 @@
 {
-  "reps": 3,
+  "reps": 5,
   "warmup_first": 2000,
   "warmup_next": 200,
   "n": 1000,
@@ -8,54 +8,22 @@
   "configs": [
     "full",
     "nobody",
-    "notsa",
     "synctsa"
   ],
-  "latency": {
-    "sizes": [
-      1024,
-      10240,
-      102400,
-      1048576
-    ],
-    "vus": [
-      1
-    ]
-  },
-  "concurrency": {
-    "sizes": [
-      10240
-    ],
-    "vus": [
-      2,
-      4,
-      8,
-      16,
-      32
-    ]
-  },
-  "baseline": {
-    "sizes": [
-      1024,
-      10240,
-      102400,
-      1048576
-    ],
-    "vus": [
-      1,
-      2,
-      4,
-      8,
-      16,
-      32
-    ]
-  },
+  "points": [
+    [10240, 1],
+    [1048576, 1],
+    [10240, 4],
+    [10240, 16],
+    [10240, 32]
+  ],
   "control": {
     "config": "full",
     "size": 10240,
     "vus": 1,
-    "repeats": 2
+    "per_rep": true
   },
+  "stamping_timeout_s": 300,
   "burnin": {
     "size": 10240,
     "vus": 4,

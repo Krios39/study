@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Сводка по results/<dir>: медиана по повторам p50/p90/p99, разности с full, байты на проводе, рост лога, OCSP/TSA.
+// Сводка по results/<dir>: медиана по повторам p50/p90/p99, разности с full, разброс между повторами, байты на канале
+// ss1 <-> ss2, рост лога, OCSP/TSA, дождались ли меток времени перед чисткой.
 //   node bench/analyze.js results/2026-09-24-10-00            → печатает markdown, пишет summary.csv и summary.md рядом
 'use strict';
 const fs = require('node:fs');
@@ -53,6 +54,8 @@ for (const r of runs) {
   if (!groups.has(key)) groups.set(key, { config: r.config, size: r.size, vus: r.vus, runs: [] });
   groups.get(key).runs.push(r);
 }
+// разброс между повторами: (max − min) / медиана, %
+const spread = (v) => (v.length > 1 ? (Math.max(...v) - Math.min(...v)) / median(v) * 100 : NaN);
 const rows = [];
 for (const g of groups.values()) {
   const invalid = g.runs.filter(isInvalid).length;
@@ -64,14 +67,23 @@ for (const g of groups.values()) {
     config: g.config, size: g.size, vus: g.vus, reps: g.runs.length, invalid,
     p50: per((r) => r.p50), p90: per((r) => r.p90), p99: per((r) => r.p99), avg: per((r) => r.avg),
     rps: per((r) => r.rps_measured), errors: g.runs.reduce((a, r) => a + r.errors, 0),
-    // байты на проводе: tx ss1 / число запросов (прогрев включён в счётчик → делим на warmup+n)
+    ok: g.runs.reduce((a, r) => a + r.n - r.errors, 0),                // успешных запросов в измеряемой фазе, по всем повторам
+    // байты: счётчики / число запросов (прогрев включён в счётчик → делим на warmup+n).
+    // wire_* — eth0 целиком (у ss1 это и ответ клиенту, и CS/CA — не канал между SS); link_* — только ss1 <-> ss2:5500, IP-уровень
     wire_tx_ss1: per((r) => (r.meta.net_bytes?.ss1?.tx ?? NaN) / (r.warmup + r.n)),
     wire_rx_ss2: per((r) => (r.meta.net_bytes?.ss2?.rx ?? NaN) / (r.warmup + r.n)),
+    link_tx: per((r) => (r.meta.link_bytes?.xroad_tx ?? NaN) / (r.warmup + r.n)),
+    link_rx: per((r) => (r.meta.link_bytes?.xroad_rx ?? NaN) / (r.warmup + r.n)),
     log_ss1: per((r) => (r.meta.messagelog_growth_bytes?.ss1 ?? NaN) / (r.warmup + r.n)),
     log_ss2: per((r) => (r.meta.messagelog_growth_bytes?.ss2 ?? NaN) / (r.warmup + r.n)),
     ocsp: per((r) => r.meta.ca_calls?.ocsp ?? NaN), tsa: per((r) => r.meta.ca_calls?.tsa ?? NaN),
+    // TSA за прогон + за ожидание меток после него (пакетное проставление обычно приходится на ожидание)
+    tsa_total: per((r) => (r.meta.ca_calls?.tsa ?? NaN) + (r.meta.timestamping?.ca_calls_while_waiting?.tsa ?? 0)),
+    stamped: g.config === 'direct' || !g.runs.some((r) => r.meta.timestamping) ? '—'
+      : `${g.runs.filter((r) => r.meta.timestamping?.completed).length}/${g.runs.length}`,
     tsa_flags: g.runs.filter((r) => r.meta.tsa_restarted_before || (r.meta.tsa_probe_after && r.meta.tsa_probe_after !== '200')).length,
-    spread_p50: (() => { const v = g.runs.map((r) => r.p50); return v.length > 1 ? (Math.max(...v) - Math.min(...v)) / median(v) * 100 : NaN; })(),
+    spread_p50: spread(g.runs.map((r) => r.p50)),
+    spread_rps: spread(g.runs.map((r) => r.rps_measured)),
   });
 }
 rows.sort((a, b) => a.size - b.size || a.vus - b.vus || a.config.localeCompare(b.config));
@@ -85,25 +97,36 @@ for (const r of rows) {
   r.d_p90 = cmp ? r.p90 - f.p90 : NaN;
 }
 
-const cols = ['config', 'size', 'vus', 'reps', 'p50', 'p90', 'p99', 'd_p50', 'd_p90', 'rps', 'spread_p50', 'wire_tx_ss1', 'log_ss1', 'ocsp', 'tsa', 'errors', 'tsa_flags', 'invalid'];
-const head = ['config', 'size', 'vus', 'reps', 'p50 ms', 'p90 ms', 'p99 ms', 'Δp50 vs full', 'Δp90 vs full', 'req/s', 'разброс p50 %', 'tx ss1 B/req', 'log ss1 B/req', 'OCSP/run', 'TSA/run', 'errors', 'TSA-сбои', 'негодных'];
-let md = `| ${head.join(' | ')} |\n| ${head.map(() => '---').join(' | ')} |\n`;
-let csv = cols.join(',') + '\n';
+// в md: канал ss1 <-> ss2, если он мерился (с 30.09); иначе старая колонка tx eth0 ss1. В csv — всё.
+const hasLink = runs.some((r) => r.meta.link_bytes);
+const COLS = [
+  ['config', 'config'], ['size', 'size'], ['vus', 'vus'], ['reps', 'reps'],
+  ['p50', 'p50 ms'], ['p90', 'p90 ms'], ['p99', 'p99 ms'], ['d_p50', 'Δp50 vs full'], ['d_p90', 'Δp90 vs full'],
+  ['spread_p50', 'разброс p50 %'], ['rps', 'req/s'], ['spread_rps', 'разброс req/s %'],
+  ...(hasLink ? [['link_tx', 'ss1→ss2 B/req'], ['link_rx', 'ss2→ss1 B/req']] : [['wire_tx_ss1', 'tx eth0 ss1 B/req']]),
+  ['log_ss1', 'log ss1 B/req'], ['ocsp', 'OCSP/run'], ['tsa', 'TSA/run'],
+  ...(hasLink ? [['tsa_total', 'TSA/run+ожидание'], ['stamped', 'метки до чистки']] : []),
+  ['ok', 'успешных'], ['errors', 'errors'], ['tsa_flags', 'TSA-сбои'], ['invalid', 'негодных'],
+];
+const cols = COLS.map(([c]) => c);
+const csvCols = [...new Set([...cols, 'wire_tx_ss1', 'wire_rx_ss2', 'link_tx', 'link_rx', 'log_ss2', 'tsa_total', 'stamped'])];
+const intCols = new Set(['size', 'vus', 'reps', 'errors', 'ok', 'tsa_flags', 'invalid', 'ocsp', 'tsa', 'tsa_total', 'wire_tx_ss1', 'wire_rx_ss2', 'link_tx', 'link_rx', 'log_ss1', 'log_ss2']);
+let md = `| ${COLS.map(([, h]) => h).join(' | ')} |\n| ${COLS.map(() => '---').join(' | ')} |\n`;
+let csv = csvCols.join(',') + '\n';
 for (const r of rows) {
-  const intCols = new Set(['size', 'vus', 'reps', 'errors', 'tsa_flags', 'invalid', 'ocsp', 'tsa', 'wire_tx_ss1', 'wire_rx_ss2', 'log_ss1', 'log_ss2']);
   const vals = cols.map((c) => (typeof r[c] === 'number' ? fmt(r[c], intCols.has(c) ? 0 : 1) : r[c]));
   md += `| ${vals.join(' | ')} |\n`;
-  csv += cols.map((c) => (typeof r[c] === 'number' ? (Number.isFinite(r[c]) ? r[c] : '') : r[c])).join(',') + '\n';
+  csv += csvCols.map((c) => (typeof r[c] === 'number' ? (Number.isFinite(r[c]) ? r[c] : '') : (r[c] ?? ''))).join(',') + '\n';
 }
 
-// контрольные прогоны: два подряд одной конфигурации
-const control = runs.filter((r) => /^control/.test(r.meta.tag || ''));
+// контрольные прогоны (full в начале каждого повтора и в конце; в старых сетках — два подряд в начале): дрейф стенда
+const control = runs.filter((r) => /^control/.test(r.meta.tag || '')).sort((a, b) => a.meta.started.localeCompare(b.meta.started));
 let note = '';
 if (control.length >= 2) {
-  const [a, b] = control;
-  const d = Math.abs(a.p50 - b.p50) / ((a.p50 + b.p50) / 2) * 100;
-  note = `\nКонтроль: p50 ${fmt(a.p50)} vs ${fmt(b.p50)} мс, расхождение ${fmt(d)}% (p90 ${fmt(a.p90)} vs ${fmt(b.p90)}). ` +
-    (d < 5 ? 'Стенд стабилен.' : d < 10 ? 'Пограничное — эффекты меньше 10% не интерпретировать.' : 'Нестабильно: снижать нагрузку/контейнеры, повторить.') + '\n';
+  const d = spread(control.map((r) => r.p50));
+  note = `\nКонтроль (${control.length} прогонов full ${control[0].size} B, ${control[0].vus} VU, по времени): ` +
+    `p50 ${control.map((r) => fmt(r.p50)).join(' / ')} мс, разброс ${fmt(d)}%; req/s ${control.map((r) => fmt(r.rps_measured)).join(' / ')}. ` +
+    (d < 5 ? 'Стенд стабилен.' : d < 10 ? 'Пограничное — эффекты меньше 10% не интерпретировать.' : 'Нестабильно: эффекты меньше этого разброса не интерпретировать.') + '\n';
 }
 
 console.log(md + note);

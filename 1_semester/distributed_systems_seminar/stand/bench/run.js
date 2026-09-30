@@ -7,7 +7,10 @@
 //   node bench/run.js --only full,nobody   # подмножество конфигураций
 //   node bench/run.js --dry                # показать порядок прогонов, ничего не запускать
 //   node bench/run.js --out results/X      # писать в заданный каталог (для night.js)
-// На каждый прогон: конфигурация (если сменилась) → clean → счётчики до → k6 → счётчики после → meta.json
+//   node bench/run.js --matrix bench/matrix-wide.json   # другая сетка (по умолчанию bench/matrix.json)
+// На каждый прогон: конфигурация (если сменилась) → clean → счётчики до → k6 → счётчики после →
+// ожидание меток времени (пакетное проставление должно закрыть все сообщения прогона до чистки) → meta.json.
+// ss3 (второй провайдер, в измеряемом пути не участвует) на время сетки останавливается.
 'use strict';
 const fs = require('node:fs');
 const path = require('node:path');
@@ -20,7 +23,7 @@ const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
 const opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : null; };
 
-const M = L.readJson(path.join(__dirname, 'matrix.json'));
+const M = L.readJson(opt('--matrix') ? path.resolve(opt('--matrix')) : path.join(__dirname, 'matrix.json'));
 const RESULTS = opt('--resume') ? path.resolve(opt('--resume'))
   : opt('--out') ? path.resolve(opt('--out'))
   : path.join(L.STAND, 'results', new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-'));
@@ -33,23 +36,33 @@ process.on('uncaughtException', (e) => { L.log('FATAL', e.stack || e.message); p
 // ---------- план ----------
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
+// контроль: одна и та же точка (full, 10 КБ, 1 VU). Старая сетка — M.control.repeats подряд в начале;
+// M.control.per_rep — в начале каждого повтора и в конце (control_r<rep>, control_end): дрейф стенда за ночь
+const controlRun = (tag) => ({ rep: 1, config: M.control.config, target: 'xroad', size: M.control.size, vus: M.control.vus, tag });
+const controlTags = () => (M.control.per_rep
+  ? [...Array.from({ length: M.reps }, (_, i) => `control_r${i + 1}`), 'control_end']
+  : Array.from({ length: M.control.repeats }, (_, i) => `control${i + 1}`));
+
 function buildPlan() {
   const plan = [];
-  if (!flag('--grid')) {
-    const c = M.control;
-    for (let k = 1; k <= c.repeats; k++) plan.push({ rep: 1, config: c.config, target: 'xroad', size: c.size, vus: c.vus, tag: `control${k}` });
-    if (flag('--control')) return plan;
-  }
+  const withControl = !flag('--grid');
+  if (withControl && !M.control.per_rep) for (const t of controlTags()) plan.push(controlRun(t));
+  if (flag('--control')) return M.control.per_rep ? [controlRun('control_r1'), controlRun('control_end')] : plan;
   const configs = opt('--only') ? opt('--only').split(',') : M.configs;
+  // M.points: [[size, vus], ...] — одни и те же точки для direct и X-Road; иначе старая сетка latency/concurrency/baseline
+  const xroadPoints = M.points || [
+    ...M.latency.sizes.flatMap((size) => M.latency.vus.map((vus) => [size, vus])),
+    ...M.concurrency.sizes.flatMap((size) => M.concurrency.vus.map((vus) => [size, vus])),
+  ];
+  const directPoints = M.points || M.baseline.sizes.flatMap((size) => M.baseline.vus.map((vus) => [size, vus]));
   for (let rep = 1; rep <= M.reps; rep++) {
-    for (const size of M.baseline.sizes) for (const vus of M.baseline.vus) plan.push({ rep, config: 'direct', target: 'direct', size, vus });
+    if (withControl && M.control.per_rep) plan.push(controlRun(`control_r${rep}`));
+    for (const [size, vus] of directPoints) plan.push({ rep, config: 'direct', target: 'direct', size, vus });
     for (const config of shuffle(configs.slice())) {
-      const runs = [];
-      for (const size of M.latency.sizes) for (const vus of M.latency.vus) runs.push({ rep, config, target: 'xroad', size, vus });
-      for (const size of M.concurrency.sizes) for (const vus of M.concurrency.vus) runs.push({ rep, config, target: 'xroad', size, vus });
-      plan.push(...shuffle(runs));
+      plan.push(...shuffle(xroadPoints.map(([size, vus]) => ({ rep, config, target: 'xroad', size, vus }))));
     }
   }
+  if (withControl && M.control.per_rep) plan.push(controlRun('control_end'));
   return plan;
 }
 
@@ -86,8 +99,10 @@ function startStats(file) {
 async function runOne(r, dir, warmup, extra = {}) {
   const n = r.tag === 'burnin' ? M.burnin.n : r.size >= M.large_from ? M.n_large : M.n;
   fs.mkdirSync(dir, { recursive: true });
+  const xroad = r.target === 'xroad';
   const before = { t: new Date().toISOString(), net: {}, db: {} };
   for (const c of L.MEASURED_SS) { before.net[c] = L.netBytes(c); before.db[c] = L.messagelogBytes(c); }
+  before.link = L.linkBytes();
   const stopStats = startStats(path.join(dir, 'stats.csv'));
 
   const k6args = ['run', '--rm', '--network', L.NET,
@@ -102,13 +117,22 @@ async function runOne(r, dir, warmup, extra = {}) {
 
   const after = { t: new Date().toISOString(), net: {}, db: {} };
   for (const c of L.MEASURED_SS) { after.net[c] = L.netBytes(c); after.db[c] = L.messagelogBytes(c); }
+  after.link = L.linkBytes();
   const ca = L.caCalls(before.t, after.t);
+  // метки времени: при notsa интервал сутки — не ждём, только фиксируем, сколько сообщений осталось без метки
+  const stamping = !xroad ? null
+    : r.config === 'notsa' ? { completed: false, waited: false, ...Object.fromEntries(L.MEASURED_SS.map((c) => [c, { unstamped_after_run: L.unstamped(c) }])) }
+    : await L.waitStamped(L.MEASURED_SS, M.stamping_timeout_s ?? 300);
+  if (stamping && stamping.waited !== false) stamping.ca_calls_while_waiting = L.caCalls(after.t, new Date().toISOString());
 
   const summary = fs.existsSync(path.join(dir, 'summary.json')) ? L.readJson(path.join(dir, 'summary.json')) : null;
   const meta = {
     run: runName(r), ...r, n, warmup, wall_s: wall, started: before.t, finished: after.t,
     net_bytes: Object.fromEntries(L.MEASURED_SS.map((c) => [c, { rx: after.net[c].rx - before.net[c].rx, tx: after.net[c].tx - before.net[c].tx }])),
     messagelog_growth_bytes: Object.fromEntries(L.MEASURED_SS.map((c) => [c, after.db[c] - before.db[c]])),
+    // канал ss1 <-> ss2 за время k6 (iptables в namespace ss1): xroad_* — порт 5500, link_* — весь трафик между ними
+    link_bytes: Object.fromEntries(Object.keys(after.link).map((k) => [k, after.link[k] - (before.link[k] ?? 0)])),
+    timestamping: stamping,
     ca_calls: ca,
     local_ini: Object.fromEntries(L.MEASURED_SS.map((c) => [c, L.iniDump(c)])),
     k6_stdout: res,
@@ -117,15 +141,16 @@ async function runOne(r, dir, warmup, extra = {}) {
   };
   L.writeJson(path.join(dir, 'meta.json'), meta);
   const s = summary || {};
-  L.log(`${runName(r)}  p50=${(s.p50 || 0).toFixed(1)} p90=${(s.p90 || 0).toFixed(1)} p99=${(s.p99 || 0).toFixed(1)} err=${s.errors ?? '?'}  ocsp=${ca.ocsp} tsa=${ca.tsa}  ${wall.toFixed(0)}s`);
+  const st = stamping ? `  stamped=${stamping.completed ? 'yes' : 'NO'}${stamping.wait_s != null ? ` +${stamping.wait_s}s` : ''}` : '';
+  L.log(`${runName(r)}  p50=${(s.p50 || 0).toFixed(1)} p90=${(s.p90 || 0).toFixed(1)} p99=${(s.p99 || 0).toFixed(1)} err=${s.errors ?? '?'}  ocsp=${ca.ocsp} tsa=${ca.tsa}${st}  ${wall.toFixed(0)}s`);
   if (!summary) throw new Error(`no summary.json for ${runName(r)} — k6 failed:\n${res}`);
 }
 
 // контроль: два прогона одной конфигурации подряд — оценка шума стенда
 function controlVerdict() {
   const p = [];
-  for (let k = 1; k <= M.control.repeats; k++) {
-    const f = path.join(RESULTS, runName({ ...M.control, rep: 1, tag: `control${k}` }), 'summary.json');
+  for (const tag of controlTags()) {
+    const f = path.join(RESULTS, runName(controlRun(tag)), 'summary.json');
     if (fs.existsSync(f)) p.push(L.readJson(f).p50);
   }
   if (p.length < 2) return;
@@ -144,6 +169,7 @@ function controlVerdict() {
 
   L.writeJson(path.join(RESULTS, 'env.json'), { started: new Date().toISOString(), matrix: M, images: L.imageDigests(), plan: plan.map(runName) });
 
+  if (L.running('ss3')) { L.log('stopping ss3 (not in the measured path)'); L.docker('stop', 'ss3'); }
   let current = null;
   for (const r of todo) {
     let warmup = M.warmup_next;
@@ -164,8 +190,9 @@ function controlVerdict() {
     clean();
     const tsaRestarted = r.target === 'xroad' ? await L.ensureTsa() : false;   // TSA жив? иначе restart ca (помечается в meta)
     await runOne(r, path.join(RESULTS, runName(r)), warmup, { tsa_restarted_before: tsaRestarted });
-    if (r.tag === `control${M.control.repeats}`) controlVerdict();
+    if (/^control/.test(r.tag || '')) controlVerdict();
   }
   if (current && current !== 'full') { L.log('restoring config full'); await applyConfig('full'); }
+  L.log('starting ss3'); L.docker('start', 'ss3');
   L.log('done');
 })().catch((e) => { L.log('ERROR', e.stack || e.message); process.exit(1); });

@@ -138,6 +138,13 @@ services:
     networks:
       - xroad-network
 
+  # только образ: bench/lib.js запускает его в namespace ss1 (счётчики iptables на канале ss1 <-> ss2)
+  netcount:
+    build: ./netcount
+    image: stand-netcount
+    profiles: ["tools"]
+    network_mode: none
+
   hurl:
     image: ghcr.io/orange-opensource/hurl:8.0.1
     profiles: ["init"]

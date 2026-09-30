@@ -1,0 +1,65 @@
+{
+  "reps": 3,
+  "warmup_first": 2000,
+  "warmup_next": 200,
+  "n": 1000,
+  "n_large": 200,
+  "large_from": 1048576,
+  "configs": [
+    "full",
+    "nobody",
+    "notsa",
+    "synctsa"
+  ],
+  "latency": {
+    "sizes": [
+      1024,
+      10240,
+      102400,
+      1048576
+    ],
+    "vus": [
+      1
+    ]
+  },
+  "concurrency": {
+    "sizes": [
+      10240
+    ],
+    "vus": [
+      2,
+      4,
+      8,
+      16,
+      32
+    ]
+  },
+  "baseline": {
+    "sizes": [
+      1024,
+      10240,
+      102400,
+      1048576
+    ],
+    "vus": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32
+    ]
+  },
+  "control": {
+    "config": "full",
+    "size": 10240,
+    "vus": 1,
+    "repeats": 2
+  },
+  "burnin": {
+    "size": 10240,
+    "vus": 4,
+    "n": 2000,
+    "warmup": 1000
+  }
+}
