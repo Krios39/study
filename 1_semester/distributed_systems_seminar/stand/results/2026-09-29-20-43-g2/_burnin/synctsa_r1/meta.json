@@ -1,0 +1,41 @@
+{
+  "run": "synctsa_s10240_v4_r1_burnin",
+  "rep": 1,
+  "config": "synctsa",
+  "target": "xroad",
+  "size": 10240,
+  "vus": 4,
+  "tag": "burnin",
+  "n": 2000,
+  "warmup": 1000,
+  "wall_s": 225.96,
+  "started": "2026-09-29T23:41:07.689Z",
+  "finished": "2026-09-29T23:44:54.354Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 93236353,
+      "tx": 81823006
+    },
+    "ss2": {
+      "rx": 85594322,
+      "tx": 88717692
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 163069952,
+    "ss2": 163004416
+  },
+  "ca_calls": {
+    "ocsp": 8,
+    "tsa": 12000,
+    "sign": 0,
+    "ocsp_rt_mean_s": 0.024749999999999994,
+    "tsa_rt_mean_s": 0.02523808333333279
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\ntimestamp-immediately = true",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\ntimestamp-immediately = true"
+  },
+  "k6_stdout": "synctsa\txroad\tsize=10240\tvus=4\trep=1\tp50=252.9\tp90=319.4\tp99=408.1\terrors=0",
+  "tsa_probe_after": "200"
+}
