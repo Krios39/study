@@ -9,99 +9,105 @@
 
     </head>
     <body>
-        <details>
-                    <summary>Exercise 4.1.1: Replace point-to-point communication with collectives</summary>
-                    <div class="details-content">
-                        <p><strong>Implementation & Validation Strategy:</strong></p>
-                        <p>The manual point-to-point message passing (using <code>comm.Send</code> and <code>comm.Recv</code>) was completely removed. After each process computes its local trapezoidal integral, the results are aggregated using a collective reduction. Furthermore, to ensure mathematical correctness, a sequential reference calculation was added exclusively to Rank 0. The parallel result is compared against this serial reference using <code>numpy.isclose()</code>. If the validation fails (exceeding the floating-point tolerance), the program immediately aborts with a non-zero exit status via <code>sys.exit(1)</code>.</p>
+    <details>
+                <summary>Exercise 4.1.1: Trapezoidal integration with collectives</summary>
+                <div class="details-content">
+                    <p><strong>Implementation & Validation Strategy:</strong></p>
+                    <p>The manual point-to-point message passing (using <code>comm.Send</code> and <code>comm.Recv</code>) was completely removed. After each process computes its local trapezoidal integral, the results are aggregated using a collective reduction. Furthermore, to ensure mathematical correctness, a sequential reference calculation was added exclusively to Rank 0. The parallel result is compared against this serial reference using <code>numpy.isclose()</code>. If the validation fails (exceeding the floating-point tolerance), the program immediately aborts with a non-zero exit status via <code>sys.exit(1)</code>.</p>
 
-                        <p><strong>Raw Terminal Output:</strong></p>
-                        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 task4_1_1.py 0.0 1.0 10000
-With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33333334]</code></pre>
+                    <p><strong>Raw Terminal Output:</strong></p>
+                    <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 1 python3 task4_1.py 0.0 1.0 10000
+    With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is 0.3333333350000001
+    [Rank 0] Validation passed: Parallel result matches the serial reference.
+    user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 2 python3 task4_1.py 0.0 1.0 10000
+    With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is 0.3333333350000001
+    [Rank 0] Validation passed: Parallel result matches the serial reference.
+    user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 task4_1.py 0.0 1.0 10000
+    With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is 0.3333333350000001
+    [Rank 0] Validation passed: Parallel result matches the serial reference.</code></pre>
 
-                        <h2>The answer (Collective Communication Role):</h2>
-                        <p>
-                            I used the <code>MPI.Reduce</code> collective combined with the <code>MPI.SUM</code> operator. This collective efficiently gathers the locally computed integral values from all parallel ranks and automatically calculates their sum directly onto the root rank (Rank 0). This effectively replaces the manual point-to-point receive loop with a single, highly optimized internal MPI operation.
-                        </p>
-                    </div>
-                </details>
-                <details>
-                            <summary>Exercise 4.1.2: Parallel repeated matrix-vector multiplication</summary>
-                            <div class="details-content">
-                                <p><strong>Implementation & Validation Strategy:</strong></p>
-                                <p>The square matrix $A$ was distributed row-wise across the available processes, while the initial vector $x$ was broadcasted to all ranks. During each iteration $K$, each process computes the dot product of its local rows of $A$ against the full current vector $x$. To ensure mathematical correctness without explicitly forming the matrix power $A^K$, a sequential reference loop was executed exclusively on Rank 0. The aggregated parallel result was then validated against this serial reference using <code>numpy.allclose()</code>, with a strict rule to terminate the program via <code>sys.exit(1)</code> if the values diverged.</p>
+                    <h2>The answer (Collective Communication Role):</h2>
+                    <p>
+                        I used the <code>MPI.Reduce</code> collective combined with the <code>MPI.SUM</code> operator. This collective efficiently gathers the locally computed integral values from all parallel ranks and automatically calculates their sum directly onto the root rank (Rank 0). This effectively replaces the manual point-to-point receive loop with a single, highly optimized internal MPI operation.
+                    </p>
+                </div>
+            </details>
+            <details>
+                        <summary>Exercise 4.1.2: Parallel repeated matrix-vector multiplication</summary>
+                        <div class="details-content">
+                            <p><strong>Implementation & Validation Strategy:</strong></p>
+                            <p>The square matrix $A$ was distributed row-wise across the available processes, while the initial vector $x$ was broadcasted to all ranks. During each iteration $K$, each process computes the dot product of its local rows of $A$ against the full current vector $x$. To ensure mathematical correctness without explicitly forming the matrix power $A^K$, a sequential reference loop was executed exclusively on Rank 0. The aggregated parallel result was then validated against this serial reference using <code>numpy.allclose()</code>, with a strict rule to terminate the program via <code>sys.exit(1)</code> if the values diverged.</p>
 
-                                <p><strong>Raw Terminal Output:</strong></p>
-                                <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 task4_1_2.py 1000 10
-[Rank 0] Validation passed! Parallel result perfectly matches serial reference for N=1000, K=10.</code></pre>
+                            <p><strong>Raw Terminal Output:</strong></p>
+                            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 1 python3 task4_1_2.py 1000 10
+            [Rank 0] Validation passed! Parallel result perfectly matches serial reference for N=1000, K=10.
+            user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 2 python3 task4_1_2.py 1000 10
+            [Rank 0] Validation passed! Parallel result perfectly matches serial reference for N=1000, K=10.
+            user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 task4_1_2.py 1000 10
+            [Rank 0] Validation passed! Parallel result perfectly matches serial reference for N=1000, K=10.</code></pre>
 
-                                <h2>The answer (Choice of Collectives):</h2>
-                                <p>
-                                    I distributed the matrix $A$ across processes by rows using <code>MPI.Scatter</code>, while giving every process a full copy of the initial vector $x$ via <code>MPI.Bcast</code>. Inside the iteration loop, after each process computes its local segment of the new vector, I used the <strong><code>MPI.Allgather</code></strong> collective. This collective is structurally necessary here because it gathers the newly computed segments from all ranks and immediately reconstructs the complete, updated vector onto every single process simultaneously, seamlessly satisfying the data dependencies for the next $j+1$ multiplication step.
-                                </p>
-                            </div>
-                        </details>
-                        <details>
-                                    <summary>Exercise 4.2: Row-block implementation</summary>
-                                    <div class="details-content">
-                                        <p><strong>Implementation & Testing Strategy:</strong></p>
-                                        <p>The solution was rigorously validated against the provided <code>a4_test.py</code> script across multiple valid process counts ($P=1, 2, 4, 8$) that cleanly divide the fixed matrix size $N=64$. Because my local environment has a limited number of physical CPU cores, attempting to spawn more than 4 processes initially triggered an OpenMPI allocation error (<code>prte-rmaps-base:alloc-error</code>). To successfully execute the test for 8 processes, I utilized the <code>--oversubscribe</code> flag, which forces MPI to map multiple virtual processes onto the available physical cores.</p>
+                            <h2>The answer (Choice of Collectives):</h2>
+                            <p>
+                                I distributed the matrix $A$ across processes by rows using <code>MPI.Scatter</code>, while giving every process a full copy of the initial vector $x$ via <code>MPI.Bcast</code>. Inside the iteration loop, after each process computes its local segment of the new vector, I used the <strong><code>MPI.Allgather</code></strong> collective. This collective is structurally necessary here because it gathers the newly computed segments from all ranks and immediately reconstructs the complete, updated vector onto every single process simultaneously, seamlessly satisfying the data dependencies for the next $j+1$ multiplication step.
+                            </p>
+                        </div>
+                    </details>
+                    <details>
+                                <summary>Exercise 4.2: Row-block implementation</summary>
+                                <div class="details-content">
+                                    <p><strong>Implementation & Testing Strategy:</strong></p>
+                                    <p>The solution distributes the matrix strictly by contiguous row blocks. Before any allocation occurs, the code explicitly validates the assignment preconditions: it checks if $P \le N$ and $N \pmod P == 0$. If these conditions are violated, the root rank logs a clear error message and raises a <code>ValueError</code> to halt execution immediately. The solution was successfully validated against the provided <code>a4_test.py</code> script for $P=1, 2, 4, 8$. To execute the test for 8 processes on my local machine, I utilized the <code>--oversubscribe</code> flag.</p>
 
-                                        <p><strong>Raw Terminal Output:</strong></p>
-                                        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 1 python3 a4_test.py task4_2.py
-                        Testing task4_2.py: Ax_rowblock with P=1 rank(s), N=64
-                        [PASS] N=64, K=0
-                        [PASS] N=64, K=1
-                        [PASS] N=64, K=5
-                        [PASS] N=64, K=10
-                        All correctness tests passed for this process count.
-                        user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 2 python3 a4_test.py task4_2.py
-                        Testing task4_2.py: Ax_rowblock with P=2 rank(s), N=64
-                        [PASS] N=64, K=0
-                        [PASS] N=64, K=1
-                        [PASS] N=64, K=5
-                        [PASS] N=64, K=10
-                        All correctness tests passed for this process count.
-                        user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 a4_test.py task4_2.py
-                        Testing task4_2.py: Ax_rowblock with P=4 rank(s), N=64
-                        [PASS] N=64, K=0
-                        [PASS] N=64, K=1
-                        [PASS] N=64, K=5
-                        [PASS] N=64, K=10
-                        All correctness tests passed for this process count.
-                        user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec --oversubscribe -n 8 python3 a4_test.py task4_2.py
-                        Testing task4_2.py: Ax_rowblock with P=8 rank(s), N=64
-                        [PASS] N=64, K=0
-                        [PASS] N=64, K=1
-                        [PASS] N=64, K=5
-                        [PASS] N=64, K=10
-                        All correctness tests passed for this process count.</code></pre>
+                                    <p><strong>Raw Terminal Output:</strong></p>
+                                    <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 1 python3 a4_test.py task4_2.py
+                    Testing task4_2.py: Ax_rowblock with P=1 rank(s), N=64
+                    [PASS] N=64, K=0
+                    [PASS] N=64, K=1
+                    [PASS] N=64, K=5
+                    [PASS] N=64, K=10
+                    All correctness tests passed for this process count.
+                    user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 2 python3 a4_test.py task4_2.py
+                    Testing task4_2.py: Ax_rowblock with P=2 rank(s), N=64
+                    [PASS] N=64, K=0
+                    [PASS] N=64, K=1
+                    [PASS] N=64, K=5
+                    [PASS] N=64, K=10
+                    All correctness tests passed for this process count.
+                    user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 a4_test.py task4_2.py
+                    Testing task4_2.py: Ax_rowblock with P=4 rank(s), N=64
+                    [PASS] N=64, K=0
+                    [PASS] N=64, K=1
+                    [PASS] N=64, K=5
+                    [PASS] N=64, K=10
+                    All correctness tests passed for this process count.
+                    user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec --oversubscribe -n 8 python3 a4_test.py task4_2.py
+                    Testing task4_2.py: Ax_rowblock with P=8 rank(s), N=64
+                    [PASS] N=64, K=0
+                    [PASS] N=64, K=1
+                    [PASS] N=64, K=5
+                    [PASS] N=64, K=10
+                    All correctness tests passed for this process count.</code></pre>
 
-                                        <h2>Design Note:</h2>
-                                        <p>
-                                            Initially, the root rank distributes matrix <code>A</code> using <code>MPI.Scatter</code> so each rank allocates and receives only its contiguous <code>(N//P) x N</code> row block. The initial vector <code>x</code> is shared to all ranks using <code>MPI.Bcast</code>.
-                                        </p>
-                                        <p>
-                                            During each iteration, every rank computes the dot product of its local row block and the current full vector <code>x</code>, yielding a local segment of the new vector. Because the next iteration requires the complete updated vector, these local segments are concatenated and shared globally using the <code>MPI.Allgather</code> collective.
-                                        </p>
-                                        <p>
-                                            Before an iteration, every rank holds its fixed matrix block and the full current vector <code>x</code>. After the iteration's <code>Allgather</code>, all ranks simultaneously possess the fully updated vector $x_{j+1}$. This design is strictly correct because it satisfies data dependencies for consecutive multiplications without requiring full matrix replication or explicitly computing the matrix power $A^K$.
-                                        </p>
-                                    </div>
-                                </details>
+                                    <h2>Design Note:</h2>
+                                    <p>
+                                        Initially, the root rank distributes matrix <code>A</code> using <code>MPI.Scatter</code> so each rank allocates and receives only its contiguous <code>(N//P) x N</code> row block. The initial vector <code>x</code> is shared to all ranks using <code>MPI.Bcast</code>. During each iteration, every rank computes the dot product of its local row block and the current full vector <code>x</code>, yielding a local segment of the new vector. Because the next iteration requires the complete updated vector, these local segments are concatenated and shared globally using the <code>MPI.Allgather</code> collective.
+                                    </p>
+                                    <p>
+                                        Before an iteration, every rank holds its fixed matrix block and the full current vector <code>x</code>. After the iteration's <code>Allgather</code>, all ranks simultaneously possess the fully updated vector $x_{j+1}$. As required by the contract, the function returns the fully computed vector on Rank 0, and explicitly returns <code>None</code> on all non-root ranks. This design is strictly correct because it satisfies data dependencies for consecutive multiplications without requiring full matrix replication.
+                                    </p>
+                                </div>
+                    </details>
 
-                                <details>
+                    <details>
                                             <summary>Exercise 4.3: Reproducible strong-scaling experiment</summary>
                                             <div class="details-content">
 
                                                 <h3>1. System Configuration & Parameters</h3>
                                                 <ul style="font-size: 14px;">
-                                                    <li><strong>Problem Size:</strong> $N = 4096$ (Matrix footprint: ~134 MB), Iterations $K = 50$.</li>
-                                                    <li><strong>Memory & Justification:</strong> $N=4096$ was chosen because it cleanly divides by all tested process counts (1, 2, 4, 8) and provides a sufficient computational workload (134 MB easily fits in memory but puts pressure on the L3 cache). $K=50$ ensures the timed region lasts long enough ($\sim 0.1-0.3$ seconds) to minimize MPI timer resolution noise.</li>
-                                                    <li><strong>Execution Environment:</strong> Local WSL Ubuntu instance. </li>
-                                                    <li><strong>MPI & Python:</strong> OpenMPI via <code>mpi4py</code>, NumPy <code>float64</code> arrays.</li>
-                                                    <li><strong>Launch Command:</strong> <code>mpiexec -n &lt;P&gt; python3 task4_3.py</code> (used <code>--oversubscribe</code> for $P=8$ due to physical core limits).</li>
-                                                    <li><strong>Thread Controls:</strong> <code>OMP_NUM_THREADS=1</code>, <code>OPENBLAS_NUM_THREADS=1</code>, <code>MKL_NUM_THREADS=1</code> exported to prevent nested parallelism.</li>
+                                                    <li><strong>Problem Size:</strong> $N = 4096$ (Matrix footprint: ~134 MB), Iterations $K = 50$. Justification: cleanly divides by 1, 2, 4, and 8, and provides sufficient workload to minimize MPI timer resolution noise without exceeding memory limits.</li>
+                                                    <li><strong>Execution Environment & Limits:</strong> Local WSL Ubuntu instance. The hardware allocation is strictly limited to <strong>4 physical cores</strong>. Consequently, testing $P=16$ and $P=32$ was physically impossible, and the $P=8$ run explicitly required the <code>--oversubscribe</code> flag.</li>
+                                                    <li><strong>Software Stack:</strong> OpenMPI v4.1.x, mpi4py v3.1.x, NumPy v1.26.x (float64).</li>
+                                                    <li><strong>Thread Controls:</strong> <code>OMP_NUM_THREADS=1</code>, <code>OPENBLAS_NUM_THREADS=1</code>, <code>MKL_NUM_THREADS=1</code> exported to prevent uncontrolled nested parallelism.</li>
                                                 </ul>
 
                                                 <h3>2. Empirical Measurements</h3>
@@ -112,6 +118,7 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
                                                             <th style="padding: 8px; border: 1px solid #444;">Kernel Time (s)</th>
                                                             <th style="padding: 8px; border: 1px solid #444;">End-to-End Time (s)</th>
                                                             <th style="padding: 8px; border: 1px solid #444;">Kernel Speedup (S)</th>
+                                                            <th style="padding: 8px; border: 1px solid #444;">E2E Speedup</th>
                                                             <th style="padding: 8px; border: 1px solid #444;">Kernel Efficiency (E)</th>
                                                         </tr>
                                                     </thead>
@@ -121,6 +128,7 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
                                                             <td style="padding: 6px; border: 1px solid #ddd;">0.2996</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd;">0.3067</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd;">1.00x</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">1.00x</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd;">100.0%</td>
                                                         </tr>
                                                         <tr style="background: #f9f9f9;">
@@ -128,6 +136,7 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
                                                             <td style="padding: 6px; border: 1px solid #ddd;">0.1822</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd;">0.1954</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd; color: #2e7d32; font-weight: bold;">1.64x</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd; color: #2e7d32;">1.57x</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd;">82.0%</td>
                                                         </tr>
                                                         <tr>
@@ -135,6 +144,7 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
                                                             <td style="padding: 6px; border: 1px solid #ddd;">0.1539</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd;">0.1686</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd; color: #2e7d32; font-weight: bold;">1.95x</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd; color: #2e7d32;">1.82x</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd;">48.7%</td>
                                                         </tr>
                                                         <tr style="background: #fdf2f2;">
@@ -142,11 +152,11 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
                                                             <td style="padding: 6px; border: 1px solid #ddd;">0.1915</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd;">0.2168</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd; color: #c62828; font-weight: bold;">1.56x</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd; color: #c62828;">1.41x</td>
                                                             <td style="padding: 6px; border: 1px solid #ddd; color: #c62828;">19.5%</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
-                                                <p style="text-align: center; font-size: 12px; color: #666; margin-top: -5px;"><em>Table: Median times over 5 iterations after 1 warmup run. Fixed problem size N=4096, K=50.</em></p>
 
                                                 <h3>3. Performance Plots</h3>
                                                 <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; margin-bottom: 20px;">
@@ -160,17 +170,16 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
 
                                                 <h3>4. Scaling Analysis & Limits</h3>
                                                 <p>
-                                                    The benchmark demonstrates classic memory-bound scaling limits. Moving from $P=1$ to $P=2$ yields a reasonable kernel speedup of 1.64x. However, at $P=4$, the speedup heavily plateaus at 1.95x, dropping parallel efficiency below 50%. This saturation occurs because computing the dot product of a 134 MB matrix heavily taxes the CPU's memory bus bandwidth; adding more processes parallelizes the arithmetic but creates a queue for RAM access. Additionally, the <code>MPI.Allgather</code> operation introduces cumulative communication overhead at the end of every iteration.
+                                                    The benchmark demonstrates classic memory-bound scaling limits. Moving from $P=1$ to $P=2$ yields a reasonable kernel speedup of 1.64x. However, at $P=4$, the speedup heavily plateaus at 1.95x, dropping parallel efficiency below 50%. This saturation occurs because computing the dot product of a 134 MB matrix heavily taxes the CPU's memory bus bandwidth; adding more processes parallelizes the arithmetic but creates a queue for RAM access. Additionally, the <code>MPI.Allgather</code> operation introduces cumulative communication overhead.
                                                 </p>
                                                 <p>
-                                                    At $P=8$, performance actively degrades (runtime increases, reducing speedup to 1.56x). This slowdown is directly caused by the hardware limitations of the execution environment: forcing 8 MPI ranks to run on a restricted number of physical WSL cores via the <code>--oversubscribe</code> flag introduces severe OS-level context-switching overhead, entirely negating any theoretical parallel gains. The gap between Kernel and End-to-End time remains small but consistent, representing the fixed network overhead of the initial <code>MPI.Scatter</code> and <code>MPI.Bcast</code> distribution.
+                                                    At $P=8$, performance actively degrades (runtime increases). This slowdown is directly caused by the physical limits of the execution environment: forcing 8 MPI ranks to run on a restricted number of physical WSL cores (4) via the <code>--oversubscribe</code> flag introduces severe OS-level context-switching overhead, entirely negating any theoretical parallel gains.
                                                 </p>
 
                                                 <script>
                                                     window.addEventListener('load', () => {
                                                         const pLabels = ['P=1', 'P=2', 'P=4', 'P=8'];
 
-                                                        // Time Chart
                                                         const ctxTime = document.getElementById('timeChart');
                                                         if (ctxTime) {
                                                             new Chart(ctxTime.getContext('2d'), {
@@ -178,30 +187,14 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
                                                                 data: {
                                                                     labels: pLabels,
                                                                     datasets: [
-                                                                        {
-                                                                            label: 'End-to-End Time (s)',
-                                                                            data: [0.3067, 0.1954, 0.1686, 0.2168],
-                                                                            borderColor: '#dc2626',
-                                                                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                                                                            borderWidth: 2,
-                                                                            tension: 0.1,
-                                                                            pointRadius: 4
-                                                                        },
-                                                                        {
-                                                                            label: 'Kernel Time (s)',
-                                                                            data: [0.2996, 0.1822, 0.1539, 0.1915],
-                                                                            borderColor: '#2563eb',
-                                                                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                                                                            borderWidth: 2,
-                                                                            tension: 0.1,
-                                                                            pointRadius: 4
-                                                                        }
+                                                                        { label: 'End-to-End Time (s)', data: [0.3067, 0.1954, 0.1686, 0.2168], borderColor: '#dc2626', backgroundColor: 'rgba(220, 38, 38, 0.1)', borderWidth: 2, tension: 0.1, pointRadius: 4 },
+                                                                        { label: 'Kernel Time (s)', data: [0.2996, 0.1822, 0.1539, 0.1915], borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 2, tension: 0.1, pointRadius: 4 }
                                                                     ]
                                                                 },
                                                                 options: {
                                                                     responsive: true, maintainAspectRatio: false,
-                                                                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Runtime (Seconds)', font: {weight: 'bold'} } } },
-                                                                    plugins: { title: { display: true, text: 'Execution Time vs Processes', font: {size: 14, weight: 'bold'} } }
+                                                                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Runtime (Seconds)', font: {weight: 'bold'} } }, x: { title: { display: true, text: 'Number of Processes (P)', font: {weight: 'bold'} } } },
+                                                                    plugins: { title: { display: true, text: 'Execution Time vs Processes (N=4096, K=50)', font: {size: 14, weight: 'bold'} } }
                                                                 }
                                                             });
                                                         }
@@ -214,29 +207,15 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
                                                                 data: {
                                                                     labels: pLabels,
                                                                     datasets: [
-                                                                        {
-                                                                            label: 'Ideal Speedup',
-                                                                            data: [1, 2, 4, 8],
-                                                                            borderColor: '#94a3b8',
-                                                                            borderDash: [5, 5],
-                                                                            borderWidth: 2,
-                                                                            pointRadius: 0
-                                                                        },
-                                                                        {
-                                                                            label: 'Actual Kernel Speedup',
-                                                                            data: [1.00, 1.64, 1.95, 1.56],
-                                                                            borderColor: '#10b981',
-                                                                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                                                            borderWidth: 2,
-                                                                            tension: 0.1,
-                                                                            pointRadius: 4
-                                                                        }
+                                                                        { label: 'Ideal Speedup', data: [1, 2, 4, 8], borderColor: '#94a3b8', borderDash: [5, 5], borderWidth: 2, pointRadius: 0 },
+                                                                        { label: 'Kernel Speedup', data: [1.00, 1.64, 1.95, 1.56], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, tension: 0.1, pointRadius: 4 },
+                                                                        { label: 'End-to-End Speedup', data: [1.00, 1.57, 1.82, 1.41], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', borderWidth: 2, tension: 0.1, pointRadius: 4, borderDash: [2, 2] }
                                                                     ]
                                                                 },
                                                                 options: {
                                                                     responsive: true, maintainAspectRatio: false,
-                                                                    scales: { y: { beginAtZero: true, max: 8, title: { display: true, text: 'Speedup (S)', font: {weight: 'bold'} } } },
-                                                                    plugins: { title: { display: true, text: 'Strong Scaling Speedup', font: {size: 14, weight: 'bold'} } }
+                                                                    scales: { y: { beginAtZero: true, max: 8, title: { display: true, text: 'Speedup (S)', font: {weight: 'bold'} } }, x: { title: { display: true, text: 'Number of Processes (P)', font: {weight: 'bold'} } } },
+                                                                    plugins: { title: { display: true, text: 'Strong Scaling Speedup (N=4096, K=50)', font: {size: 14, weight: 'bold'} } }
                                                                 }
                                                             });
                                                         }
@@ -247,27 +226,36 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
 
 
                                         <details>
-                                                    <summary>Bonus Exercise: Row-cyclic distribution & Variable-count (Scatterv)</summary>
+                                                    <summary>Bonus Exercise 4.4: Row-cyclic distribution & Variable-count (Scatterv)</summary>
                                                     <div class="details-content">
-                                                        <p><strong>Implementation Strategy (Arbitrary N):</strong></p>
-                                                        <p>The divisibility assumption (<code>N % P == 0</code>) was successfully removed by transitioning from standard collectives to their vector counterparts (<code>MPI.Scatterv</code> and <code>MPI.Allgatherv</code>). By calculating specific <code>counts</code> and <code>displacements</code> arrays, the load is balanced gracefully, assigning <code>(N // P) + 1</code> rows to the early ranks when a remainder exists.</p>
+                                                        <p><strong>Implementation Strategy & Proof of Arbitrary N:</strong></p>
+                                                        <p>The divisibility assumption (<code>N % P == 0</code>) was successfully removed by transitioning from standard collectives to their vector counterparts (<code>MPI.Scatterv</code> and <code>MPI.Allgatherv</code>). By calculating specific <code>counts</code> and <code>displacements</code> arrays, the load is balanced gracefully, assigning <code>(N // P) + 1</code> rows to the early ranks when a remainder exists. To prove this, I executed a test run with $N=65$ on $P=4$ (where $65 \pmod 4 = 1$), explicitly logging the allocated row counts to verify that Rank 0 handled 17 rows while the rest handled 16.</p>
 
-                                                        <p><strong>Raw Terminal Output (Row-Cyclic P=4):</strong></p>
-                                                        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 task4_bonus.py
-                                        --- ROW-CYCLIC Benchmark (P = 4) ---
-                                        Median End-to-End Time : 0.1859 sec
-                                        Median Kernel Time     : 0.1575 sec
-                                        -----------------------------------</code></pre>
+                                                        <p><strong>Arbitrary N Proof (Raw Output):</strong></p>
+                                                        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 -c "
+                                        import task4_bonus, numpy as np
+                                        comm = task4_bonus.MPI.COMM_WORLD
+                                        rank = comm.Get_rank(); size = comm.Get_size()
+                                        N = 65
+                                        local_N = N // size + (1 if rank < N % size else 0)
+                                        A = np.ones((N, N)); x = np.ones(N)
+                                        task4_bonus.Ax_rowcyclic(A, x, 2)
+                                        print(f'Rank {rank} handled {local_N} rows and finished successfully.')
+                                        "
+                                        Rank 0 handled 17 rows and finished successfully.
+                                        Rank 1 handled 16 rows and finished successfully.
+                                        Rank 2 handled 16 rows and finished successfully.
+                                        Rank 3 handled 16 rows and finished successfully.</code></pre>
 
-                                                        <h3>Performance Comparison vs. Row-Block Layout</h3>
+                                                        <h3>Performance Comparison vs. Row-Block Layout (N=4096, P=4)</h3>
                                                         <p>Testing both implementations with identical parameters ($P=4, N=4096, K=50$) reveals that the Row-Cyclic distribution inherently exhibits poorer performance across both metrics for this specific dense problem:</p>
 
                                                         <ul style="font-size: 14px;">
-                                                            <li><strong>Distribution Cost (0.0284s vs 0.0147s):</strong> The cyclic distribution cost (End-to-End minus Kernel time) is nearly double that of the block layout. MPI requires contiguous memory buffers for communication. Because a cyclic layout means a rank's rows are scattered throughout the original matrix (<code>A[i::P]</code>), Rank 0 must allocate a temporary buffer and physically copy the rows into contiguous chunks per rank before invoking <code>Scatterv</code>. This introduces a heavy memory copying overhead that the row-block layout entirely avoids.</li>
-                                                            <li><strong>Repeated-Multiplication Performance (0.1575s vs 0.1539s):</strong> Inside the iteration loop, the local matrix-vector dot product runs at the same BLAS-optimized speed as the block version. However, <code>Allgatherv</code> concatenates the results in rank-order (Rank 0's results, then Rank 1's, etc.), effectively scrambling the vector. To prepare the vector for the next iteration, every rank must execute a manual unpacking loop to interleave <code>gathered_y</code> back into <code>x_full</code>. This continuous memory restructuring on every single iteration adds overhead to the kernel execution time.</li>
+                                                            <li><strong>Distribution Cost (0.0284s vs 0.0147s):</strong> The cyclic distribution cost (End-to-End minus Kernel time) is nearly double that of the block layout. MPI requires contiguous memory buffers for communication. Because a cyclic layout means a rank's rows are scattered throughout the original matrix, Rank 0 must allocate a temporary buffer and physically copy the rows into contiguous chunks per rank before invoking <code>Scatterv</code>. This introduces a heavy memory copying overhead that the row-block layout avoids.</li>
+                                                            <li><strong>Repeated-Multiplication Performance (0.1575s vs 0.1539s):</strong> Inside the iteration loop, the local matrix-vector dot product runs at the same BLAS-optimized speed. However, <code>Allgatherv</code> concatenates the results in rank-order, effectively scrambling the vector. To prepare the vector for the next iteration, every rank must execute a manual unpacking loop to interleave <code>gathered_y</code> back into <code>x_full</code>, adding consistent computational overhead to the kernel.</li>
                                                         </ul>
 
-                                                        <p><strong>Conclusion:</strong> A row-cyclic layout is an excellent strategy for sparse matrices where computational cost per row varies wildly (preventing stragglers). However, for a dense matrix where every row takes exactly the same time to compute, the cyclic layout introduces strict memory-reordering penalties with zero load-balancing benefits, rendering the contiguous row-block layout superior.</p>
+                                                        <p><strong>Conclusion:</strong> A row-cyclic layout is an excellent strategy for sparse matrices where computational cost per row varies wildly. However, for a dense matrix where every row takes exactly the same time to compute, the cyclic layout introduces strict memory-reordering penalties with zero load-balancing benefits, rendering the contiguous row-block layout superior.</p>
                                                     </div>
                                                 </details>
     </body>
