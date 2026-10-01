@@ -1,0 +1,6 @@
+Distribution,Processes(P),Kernel_Time_s,End_to_End_Time_s,Kernel_Speedup,Kernel_Efficiency
+Row-Block,1,0.2996,0.3067,1.00,100.0%
+Row-Block,2,0.1822,0.1954,1.64,82.0%
+Row-Block,4,0.1539,0.1686,1.95,48.7%
+Row-Block,8,0.1915,0.2168,1.56,19.5%
+Row-Cyclic,4,0.1575,0.1859,1.90,47.5%

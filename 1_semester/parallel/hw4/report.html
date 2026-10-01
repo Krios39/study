@@ -244,6 +244,32 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
                                                 </script>
                                             </div>
                                         </details>
+
+
+                                        <details>
+                                                    <summary>Bonus Exercise: Row-cyclic distribution & Variable-count (Scatterv)</summary>
+                                                    <div class="details-content">
+                                                        <p><strong>Implementation Strategy (Arbitrary N):</strong></p>
+                                                        <p>The divisibility assumption (<code>N % P == 0</code>) was successfully removed by transitioning from standard collectives to their vector counterparts (<code>MPI.Scatterv</code> and <code>MPI.Allgatherv</code>). By calculating specific <code>counts</code> and <code>displacements</code> arrays, the load is balanced gracefully, assigning <code>(N // P) + 1</code> rows to the early ranks when a remainder exists.</p>
+
+                                                        <p><strong>Raw Terminal Output (Row-Cyclic P=4):</strong></p>
+                                                        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw4$ mpiexec -n 4 python3 task4_bonus.py
+                                        --- ROW-CYCLIC Benchmark (P = 4) ---
+                                        Median End-to-End Time : 0.1859 sec
+                                        Median Kernel Time     : 0.1575 sec
+                                        -----------------------------------</code></pre>
+
+                                                        <h3>Performance Comparison vs. Row-Block Layout</h3>
+                                                        <p>Testing both implementations with identical parameters ($P=4, N=4096, K=50$) reveals that the Row-Cyclic distribution inherently exhibits poorer performance across both metrics for this specific dense problem:</p>
+
+                                                        <ul style="font-size: 14px;">
+                                                            <li><strong>Distribution Cost (0.0284s vs 0.0147s):</strong> The cyclic distribution cost (End-to-End minus Kernel time) is nearly double that of the block layout. MPI requires contiguous memory buffers for communication. Because a cyclic layout means a rank's rows are scattered throughout the original matrix (<code>A[i::P]</code>), Rank 0 must allocate a temporary buffer and physically copy the rows into contiguous chunks per rank before invoking <code>Scatterv</code>. This introduces a heavy memory copying overhead that the row-block layout entirely avoids.</li>
+                                                            <li><strong>Repeated-Multiplication Performance (0.1575s vs 0.1539s):</strong> Inside the iteration loop, the local matrix-vector dot product runs at the same BLAS-optimized speed as the block version. However, <code>Allgatherv</code> concatenates the results in rank-order (Rank 0's results, then Rank 1's, etc.), effectively scrambling the vector. To prepare the vector for the next iteration, every rank must execute a manual unpacking loop to interleave <code>gathered_y</code> back into <code>x_full</code>. This continuous memory restructuring on every single iteration adds overhead to the kernel execution time.</li>
+                                                        </ul>
+
+                                                        <p><strong>Conclusion:</strong> A row-cyclic layout is an excellent strategy for sparse matrices where computational cost per row varies wildly (preventing stragglers). However, for a dense matrix where every row takes exactly the same time to compute, the cyclic layout introduces strict memory-reordering penalties with zero load-balancing benefits, rendering the contiguous row-block layout superior.</p>
+                                                    </div>
+                                                </details>
     </body>
     <script>
         function loadKaTeXAndRender() {
