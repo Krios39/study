@@ -78,6 +78,24 @@ power_setup() {
   done
 }
 
+# сети docker — подальше от университетских: по умолчанию docker берёт 172.17–172.31.x, а учебный VPN выдаёт
+# 172.18.64.0/23, eduroam — 172.31.208.0/21. Пересечение → ответы на ssh из VPN уходят в docker-мост, доступ теряется
+docker_net_setup() {
+  say "docker networks → 10.200.0.0/24, 10.201.0.0/16"
+  mkdir -p /etc/docker
+  if [ -s /etc/docker/daemon.json ] && ! grep -q '10.201.0.0' /etc/docker/daemon.json; then
+    cp /etc/docker/daemon.json /etc/docker/daemon.json.bak; echo "  старый daemon.json → daemon.json.bak (заменён)"
+  fi
+  printf '{\n  "bip": "10.200.0.1/24",\n  "default-address-pools": [{ "base": "10.201.0.0/16", "size": 24 }]\n}\n' > /etc/docker/daemon.json
+  if command -v docker >/dev/null; then
+    systemctl restart docker 2>/dev/null || true
+    docker network ls --format '{{.Name}}' 2>/dev/null | grep -vE '^(bridge|host|none)$' | while read -r n; do
+      sub=$(docker network inspect -f '{{range .IPAM.Config}}{{.Subnet}} {{end}}' "$n" 2>/dev/null)
+      case "$sub" in 172.*) echo "  !! сеть $n ($sub) в 172.x — удалить, если не нужна: docker network rm $n" ;; esac
+    done
+  fi
+}
+
 keys_setup() {
   say "ssh keys → ~$USER_NAME/.ssh/authorized_keys ($KEYS)"
   local home; home=$(getent passwd "$USER_NAME" | cut -d: -f6)
@@ -127,7 +145,7 @@ if [ "$ACCESS" = 1 ]; then
     *) try_install openssh curl iputils iproute2 ;;
   esac
   for s in ssh sshd; do systemctl enable --now "$s" >/dev/null 2>&1 && echo "  + $s" || true; done
-  keys_setup; lan_setup; power_setup
+  keys_setup; lan_setup; power_setup; docker_net_setup
   [ "$TAILSCALE" = 1 ] && tailscale_setup
   access_report
   exit 0
@@ -169,6 +187,8 @@ if [ "$(printf '%s\n2.24.0\n' "${cv#v}" | sort -V | head -1)" != "2.24.0" ]; the
   chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 fi
 docker compose version
+
+docker_net_setup
 
 # ---------- службы ----------
 say "services"
