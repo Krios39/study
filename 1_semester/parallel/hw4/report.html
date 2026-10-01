@@ -4,6 +4,9 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Homework 4 Report - Parallel Computing</title>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     </head>
     <body>
         <details>
@@ -87,6 +90,160 @@ With n = 10000 trapezoids, our estimate of the integral from 0.0 to 1.0 is [0.33
                                     </div>
                                 </details>
 
+                                <details>
+                                            <summary>Exercise 4.3: Reproducible strong-scaling experiment</summary>
+                                            <div class="details-content">
+
+                                                <h3>1. System Configuration & Parameters</h3>
+                                                <ul style="font-size: 14px;">
+                                                    <li><strong>Problem Size:</strong> $N = 4096$ (Matrix footprint: ~134 MB), Iterations $K = 50$.</li>
+                                                    <li><strong>Memory & Justification:</strong> $N=4096$ was chosen because it cleanly divides by all tested process counts (1, 2, 4, 8) and provides a sufficient computational workload (134 MB easily fits in memory but puts pressure on the L3 cache). $K=50$ ensures the timed region lasts long enough ($\sim 0.1-0.3$ seconds) to minimize MPI timer resolution noise.</li>
+                                                    <li><strong>Execution Environment:</strong> Local WSL Ubuntu instance. </li>
+                                                    <li><strong>MPI & Python:</strong> OpenMPI via <code>mpi4py</code>, NumPy <code>float64</code> arrays.</li>
+                                                    <li><strong>Launch Command:</strong> <code>mpiexec -n &lt;P&gt; python3 task4_3.py</code> (used <code>--oversubscribe</code> for $P=8$ due to physical core limits).</li>
+                                                    <li><strong>Thread Controls:</strong> <code>OMP_NUM_THREADS=1</code>, <code>OPENBLAS_NUM_THREADS=1</code>, <code>MKL_NUM_THREADS=1</code> exported to prevent nested parallelism.</li>
+                                                </ul>
+
+                                                <h3>2. Empirical Measurements</h3>
+                                                <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: right;">
+                                                    <thead>
+                                                        <tr style="background: #2d2d2d; color: #fff; text-align: center;">
+                                                            <th style="padding: 8px; border: 1px solid #444;">MPI Ranks (P)</th>
+                                                            <th style="padding: 8px; border: 1px solid #444;">Kernel Time (s)</th>
+                                                            <th style="padding: 8px; border: 1px solid #444;">End-to-End Time (s)</th>
+                                                            <th style="padding: 8px; border: 1px solid #444;">Kernel Speedup (S)</th>
+                                                            <th style="padding: 8px; border: 1px solid #444;">Kernel Efficiency (E)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody style="text-align: center;">
+                                                        <tr>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">1</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">0.2996</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">0.3067</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">1.00x</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">100.0%</td>
+                                                        </tr>
+                                                        <tr style="background: #f9f9f9;">
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">2</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">0.1822</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">0.1954</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd; color: #2e7d32; font-weight: bold;">1.64x</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">82.0%</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">4</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">0.1539</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">0.1686</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd; color: #2e7d32; font-weight: bold;">1.95x</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">48.7%</td>
+                                                        </tr>
+                                                        <tr style="background: #fdf2f2;">
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">8 (oversubscribed)</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">0.1915</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd;">0.2168</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd; color: #c62828; font-weight: bold;">1.56x</td>
+                                                            <td style="padding: 6px; border: 1px solid #ddd; color: #c62828;">19.5%</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                                <p style="text-align: center; font-size: 12px; color: #666; margin-top: -5px;"><em>Table: Median times over 5 iterations after 1 warmup run. Fixed problem size N=4096, K=50.</em></p>
+
+                                                <h3>3. Performance Plots</h3>
+                                                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; margin-bottom: 20px;">
+                                                    <div style="flex: 1; min-width: 300px; height: 350px; position: relative;">
+                                                        <canvas id="timeChart"></canvas>
+                                                    </div>
+                                                    <div style="flex: 1; min-width: 300px; height: 350px; position: relative;">
+                                                        <canvas id="speedupChart"></canvas>
+                                                    </div>
+                                                </div>
+
+                                                <h3>4. Scaling Analysis & Limits</h3>
+                                                <p>
+                                                    The benchmark demonstrates classic memory-bound scaling limits. Moving from $P=1$ to $P=2$ yields a reasonable kernel speedup of 1.64x. However, at $P=4$, the speedup heavily plateaus at 1.95x, dropping parallel efficiency below 50%. This saturation occurs because computing the dot product of a 134 MB matrix heavily taxes the CPU's memory bus bandwidth; adding more processes parallelizes the arithmetic but creates a queue for RAM access. Additionally, the <code>MPI.Allgather</code> operation introduces cumulative communication overhead at the end of every iteration.
+                                                </p>
+                                                <p>
+                                                    At $P=8$, performance actively degrades (runtime increases, reducing speedup to 1.56x). This slowdown is directly caused by the hardware limitations of the execution environment: forcing 8 MPI ranks to run on a restricted number of physical WSL cores via the <code>--oversubscribe</code> flag introduces severe OS-level context-switching overhead, entirely negating any theoretical parallel gains. The gap between Kernel and End-to-End time remains small but consistent, representing the fixed network overhead of the initial <code>MPI.Scatter</code> and <code>MPI.Bcast</code> distribution.
+                                                </p>
+
+                                                <script>
+                                                    window.addEventListener('load', () => {
+                                                        const pLabels = ['P=1', 'P=2', 'P=4', 'P=8'];
+
+                                                        // Time Chart
+                                                        const ctxTime = document.getElementById('timeChart');
+                                                        if (ctxTime) {
+                                                            new Chart(ctxTime.getContext('2d'), {
+                                                                type: 'line',
+                                                                data: {
+                                                                    labels: pLabels,
+                                                                    datasets: [
+                                                                        {
+                                                                            label: 'End-to-End Time (s)',
+                                                                            data: [0.3067, 0.1954, 0.1686, 0.2168],
+                                                                            borderColor: '#dc2626',
+                                                                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                                                                            borderWidth: 2,
+                                                                            tension: 0.1,
+                                                                            pointRadius: 4
+                                                                        },
+                                                                        {
+                                                                            label: 'Kernel Time (s)',
+                                                                            data: [0.2996, 0.1822, 0.1539, 0.1915],
+                                                                            borderColor: '#2563eb',
+                                                                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                                                                            borderWidth: 2,
+                                                                            tension: 0.1,
+                                                                            pointRadius: 4
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                options: {
+                                                                    responsive: true, maintainAspectRatio: false,
+                                                                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Runtime (Seconds)', font: {weight: 'bold'} } } },
+                                                                    plugins: { title: { display: true, text: 'Execution Time vs Processes', font: {size: 14, weight: 'bold'} } }
+                                                                }
+                                                            });
+                                                        }
+
+                                                        // Speedup Chart
+                                                        const ctxSpeedup = document.getElementById('speedupChart');
+                                                        if (ctxSpeedup) {
+                                                            new Chart(ctxSpeedup.getContext('2d'), {
+                                                                type: 'line',
+                                                                data: {
+                                                                    labels: pLabels,
+                                                                    datasets: [
+                                                                        {
+                                                                            label: 'Ideal Speedup',
+                                                                            data: [1, 2, 4, 8],
+                                                                            borderColor: '#94a3b8',
+                                                                            borderDash: [5, 5],
+                                                                            borderWidth: 2,
+                                                                            pointRadius: 0
+                                                                        },
+                                                                        {
+                                                                            label: 'Actual Kernel Speedup',
+                                                                            data: [1.00, 1.64, 1.95, 1.56],
+                                                                            borderColor: '#10b981',
+                                                                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                                                            borderWidth: 2,
+                                                                            tension: 0.1,
+                                                                            pointRadius: 4
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                options: {
+                                                                    responsive: true, maintainAspectRatio: false,
+                                                                    scales: { y: { beginAtZero: true, max: 8, title: { display: true, text: 'Speedup (S)', font: {weight: 'bold'} } } },
+                                                                    plugins: { title: { display: true, text: 'Strong Scaling Speedup', font: {size: 14, weight: 'bold'} } }
+                                                                }
+                                                            });
+                                                        }
+                                                    });
+                                                </script>
+                                            </div>
+                                        </details>
     </body>
     <script>
         function loadKaTeXAndRender() {
