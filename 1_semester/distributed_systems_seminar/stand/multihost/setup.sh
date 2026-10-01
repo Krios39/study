@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Подготовка машины для стенда на трёх машинах (среда B). Запускать на каждой, от root:
 #   curl -fsSL https://raw.githubusercontent.com/Krios39/study/master/1_semester/distributed_systems_seminar/stand/multihost/setup.sh -o setup.sh
-#   sudo bash setup.sh l1 <интерфейс к свитчу>          # l1 | l2 | l3; интерфейс — ip -br link
+#   sudo bash setup.sh l1 <интерфейс к свитчу> [--access] [--tailscale] [--keys=URL]   # l1/l2/l3; интерфейс — ip -br link
 # Bash, а не Node: на свежей машине Node ещё нет (ставится здесь же). Повторный запуск безопасен.
 # Что делает: пакеты (git, docker + compose ≥ 2.24, chrony, ssh, node на l2) под apt/dnf/pacman/zypper; репозиторий в
 # /opt/study (путь одинаковый на всех машинах — compose монтирует файлы стенда по абсолютному пути); статический адрес
@@ -12,8 +12,8 @@ set -euo pipefail
 
 ROLE="${1:-}"; IFACE="${2:-}"
 case "$ROLE" in l1) N=1; RANGE=10.10.0.64/27 ;; l2) N=2; RANGE=10.10.0.96/27 ;; l3) N=3; RANGE=10.10.0.128/27 ;;
-  *) echo "usage: sudo bash setup.sh l1|l2|l3 <iface-to-switch>"; ip -br link; exit 2 ;; esac
-[ -n "$IFACE" ] && ip link show "$IFACE" >/dev/null 2>&1 || { echo "interface '$IFACE' not found:"; ip -br link; exit 2; }
+  *) echo "usage: sudo bash setup.sh l1|l2|l3 <iface-to-switch> [--access] [--tailscale] [--keys=URL]"; ls /sys/class/net; exit 2 ;; esac
+[ -n "$IFACE" ] && [ -e "/sys/class/net/$IFACE" ] || { echo "interface '$IFACE' not found; есть: $(ls /sys/class/net | tr '\n' ' ')"; exit 2; }
 [ "$(id -u)" = 0 ] || { echo "run with sudo"; exit 2; }
 USER_NAME="${SUDO_USER:-root}"
 REPO=/opt/study
@@ -37,6 +37,102 @@ install() {
   esac
 }
 try_install() { for p in "$@"; do install "$p" >/dev/null 2>&1 && echo "  + $p" || echo "  - $p (нет в репозитории)"; done; }
+
+# ---------- флаги ----------
+# --access        только удалённый доступ (на месте, быстро): ssh, ключи, адрес к свитчу, без сна; без docker и образов
+# --tailscale     + Tailscale (исходящее соединение — работает за NAT/eduroam без входящих портов); вход по ссылке
+# --keys=<url|файл>  открытые ssh-ключи в authorized_keys (по умолчанию https://github.com/Krios39.keys)
+ACCESS=0; TAILSCALE=0; KEYS=https://github.com/Krios39.keys
+for a in "${@:3}"; do case "$a" in
+  --access) ACCESS=1 ;; --tailscale) TAILSCALE=1 ;; --keys=*) KEYS="${a#--keys=}" ;;
+  *) echo "unknown option $a"; exit 2 ;; esac; done
+
+lan_setup() {
+  say "static 10.10.0.$N/24 on $IFACE"
+  if command -v nmcli >/dev/null && systemctl is-active --quiet NetworkManager; then
+    nmcli con delete xroad-lan >/dev/null 2>&1 || true
+    nmcli con add type ethernet ifname "$IFACE" con-name xroad-lan ipv4.method manual ipv4.addresses "10.10.0.$N/24" \
+      ipv4.never-default yes ipv6.method disabled connection.autoconnect yes connection.autoconnect-priority 100 >/dev/null
+    nmcli con up xroad-lan
+  elif systemctl is-active --quiet systemd-networkd; then
+    printf '[Match]\nName=%s\n\n[Network]\nAddress=10.10.0.%s/24\nLinkLocalAddressing=no\n' "$IFACE" "$N" > /etc/systemd/network/10-xroad-lan.network
+    systemctl restart systemd-networkd
+  else
+    ip addr replace "10.10.0.$N/24" dev "$IFACE"; ip link set "$IFACE" up
+    echo "  !! ни NetworkManager, ни systemd-networkd: адрес задан до перезагрузки — настроить постоянный вручную"
+  fi
+  # без sed -i: /etc/hosts бывает примонтирован (rename не проходит)
+  { grep -v '# xroad-stand$' /etc/hosts; printf '10.10.0.1 l1 # xroad-stand\n10.10.0.2 l2 # xroad-stand\n10.10.0.3 l3 # xroad-stand\n'; } > /tmp/hosts.xroad
+  cat /tmp/hosts.xroad > /etc/hosts
+  ip -br addr show "$IFACE"
+}
+
+power_setup() {
+  say "sleep / lid / auto-updates off"
+  systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target >/dev/null || echo "  !! не удалось выключить сон (systemctl mask)"
+  mkdir -p /etc/systemd/logind.conf.d
+  printf '[Login]\nHandleLidSwitch=ignore\nHandleLidSwitchExternalPower=ignore\nHandleLidSwitchDocked=ignore\nIdleAction=ignore\n' \
+    > /etc/systemd/logind.conf.d/xroad-stand.conf
+  for s in unattended-upgrades apt-daily.timer apt-daily-upgrade.timer dnf-automatic.timer dnf-makecache.timer packagekit; do
+    systemctl disable --now "$s" >/dev/null 2>&1 && echo "  - $s" || true
+  done
+}
+
+keys_setup() {
+  say "ssh keys → ~$USER_NAME/.ssh/authorized_keys ($KEYS)"
+  local home; home=$(getent passwd "$USER_NAME" | cut -d: -f6)
+  local k; if [ -f "$KEYS" ]; then k=$(cat "$KEYS"); else k=$(curl -fsSL "$KEYS" || true); fi
+  [ -n "$k" ] || { echo "  !! ключей нет ($KEYS) — вход только по паролю"; return; }
+  command install -d -m 700 -o "$USER_NAME" "$home/.ssh"      # command: не своя install() для пакетов
+  touch "$home/.ssh/authorized_keys"
+  printf '%s\n' "$k" | while read -r line; do [ -z "$line" ] || grep -qxF "$line" "$home/.ssh/authorized_keys" || echo "$line" >> "$home/.ssh/authorized_keys"; done
+  chown "$USER_NAME": "$home/.ssh/authorized_keys"; chmod 600 "$home/.ssh/authorized_keys"
+  echo "  $(wc -l < "$home/.ssh/authorized_keys") key(s)"
+}
+
+tailscale_setup() {
+  say "tailscale"
+  command -v tailscale >/dev/null || curl -fsSL https://tailscale.com/install.sh | sh
+  systemctl enable --now tailscaled
+  tailscale up --hostname="xroad-$ROLE" || true      # напечатает ссылку для входа — открыть на телефоне
+  tailscale ip -4 2>/dev/null | sed 's/^/  tailscale ip: /' || true
+}
+
+# что помешает подключиться после перезагрузки без человека рядом
+access_report() {
+  say "access report: $ROLE"
+  echo "  user: $USER_NAME   sshd: $(systemctl is-active ssh 2>/dev/null || systemctl is-active sshd 2>/dev/null || echo '?')"
+  echo "  адреса (кроме свитча):"; ip -br -4 addr | grep -v "^lo\|^$IFACE\|docker\|br-\|veth" | sed 's/^/    /' || true
+  echo "  маршрут наружу: $(ip route get 1.1.1.1 2>/dev/null | head -1)"
+  if command -v nmcli >/dev/null; then
+    nmcli -t -f NAME,TYPE,DEVICE con show --active | grep -v ':loopback:' | while IFS=: read -r name type dev; do
+      [ "$name" = xroad-lan ] && continue
+      ac=$(nmcli -g connection.autoconnect con show "$name"); perm=$(nmcli -g connection.permissions con show "$name")
+      flags=$(nmcli -g 802-1x.password-flags,802-11-wireless-security.psk-flags con show "$name" 2>/dev/null | tr '\n' ' ')
+      echo "  $name ($type, $dev): autoconnect=$ac permissions=${perm:-все} secret-flags=${flags:-—}"
+      [ -n "$perm" ] && echo "    !! подключение только для одного пользователя — не поднимется до входа: nmcli con mod '$name' connection.permissions ''"
+      case "$flags" in *1*) echo "    !! пароль хранится у пользователя (flags=1) — до входа в систему сеть не поднимется: nmcli con mod '$name' 802-1x.password-flags 0 802-11-wireless-security.psk-flags 0, затем ввести пароль ещё раз" ;; esac
+    done
+  fi
+  lsblk -o NAME,TYPE 2>/dev/null | grep -q crypt && echo "  !! шифрованный диск: после перезагрузки ждёт пароль у экрана — удалённо не поднимется"
+  systemctl is-enabled --quiet tailscaled 2>/dev/null && echo "  tailscale: $(tailscale ip -4 2>/dev/null | head -1) ($(tailscale status --self --peers=false 2>/dev/null | head -1 | awk '{print $2}'))"
+  echo "  проверка: с телефона (модем) → VPN или tailscale → ssh $USER_NAME@<адрес>; потом sudo reboot и снова войти"
+}
+
+if [ "$ACCESS" = 1 ]; then
+  say "access-only ($PM)"
+  case $PM in apt) apt-get update -qq ;; pacman) pacman -Sy --noconfirm >/dev/null ;; esac
+  case $PM in
+    apt) try_install openssh-server curl iputils-ping iproute2 ;; dnf) try_install openssh-server curl iputils iproute ;;
+    *) try_install openssh curl iputils iproute2 ;;
+  esac
+  for s in ssh sshd; do systemctl enable --now "$s" >/dev/null 2>&1 && echo "  + $s" || true; done
+  keys_setup; lan_setup; power_setup
+  [ "$TAILSCALE" = 1 ] && tailscale_setup
+  access_report
+  exit 0
+fi
+
 
 say "packages ($PM)"
 case $PM in apt) apt-get update -qq ;; pacman) pacman -Sy --noconfirm >/dev/null ;; esac
@@ -84,33 +180,9 @@ say "repo → $REPO"
 if [ ! -d "$REPO/.git" ]; then git clone --depth 1 https://github.com/Krios39/study "$REPO"; else git -C "$REPO" pull --ff-only || true; fi
 chown -R "$USER_NAME": "$REPO"
 
-# ---------- сеть к свитчу ----------
-say "static 10.10.0.$N/24 on $IFACE"
-if command -v nmcli >/dev/null && systemctl is-active --quiet NetworkManager; then
-  nmcli con delete xroad-lan >/dev/null 2>&1 || true
-  nmcli con add type ethernet ifname "$IFACE" con-name xroad-lan ipv4.method manual ipv4.addresses "10.10.0.$N/24" \
-    ipv4.never-default yes ipv6.method disabled connection.autoconnect yes connection.autoconnect-priority 100 >/dev/null
-  nmcli con up xroad-lan
-elif systemctl is-active --quiet systemd-networkd; then
-  printf '[Match]\nName=%s\n\n[Network]\nAddress=10.10.0.%s/24\nLinkLocalAddressing=no\n' "$IFACE" "$N" > /etc/systemd/network/10-xroad-lan.network
-  systemctl restart systemd-networkd
-else
-  ip addr replace "10.10.0.$N/24" dev "$IFACE"; ip link set "$IFACE" up
-  echo "  !! ни NetworkManager, ни systemd-networkd: адрес задан до перезагрузки — настроить постоянный вручную"
-fi
-sed -i '/# xroad-stand$/d' /etc/hosts
-printf '10.10.0.1 l1 # xroad-stand\n10.10.0.2 l2 # xroad-stand\n10.10.0.3 l3 # xroad-stand\n' >> /etc/hosts
-ip -br addr show "$IFACE"
-
-# ---------- не засыпать, не обновляться ----------
-say "sleep / lid / auto-updates off"
-systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target >/dev/null
-mkdir -p /etc/systemd/logind.conf.d
-printf '[Login]\nHandleLidSwitch=ignore\nHandleLidSwitchExternalPower=ignore\nHandleLidSwitchDocked=ignore\nIdleAction=ignore\n' \
-  > /etc/systemd/logind.conf.d/xroad-stand.conf
-for s in unattended-upgrades apt-daily.timer apt-daily-upgrade.timer dnf-automatic.timer dnf-makecache.timer packagekit; do
-  systemctl disable --now "$s" >/dev/null 2>&1 && echo "  - $s" || true
-done
+# ---------- сеть к свитчу, сон ----------
+lan_setup
+power_setup
 
 # ---------- .env стенда ----------
 say ".env"
