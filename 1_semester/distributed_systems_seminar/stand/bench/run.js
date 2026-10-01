@@ -10,7 +10,8 @@
 //   node bench/run.js --matrix bench/matrix-wide.json   # другая сетка (по умолчанию bench/matrix.json)
 // На каждый прогон: конфигурация (если сменилась) → clean → счётчики до → k6 → счётчики после →
 // ожидание меток времени (пакетное проставление должно закрыть все сообщения прогона до чистки) → meta.json.
-// ss3 (второй провайдер, в измеряемом пути не участвует) на время сетки останавливается.
+// ss3 (второй провайдер, в измеряемом пути не участвует) останавливается и после сетки остаётся остановленным: запущенный
+// в конце, он ещё стартовал, когда night.js проверял стенд перед следующей сеткой, и check.js падал. Поднять — node bench/up.js.
 'use strict';
 const fs = require('node:fs');
 const path = require('node:path');
@@ -193,6 +194,5 @@ function controlVerdict() {
     if (/^control/.test(r.tag || '')) controlVerdict();
   }
   if (current && current !== 'full') { L.log('restoring config full'); await applyConfig('full'); }
-  L.log('starting ss3'); L.docker('start', 'ss3');
   L.log('done');
 })().catch((e) => { L.log('ERROR', e.stack || e.message); process.exit(1); });
