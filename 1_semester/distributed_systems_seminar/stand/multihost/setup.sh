@@ -122,6 +122,11 @@ access_report() {
   echo "  user: $USER_NAME   sshd: $(systemctl is-active ssh 2>/dev/null || systemctl is-active sshd 2>/dev/null || echo '?')"
   echo "  адреса (кроме свитча):"; ip -br -4 addr | grep -v "^lo\|^$IFACE\|docker\|br-\|veth" | sed 's/^/    /' || true
   echo "  маршрут наружу: $(ip route get 1.1.1.1 2>/dev/null | head -1)"
+  # постоянный глобальный IPv6 (не temporary): обычно не меняется после перезагрузки — путь без VPN и Tailscale
+  echo "  IPv6 (постоянные, для ssh -6):"
+  ip -6 addr show scope global 2>/dev/null | grep inet6 | grep -v 'temporary\|deprecated' | awk '{print "    " $2 "  " $NF}' || true
+  ip -6 addr show scope global 2>/dev/null | grep -q 'mngtmpaddr\|dynamic' && \
+    echo "    (адрес из SLAAC; если в строке нет 'stable-privacy'/'noprefixroute' — может зависеть от MAC, он тоже постоянный)" || true
   if command -v nmcli >/dev/null; then
     nmcli -t -f NAME,TYPE,DEVICE con show --active | grep -v ':loopback:' | while IFS=: read -r name type dev; do
       [ "$name" = xroad-lan ] && continue
@@ -134,7 +139,8 @@ access_report() {
   fi
   lsblk -o NAME,TYPE 2>/dev/null | grep -q crypt && echo "  !! шифрованный диск: после перезагрузки ждёт пароль у экрана — удалённо не поднимется"
   systemctl is-enabled --quiet tailscaled 2>/dev/null && echo "  tailscale: $(tailscale ip -4 2>/dev/null | head -1) ($(tailscale status --self --peers=false 2>/dev/null | head -1 | awk '{print $2}'))"
-  echo "  проверка: с телефона (модем) → VPN или tailscale → ssh $USER_NAME@<адрес>; потом sudo reboot и снова войти"
+  echo "  проверка: с телефона (модем) → VPN → ssh $USER_NAME@<IPv4 кафедры>, без VPN → ssh -6 $USER_NAME@<IPv6>;"
+  echo "  потом sudo reboot и снова войти — адрес тот же? (крайний случай — --tailscale)"
 }
 
 if [ "$ACCESS" = 1 ]; then
