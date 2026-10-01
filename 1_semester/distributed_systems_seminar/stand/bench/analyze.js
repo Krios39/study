@@ -54,8 +54,11 @@ for (const r of runs) {
   if (!groups.has(key)) groups.set(key, { config: r.config, size: r.size, vus: r.vus, runs: [] });
   groups.get(key).runs.push(r);
 }
-// разброс между повторами: (max − min) / медиана, %
+// размах между повторами: (max − min) / медиана, % — чувствителен к одиночному выбросу
 const spread = (v) => (v.length > 1 ? (Math.max(...v) - Math.min(...v)) / median(v) * 100 : NaN);
+// межквартильный размах (Q3 − Q1) / медиана, %: типичный разброс без влияния одиночных выбросов (квантили с линейной интерполяцией)
+const quantile = (a, q) => { const b = a.slice().sort((x, y) => x - y); const p = (b.length - 1) * q, i = Math.floor(p); return b[i] + (b[Math.min(i + 1, b.length - 1)] - b[i]) * (p - i); };
+const iqr = (v) => (v.length > 3 ? (quantile(v, 0.75) - quantile(v, 0.25)) / median(v) * 100 : NaN);
 const rows = [];
 for (const g of groups.values()) {
   const invalid = g.runs.filter(isInvalid).length;
@@ -84,6 +87,8 @@ for (const g of groups.values()) {
     tsa_flags: g.runs.filter((r) => r.meta.tsa_restarted_before || (r.meta.tsa_probe_after && r.meta.tsa_probe_after !== '200')).length,
     spread_p50: spread(g.runs.map((r) => r.p50)),
     spread_rps: spread(g.runs.map((r) => r.rps_measured)),
+    iqr_p50: iqr(g.runs.map((r) => r.p50)),
+    iqr_rps: iqr(g.runs.map((r) => r.rps_measured)),
   });
 }
 rows.sort((a, b) => a.size - b.size || a.vus - b.vus || a.config.localeCompare(b.config));
@@ -102,7 +107,7 @@ const hasLink = runs.some((r) => r.meta.link_bytes);
 const COLS = [
   ['config', 'config'], ['size', 'size'], ['vus', 'vus'], ['reps', 'reps'],
   ['p50', 'p50 ms'], ['p90', 'p90 ms'], ['p99', 'p99 ms'], ['d_p50', 'Δp50 vs full'], ['d_p90', 'Δp90 vs full'],
-  ['spread_p50', 'разброс p50 %'], ['rps', 'req/s'], ['spread_rps', 'разброс req/s %'],
+  ['iqr_p50', 'IQR p50 %'], ['spread_p50', 'размах p50 %'], ['rps', 'req/s'], ['iqr_rps', 'IQR req/s %'], ['spread_rps', 'размах req/s %'],
   ...(hasLink ? [['link_tx', 'ss1→ss2 B/req'], ['link_rx', 'ss2→ss1 B/req']] : [['wire_tx_ss1', 'tx eth0 ss1 B/req']]),
   ['log_ss1', 'log ss1 B/req'], ['ocsp', 'OCSP/run'], ['tsa', 'TSA/run'],
   ...(hasLink ? [['tsa_total', 'TSA/run+ожидание'], ['stamped', 'метки до чистки']] : []),
@@ -123,9 +128,9 @@ for (const r of rows) {
 const control = runs.filter((r) => /^control/.test(r.meta.tag || '')).sort((a, b) => a.meta.started.localeCompare(b.meta.started));
 let note = '';
 if (control.length >= 2) {
-  const d = spread(control.map((r) => r.p50));
+  const d = spread(control.map((r) => r.p50)), q = iqr(control.map((r) => r.p50));
   note = `\nКонтроль (${control.length} прогонов full ${control[0].size} B, ${control[0].vus} VU, по времени): ` +
-    `p50 ${control.map((r) => fmt(r.p50)).join(' / ')} мс, разброс ${fmt(d)}%; req/s ${control.map((r) => fmt(r.rps_measured)).join(' / ')}. ` +
+    `p50 ${control.map((r) => fmt(r.p50)).join(' / ')} мс, размах ${fmt(d)}%, IQR ${fmt(q)}%; req/s ${control.map((r) => fmt(r.rps_measured)).join(' / ')}. ` +
     (d < 5 ? 'Стенд стабилен.' : d < 10 ? 'Пограничное — эффекты меньше 10% не интерпретировать.' : 'Нестабильно: эффекты меньше этого разброса не интерпретировать.') + '\n';
 }
 

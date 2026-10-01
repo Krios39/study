@@ -15,6 +15,10 @@
 Логин, пароль админки и PIN токена — в `.env` (не в git): `cp .env.example .env` и заполнить до первого `up.js`. Его читают и `docker compose`, и `bench/lib.js` (передаёт в hurl). Ключи и сертификаты CA и SS генерируются при развёртывании (`up.js --fresh`), в репозитории их нет.
 Admin UI **только по https**, серт самоподписанный.
 
+## Три машины (среда B)
+
+`multihost/` — тот же стенд на трёх Linux-ноутбуках со своим свитчем: `setup.sh` (подготовка каждой машины), `link.sh` (ssh и docker context с l2), `compose.yml` (раскладка и macvlan поверх `docker-compose.yml`). Bench тот же, запускается с l2; многомашинный режим включает `STAND_HOST` в `.env`. Подробно — `multihost/README.md`.
+
 ## Четыре команды
 
 Всё на Node ≥ 18 без зависимостей, из папки `stand` в PowerShell:

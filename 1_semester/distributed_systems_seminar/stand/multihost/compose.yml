@@ -1,0 +1,114 @@
+# Стенд на трёх машинах (среда B): поверх ../docker-compose.yml, подключается через .env на каждой машине:
+#   COMPOSE_FILE=docker-compose.yml:multihost/compose.yml
+#   COMPOSE_PROFILES=l1 | l2 | l3        — какие сервисы поднимать на этой машине
+#   LAN_IF=<интерфейс к свитчу>, LAN_RANGE=<диапазон для временных контейнеров этой машины>
+# (multihost/setup.sh пишет это сам). Раскладка:
+#   l1 10.10.0.1 — cs, ca, ss0, ss3 (provider B) + is-provider-b
+#   l2 10.10.0.2 — ss1 (consumer) + k6/curl; отсюда запускается bench
+#   l3 10.10.0.3 — ss2 (provider A) + is-provider
+# Сеть xroad-network — macvlan на проводном интерфейсе к свитчу: у каждого контейнера свой адрес в 10.10.0.0/24,
+# без NAT и проброса портов; SS ↔ SS идёт через свитч. Имена контейнеров на других машинах — через extra_hosts.
+# Временные контейнеры (k6, curl, hurl) берут адрес из LAN_RANGE своей машины, чтобы IPAM разных машин не пересекались.
+# Хост не видит свои же macvlan-контейнеры (ограничение macvlan) — bench ходит в них через docker exec, а UI —
+# ssh-туннелем через другую машину: ssh -L 4000:10.10.0.10:4000 l2.
+
+x-lan-hosts: &lan-hosts
+  - "cs:10.10.0.10"
+  - "ca:10.10.0.11"
+  - "ss0:10.10.0.20"
+  - "ss1:10.10.0.21"
+  - "ss2:10.10.0.22"
+  - "ss3:10.10.0.23"
+  - "is-provider:10.10.0.30"
+  - "is-provider-b:10.10.0.31"
+
+services:
+  cs:
+    profiles: ["l1"]
+    ports: !reset []
+    extra_hosts: *lan-hosts
+    networks:
+      xroad-network:
+        ipv4_address: 10.10.0.10
+
+  ca:
+    profiles: ["l1"]
+    ports: !reset []
+    extra_hosts: *lan-hosts
+    networks:
+      xroad-network:
+        ipv4_address: 10.10.0.11
+
+  ss0:
+    profiles: ["l1"]
+    ports: !reset []
+    depends_on: !reset []
+    extra_hosts: *lan-hosts
+    networks:
+      xroad-network:
+        ipv4_address: 10.10.0.20
+
+  ss1:
+    profiles: ["l2"]
+    ports: !reset []
+    depends_on: !reset []
+    extra_hosts: *lan-hosts
+    networks:
+      xroad-network:
+        ipv4_address: 10.10.0.21
+
+  ss2:
+    profiles: ["l3"]
+    ports: !reset []
+    depends_on: !reset []
+    extra_hosts: *lan-hosts
+    networks:
+      xroad-network:
+        ipv4_address: 10.10.0.22
+
+  ss3:
+    profiles: ["l1"]
+    ports: !reset []
+    depends_on: !reset []
+    extra_hosts: *lan-hosts
+    networks:
+      xroad-network:
+        ipv4_address: 10.10.0.23
+
+  is-provider:
+    profiles: ["l3"]
+    ports: !reset []
+    extra_hosts: *lan-hosts
+    networks:
+      xroad-network:
+        ipv4_address: 10.10.0.30
+
+  # свой эхо-сервис у provider B на его машине — иначе ss3 ходил бы за ответом через свитч, а ss2 нет
+  is-provider-b:
+    extends:
+      file: docker-compose.yml     # путь от каталога проекта (stand/), не от этого файла
+      service: is-provider
+    container_name: is-provider-b
+    profiles: ["l1"]
+    ports: !reset []
+    extra_hosts: *lan-hosts
+    networks:
+      xroad-network:
+        ipv4_address: 10.10.0.31
+
+  # hurl — только на l1: ему нужен volume ca-data (сертификаты testca)
+  hurl:
+    depends_on: !reset []
+    extra_hosts: *lan-hosts
+
+networks:
+  xroad-network:
+    name: xroad-network
+    driver: macvlan
+    driver_opts:
+      parent: ${LAN_IF:?set LAN_IF in .env}
+    ipam:
+      config:
+        - subnet: 10.10.0.0/24
+          ip_range: ${LAN_RANGE:?set LAN_RANGE in .env}
+          gateway: 10.10.0.254

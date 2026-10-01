@@ -26,38 +26,85 @@ function sh(cmd, args, opts = {}) {
     tee(out);
   }
   if (r.status !== 0 && !ok) {
-    const shown = args.map((a) => a.replace(/^(admin_password|token_pin)=.*/, '$1=***'));   // не светить секреты в run.log
+    const shown = args.map((a) => a.replace(/(admin_password|token_pin)=[^\s']*/g, '$1=***'));   // не светить секреты в run.log
     throw new Error(`${cmd} ${shown.join(' ')} → exit ${r.status}\n${r.stderr || ''}`);
   }
   return (r.stdout || '').trim();
 }
+// .env стенда (не в git, шаблон .env.example): секреты, а на нескольких машинах — STAND_HOST и раскладка compose
+function readEnv() {
+  const file = path.join(STAND, '.env');
+  if (!fs.existsSync(file)) return {};
+  const env = {};
+  for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/);
+    if (m) env[m[1]] = m[2];
+  }
+  return env;
+}
+const ENV = readEnv();
+
+// Несколько машин (multihost/, среда B): STAND_HOST=l1|l2|l3 в .env — эта машина; bench запускается на l2.
+// Контейнеры других машин — через docker context (созданы multihost/setup.sh: ssh по подсети свитча),
+// compose на них — через ssh в тот же каталог (у каждой машины свой .env с профилем и интерфейсом).
+// Без STAND_HOST всё как раньше, на одной машине.
+const THIS_HOST = ENV.STAND_HOST || null;
+const HOSTS = ['l1', 'l2', 'l3'];
+const HOST_OF = { cs: 'l1', ca: 'l1', ss0: 'l1', ss3: 'l1', 'is-provider-b': 'l1', hurl: 'l1', ss1: 'l2', ss2: 'l3', 'is-provider': 'l3' };
+const hostOf = (c) => (THIS_HOST ? HOST_OF[c] || THIS_HOST : null);
+const ctx = (c) => (THIS_HOST && hostOf(c) !== THIS_HOST ? ['--context', hostOf(c)] : []);
+const hostCtx = (h) => (THIS_HOST && h !== THIS_HOST ? ['--context', h] : []);
+// временные контейнеры (k6, curl) в xroad-network: на нескольких машинах docker DNS знает только свои контейнеры —
+// имена остальных берём из extra_hosts в multihost/compose.yml (один источник адресов)
+const LAN_HOSTS = THIS_HOST
+  ? [...fs.readFileSync(path.join(STAND, 'multihost', 'compose.yml'), 'utf8').matchAll(/^\s*- "([a-z0-9-]+):(10\.10\.0\.\d+)"/gm)].map((m) => `${m[1]}:${m[2]}`)
+  : [];
+const NETARGS = ['--network', NET, ...LAN_HOSTS.flatMap((h) => ['--add-host', h])];
+
 const docker = (...args) => sh('docker', args);
-const dexec = (c, ...args) => docker('exec', c, ...args);
-const dexecOk = (c, ...args) => sh('docker', ['exec', c, ...args], { ok: true });
+// docker-команда над контейнером c — на его машине
+const dctl = (c, ...args) => sh('docker', [...ctx(c), ...args, c]);
+const dexec = (c, ...args) => sh('docker', [...ctx(c), 'exec', c, ...args]);
+const dexecOk = (c, ...args) => sh('docker', [...ctx(c), 'exec', c, ...args], { ok: true });
 // код возврата, без исключений
 const shCode = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: 'utf8', stdio: 'pipe', ...opts }).status;
-// docker compose из каталога стенда, вывод в консоль
-const compose = (...args) => sh('docker', ['compose', ...args], { cwd: STAND, inherit: true });
+// аргумент для удалённой оболочки (ssh)
+const shq = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
+// docker compose из каталога стенда, вывод в консоль. На нескольких машинах — на каждой (или на host), со своим .env
+function compose(...args) {
+  if (!THIS_HOST) return sh('docker', ['compose', ...args], { cwd: STAND, inherit: true });
+  for (const h of HOSTS) composeOn(h, ...args);
+  return '';
+}
+function composeOn(h, ...args) {
+  if (!THIS_HOST || h === THIS_HOST) return sh('docker', ['compose', ...args], { cwd: STAND, inherit: true });
+  return sh('ssh', [h, `cd ${shq(STAND)} && docker compose ${args.map(shq).join(' ')}`], { inherit: true });
+}
 // статус healthcheck контейнера: healthy | starting | unhealthy | none | missing
 function health(c) {
-  const r = spawnSync('docker', ['inspect', '-f', '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}', c], { encoding: 'utf8' });
+  const r = spawnSync('docker', [...ctx(c), 'inspect', '-f', '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}', c], { encoding: 'utf8' });
   return r.status === 0 ? r.stdout.trim() : 'missing';
 }
 // контейнер запущен (остановленный ss3 — нормально во время сетки)
-const running = (c) => spawnSync('docker', ['inspect', '-f', '{{.State.Running}}', c], { encoding: 'utf8' }).stdout.trim() === 'true';
+const running = (c) => (spawnSync('docker', [...ctx(c), 'inspect', '-f', '{{.State.Running}}', c], { encoding: 'utf8' }).stdout || '').trim() === 'true';
+// docker stats по машинам: [{ args: [...context], names: [...] }] — для сводки CPU и stats.csv
+function statsTargets(names) {
+  if (!THIS_HOST) return [{ args: [], names }];
+  return HOSTS.map((h) => ({ args: hostCtx(h), names: names.filter((c) => hostOf(c) === h) })).filter((t) => t.names.length);
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (...a) => { const line = `${new Date().toISOString().slice(11, 19)} ${a.join(' ')}`; console.log(line); tee(line); };
 
 // один запрос через X-Road из контейнера curl; вернёт HTTP-код строкой
 function smoke(provider = PROVIDERS.ss2) {
-  return sh('docker', ['run', '--rm', '--network', NET, 'curlimages/curl', '-s', '-o', '/dev/null', '-m', '20',
+  return sh('docker', ['run', '--rm', ...NETARGS, 'curlimages/curl', '-s', '-o', '/dev/null', '-m', '20',
     '-w', '%{http_code}', '-H', `X-Road-Client: ${CLIENT}`,
     `http://ss1:8080/r1/${provider}/echo?size=16`], { ok: true });
 }
 // то же, но с телом ответа (первые 300 символов) — чтобы видеть текст ошибки X-Road при не-200
 function smokeErr(provider = PROVIDERS.ss2) {
-  const out = sh('docker', ['run', '--rm', '--network', NET, 'curlimages/curl', '-s', '-m', '20',
+  const out = sh('docker', ['run', '--rm', ...NETARGS, 'curlimages/curl', '-s', '-m', '20',
     '-w', '\\n%{http_code}', '-H', `X-Road-Client: ${CLIENT}`,
     `http://ss1:8080/r1/${provider}/echo?size=16`], { ok: true });
   const i = out.lastIndexOf('\n');
@@ -67,20 +114,20 @@ function smokeErr(provider = PROVIDERS.ss2) {
 function tsaProbe() {
   const q = dexecOk('ss1', 'sh', '-c', 'openssl ts -query -data /etc/hostname -sha256 | base64 -w0');
   if (!q) return 'noquery';
-  return sh('docker', ['run', '--rm', '--network', NET, 'curlimages/curl', 'sh', '-c',
+  return sh('docker', ['run', '--rm', ...NETARGS, 'curlimages/curl', 'sh', '-c',
     `echo ${q} | base64 -d > /tmp/q && curl -s -m 10 -o /dev/null -w '%{http_code}' -H 'Content-Type: application/timestamp-query' --data-binary @/tmp/q http://ca:8899/`], { ok: true });
 }
 // TSA не отвечает → перезапустить контейнер ca и дождаться ответа; вернёт true, если пришлось перезапускать
 async function ensureTsa() {
   if (tsaProbe() === '200') return false;
   log('TSA not answering — docker compose restart ca');
-  compose('restart', 'ca');
+  composeOn(hostOf('ca'), 'restart', 'ca');
   for (let i = 0; i < 20; i++) { await sleep(3000); if (tsaProbe() === '200') return true; }
   throw new Error('TSA still not answering after restart of ca');
 }
 // прямой запрос к эхо-сервису мимо X-Road: "<код> <байт>"
 function smokeDirect(size = 16) {
-  return sh('docker', ['run', '--rm', '--network', NET, 'curlimages/curl', '-s', '-o', '/dev/null', '-m', '10',
+  return sh('docker', ['run', '--rm', ...NETARGS, 'curlimages/curl', '-s', '-o', '/dev/null', '-m', '10',
     '-w', '%{http_code} %{size_download}', `http://is-provider:8080/echo?size=${size}&fill=random`], { ok: true });
 }
 
@@ -117,24 +164,21 @@ function iniDump(c) { return dexecOk(c, 'cat', '/etc/xroad/conf.d/local.ini'); }
 
 // логин/пароль/PIN стенда — из .env (не в git, шаблон .env.example); тот же файл читает docker compose
 function secrets() {
-  const file = path.join(STAND, '.env');
-  if (!fs.existsSync(file)) throw new Error(`${file} not found — copy .env.example to .env and fill it in`);
-  const env = {};
-  for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
-    const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/);
-    if (m) env[m[1]] = m[2];
-  }
-  return { admin_user: env.XROAD_ADMIN_USER, admin_password: env.XROAD_ADMIN_PASSWORD, token_pin: env.XROAD_TOKEN_PIN };
+  if (!ENV.XROAD_ADMIN_PASSWORD) throw new Error(`${path.join(STAND, '.env')}: no XROAD_* — copy .env.example to .env and fill it in`);
+  return { admin_user: ENV.XROAD_ADMIN_USER, admin_password: ENV.XROAD_ADMIN_PASSWORD, token_pin: ENV.XROAD_TOKEN_PIN };
 }
 
-// hurl-файл против стенда (для API SS/CS)
+// hurl-файл против стенда (для API SS/CS). На нескольких машинах — на l1: там volume ca-data с сертификатами testca
 function hurl(file, vars = {}, opts = {}) {
-  const args = ['compose', 'run', '--rm', '--no-deps', 'hurl', '--insecure', '--variables-file', '/hurl-src/vars.env',
+  const args = ['run', '--rm', '--no-deps', 'hurl', '--insecure', '--variables-file', '/hurl-src/vars.env',
     '--file-root', '/hurl-files', '--retry', String(opts.retry ?? 10), '--retry-interval', String(opts.interval ?? 5000), '--test'];
   for (const [k, v] of Object.entries({ ...secrets(), ...vars })) args.push('--variable', `${k}=${v}`);
   args.push(`/hurl-src/${file}`);
-  if (opts.ok) return sh('docker', args, { cwd: STAND, inherit: !opts.quiet, ok: true }) !== null && lastStatus === 0;
-  sh('docker', args, { cwd: STAND, inherit: true });
+  const h = hostOf('hurl');
+  const [cmd, cargs] = !THIS_HOST || h === THIS_HOST ? ['docker', ['compose', ...args]]
+    : ['ssh', [h, `cd ${shq(STAND)} && docker compose ${args.map(shq).join(' ')}`]];
+  if (opts.ok) return sh(cmd, cargs, { cwd: STAND, inherit: !opts.quiet, ok: true }) !== null && lastStatus === 0;
+  sh(cmd, cargs, { cwd: STAND, inherit: true });
   return true;
 }
 
@@ -184,16 +228,14 @@ const LINK_RULES = [
   ['INPUT', '-s', 'IP', 'link_rx'],
 ];
 function linkBytes(from = 'ss1', to = 'ss2') {
-  if (shCode('docker', ['image', 'inspect', 'stand-netcount']) !== 0) {
-    sh('docker', ['compose', '--profile', 'tools', 'build', 'netcount'], { cwd: STAND, inherit: true });
-  }
+  if (shCode('docker', [...ctx(from), 'image', 'inspect', 'stand-netcount']) !== 0) composeOn(hostOf(from), '--profile', 'tools', 'build', 'netcount');
   const ip = dexec(from, 'getent', 'hosts', to).split(/\s+/)[0];
   const ensure = LINK_RULES.map((r) => {
     const [chain, ...rest] = r;
     const spec = [...rest.slice(0, -1).map((x) => (x === 'IP' ? ip : x)), '-m', 'comment', '--comment', r[r.length - 1]].join(' ');
     return `iptables -C ${chain} ${spec} 2>/dev/null || iptables -A ${chain} ${spec}`;
   }).join('; ');
-  const out = sh('docker', ['run', '--rm', '--net', `container:${from}`, '--cap-add', 'NET_ADMIN', 'stand-netcount', 'sh', '-c',
+  const out = sh('docker', [...ctx(from), 'run', '--rm', '--net', `container:${from}`, '--cap-add', 'NET_ADMIN', 'stand-netcount', 'sh', '-c',
     `${ensure}; iptables -L INPUT -v -x -n; iptables -L OUTPUT -v -x -n`]);
   const res = {};
   for (const line of out.split('\n')) {
@@ -229,7 +271,7 @@ function messagelogBytes(c) {
 
 // обращения к testca за интервал по доп. access-логу nginx (формат: "<port> <ip> [iso] \"REQ\" status bytes rt")
 function caCalls(sinceIso, untilIso) {
-  const r = spawnSync('docker', ['logs', '--since', sinceIso, '--until', untilIso, 'ca'], { encoding: 'utf8' });
+  const r = spawnSync('docker', [...ctx('ca'), 'logs', '--since', sinceIso, '--until', untilIso, 'ca'], { encoding: 'utf8' });
   const all = (r.stdout || '') + '\n' + (r.stderr || '');
   let ocsp = 0, tsa = 0, sign = 0, ocsp_rt = [], tsa_rt = [];
   for (const line of all.split('\n')) {
@@ -253,8 +295,8 @@ function readJson(p) { return JSON.parse(fs.readFileSync(p, 'utf8')); }
 function writeJson(p, obj) { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, JSON.stringify(obj, null, 2)); }
 
 module.exports = {
-  STAND, NET, CLIENT, PROVIDERS, MEASURED_SS,
-  setLogFile, tee, sh, shCode, docker, dexec, dexecOk, compose, health, running, sleep, log, smoke, smokeErr, smokeDirect, tsaProbe, ensureTsa, waitSmoke, restartProxy,
+  STAND, NET, NETARGS, CLIENT, PROVIDERS, MEASURED_SS, ENV, THIS_HOST, HOSTS, hostOf, ctx, hostCtx, shq,
+  setLogFile, tee, sh, shCode, docker, dctl, dexec, dexecOk, compose, composeOn, health, running, statsTargets, sleep, log, smoke, smokeErr, smokeDirect, tsaProbe, ensureTsa, waitSmoke, restartProxy,
   iniSet, iniDel, iniDump, hurl, psql, pgSchema, pgTable, csParamSet, csParamDel, csParamDump,
   netBytes, linkBytes, unstamped, waitStamped, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
 };

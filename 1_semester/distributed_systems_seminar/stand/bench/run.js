@@ -84,16 +84,20 @@ function run(cmd, args) {
 function startStats(file) {
   const out = fs.createWriteStream(file);
   let stopped = false;                      // docker stats может отдать хвост после kill — не писать в закрытый поток
-  const p = spawn('docker', ['stats', '--format', '{{.Name}},{{.CPUPerc}},{{.MemUsage}}', 'cs', 'ss1', 'ss2', 'is-provider']);
-  p.stdout.on('data', (buf) => {
-    if (stopped) return;
-    const ts = new Date().toISOString();
-    for (const line of buf.toString().replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').split('\n')) {
-      if (line.includes(',')) out.write(`${ts},${line.trim()}\n`);
-    }
+  // по процессу docker stats на машину (на одной машине — один)
+  const procs = L.statsTargets(['cs', 'ss1', 'ss2', 'is-provider']).map((t) => {
+    const p = spawn('docker', [...t.args, 'stats', '--format', '{{.Name}},{{.CPUPerc}},{{.MemUsage}}', ...t.names]);
+    p.stdout.on('data', (buf) => {
+      if (stopped) return;
+      const ts = new Date().toISOString();
+      for (const line of buf.toString().replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').split('\n')) {
+        if (line.includes(',')) out.write(`${ts},${line.trim()}\n`);
+      }
+    });
+    p.on('error', () => {});
+    return p;
   });
-  p.on('error', () => {});
-  return () => { stopped = true; p.kill(); out.end(); };
+  return () => { stopped = true; procs.forEach((p) => p.kill()); out.end(); };
 }
 
 // ---------- один прогон ----------
@@ -106,7 +110,7 @@ async function runOne(r, dir, warmup, extra = {}) {
   before.link = L.linkBytes();
   const stopStats = startStats(path.join(dir, 'stats.csv'));
 
-  const k6args = ['run', '--rm', '--network', L.NET,
+  const k6args = ['run', '--rm', ...L.NETARGS,
     '-v', `${path.join(L.STAND, 'k6')}:/k6:ro`, '-v', `${dir}:/out`,
     'grafana/k6:latest', 'run', '--quiet', '--out', 'csv=/out/requests.csv.gz',
     '-e', `CONFIG=${r.config}`, '-e', `TARGET=${r.target}`, '-e', `SIZE=${r.size}`, '-e', `VUS=${r.vus}`,
@@ -170,7 +174,7 @@ function controlVerdict() {
 
   L.writeJson(path.join(RESULTS, 'env.json'), { started: new Date().toISOString(), matrix: M, images: L.imageDigests(), plan: plan.map(runName) });
 
-  if (L.running('ss3')) { L.log('stopping ss3 (not in the measured path)'); L.docker('stop', 'ss3'); }
+  if (L.running('ss3')) { L.log('stopping ss3 (not in the measured path)'); L.dctl('ss3', 'stop'); }
   let current = null;
   for (const r of todo) {
     let warmup = M.warmup_next;

@@ -6,7 +6,8 @@
 'use strict';
 const L = require('./lib');
 
-const SERVICES = ['cs', 'ca', 'ss0', 'ss1', 'ss2', 'ss3', 'is-provider'];
+// на нескольких машинах у provider B свой эхо-сервис рядом (multihost/compose.yml)
+const SERVICES = ['cs', 'ca', 'ss0', 'ss1', 'ss2', 'ss3', 'is-provider', ...(L.THIS_HOST ? ['is-provider-b'] : [])];
 const fresh = process.argv.includes('--fresh');
 
 async function waitHealthy(timeoutS = 600) {
@@ -22,7 +23,7 @@ async function waitHealthy(timeoutS = 600) {
 }
 
 // признак инициализации: у SS появился якорь конфигурации (первый шаг 02-ss-base.hurl)
-const hasAnchor = (c) => L.shCode('docker', ['exec', c, 'test', '-f', '/etc/xroad/configuration-anchor.xml']) === 0;
+const hasAnchor = (c) => L.shCode('docker', [...L.ctx(c), 'exec', c, 'test', '-f', '/etc/xroad/configuration-anchor.xml']) === 0;
 
 function init() {
   const H = (file, vars) => { L.log(`>>> ${file} ${JSON.stringify(vars || {})}`); L.hurl(file, vars, { retry: 30, interval: 10000 }); };
@@ -32,7 +33,8 @@ function init() {
   for (const i of [1, 2, 3]) H('02-ss-base.hurl', { ss_host: `ss${i}`, ss_code: `SS${i}`, member_code: `SS${i}-CODE`, member_name: `SS${i}-NAME` });
   H('04-consumer.hurl', { ss_host: 'ss1', member_code: 'SS1-CODE', subsystem: 'CLIENT' });
   H('05-provider.hurl', { ss_host: 'ss2', member_code: 'SS2-CODE', subsystem: 'ECHO' });
-  H('05-provider.hurl', { ss_host: 'ss3', member_code: 'SS3-CODE', subsystem: 'ECHO' });
+  H('05-provider.hurl', { ss_host: 'ss3', member_code: 'SS3-CODE', subsystem: 'ECHO',
+    ...(L.THIS_HOST ? { echo_url: 'http://is-provider-b:8080/echo' } : {}) });
 }
 
 async function waitXroad(timeoutS) {

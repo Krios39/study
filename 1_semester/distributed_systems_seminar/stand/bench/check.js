@@ -16,10 +16,25 @@ function check(name, fn) {
   return ok;
 }
 
+// --- несколько машин (multihost/): docker на l1/l3 через context, часы (метки времени, OCSP и подсчёт обращений к CA
+// по логам ca сравнивают время разных машин), задержка по свитчу
+if (L.THIS_HOST) {
+  for (const h of L.HOSTS.filter((x) => x !== L.THIS_HOST)) {
+    check(`${h}: docker via context`, () => { const v = L.sh('docker', [...L.hostCtx(h), 'version', '--format', '{{.Server.Version}}'], { ok: true }); return { ok: !!v, note: v || `docker --context ${h} — multihost/setup.sh on ${L.THIS_HOST}` }; });
+    check(`${h}: clock offset`, () => {
+      const t0 = Date.now() / 1000;
+      const remote = Number(L.sh('ssh', [h, 'date +%s.%N'], { ok: true }));
+      const off = (remote - (t0 + Date.now() / 1000) / 2) * 1000;   // середина интервала ssh-вызова
+      return { ok: Number.isFinite(off) && Math.abs(off) < 50, note: `${off.toFixed(0)} ms (ssh-оценка, грубая; chronyc tracking на ${h})` };
+    });
+    check(`${h}: ping over switch`, () => { const r = L.sh('ping', ['-c', '5', '-q', h], { ok: true }) || ''; const m = /= [\d.]+\/([\d.]+)\//.exec(r); return { ok: !!m && Number(m[1]) < 2, note: m ? `rtt avg ${m[1]} ms` : 'no reply' }; });
+  }
+}
+
 // --- контейнеры
 // ss3 в измеряемом пути не участвует, run.js останавливает его на время сетки — остановленный ss3 не ошибка
 const ss3 = L.running('ss3');
-for (const c of ['cs', 'ca', 'ss0', 'ss1', 'ss2', 'ss3', 'is-provider']) {
+for (const c of ['cs', 'ca', 'ss0', 'ss1', 'ss2', 'ss3', 'is-provider', ...(L.THIS_HOST ? ['is-provider-b'] : [])]) {
   if (c === 'ss3' && !ss3) { check('ss3 stopped', () => ({ ok: true, note: 'not in the measured path; node bench/up.js starts it' })); continue; }
   check(`${c} healthy`, () => { const h = L.health(c); return { ok: h === 'healthy', note: h }; });
 }
@@ -35,7 +50,7 @@ check('X-Road ss1 → ss2 (provider A)', () => { const r = L.smoke(L.PROVIDERS.s
 if (ss3) check('X-Road ss1 → ss3 (provider B)', () => { const r = L.smoke(L.PROVIDERS.ss3); return { ok: r === '200', note: `HTTP ${r}` }; });
 
 check('TSA (openssl ts -query → ca:8899)', () => { const r = L.tsaProbe(); return { ok: r === '200', note: `HTTP ${r}${r !== '200' ? ' — docker compose restart ca' : ''}` }; });
-check('ca tsa_server.py многопоточный', () => { const l = L.sh('docker', ['logs', 'ca'], { ok: true }); const m = /tsa_server: (\d+) workers/.exec(l); return { ok: !!m, note: m ? `${m[1]} workers` : 'оригинальный однопоточный — docker compose up -d ca' }; });
+check('ca tsa_server.py многопоточный', () => { const l = L.sh('docker', [...L.ctx('ca'), 'logs', 'ca'], { ok: true }); const m = /tsa_server: (\d+) workers/.exec(l); return { ok: !!m, note: m ? `${m[1]} workers` : 'оригинальный однопоточный — docker compose up -d ca' }; });
 
 check('link counters ss1 <-> ss2 (iptables, stand-netcount)', () => { const b = L.linkBytes(); return { ok: 'xroad_tx' in b, note: JSON.stringify(b) }; });
 
@@ -65,7 +80,8 @@ check('ca nginx log_format ports', () => {
 
 // --- фон: стенд должен простаивать
 check('idle CPU', () => {
-  const out = L.sh('docker', ['stats', '--no-stream', '--format', '{{.Name}} {{.CPUPerc}}'], { ok: true });
+  const out = (L.THIS_HOST ? L.HOSTS.map(L.hostCtx) : [[]])
+    .map((a) => L.sh('docker', [...a, 'stats', '--no-stream', '--format', '{{.Name}} {{.CPUPerc}}'], { ok: true }) || '').join('\n');
   const total = out.split('\n').map((l) => Number((l.split(' ')[1] || '0').replace('%', ''))).reduce((a, b) => a + b, 0);
   return { ok: total < 40, note: `${total.toFixed(0)}% суммарно${total >= 40 ? ' — подождать, фон ещё не успокоился' : ''}` };
 });
