@@ -102,7 +102,7 @@ docker_net_setup() {
   printf '{\n  "bip": "10.200.0.1/24",\n  "default-address-pools": [{ "base": "10.201.0.0/16", "size": 24 }]\n}\n' > /etc/docker/daemon.json
   if command -v docker >/dev/null; then
     systemctl restart docker 2>/dev/null || true
-    docker network ls --format '{{.Name}}' 2>/dev/null | grep -vE '^(bridge|host|none)$' | while read -r n; do
+    { docker network ls --format '{{.Name}}' 2>/dev/null | grep -vE '^(bridge|host|none)$' || true; } | while read -r n; do
       sub=$(docker network inspect -f '{{range .IPAM.Config}}{{.Subnet}} {{end}}' "$n" 2>/dev/null)
       case "$sub" in 172.*) echo "  !! сеть $n ($sub) в 172.x — удалить, если не нужна: docker network rm $n" ;; esac
     done
