@@ -23,7 +23,10 @@ say() { printf '\n=== %s\n' "$*"; }
 # ---------- пакеты ----------
 . /etc/os-release
 say "distro: ${PRETTY_NAME:-$ID} (ID=$ID ID_LIKE=${ID_LIKE:-})"
-if command -v apt-get >/dev/null; then PM=apt
+# Fedora Atomic / Universal Blue (Aurora, Bluefin, Bazzite): система неизменяемая, пакеты не ставим — docker, git, curl,
+# chrony, sshd там уже есть (aurora-dx); чего нет — сообщаем. Node для bench на l2 — через brew (есть в Universal Blue)
+if command -v rpm-ostree >/dev/null && [ -e /run/ostree-booted ]; then PM=ostree
+elif command -v apt-get >/dev/null; then PM=apt
 elif command -v dnf >/dev/null; then PM=dnf
 elif command -v pacman >/dev/null; then PM=pacman
 elif command -v zypper >/dev/null; then PM=zypper
@@ -34,9 +37,17 @@ install() {
     dnf) dnf install -y "$@" ;;
     pacman) pacman -S --needed --noconfirm "$@" ;;
     zypper) zypper --non-interactive install "$@" ;;
+    ostree) return 1 ;;
   esac
 }
-try_install() { for p in "$@"; do install "$p" >/dev/null 2>&1 && echo "  + $p" || echo "  - $p (нет в репозитории)"; done; }
+try_install() {
+  if [ "$PM" = ostree ]; then   # не ставим, только проверяем нужные команды
+    for p in "$@"; do case $p in openssh*) c=sshd ;; iputils*) c=ping ;; iproute*) c=ip ;; nodejs) c=node ;; *) c=$p ;; esac
+      command -v "$c" >/dev/null || [ -x "/usr/sbin/$c" ] && echo "  = $p (есть)" || echo "  !! $p нет — atomic: brew install $p или rpm-ostree install $p + перезагрузка"; done
+    return 0
+  fi
+  for p in "$@"; do install "$p" >/dev/null 2>&1 && echo "  + $p" || echo "  - $p (нет в репозитории)"; done
+}
 
 # ---------- флаги ----------
 # --access        только удалённый доступ (на месте, быстро): ssh, ключи, адрес к свитчу, без сна; без docker и образов
@@ -73,7 +84,9 @@ power_setup() {
   mkdir -p /etc/systemd/logind.conf.d
   printf '[Login]\nHandleLidSwitch=ignore\nHandleLidSwitchExternalPower=ignore\nHandleLidSwitchDocked=ignore\nIdleAction=ignore\n' \
     > /etc/systemd/logind.conf.d/xroad-stand.conf
-  for s in unattended-upgrades apt-daily.timer apt-daily-upgrade.timer dnf-automatic.timer dnf-makecache.timer packagekit; do
+  # uupd/rpm-ostreed-automatic/bootc-fetch-apply-updates — автообновления образа в Universal Blue / Fedora Atomic
+  for s in unattended-upgrades apt-daily.timer apt-daily-upgrade.timer dnf-automatic.timer dnf-makecache.timer packagekit \
+           uupd.timer rpm-ostreed-automatic.timer bootc-fetch-apply-updates.timer flatpak-system-update.timer; do
     systemctl disable --now "$s" >/dev/null 2>&1 && echo "  - $s" || true
   done
 }
@@ -165,9 +178,10 @@ case $PM in
   dnf)    try_install git curl chrony openssh-server iputils iproute ;;
   pacman) try_install git curl chrony openssh iputils iproute2 ;;
   zypper) try_install git curl chrony openssh iputils iproute2 ;;
+  ostree) try_install git curl chronyd openssh iputils iproute2 ;;
 esac
 if [ "$ROLE" = l2 ]; then
-  case $PM in apt|dnf|pacman) try_install nodejs ;;
+  case $PM in apt|dnf|pacman|ostree) try_install nodejs ;;
     zypper) for p in nodejs-default nodejs24 nodejs22 nodejs20; do install "$p" >/dev/null 2>&1 && { echo "  + $p"; break; }; done ;; esac
 fi
 
@@ -199,6 +213,8 @@ docker_net_setup
 # ---------- службы ----------
 say "services"
 for s in docker chrony chronyd ssh sshd; do systemctl enable --now "$s" >/dev/null 2>&1 && echo "  + $s" || true; done
+# в Fedora Atomic группа docker лежит в /usr/lib/group, а не в /etc/group — usermod её не видит; переносим (как ujust dx-group)
+if ! grep -q '^docker:' /etc/group && grep -q '^docker:' /usr/lib/group 2>/dev/null; then grep '^docker:' /usr/lib/group >> /etc/group; fi
 [ "$USER_NAME" != root ] && usermod -aG docker "$USER_NAME"
 
 # ---------- репозиторий ----------
