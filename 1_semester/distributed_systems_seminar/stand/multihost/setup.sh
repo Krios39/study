@@ -132,7 +132,8 @@ tailscale_setup() {
 # что помешает подключиться после перезагрузки без человека рядом
 access_report() {
   say "access report: $ROLE"
-  echo "  user: $USER_NAME   sshd: $(systemctl is-active ssh 2>/dev/null || systemctl is-active sshd 2>/dev/null || echo '?')"
+  local st="?"; for u in sshd ssh; do systemctl cat "$u" >/dev/null 2>&1 && { st="$(systemctl is-active "$u" || true)/$(systemctl is-enabled "$u" || true)"; break; }; done
+  echo "  user: $USER_NAME   sshd: $st (active/enabled — норма)"
   echo "  адреса (кроме свитча):"; ip -br -4 addr | grep -v "^lo\|^$IFACE\|docker\|br-\|veth" | sed 's/^/    /' || true
   echo "  маршрут наружу: $(ip route get 1.1.1.1 2>/dev/null | head -1)"
   # постоянный глобальный IPv6 (не temporary): обычно не меняется после перезагрузки — путь без VPN и Tailscale
@@ -142,7 +143,7 @@ access_report() {
     echo "    (адрес из SLAAC; если в строке нет 'stable-privacy'/'noprefixroute' — может зависеть от MAC, он тоже постоянный)" || true
   if command -v nmcli >/dev/null; then
     nmcli -t -f NAME,TYPE,DEVICE con show --active | grep -v ':loopback:' | while IFS=: read -r name type dev; do
-      [ "$name" = xroad-lan ] && continue
+      case "$name" in xroad-lan|docker0|br-*|veth*) continue ;; esac
       ac=$(nmcli -g connection.autoconnect con show "$name"); perm=$(nmcli -g connection.permissions con show "$name")
       flags=$(nmcli -g 802-1x.password-flags,802-11-wireless-security.psk-flags con show "$name" 2>/dev/null | tr '\n' ' ')
       echo "  $name ($type, $dev): autoconnect=$ac permissions=${perm:-все} secret-flags=${flags:-—}"
