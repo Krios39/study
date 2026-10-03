@@ -110,7 +110,10 @@ async function runOne(r, dir, warmup, extra = {}) {
   before.link = L.linkBytes();
   const stopStats = startStats(path.join(dir, 'stats.csv'));
 
-  const k6args = ['run', '--rm', ...L.NETARGS,
+  // на Linux k6 в контейнере — свой uid (12345) и не может писать в каталог результатов bench'а; запускаем от нашего
+  // пользователя (Docker Desktop на Windows права на bind mount не проверяет)
+  const asUser = process.getuid ? ['--user', `${process.getuid()}:${process.getgid()}`] : [];
+  const k6args = ['run', '--rm', ...asUser, ...L.NETARGS,
     '-v', `${path.join(L.STAND, 'k6')}:/k6:ro`, '-v', `${dir}:/out`,
     'grafana/k6:latest', 'run', '--quiet', '--out', 'csv=/out/requests.csv.gz',
     '-e', `CONFIG=${r.config}`, '-e', `TARGET=${r.target}`, '-e', `SIZE=${r.size}`, '-e', `VUS=${r.vus}`,
