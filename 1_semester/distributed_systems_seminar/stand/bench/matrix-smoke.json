@@ -1,0 +1,31 @@
+{
+  "reps": 1,
+  "warmup_first": 100,
+  "warmup_next": 20,
+  "n": 50,
+  "n_large": 10,
+  "large_from": 1048576,
+  "configs": [
+    "full",
+    "nobody",
+    "synctsa"
+  ],
+  "points": [
+    [10240, 1],
+    [1048576, 1],
+    [10240, 4]
+  ],
+  "control": {
+    "config": "full",
+    "size": 10240,
+    "vus": 1,
+    "per_rep": true
+  },
+  "stamping_timeout_s": 300,
+  "burnin": {
+    "size": 10240,
+    "vus": 4,
+    "n": 100,
+    "warmup": 50
+  }
+}

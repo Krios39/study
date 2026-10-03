@@ -24,3 +24,6 @@ parcomp_key*
 # отладочные файлы этапа 0
 1_semester/distributed_systems_seminar/stand/probe-stats.csv
 1_semester/distributed_systems_seminar/stand/warmup-*.tsv
+# сквозные проверки bench/smoke.js
+1_semester/distributed_systems_seminar/stand/results/smoke-*/
+1_semester/distributed_systems_seminar/stand/results/*-smoke/

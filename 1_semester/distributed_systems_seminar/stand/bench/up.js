@@ -71,6 +71,15 @@ async function waitXroad(timeoutS) {
   } else {
     L.log('stand initialised, waiting for global configuration to reach ss1/ss2/ss3');
   }
-  await waitXroad(300);
+  try {
+    await waitXroad(anchors.every((x) => x) ? 180 : 300);
+  } catch (e) {
+    if (!/authentication certificate/.test(e.message)) throw e;
+    // после долгого простоя OCSP-ответы на сертификаты истекли, а signer обновляет их раз в ocspFetchInterval (20 мин):
+    // до этого «Security server has no authentication certificate». Рестарт signer — запрос OCSP сразу (~20 с)
+    L.log('auth certificate not usable (stale OCSP after downtime) — restarting xroad-signer and xroad-proxy');
+    for (const c of ['ss0', 'ss1', 'ss2', 'ss3'].filter(L.running)) L.dexec(c, 'supervisorctl', 'restart', 'xroad-signer', 'xroad-proxy');
+    await waitXroad(300);
+  }
   L.log('X-Road answers from both providers — stand is up. Next: node bench/check.js');
 })().catch((e) => { console.error(e.message); process.exit(1); });
