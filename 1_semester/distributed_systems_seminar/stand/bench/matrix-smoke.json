@@ -15,6 +15,14 @@
     [1048576, 1],
     [10240, 4]
   ],
+  "two_providers": {
+    "configs": [
+      "full"
+    ],
+    "points": [
+      [10240, 4]
+    ]
+  },
   "control": {
     "config": "full",
     "size": 10240,

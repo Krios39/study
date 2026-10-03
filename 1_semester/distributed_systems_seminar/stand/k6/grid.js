@@ -1,5 +1,5 @@
 // Один прогон сетки: WARMUP запросов прогрева (не пишутся) + N измеряемых, VUS параллельных клиентов.
-// env: CONFIG SIZE VUS N WARMUP REP TARGET(xroad|direct) PROVIDER METHOD(GET|POST) FILL(random|abc) OUT(/out)
+// env: CONFIG SIZE VUS N WARMUP REP TARGET(xroad|xroad2|direct) PROVIDER METHOD(GET|POST) FILL(random|abc) OUT(/out)
 // Выход: /out/summary.json (перцентили по измеряемым) и /out/requests.csv (по-запросные строки).
 import http from 'k6/http';
 import exec from 'k6/execution';
@@ -18,7 +18,9 @@ const OUT = __ENV.OUT || '/out';
 const FILL = __ENV.FILL || 'random';     // random — несжимаемое тело: размер message log не занижается TOAST-сжатием
 
 const QS = METHOD === 'GET' ? `?size=${SIZE}&fill=${FILL}` : '';
-const URL = TARGET === 'direct' ? `http://is-provider:8080/echo${QS}` : `http://ss1:8080/r1/${PROVIDER}/echo${QS}`;
+// xroad2 — два провайдера: запросы по очереди на ss2 и ss3 (по номеру итерации, поровну при любом числе VU)
+const PROVIDERS = TARGET === 'xroad2' ? ['DEV/MEMBER/SS2-CODE/ECHO', 'DEV/MEMBER/SS3-CODE/ECHO'] : [PROVIDER];
+const urlFor = (i) => (TARGET === 'direct' ? `http://is-provider:8080/echo${QS}` : `http://ss1:8080/r1/${PROVIDERS[i % PROVIDERS.length]}/echo${QS}`);
 const HEADERS = { 'X-Road-Client': 'DEV/MEMBER/SS1-CODE/CLIENT' };
 const BODY = METHOD === 'POST' ? 'x'.repeat(SIZE) : null;
 
@@ -40,7 +42,8 @@ export default function () {
   const phase = i < WARMUP ? 'warmup' : 'measured';
   // responseType binary: тело — случайные байты, как строка после UTF-8-декодирования оно другой длины
   const params = { headers: HEADERS, responseType: 'binary', tags: { phase, config: CONFIG, size: String(SIZE), vus: String(VUS), rep: String(REP) } };
-  const res = METHOD === 'POST' ? http.post(URL, BODY, params) : http.get(URL, params);
+  const url = urlFor(i);
+  const res = METHOD === 'POST' ? http.post(url, BODY, params) : http.get(url, params);
   if (phase === 'measured') {
     measured.add(res.timings.duration, { phase });
     if (res.status !== 200 || !res.body || res.body.byteLength !== SIZE) errors.add(1);

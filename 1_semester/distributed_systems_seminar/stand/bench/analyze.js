@@ -50,8 +50,10 @@ const isInvalid = (r) => r.errors > 0.1 * r.n || r.p50 > 10000;
 const groups = new Map();
 for (const r of runs) {
   if (r.meta.tag) continue;
-  const key = `${r.config}|${r.size}|${r.vus}`;
-  if (!groups.has(key)) groups.set(key, { config: r.config, size: r.size, vus: r.vus, runs: [] });
+  // два провайдера (target xroad2) — отдельной строкой: full+ss3 рядом с full при той же нагрузке
+  const config = r.config + (r.meta.target === 'xroad2' ? '+ss3' : '');
+  const key = `${config}|${r.size}|${r.vus}`;
+  if (!groups.has(key)) groups.set(key, { config, size: r.size, vus: r.vus, runs: [] });
   groups.get(key).runs.push(r);
 }
 // размах между повторами: (max − min) / медиана, % — чувствителен к одиночному выбросу
@@ -75,8 +77,9 @@ for (const g of groups.values()) {
     // wire_* — eth0 целиком (у ss1 это и ответ клиенту, и CS/CA — не канал между SS); link_* — только ss1 <-> ss2:5500, IP-уровень
     wire_tx_ss1: per((r) => (r.meta.net_bytes?.ss1?.tx ?? NaN) / (r.warmup + r.n)),
     wire_rx_ss2: per((r) => (r.meta.net_bytes?.ss2?.rx ?? NaN) / (r.warmup + r.n)),
-    link_tx: per((r) => (r.meta.link_bytes?.xroad_tx ?? NaN) / (r.warmup + r.n)),
-    link_rx: per((r) => (r.meta.link_bytes?.xroad_rx ?? NaN) / (r.warmup + r.n)),
+    // с двумя провайдерами — сумма по обоим каналам (ss1→ss2 + ss1→ss3): байты на запрос сравнимы с одним провайдером
+    link_tx: per((r) => ((r.meta.link_bytes?.xroad_tx ?? NaN) + (r.meta.link_bytes_ss3?.xroad_tx ?? 0)) / (r.warmup + r.n)),
+    link_rx: per((r) => ((r.meta.link_bytes?.xroad_rx ?? NaN) + (r.meta.link_bytes_ss3?.xroad_rx ?? 0)) / (r.warmup + r.n)),
     log_ss1: per((r) => (r.meta.messagelog_growth_bytes?.ss1 ?? NaN) / (r.warmup + r.n)),
     log_ss2: per((r) => (r.meta.messagelog_growth_bytes?.ss2 ?? NaN) / (r.warmup + r.n)),
     ocsp: per((r) => r.meta.ca_calls?.ocsp ?? NaN), tsa: per((r) => r.meta.ca_calls?.tsa ?? NaN),

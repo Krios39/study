@@ -34,6 +34,10 @@ if (!flag('--dry')) {
 }
 process.on('uncaughtException', (e) => { L.log('FATAL', e.stack || e.message); process.exit(1); });
 
+// два провайдера: только full — config.js меняет local.ini лишь на ss1/ss2, у ss3 остались бы настройки по умолчанию
+const TWO = M.two_providers || null;
+if (TWO && TWO.configs.some((c) => c !== 'full')) throw new Error('two_providers: only "full" (config.js does not configure ss3)');
+
 // ---------- план ----------
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
@@ -60,14 +64,16 @@ function buildPlan() {
     if (withControl && M.control.per_rep) plan.push(controlRun(`control_r${rep}`));
     for (const [size, vus] of directPoints) plan.push({ rep, config: 'direct', target: 'direct', size, vus });
     for (const config of shuffle(configs.slice())) {
-      plan.push(...shuffle(xroadPoints.map(([size, vus]) => ({ rep, config, target: 'xroad', size, vus }))));
+      // M.two_providers: те же точки, но запросы по очереди на ss2 и ss3 (target xroad2) — в блоке своей конфигурации
+      const two = TWO && TWO.configs.includes(config) ? TWO.points.map(([size, vus]) => ({ rep, config, target: 'xroad2', size, vus })) : [];
+      plan.push(...shuffle([...xroadPoints.map(([size, vus]) => ({ rep, config, target: 'xroad', size, vus })), ...two]));
     }
   }
   if (withControl && M.control.per_rep) plan.push(controlRun('control_end'));
   return plan;
 }
 
-const runName = (r) => `${r.config}_s${r.size}_v${r.vus}_r${r.rep}${r.tag ? '_' + r.tag : ''}`;
+const runName = (r) => `${r.config}${r.target === 'xroad2' ? '-2p' : ''}_s${r.size}_v${r.vus}_r${r.rep}${r.tag ? '_' + r.tag : ''}`;
 
 // spawn с ожиданием: k6 нельзя запускать через spawnSync — он блокирует цикл событий, и docker stats в фоне не пишется
 function run(cmd, args) {
@@ -85,7 +91,7 @@ function startStats(file) {
   const out = fs.createWriteStream(file);
   let stopped = false;                      // docker stats может отдать хвост после kill — не писать в закрытый поток
   // по процессу docker stats на машину (на одной машине — один)
-  const procs = L.statsTargets(['cs', 'ss1', 'ss2', 'is-provider']).map((t) => {
+  const procs = L.statsTargets(['cs', 'ss1', 'ss2', 'is-provider', ...(TWO ? ['ss3'] : [])]).map((t) => {
     const p = spawn('docker', [...t.args, 'stats', '--format', '{{.Name}},{{.CPUPerc}},{{.MemUsage}}', ...t.names]);
     p.stdout.on('data', (buf) => {
       if (stopped) return;
@@ -104,10 +110,13 @@ function startStats(file) {
 async function runOne(r, dir, warmup, extra = {}) {
   const n = r.tag === 'burnin' ? M.burnin.n : r.size >= M.large_from ? M.n_large : M.n;
   fs.mkdirSync(dir, { recursive: true });
-  const xroad = r.target === 'xroad';
+  const xroad = r.target !== 'direct';
+  const two = r.target === 'xroad2';                 // два провайдера: метки и байты ещё и для ss3
+  const logged = two ? [...L.MEASURED_SS, 'ss3'] : L.MEASURED_SS;
   const before = { t: new Date().toISOString(), net: {}, db: {} };
   for (const c of L.MEASURED_SS) { before.net[c] = L.netBytes(c); before.db[c] = L.messagelogBytes(c); }
   before.link = L.linkBytes();
+  before.link3 = two ? L.linkBytes('ss1', 'ss3') : null;
   const stopStats = startStats(path.join(dir, 'stats.csv'));
 
   // на Linux k6 в контейнере — свой uid (12345) и не может писать в каталог результатов bench'а; запускаем от нашего
@@ -126,11 +135,12 @@ async function runOne(r, dir, warmup, extra = {}) {
   const after = { t: new Date().toISOString(), net: {}, db: {} };
   for (const c of L.MEASURED_SS) { after.net[c] = L.netBytes(c); after.db[c] = L.messagelogBytes(c); }
   after.link = L.linkBytes();
+  after.link3 = two ? L.linkBytes('ss1', 'ss3') : null;
   const ca = L.caCalls(before.t, after.t);
   // метки времени: при notsa интервал сутки — не ждём, только фиксируем, сколько сообщений осталось без метки
   const stamping = !xroad ? null
     : r.config === 'notsa' ? { completed: false, waited: false, ...Object.fromEntries(L.MEASURED_SS.map((c) => [c, { unstamped_after_run: L.unstamped(c) }])) }
-    : await L.waitStamped(L.MEASURED_SS, M.stamping_timeout_s ?? 300);
+    : await L.waitStamped(logged, M.stamping_timeout_s ?? 300);
   if (stamping && stamping.waited !== false) stamping.ca_calls_while_waiting = L.caCalls(after.t, new Date().toISOString());
 
   const summary = fs.existsSync(path.join(dir, 'summary.json')) ? L.readJson(path.join(dir, 'summary.json')) : null;
@@ -140,11 +150,12 @@ async function runOne(r, dir, warmup, extra = {}) {
     messagelog_growth_bytes: Object.fromEntries(L.MEASURED_SS.map((c) => [c, after.db[c] - before.db[c]])),
     // канал ss1 <-> ss2 за время k6 (iptables в namespace ss1): xroad_* — порт 5500, link_* — весь трафик между ними
     link_bytes: Object.fromEntries(Object.keys(after.link).map((k) => [k, after.link[k] - (before.link[k] ?? 0)])),
+    link_bytes_ss3: two ? Object.fromEntries(Object.keys(after.link3).map((k) => [k, after.link3[k] - (before.link3[k] ?? 0)])) : undefined,
     timestamping: stamping,
     ca_calls: ca,
     local_ini: Object.fromEntries(L.MEASURED_SS.map((c) => [c, L.iniDump(c)])),
     k6_stdout: res,
-    tsa_probe_after: r.target === 'xroad' ? L.tsaProbe() : null,   // '200' = TSA пережил прогон
+    tsa_probe_after: xroad ? L.tsaProbe() : null,   // '200' = TSA пережил прогон
     ...extra,
   };
   L.writeJson(path.join(dir, 'meta.json'), meta);
@@ -177,11 +188,13 @@ function controlVerdict() {
 
   L.writeJson(path.join(RESULTS, 'env.json'), { started: new Date().toISOString(), matrix: M, images: L.imageDigests(), plan: plan.map(runName) });
 
-  if (L.running('ss3')) { L.log('stopping ss3 (not in the measured path)'); L.dctl('ss3', 'stop'); }
+  // ss3 нужен только прогонам с двумя провайдерами; без них — остановить, чтобы не ел CPU
+  if (todo.some((r) => r.target === 'xroad2')) await L.ensureProvider('ss3', L.PROVIDERS.ss3);
+  else if (L.running('ss3')) { L.log('stopping ss3 (not in the measured path)'); L.dctl('ss3', 'stop'); }
   let current = null;
   for (const r of todo) {
     let warmup = M.warmup_next;
-    if (r.target === 'xroad' && r.config !== current) {
+    if (r.target !== 'direct' && r.config !== current) {
       await applyConfig(r.config);
       current = r.config;
       warmup = M.warmup_first;
@@ -196,7 +209,7 @@ function controlVerdict() {
     if (r.size >= M.large_from) warmup = Math.ceil(warmup / 5);
     if (r.target === 'direct') warmup = 100;
     clean();
-    const tsaRestarted = r.target === 'xroad' ? await L.ensureTsa() : false;   // TSA жив? иначе restart ca (помечается в meta)
+    const tsaRestarted = r.target !== 'direct' ? await L.ensureTsa() : false;   // TSA жив? иначе restart ca (помечается в meta)
     await runOne(r, path.join(RESULTS, runName(r)), warmup, { tsa_restarted_before: tsaRestarted });
     if (/^control/.test(r.tag || '')) controlVerdict();
   }

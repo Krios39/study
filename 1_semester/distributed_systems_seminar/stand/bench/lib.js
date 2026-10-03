@@ -230,9 +230,11 @@ const LINK_RULES = [
 function linkBytes(from = 'ss1', to = 'ss2') {
   if (shCode('docker', [...ctx(from), 'image', 'inspect', 'stand-netcount']) !== 0) composeOn(hostOf(from), '--profile', 'tools', 'build', 'netcount');
   const ip = dexec(from, 'getent', 'hosts', to).split(/\s+/)[0];
+  // свои правила на каждого провайдера: ss2 — xroad_tx…, ss3 — ss3_xroad_tx… (ключи в ответе — без префикса)
+  const pre = to === 'ss2' ? '' : `${to}_`;
   const ensure = LINK_RULES.map((r) => {
     const [chain, ...rest] = r;
-    const spec = [...rest.slice(0, -1).map((x) => (x === 'IP' ? ip : x)), '-m', 'comment', '--comment', r[r.length - 1]].join(' ');
+    const spec = [...rest.slice(0, -1).map((x) => (x === 'IP' ? ip : x)), '-m', 'comment', '--comment', pre + r[r.length - 1]].join(' ');
     return `iptables -C ${chain} ${spec} 2>/dev/null || iptables -A ${chain} ${spec}`;
   }).join('; ');
   const out = sh('docker', [...ctx(from), 'run', '--rm', '--net', `container:${from}`, '--cap-add', 'NET_ADMIN', 'stand-netcount', 'sh', '-c',
@@ -240,9 +242,25 @@ function linkBytes(from = 'ss1', to = 'ss2') {
   const res = {};
   for (const line of out.split('\n')) {
     const m = /^\s*\d+\s+(\d+)\s.*\/\* (\w+) \*\//.exec(line);
-    if (m) res[m[2]] = Number(m[1]);
+    if (m && (pre ? m[2].startsWith(pre) : /^(xroad|link)_/.test(m[2]))) res[m[2].slice(pre.length)] = Number(m[1]);
   }
   return res;
+}
+
+// поднять остановленный SS (ss3 для прогонов с двумя провайдерами) и дождаться ответа через него. После старта
+// контейнера токен закрыт, а после простоя ещё и OCSP-ответы просрочены — то же, что делает up.js
+async function ensureProvider(c, provider, timeoutS = 600) {
+  if (running(c) && smoke(provider) === '200') return false;
+  log(`${c}: starting for two-provider runs`);
+  if (!running(c)) dctl(c, 'start');
+  const t0 = Date.now();
+  while (health(c) !== 'healthy') { if (Date.now() - t0 > timeoutS * 1000) throw new Error(`${c} not healthy`); await sleep(10000); }
+  hurl('token-login.hurl', { ss_host: c }, { retry: 3, ok: true, quiet: true });
+  for (let i = 0; i < 18; i++) { if (smoke(provider) === '200') return true; await sleep(10000); }
+  log(`${c}: no answer after token login — restarting xroad-signer, xroad-proxy (stale OCSP)`);
+  dexec(c, 'supervisorctl', 'restart', 'xroad-signer', 'xroad-proxy');
+  for (let i = 0; i < 30; i++) { if (smoke(provider) === '200') return true; await sleep(10000); }
+  throw new Error(`${c}: X-Road via ${provider} not answering: ${JSON.stringify(smokeErr(provider))}`);
 }
 
 // сообщения в messagelog без метки времени (пакетное проставление ещё не дошло до них)
@@ -298,5 +316,5 @@ module.exports = {
   STAND, NET, NETARGS, CLIENT, PROVIDERS, MEASURED_SS, ENV, THIS_HOST, HOSTS, hostOf, ctx, hostCtx, shq,
   setLogFile, tee, sh, shCode, docker, dctl, dexec, dexecOk, compose, composeOn, health, running, statsTargets, sleep, log, smoke, smokeErr, smokeDirect, tsaProbe, ensureTsa, waitSmoke, restartProxy,
   iniSet, iniDel, iniDump, hurl, psql, pgSchema, pgTable, csParamSet, csParamDel, csParamDump,
-  netBytes, linkBytes, unstamped, waitStamped, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
+  netBytes, linkBytes, ensureProvider, unstamped, waitStamped, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
 };

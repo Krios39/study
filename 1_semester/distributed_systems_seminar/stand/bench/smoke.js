@@ -26,8 +26,9 @@ function smoke(dir) {
     if (!(s.p50 > 0)) problems.push(`${d}: p50=${s.p50}`);
     if (s.errors > 0) problems.push(`${d}: ${s.errors} ошибок`);
     if (!fs.existsSync(path.join(dir, d, 'requests.csv.gz'))) problems.push(`${d}: нет requests.csv.gz`);
-    if (meta.target !== 'xroad') continue;
+    if (meta.target === 'direct') continue;
     if (!(meta.link_bytes?.xroad_tx > 0)) problems.push(`${d}: счётчики канала ss1→ss2 = 0 (iptables в namespace ss1?)`);
+    if (meta.target === 'xroad2' && !(meta.link_bytes_ss3?.xroad_tx > 0)) problems.push(`${d}: два провайдера, но на ss3 ничего не ушло`);
     if (meta.config !== 'notsa' && !meta.timestamping?.completed) problems.push(`${d}: метки не проставились до чистки`);
     if (!meta.ca_calls) problems.push(`${d}: нет обращений к CA в meta (логи ca?)`);
   }
