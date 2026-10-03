@@ -60,11 +60,28 @@ for a in "${@:3}"; do case "$a" in
 
 lan_setup() {
   say "static 10.10.0.$N/24 on $IFACE"
-  if command -v nmcli >/dev/null && systemctl is-active --quiet NetworkManager; then
+  # Если на проводе уже есть рабочий адрес по DHCP (свитч соединён с розеткой кафедры, через провод и заходят) —
+  # 10.10.0.N добавляется ВТОРЫМ адресом к существующему подключению; заменить его = потерять доступ посреди установки.
+  # Сначала сразу (без переподключения), потом постоянно.
+  ip addr replace "10.10.0.$N/24" dev "$IFACE"
+  local cur=""; command -v nmcli >/dev/null && cur=$(nmcli -g GENERAL.CONNECTION dev show "$IFACE" 2>/dev/null || true)
+  if command -v nmcli >/dev/null && systemctl is-active --quiet NetworkManager && [ -n "$cur" ] && [ "$cur" != xroad-lan ] \
+     && [ "$(nmcli -g ipv4.method con show "$cur")" = auto ]; then
+    echo "  на $IFACE уже DHCP ('$cur') — добавляю адрес к нему"
+    nmcli con mod "$cur" -ipv4.addresses "10.10.0.$N/24" >/dev/null 2>&1 || true
+    nmcli con mod "$cur" +ipv4.addresses "10.10.0.$N/24"
+    nmcli dev reapply "$IFACE" >/dev/null 2>&1 || true
+  elif command -v nmcli >/dev/null && systemctl is-active --quiet NetworkManager; then
     nmcli con delete xroad-lan >/dev/null 2>&1 || true
     nmcli con add type ethernet ifname "$IFACE" con-name xroad-lan ipv4.method manual ipv4.addresses "10.10.0.$N/24" \
       ipv4.never-default yes ipv6.method disabled connection.autoconnect yes connection.autoconnect-priority 100 >/dev/null
     nmcli con up xroad-lan
+  elif command -v netplan >/dev/null && [ -d /etc/netplan ]; then
+    # Ubuntu Server: netplan сливает файлы — dhcp4 из основного остаётся, этот только добавляет адрес
+    printf 'network:\n  version: 2\n  ethernets:\n    %s:\n      addresses: [10.10.0.%s/24]\n' "$IFACE" "$N" > /etc/netplan/90-xroad-stand.yaml
+    chmod 600 /etc/netplan/90-xroad-stand.yaml
+    # apply, а не только generate: адрес, добавленный руками, networkd может снять при продлении DHCP
+    netplan apply && echo "  netplan: /etc/netplan/90-xroad-stand.yaml"
   elif systemctl is-active --quiet systemd-networkd; then
     printf '[Match]\nName=%s\n\n[Network]\nAddress=10.10.0.%s/24\nLinkLocalAddressing=no\n' "$IFACE" "$N" > /etc/systemd/network/10-xroad-lan.network
     systemctl restart systemd-networkd

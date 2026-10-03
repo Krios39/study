@@ -6,10 +6,10 @@
 #   l1 10.10.0.1 — cs, ca, ss0, ss3 (provider B) + is-provider-b
 #   l2 10.10.0.2 — ss1 (consumer) + k6/curl; отсюда запускается bench
 #   l3 10.10.0.3 — ss2 (provider A) + is-provider
-# Сеть xroad-network — macvlan на проводном интерфейсе к свитчу: у каждого контейнера свой адрес в 10.10.0.0/24,
+# Сеть xroad-network — ipvlan L2 на проводном интерфейсе к свитчу: у каждого контейнера свой адрес в 10.10.0.0/24,
 # без NAT и проброса портов; SS ↔ SS идёт через свитч. Имена контейнеров на других машинах — через extra_hosts.
 # Временные контейнеры (k6, curl, hurl) берут адрес из LAN_RANGE своей машины, чтобы IPAM разных машин не пересекались.
-# Хост не видит свои же macvlan-контейнеры (ограничение macvlan) — bench ходит в них через docker exec, а UI —
+# Хост не видит свои же ipvlan-контейнеры (как и с macvlan) — bench ходит в них через docker exec, а UI —
 # ssh-туннелем через другую машину: ssh -L 4000:10.10.0.10:4000 l2.
 
 x-lan-hosts: &lan-hosts
@@ -104,9 +104,13 @@ services:
 networks:
   xroad-network:
     name: xroad-network
-    driver: macvlan
+    # ipvlan L2, а не macvlan: у каждого контейнера свой адрес, но MAC — один, как у самой машины. Свитч соединён
+    # с розеткой кафедры (03.10), и macvlan выпустил бы в сеть университета по 5–8 новых MAC с машины (ограничение
+    # устройств на порт может закрыть порт). Трафик между машинами по-прежнему идёт внутри свитча.
+    driver: ipvlan
     driver_opts:
       parent: ${LAN_IF:?set LAN_IF in .env}
+      ipvlan_mode: l2
     ipam:
       config:
         - subnet: 10.10.0.0/24
