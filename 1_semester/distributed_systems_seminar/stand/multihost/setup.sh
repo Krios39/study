@@ -82,6 +82,11 @@ lan_setup() {
     chmod 600 /etc/netplan/90-xroad-stand.yaml
     # apply, а не только generate: адрес, добавленный руками, networkd может снять при продлении DHCP
     netplan apply && echo "  netplan: /etc/netplan/90-xroad-stand.yaml"
+  elif [ -d /etc/network/if-up.d ] && grep -qsE "^\s*iface\s+$IFACE\s" /etc/network/interfaces /etc/network/interfaces.d/* 2>/dev/null; then
+    # Debian без рабочего стола: ifupdown. Подключение по DHCP не трогаем — хук навешивает адрес при каждом подъёме
+    printf '#!/bin/sh\n# xroad-stand (multihost/setup.sh): второй адрес на проводе к свитчу\n[ "$IFACE" = "%s" ] && ip addr replace 10.10.0.%s/24 dev "%s" || true\n' "$IFACE" "$N" "$IFACE" > /etc/network/if-up.d/xroad-stand
+    chmod 755 /etc/network/if-up.d/xroad-stand
+    echo "  ifupdown: /etc/network/if-up.d/xroad-stand"
   elif systemctl is-active --quiet systemd-networkd; then
     printf '[Match]\nName=%s\n\n[Network]\nAddress=10.10.0.%s/24\nLinkLocalAddressing=no\n' "$IFACE" "$N" > /etc/systemd/network/10-xroad-lan.network
     systemctl restart systemd-networkd
