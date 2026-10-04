@@ -5,6 +5,9 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 const STAND = path.resolve(__dirname, '..');
+// путь стенда для других машин: в Fedora Atomic (Aurora) /opt — ссылка на /var/opt, и Node видит /var/opt/study/…,
+// а на Debian/Ubuntu есть только /opt/study/…
+const REMOTE_STAND = STAND.replace(/^\/var\/opt\//, '/opt/');
 const NET = 'xroad-network';
 const CLIENT = 'DEV/MEMBER/SS1-CODE/CLIENT';
 const PROVIDERS = { ss2: 'DEV/MEMBER/SS2-CODE/ECHO', ss3: 'DEV/MEMBER/SS3-CODE/ECHO' };
@@ -78,7 +81,7 @@ function compose(...args) {
 }
 function composeOn(h, ...args) {
   if (!THIS_HOST || h === THIS_HOST) return sh('docker', ['compose', ...args], { cwd: STAND, inherit: true });
-  return sh('ssh', [h, `cd ${shq(STAND)} && docker compose ${args.map(shq).join(' ')}`], { inherit: true });
+  return sh('ssh', [h, `cd ${shq(REMOTE_STAND)} && docker compose ${args.map(shq).join(' ')}`], { inherit: true });
 }
 // статус healthcheck контейнера: healthy | starting | unhealthy | none | missing
 function health(c) {
@@ -176,7 +179,7 @@ function hurl(file, vars = {}, opts = {}) {
   args.push(`/hurl-src/${file}`);
   const h = hostOf('hurl');
   const [cmd, cargs] = !THIS_HOST || h === THIS_HOST ? ['docker', ['compose', ...args]]
-    : ['ssh', [h, `cd ${shq(STAND)} && docker compose ${args.map(shq).join(' ')}`]];
+    : ['ssh', [h, `cd ${shq(REMOTE_STAND)} && docker compose ${args.map(shq).join(' ')}`]];
   if (opts.ok) return sh(cmd, cargs, { cwd: STAND, inherit: !opts.quiet, ok: true }) !== null && lastStatus === 0;
   sh(cmd, cargs, { cwd: STAND, inherit: true });
   return true;
