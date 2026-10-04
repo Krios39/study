@@ -17,7 +17,13 @@ for target in "$@"; do
       "$host" "$user" >> ~/.ssh/config
   fi
   chmod 600 ~/.ssh/config
-  ssh-copy-id -i ~/.ssh/id_ed25519.pub "$host"
+  # ключ уже стоит — ssh-copy-id не нужен; на машинах только с входом по ключу он и не сможет (пароль выключен)
+  if ! ssh -o BatchMode=yes -o ConnectTimeout=10 "$host" true 2>/dev/null; then
+    ssh-copy-id -i ~/.ssh/id_ed25519.pub "$host" || {
+      echo "$host: не пускает ни по ключу, ни по паролю. Положить ключ l2 через машину, с которой туда пускает:"
+      echo "  ssh <l2> \"cat ~/.ssh/id_ed25519.pub\" | ssh <$host> \"cat >> ~/.ssh/authorized_keys\""
+      exit 1; }
+  fi
   ssh "$host" "test -f '$STAND/.env' && grep -q '^STAND_HOST=$host\$' '$STAND/.env'" \
     || { echo "$host: no $STAND/.env with STAND_HOST=$host — run setup.sh $host there"; exit 1; }
   docker context rm -f "$host" >/dev/null 2>&1 || true
