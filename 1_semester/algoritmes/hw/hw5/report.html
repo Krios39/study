@@ -291,6 +291,117 @@ Shape bits:     11111010010000</pre>
 
     </div>
 </details>
+<details>
+    <summary>Task B1: Zobrist hashing for a changing board (Bonus)</summary>
+    <div class="details-content">
+
+        <h3>1. Execution Trace and Operation Counts</h3>
+        <p>Using a 64-bit Zobrist hashing scheme, the incremental update requires exactly <strong>1 XOR operation</strong> per move or undo, regardless of the board state. Full recomputation requires <em>N XOR operations</em>, where N is the number of pieces currently on the board.</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left; font-family: monospace;">
+            <thead>
+            <tr style="background: #e2e8f0; color: #333;">
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Action</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Zobrist Fingerprint (Hex)</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Inc XORs</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Full XORs</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1;">place X at 0</td><td style="padding: 8px; border: 1px solid #cbd5e1;">86cc7763222724a2</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1;">place O at 4</td><td style="padding: 8px; border: 1px solid #cbd5e1;">a2dcc17497e01b78</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">2</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1;">place X at 8</td><td style="padding: 8px; border: 1px solid #cbd5e1;">8347bf3336fc9826</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">3</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1;">place O at 1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">6de6af0ae4973611</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">4</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1;">undo</td><td style="padding: 8px; border: 1px solid #cbd5e1;">8347bf3336fc9826</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">3</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1;">place O at 2</td><td style="padding: 8px; border: 1px solid #cbd5e1;">02d4be1dafb2342f</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">4</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1;">place X at 6</td><td style="padding: 8px; border: 1px solid #cbd5e1;">be1366f5f6ba4cd4</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">5</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1;">undo</td><td style="padding: 8px; border: 1px solid #cbd5e1;">02d4be1dafb2342f</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">4</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1;">undo</td><td style="padding: 8px; border: 1px solid #cbd5e1;">8347bf3336fc9826</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">3</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1;">undo</td><td style="padding: 8px; border: 1px solid #cbd5e1;">a2dcc17497e01b78</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">2</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1;">undo</td><td style="padding: 8px; border: 1px solid #cbd5e1;">86cc7763222724a2</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1;">undo</td><td style="padding: 8px; border: 1px solid #cbd5e1;">0000000000000000</td><td style="padding: 8px; border: 1px solid #cbd5e1;">1</td><td style="padding: 8px; border: 1px solid #cbd5e1;">0</td></tr>
+            <tr style="background: #333; color: white; font-weight: bold;">
+                <td style="padding: 8px; border: 1px solid #cbd5e1;" colspan="2">Total Operations</td>
+                <td style="padding: 8px; border: 1px solid #cbd5e1;">12</td>
+                <td style="padding: 8px; border: 1px solid #cbd5e1;">32</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h3>2. Why equal fingerprints do not prove equal boards?</h3>
+        <p style="line-height: 1.6;">A Zobrist fingerprint is generated by XORing random 64-bit integers. Because it maps the entire universe of possible board states into a fixed 64-bit space, it acts as a hash function. Equal fingerprints do not mathematically <em>prove</em> that two boards are identical due to the possibility of <strong>hash collisions</strong>.</p>
+        <p style="line-height: 1.6;">Even though 64-bit integers offer an immense space (1.8 × 10<sup>19</sup> values), there is still a non-zero mathematical probability that two entirely different subsets of random numbers could XOR to the exact same resulting 64-bit value. Therefore, a fingerprint match means the boards are probabilistically <em>almost certainly</em> the same, but it does not constitute a rigid cryptographic or mathematical proof.</p>
+    </div>
+</details>
+<details open>
+    <summary>Task B2: Can probing miss an empty slot? (Bonus)</summary>
+    <div class="details-content">
+
+        <h3>Part A: Small Tables Exploration</h3>
+
+        <h4>1. Visited Slots Coverage Table</h4>
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: center;">
+            <thead>
+            <tr style="background: #e2e8f0; color: #333;">
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">m</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Step 1 (Linear)</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Step 2</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Square (i*i)</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Triangular (i*(i+1)//2)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1;"><strong>8</strong></td><td style="padding: 8px; border: 1px solid #cbd5e1;">8</td><td style="padding: 8px; border: 1px solid #cbd5e1;">4</td><td style="padding: 8px; border: 1px solid #cbd5e1;">3</td><td style="padding: 8px; border: 1px solid #cbd5e1;">8</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1;"><strong>9</strong></td><td style="padding: 8px; border: 1px solid #cbd5e1;">9</td><td style="padding: 8px; border: 1px solid #cbd5e1;">9</td><td style="padding: 8px; border: 1px solid #cbd5e1;">4</td><td style="padding: 8px; border: 1px solid #cbd5e1;">4</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1;"><strong>11</strong></td><td style="padding: 8px; border: 1px solid #cbd5e1;">11</td><td style="padding: 8px; border: 1px solid #cbd5e1;">11</td><td style="padding: 8px; border: 1px solid #cbd5e1;">6</td><td style="padding: 8px; border: 1px solid #cbd5e1;">6</td></tr>
+            </tbody>
+        </table>
+
+        <h4>2. Coverage Conditions & Trace</h4>
+        <ul style="line-height: 1.6;">
+            <li><strong>Fixed step <em>k</em>:</strong> Full coverage is guaranteed if <em>gcd(k, m) = 1</em>.</li>
+            <li><strong>Triangular probing:</strong> Full coverage is guaranteed if <em>m</em> is a power of 2.</li>
+            <li><strong>Square probing:</strong> Guarantees finding a slot only if <em>m</em> is prime and load is &le; 50%.</li>
+        </ul>
+        <p><strong>Trace for first 9 probes of <em>i*i</em> mod 9:</strong><br>
+            <code>i=0 &rarr; 0</code>, <code>1 &rarr; 1</code>, <code>2 &rarr; 4</code>, <code>3 &rarr; 0 (Repeated)</code>, <code>4 &rarr; 7 (NEW)</code>, <code>5 &rarr; 7</code>, <code>6 &rarr; 0</code>, <code>7 &rarr; 4</code>, <code>8 &rarr; 1</code>.</p>
+        <p><strong>Can a new slot appear after a repeated slot?</strong> Yes. At <code>i=4</code>, slot 7 appears for the first time, even though <code>i=3</code> already repeated slot 0.</p>
+        <p><strong>The Infinite Loop Problem:</strong> If a hash maps to a specific probe sequence, and every reachable slot in that sequence is full, an unbounded <code>while(true)</code> loop will cycle over those occupied slots forever — even if the rest of the table is empty. A probe limit prevents this infinite loop. Hitting the limit means the <em>reachable slots</em> are exhausted, not necessarily that the entire table is full.</p>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+        <h3>Part B: Triangular vs Linear (T2 Comparison)</h3>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left;">
+            <thead>
+            <tr style="background: #e2e8f0; color: #333;">
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Probing / Hash</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Load</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Mean Present</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">Mean Absent</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Данные из T2 (Linear) -->
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">Linear (T2) / Weak</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">50%</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">1996.94</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">4040.14</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">Linear (T2) / Weak</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">90%</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">3629.95</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">7310.58</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">Linear (T2) / Affine</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">50%</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">1.48</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">2.44</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">Linear (T2) / Affine</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">90%</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">5.81</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: gray;">56.48</td></tr>
+
+            <!-- Данные из B2 (Triangular) -->
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Triangular (B2) / Weak</td><td style="padding: 8px; border: 1px solid #cbd5e1;">50%</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: #dc2626;">61.36</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: #dc2626;">97.15</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Triangular (B2) / Weak</td><td style="padding: 8px; border: 1px solid #cbd5e1;">90%</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: #dc2626;">100.24</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: #dc2626;">242.44</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Triangular (B2) / Affine</td><td style="padding: 8px; border: 1px solid #cbd5e1;">50%</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: #2563eb;">1.43</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: #2563eb;">2.10</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Triangular (B2) / Affine</td><td style="padding: 8px; border: 1px solid #cbd5e1;">90%</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: #2563eb;">2.93</td><td style="padding: 8px; border: 1px solid #cbd5e1; color: #2563eb;">12.00</td></tr>
+            </tbody>
+        </table>
+
+        <h4>Analysis</h4>
+        <p style="line-height: 1.6;"><strong>Does it reduce probes for both hashes and loads?</strong> For the "Good" (Affine) hash, triangular probing successfully reduces the mean lookup probes compared to linear probing, particularly at 90% load (Absent probes dropped significantly from 56.48 to 12.00). This happens because triangular probing breaks <em>primary clustering</em> — a major issue in linear probing where blocks of occupied slots merge together.</p>
+        <p style="line-height: 1.6;"><strong>Does it fix a poor hash?</strong> No. While triangular probing mitigates the catastrophic 4000-7000 probes seen in linear probing, it still suffers heavily from <em>secondary clustering</em>. The "Weak" hash maps hundreds of different words to the exact same starting slot. Because triangular probing is strictly deterministic, all these words follow the exact same triangular path, colliding with each other sequentially (resulting in 100 to 242+ probes). Changing the probe strategy cannot rescue a fundamentally poor hash distribution.</p>
+        <p style="line-height: 1.6;"><strong>Why full coverage doesn't guarantee a short search?</strong> Even though triangular probing with m=8192 guarantees visiting every single slot eventually, finding that empty slot may still require hundreds or thousands of hops if the hash creates a secondary cluster. Full coverage guarantees <em>correctness</em> (we will eventually find a spot without infinite looping), but <em>speed</em> still relies entirely on the initial uniform distribution of the hash function.</p>
+    </div>
+</details>
 </body>
 
 <script>
