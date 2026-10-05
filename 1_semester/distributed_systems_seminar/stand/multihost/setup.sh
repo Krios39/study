@@ -141,9 +141,13 @@ docker_net_setup() {
   if [ -s /etc/docker/daemon.json ] && ! grep -q '10.201.0.0' /etc/docker/daemon.json; then
     cp /etc/docker/daemon.json /etc/docker/daemon.json.bak; echo "  старый daemon.json → daemon.json.bak (заменён)"
   fi
-  printf '{\n  "bip": "10.200.0.1/24",\n  "default-address-pools": [{ "base": "10.201.0.0/16", "size": 24 }]\n}\n' > /etc/docker/daemon.json
+  local want; want=$(printf '{\n  "bip": "10.200.0.1/24",\n  "default-address-pools": [{ "base": "10.201.0.0/16", "size": 24 }]\n}\n')
+  # перезапуск docker останавливает все контейнеры стенда — только если настройки действительно меняются
+  if [ "$(cat /etc/docker/daemon.json 2>/dev/null)" = "$want" ]; then echo "  daemon.json уже такой — docker не перезапускаю"; return 0; fi
+  printf '%s\n' "$want" > /etc/docker/daemon.json
   if command -v docker >/dev/null; then
     systemctl restart docker 2>/dev/null || true
+    echo "  docker перезапущен — контейнеры стенда остановлены, поднять: node bench/up.js (на l2)"
     { docker network ls --format '{{.Name}}' 2>/dev/null | grep -vE '^(bridge|host|none)$' || true; } | while read -r n; do
       sub=$(docker network inspect -f '{{range .IPAM.Config}}{{.Subnet}} {{end}}' "$n" 2>/dev/null)
       case "$sub" in 172.*) echo "  !! сеть $n ($sub) в 172.x — удалить, если не нужна: docker network rm $n" ;; esac
