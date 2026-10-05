@@ -8,7 +8,8 @@
   "configs": [
     "full",
     "nobody",
-    "synctsa"
+    "synctsa",
+    "reuse"
   ],
   "points": [
     [10240, 1],

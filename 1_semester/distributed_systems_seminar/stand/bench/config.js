@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Переключение конфигурации доверия на стенде.
-//   node bench/config.js full | nobody | notsa | synctsa | ocsp | show
+//   node bench/config.js full | nobody | notsa | synctsa | reuse | ocsp | show
 // Каждое имя — полное состояние: сначала всё сбрасывается к full, потом применяется нужное.
 // Что стоит за каждым (X-Road 7.8.3):
 //   full     — дефолты; TSA настроен; ocspFreshnessSeconds=3600 (дефолт CS)
@@ -10,6 +10,10 @@
 //              LogManager.verifyCanLogMessage() при пустом списке TSA отвергает каждое сообщение независимо от
 //              acceptable-timestamp-failure-period (проверено по исходникам 7.8.3).
 //   synctsa  — [message-log] timestamp-immediately=true           (метка времени синхронно на каждое сообщение)
+//   reuse    — [proxy] pool-enable-connection-reuse=true (клиент), server-support-clients-pooled-connections=true и
+//              server-connector-max-idle-time=120000 (провайдер) — как в пакете FI. По умолчанию (и в EE) false: каждое
+//              сообщение открывает новое TCP + mTLS-соединение между SS (видно по tcpdump 05.10). Разность full − reuse =
+//              цена mTLS-рукопожатия на каждое сообщение. Ставится на ss1 и ss2 (обе роли на обоих — не мешает).
 //   ocsp     — CS system_parameters.ocspFreshnessSeconds=10. НЕ РАБОТАЕТ и из сетки убран (matrix.json): по исходникам 7.8.3
 //              клиентский proxy никогда не ходит к OCSP-ответчику сам — берёт ответ из кеша signer'а (свой или у peer'а по 5577,
 //              AuthTrustVerifier.getOcspResponses), а signer обновляет ответы раз в ocspFetchInterval (мин. 60 с, по умолчанию
@@ -19,7 +23,9 @@
 'use strict';
 const L = require('./lib');
 
-const CONFIGS = ['full', 'nobody', 'notsa', 'synctsa', 'ocsp'];
+const CONFIGS = ['full', 'nobody', 'notsa', 'synctsa', 'reuse', 'ocsp'];
+// ключи [proxy] конфигурации reuse
+const REUSE = { 'pool-enable-connection-reuse': 'true', 'server-support-clients-pooled-connections': 'true', 'server-connector-max-idle-time': '120000' };
 const SS = L.MEASURED_SS;
 
 async function resetToFull() {
@@ -27,6 +33,7 @@ async function resetToFull() {
     L.iniDel(c, 'message-log', 'message-body-logging');
     L.iniDel(c, 'message-log', 'acceptable-timestamp-failure-period');
     L.iniDel(c, 'message-log', 'timestamp-immediately');
+    for (const k of Object.keys(REUSE)) L.iniDel(c, 'proxy', k);
   }
   // TSA обратно, если убран (tsa-add.hurl принимает 201 и 409 — идемпотентно)
   for (const c of SS) L.hurl('tsa-add.hurl', { ss_host: c });
@@ -49,6 +56,9 @@ async function apply(name) {
       break;
     case 'synctsa':
       for (const c of SS) L.iniSet(c, 'message-log', 'timestamp-immediately', 'true');
+      break;
+    case 'reuse':
+      for (const c of SS) for (const [k, v] of Object.entries(REUSE)) L.iniSet(c, 'proxy', k, v);
       break;
     case 'ocsp':
       L.csParamSet('ocspFreshnessSeconds', '10');

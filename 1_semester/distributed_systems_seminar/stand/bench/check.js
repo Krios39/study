@@ -59,7 +59,8 @@ for (const c of ['ss0', 'ss1', 'ss2', ...(ss3 ? ['ss3'] : [])]) check(`${c} mess
 check('cs system_parameters', () => ({ ok: true, note: L.pgTable('cs', 'centerui_production', 'system_parameters') }));
 
 // --- конфигурация доверия = full
-const BENCH_KEYS = ['message-body-logging', 'acceptable-timestamp-failure-period', 'timestamp-immediately'];
+const BENCH_KEYS = ['message-body-logging', 'acceptable-timestamp-failure-period', 'timestamp-immediately',
+  'pool-enable-connection-reuse', 'server-support-clients-pooled-connections', 'server-connector-max-idle-time'];
 for (const c of L.MEASURED_SS) {
   check(`${c} local.ini без ключей замера`, () => {
     const ini = L.iniDump(c);
