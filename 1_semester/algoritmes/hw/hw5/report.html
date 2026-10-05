@@ -187,6 +187,110 @@ Shape bits:     11111010010000</pre>
         </div>
     </div>
 </details>
+<details>
+    <summary>Task T4: A compact dictionary that sometimes lies</summary>
+    <div class="details-content">
+
+        <h3>1. SHA-256 Control Check & False Negatives</h3>
+        <ul>
+            <li><strong>SHA-256 algorithm test:</strong> Positions for i=0,1,2 matched the required <code>66882, 80791, 6684</code> exactly.</li>
+            <li><strong>No-false-negatives check:</strong> Both implementations successfully found 100% of the 10,000 inserted words (0 false negatives).</li>
+        </ul>
+
+        <h3>2. Performance and Accuracy Table</h3>
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left;">
+            <thead>
+            <tr style="background: #e2e8f0; color: #333;">
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Hash Method</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Predicted FP Rate</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Observed Rate (Count)</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Median Lookups/sec</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">FNV-1a (Custom)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0.00819</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0.00808 (404/50000)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">272,949</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">SHA-256 (Library)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0.00819</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0.00824 (412/50000)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">18,793</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h3>3. Actual False Positive Example</h3>
+        <p><strong>Word:</strong> <code>circuitous</code></p>
+        <p><strong>Positions (FNV-1a):</strong> <code>[64277, 91124, 86307, 26322, 66081, 74560, 93327]</code></p>
+
+        <h3>4. Analysis and Hash Choice</h3>
+        <p><strong>Choice of Custom Hash:</strong> I implemented the <strong>FNV-1a (Fowler–Noll–Vo)</strong> 64-bit hash function. It is a highly respected non-cryptographic hash widely used in standard libraries for its simplicity and excellent avalanche characteristics. It requires only an XOR operation and a multiplication by a prime number per byte of data, making it extremely lightweight to implement from scratch without external dependencies.</p>
+
+        <p><strong>Was the "good" hash good in practice?</strong> Yes. In practice, the FNV-1a non-cryptographic hash provided a false positive rate almost identical to the cryptographic SHA-256 (0.00808 vs 0.00824) and perfectly matched the idealized theoretical prediction of ~0.82%. The outputs of FNV-1a were uniformly distributed enough that hash correlation did not noticeably degrade the Bloom filter's accuracy. Furthermore, despite Rust's highly optimized <code>sha2</code> crate, the raw simplicity of FNV-1a allowed it to achieve a massive performance advantage (<strong>~273k lookups/sec vs ~19k lookups/sec</strong>), proving that a well-designed non-cryptographic hash is strictly superior for Bloom filters where cryptographic resistance to malicious inputs is not required.</p>
+    </div>
+</details>
+<details>
+    <summary>Task T5: Why password hashing should be slow</summary>
+    <div class="details-content">
+
+        <h3>1. Password Verification Results</h3>
+        <ul>
+            <li><strong>Salt demonstration:</strong> Two independently generated 16-byte random salts produced completely different 32-byte derived keys for the exact same password:
+                <ul>
+                    <li><code>Salt 1: 8d04e17d251cb9c4306a98ed3bb32078</code> &rarr; <code>Key: 34477a93de3502b5f896df42cc92401cf8d96858d8d87dd79e824d109458d921</code></li>
+                    <li><code>Salt 2: c007778405474868511a6fe5137f231c</code> &rarr; <code>Key: f6f9fe87e4e6b96968c17697c449804d9d8ae0d3dc740d12711a247575d9472f</code></li>
+                </ul>
+            </li>
+            <li><strong>Verification logic:</strong> Using a constant-time comparison (<code>subtle::ConstantTimeEq</code> in Rust) to prevent timing side-channel attacks, the system successfully returned <strong>True</strong> for the correct <code>A!</code> password and <strong>False</strong> for the modified <code>B!</code> password using the stored salt and parameters.</li>
+        </ul>
+
+        <h3>2. Timing Comparison</h3>
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left;">
+            <thead>
+            <tr style="background: #e2e8f0; color: #333;">
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Algorithm / Construction</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Iterations</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Median Time Per Call (Seconds)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">Salted SHA-256</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">1</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0.000004665 s</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">PBKDF2-HMAC-SHA256</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">100,000</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">1.058105 s</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">PBKDF2-HMAC-SHA256</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">200,000</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">1.829282 s</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h3>3. Cryptographic Analysis</h3>
+        <p style="line-height: 1.6;"><strong>Does doubling iterations roughly double time?</strong><br>
+            Yes. The timing data confirms this linear relationship: 200,000 iterations (1.83s) takes roughly twice as long as 100,000 iterations (1.06s). PBKDF2 applies the internal HMAC function sequentially in a loop, meaning the time complexity is strictly <em>O(N)</em> based on the iteration count.</p>
+
+        <p style="line-height: 1.6;"><strong>The Role of the Salt:</strong><br>
+            The salt guarantees that two users with the exact same password will have entirely different derived verifiers (keys). This strictly prevents the use of precomputed dictionary tables ("rainbow tables") and forces an attacker who steals the database to crack each individual user's password separately, rather than attacking the database globally.</p>
+
+        <p style="line-height: 1.6;"><strong>The Role of Work per Guess (Iterations):</strong><br>
+            Iterations enforce "key stretching". By making a single password check artificially computationally expensive, we dictate the terms of engagement for an offline attacker. A legitimate user only logs in occasionally, so a 1-second delay is imperceptible. But to an attacker testing millions of guesses, a 1-second cost per guess is devastating.</p>
+
+        <p style="line-height: 1.6;"><strong>Why fast hashing is unsuitable here:</strong><br>
+            Fast algorithms like the basic Salted SHA-256 execute in fractions of a microsecond (e.g., <strong>~0.000004s</strong>). If we used them for passwords, an attacker with modern GPUs or ASICs could evaluate billions of password candidates per second, trivially brute-forcing most user passwords offline in minutes. Fast hashing is for quick structure lookups (like Bloom filters or Hash tables); password hashing <em>must</em> be slow to defend against offline computational attacks.</p>
+
+    </div>
+</details>
 </body>
 
 <script>
