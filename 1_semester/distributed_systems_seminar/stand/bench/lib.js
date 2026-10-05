@@ -252,8 +252,19 @@ function linkBytes(from = 'ss1', to = 'ss2') {
 
 // режим процессора машины: governor, EPP, частоты. На Windows (Docker Desktop) sysfs недоступен — null.
 // Режим питания меняет задержки в разы (05.10: 79.7 мс в balanced против 28.7 в performance) — пишется в env.json
+// Windows 11: режим «Максимальная производительность» = overlay ded574b5-… поверх схемы (Параметры → Питание),
+// либо схема «Высокая»/«Максимальная производительность»
+const WIN_PERF = ['ded574b5-45a0-4f42-8737-46345c09c238', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c', 'e9a42b02-d5df-448d-aa00-03f14749eb61'];
+function cpuModeWindows() {
+  const reg = (key, v) => ((sh('reg', ['query', key, '/v', v], { ok: true }) || '').match(/REG_\w+\s+(.+)$/m) || [])[1]?.trim() || '';
+  const pk = 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\User\\PowerSchemes';
+  const scheme = reg(pk, 'ActivePowerScheme'), overlay = reg(pk, 'ActiveOverlayAcPowerScheme');
+  const perf = WIN_PERF.includes(overlay.toLowerCase()) || WIN_PERF.includes(scheme.toLowerCase());
+  return { host: 'local', governor: perf ? 'performance' : 'balanced', epp: null, scheme, overlay: overlay || null,
+    cpu: reg('HKLM\\HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0', 'ProcessorNameString') };
+}
 function cpuMode(h = THIS_HOST) {
-  if (!THIS_HOST && process.platform === 'win32') return null;
+  if (!THIS_HOST && process.platform === 'win32') return cpuModeWindows();
   const cmd = 'cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference 2>/dev/null | tr "\\n" " "; echo; grep -m1 "model name" /proc/cpuinfo | cut -d: -f2';
   const out = !THIS_HOST || h === THIS_HOST ? sh('sh', ['-c', cmd], { ok: true }) : sh('ssh', [h, cmd], { ok: true });
   if (!out) return null;
