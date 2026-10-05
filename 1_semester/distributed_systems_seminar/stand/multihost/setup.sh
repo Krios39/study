@@ -111,6 +111,26 @@ power_setup() {
            uupd.timer rpm-ostreed-automatic.timer bootc-fetch-apply-updates.timer flatpak-system-update.timer; do
     systemctl disable --now "$s" >/dev/null 2>&1 && echo "  - $s" || true
   done
+  # Процессор в режиме производительности. В balanced (по умолчанию) малонагруженная машина не успевает поднять частоту
+  # на коротких всплесках работы: 05.10 на трёх i5-8250U контроль был 79.7 мс в balanced и 28.7 мс в performance.
+  # Профиль демона питания + служба, выставляющая governor/EPP при каждой загрузке (после tuned/power-profiles-daemon)
+  say "CPU: performance"
+  command -v powerprofilesctl >/dev/null && powerprofilesctl set performance 2>/dev/null || true
+  command -v tuned-adm >/dev/null && tuned-adm profile throughput-performance 2>/dev/null || true
+  cat > /etc/systemd/system/xroad-cpu-performance.service <<'UNIT'
+[Unit]
+Description=xroad-stand: CPU governor/EPP performance (multihost/setup.sh)
+After=tuned.service power-profiles-daemon.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'for f in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do [ -w "$f" ] && echo performance > "$f"; done; true'
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+  systemctl daemon-reload && systemctl enable --now xroad-cpu-performance.service >/dev/null 2>&1 || echo "  !! xroad-cpu-performance.service"
+  echo "  governor=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo ?) epp=$(cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference 2>/dev/null || echo ?)"
 }
 
 # сети docker — подальше от университетских: по умолчанию docker берёт 172.17–172.31.x, а учебный VPN выдаёт

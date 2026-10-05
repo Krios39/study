@@ -250,6 +250,18 @@ function linkBytes(from = 'ss1', to = 'ss2') {
   return res;
 }
 
+// режим процессора машины: governor, EPP, частоты. На Windows (Docker Desktop) sysfs недоступен — null.
+// Режим питания меняет задержки в разы (05.10: 79.7 мс в balanced против 28.7 в performance) — пишется в env.json
+function cpuMode(h = THIS_HOST) {
+  if (!THIS_HOST && process.platform === 'win32') return null;
+  const cmd = 'cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference 2>/dev/null | tr "\\n" " "; echo; grep -m1 "model name" /proc/cpuinfo | cut -d: -f2';
+  const out = !THIS_HOST || h === THIS_HOST ? sh('sh', ['-c', cmd], { ok: true }) : sh('ssh', [h, cmd], { ok: true });
+  if (!out) return null;
+  const [modes, model] = out.split('\n');
+  const [governor, epp] = modes.trim().split(/\s+/);
+  return { host: h || 'local', governor: governor || null, epp: epp || null, cpu: (model || '').trim() };
+}
+
 // поднять остановленный SS (ss3 для прогонов с двумя провайдерами) и дождаться ответа через него. После старта
 // контейнера токен закрыт, а после простоя ещё и OCSP-ответы просрочены — то же, что делает up.js
 async function ensureProvider(c, provider, timeoutS = 600) {
@@ -319,5 +331,5 @@ module.exports = {
   STAND, NET, NETARGS, CLIENT, PROVIDERS, MEASURED_SS, ENV, THIS_HOST, HOSTS, hostOf, ctx, hostCtx, shq,
   setLogFile, tee, sh, shCode, docker, dctl, dexec, dexecOk, compose, composeOn, health, running, statsTargets, sleep, log, smoke, smokeErr, smokeDirect, tsaProbe, ensureTsa, waitSmoke, restartProxy,
   iniSet, iniDel, iniDump, hurl, psql, pgSchema, pgTable, csParamSet, csParamDel, csParamDump,
-  netBytes, linkBytes, ensureProvider, unstamped, waitStamped, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
+  netBytes, linkBytes, ensureProvider, cpuMode, unstamped, waitStamped, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
 };

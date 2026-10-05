@@ -186,7 +186,10 @@ function controlVerdict() {
   L.log(`${plan.length} runs planned, ${todo.length} to do`);
   if (flag('--dry')) { todo.forEach((r) => console.log('  ' + runName(r))); return; }
 
-  L.writeJson(path.join(RESULTS, 'env.json'), { started: new Date().toISOString(), matrix: M, images: L.imageDigests(), plan: plan.map(runName) });
+  L.writeJson(path.join(RESULTS, 'env.json'), {
+    started: new Date().toISOString(), matrix: M, images: L.imageDigests(), plan: plan.map(runName),
+    cpu: (L.THIS_HOST ? L.HOSTS : [null]).map((h) => L.cpuMode(h)),   // режим процессора: в balanced задержки в разы выше
+  });
 
   // ss3 нужен только прогонам с двумя провайдерами; без них — остановить, чтобы не ел CPU
   if (todo.some((r) => r.target === 'xroad2')) await L.ensureProvider('ss3', L.PROVIDERS.ss3);

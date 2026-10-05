@@ -16,6 +16,14 @@ function check(name, fn) {
   return ok;
 }
 
+// --- режим процессора: performance на каждой машине (в balanced малонагруженная машина не поднимает частоту на
+// коротких всплесках — 05.10 контроль 79.7 мс против 28.7 в performance). На Windows не проверяется
+for (const h of (L.THIS_HOST ? L.HOSTS : [null])) {
+  const m = L.cpuMode(h);
+  if (m === null && !L.THIS_HOST) continue;
+  check(`${h || 'local'}: CPU performance`, () => ({ ok: !!m && m.governor === 'performance' && (!m.epp || m.epp === 'performance'), note: m ? `governor=${m.governor} epp=${m.epp} — ${m.cpu}` : 'нет данных' + ' (sudo bash multihost/setup.sh … или см. multihost/README)' }));
+}
+
 // --- несколько машин (multihost/): docker на l1/l3 через context, часы (метки времени, OCSP и подсчёт обращений к CA
 // по логам ca сравнивают время разных машин), задержка по свитчу
 if (L.THIS_HOST) {
