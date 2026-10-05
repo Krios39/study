@@ -102,19 +102,33 @@ fn main() -> io::Result<()> {
         med_ex.push(time_exact);
         med_mo.push(time_morris);
 
-        // Дамп данных для графика (только для seed 100)
         if seed == 100 {
-            let mut file = File::create("plot_data.csv")?;
-            writeln!(file, "exact,morris,saturated")?;
+            let mut file = File::create("data.js")?;
             let mut indices: Vec<usize> = (0..1024).collect();
-            indices.sort_by_key(|&i| exact[i]); // Сортировка по точной частоте
+            indices.sort_by_key(|&i| exact[i]);
 
-            for i in indices {
+            let mut labels_arr = Vec::new();
+            let mut exact_arr = Vec::new();
+            let mut morris_arr = Vec::new();
+            let mut sat_arr = Vec::new();
+
+            for (idx, &i) in indices.iter().enumerate() {
                 let ex = exact[i];
                 let mo = (q.powi(morris_c[i] as i32) - 1.0) / (q - 1.0);
                 let sat = exact[i].min(255);
-                writeln!(file, "{},{:.2},{}", ex, mo, sat)?;
+
+                labels_arr.push(idx.to_string());
+                exact_arr.push(ex.to_string());
+                morris_arr.push(format!("{:.2}", mo));
+                sat_arr.push(sat.to_string());
             }
+
+            writeln!(file, "const chartData = {{")?;
+            writeln!(file, "  labels: [{}],", labels_arr.join(", "))?;
+            writeln!(file, "  exact: [{}],", exact_arr.join(", "))?;
+            writeln!(file, "  morris: [{}],", morris_arr.join(", "))?;
+            writeln!(file, "  saturated: [{}]", sat_arr.join(", "))?;
+            writeln!(file, "}};")?;
         }
     }
 
