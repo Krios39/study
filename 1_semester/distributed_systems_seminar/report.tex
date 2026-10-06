@@ -127,7 +127,11 @@ For this study the mechanisms divide by their position relative to the request p
   \item \textbf{Synchronous}, paid on every message: the mutually authenticated TLS channel between
   the Security Servers; signing with the member's signing key; verification of the incoming
   signature; and writing request and response into the message log, whose bodies are logged in full
-  by default~\cite{xroadsyspar}.
+  by default~\cite{xroadsyspar}. How much the TLS channel costs per message depends on whether
+  connections are reused~\cite{naylor2014}. By default they are not: the client-side pool reuse
+  (\texttt{pool-enable-connection-reuse}) and the provider-side support for pooled connections
+  (\texttt{server-support-clients-pooled-connections}) are both off, so each message opens a new
+  connection with a full handshake~\cite{xroadsyspar}.
   \item \textbf{Asynchronous}, amortised or deferred: certificate status checking, which uses cached
   OCSP responses refreshed on a fixed interval (20 minutes by default) rather than one query per
   message; time-stamping, applied in batches over a hash chain of log records (once per minute by
@@ -305,7 +309,9 @@ time-stamping requests per thousand messages; message-log growth per message; an
 CPU and memory use.
 
 Each configuration is preceded by 50 warm-up requests and measured over 1000 requests, following
-\cite{bakhtina2026ijis}, repeated three times at different times of day, with the order of
+\cite{bakhtina2026ijis}. Warm-up, independent repetitions and reporting the spread between them follow
+the practice for Java performance evaluation in~\cite{georges2007}, since the Security Server runs
+on the Java virtual machine. Measurements are repeated three times at different times of day, with the order of
 configurations randomised rather than run in blocks. At 1\,MB payloads the count is reduced to 200
 requests, which is sufficient at that size and keeps the message log from growing without need.
 Before the campaign a control run measures the same configuration twice in succession; if the
@@ -465,6 +471,19 @@ Nordic Institute for Interoperability Solutions.
 \newblock X-Road: System Parameters (UG-SYSPAR).
 \newblock \url{https://docs.x-road.global/Manuals/ug-syspar_x-road_v6_system_parameters.html}.
 \newblock Accessed 17 September 2026.
+
+\bibitem{naylor2014}
+D.~Naylor, A.~Finamore, I.~Leontiadis, Y.~Grunenberger, M.~Mellia, M.~Munaf\`{o},
+K.~Papagiannaki, P.~Steenkiste.
+\newblock The Cost of the ``S'' in HTTPS.
+\newblock In \emph{CoNEXT '14}, pp.~133--140, ACM, 2014.
+\newblock DOI: 10.1145/2674005.2674991.
+
+\bibitem{georges2007}
+A.~Georges, D.~Buytaert, L.~Eeckhout.
+\newblock Statistically Rigorous Java Performance Evaluation.
+\newblock In \emph{OOPSLA '07}, pp.~57--76, ACM, 2007.
+\newblock DOI: 10.1145/1297027.1297033.
 
 \end{thebibliography}
 
