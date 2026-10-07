@@ -27,3 +27,6 @@ parcomp_key*
 # сквозные проверки bench/smoke.js
 1_semester/distributed_systems_seminar/stand/results/smoke-*/
 1_semester/distributed_systems_seminar/stand/results/*-smoke/
+
+# ML project: licensed Forest Register extract and derived tables from the partner, must not be pushed
+1_semester/machine_learning/project/data/
