@@ -66,6 +66,8 @@ Not logging bodies changes nothing at 10 kilobytes but saves almost half at one 
 
 Every request succeeded. It's preliminary because of the old laptops and a local test PKI, which make these numbers optimistic.
 
+The same grid on one of these laptops alone, with the same CPU, gives practically the same picture: 30 milliseconds instead of 28, and each mechanism's cost within one to three milliseconds. So for a single client on a local network, the network doesn't change the result. Under load it's different: three machines handle about one and a half times more requests per second, because the work is spread over three CPUs, not because of the network.
+
 ## 11. Connection setup vs per-message work (0:45)
 
 With connection reuse, latency drops by 2 milliseconds and traffic by 3.3 kilobytes per message. That's the handshake. So the handshake is paid every time, but it's small. The other 26 milliseconds are signing, verification and logging, which is where bigger post-quantum signatures would show up.
@@ -78,7 +80,7 @@ Under load the results vary too much to separate configurations, so there I'll o
 
 ## 13. Status and next steps (0:30)
 
-Done: the testbed and the first clean results on three machines. Running now: the same grid on one machine and on my own laptop. Next: one machine against three, and the final tables in the report by the end of the week.
+Done: the testbed, clean results on three machines, and the comparison with one machine. Running now: the same grid on my own laptop. Next: the final tables in the report by the end of the week.
 
 Two open questions for you. First, a plain mutual TLS baseline without X-Road, two simple proxies with the same certificates. Connection reuse already shows that the handshake is about 2 of the 28 milliseconds, so I'd add it only if you think the cost of the TLS channel itself is worth isolating. Second, do the three laptops cover the final measurements, or would you still like a run on virtual machines from the university's HPC centre?
 
