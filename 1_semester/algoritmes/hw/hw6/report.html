@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>HW6. Graph Traversal and Shortest Paths</title>
+    <meta name="reference" content="Rust | https://doc.rust-lang.ru/">
+    <meta name="reference" content="Gemini |  https://gemini.google.com/">
+
+    <link rel="stylesheet" href="../../styles.css">
+    <script src="../../header.js" defer></script>
+    <script src="../../footer.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .trace-tab {
+            padding: 8px 14px; border: none; background: none; cursor: pointer;
+            font-size: 14px; color: #64748b; border-bottom: 3px solid transparent; margin-bottom: -2px;
+        }
+        .trace-tab:hover { color: #0f172a; }
+        .trace-tab.active { color: #0f172a; font-weight: bold; border-bottom-color: #3b82f6; }
+        .trace-btn {
+            padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 5px; background: #f8fafc;
+            cursor: pointer; font-size: 14px;
+        }
+        .trace-btn:hover:not(:disabled) { background: #e2e8f0; }
+        .trace-btn:disabled { opacity: 0.4; cursor: default; }
+        .lg-line { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+        .lg-pill { display: inline-block; padding: 0 6px; border-radius: 8px; font-size: 10px; font-weight: bold; line-height: 14px; vertical-align: middle; margin-right: 6px; }
+        .lg-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: middle; margin-right: 6px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+<details>
+    <summary>Task T1: Make DFS take the long way round</summary>
+    <div class="details-content">
+
+        <h3>1. The Graph</h3>
+        <p>
+            Connected, undirected, unweighted graph with 8 vertices (<code>A</code>–<code>H</code>), 9 edges, no self-loops or duplicate edges.
+            <strong>Source</strong> <code>s = A</code>, <strong>target</strong> <code>t = H</code>.
+        </p>
+        <pre style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; line-height: 1.5;">
+Edges: A-B, A-G, B-C, C-D, C-F, D-E, E-H, F-G, G-H
+
+Adjacency lists (alphabetical):
+A: B, G
+B: A, C
+C: B, D, F
+D: C, E
+E: D, H
+F: C, G
+G: A, F, H
+H: E, G</pre>
+        <p>
+            <strong>Idea of the construction:</strong> the long branch starts at <code>B</code> and the short one at <code>G</code>.
+            Since <code>B</code> comes before <code>G</code> alphabetically, alphabetical DFS dives into the long branch first and follows it all the way to <code>H</code>
+            before it ever returns to <code>A</code> to try <code>G</code>. Vertex <code>F</code> is a side branch: at <code>C</code> DFS prefers <code>D</code> over <code>F</code>, so it keeps going along the long chain.
+        </p>
+
+        <div style="max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <canvas id="t1Graph"></canvas>
+        </div>
+
+        <h3>2. Traces (until t is first discovered)</h3>
+        <p><em>Vertices are marked when discovered. Recursive-style DFS follows one branch fully before returning.
+            Pick a run in the tabs and step through it. The number next to each vertex is its discovery order,
+            blue arrows are parent pointers, the orange vertex is the one being expanded, the orange edge is the one being examined.
+            The last step reconstructs the path to t (red).</em></p>
+
+        <div style="font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; max-width: 700px; margin: 15px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div id="traceTabs" style="display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 2px solid #e2e8f0; margin-bottom: 12px;"></div>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; font-size: 12px; color: #475569; margin-bottom: 4px;">
+                <span><span class="lg-line" style="background: #3b82f6;"></span>Parent pointer</span>
+                <span><span class="lg-line" style="background: #f59e0b;"></span>Examined edge</span>
+                <span><span class="lg-line" style="background: #ef4444;"></span>Path to t</span>
+                <span><span class="lg-dot" style="background: #f59e0b;"></span>Expanded</span>
+                <span><span class="lg-dot" style="background: #1e293b;"></span>Discovered</span>
+                <span><span class="lg-dot" style="background: #fff; border: 2px solid #cbd5e1;"></span>Undiscovered</span>
+                <span><span class="lg-dot" style="background: #fde68a; width: 14px; height: 14px; font-size: 9px; text-align: center; line-height: 14px; color: #92400e; font-weight: bold;">1</span>Discovery order</span>
+            </div>
+            <canvas id="traceChart"></canvas>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin: 10px 0;">
+                <button id="traceFirst" class="trace-btn">⏮</button>
+                <button id="tracePrev" class="trace-btn">◀ Prev</button>
+                <button id="tracePlay" class="trace-btn">▶ Play</button>
+                <button id="traceNext" class="trace-btn">Next ▶</button>
+                <button id="traceLast" class="trace-btn">⏭</button>
+            </div>
+            <div style="text-align: center; font-size: 13px; color: #64748b;" id="traceStepNo"></div>
+            <pre id="traceInfo" style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; line-height: 1.5; min-height: 6em; white-space: pre-wrap;"></pre>
+        </div>
+
+        <h3>3. Summary of Paths</h3>
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left;">
+            <thead>
+            <tr style="background: #e2e8f0; color: #333;">
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Run</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Discovery Order</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Path to t</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Edges</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Alphabetical DFS</strong></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">A, B, C, D, E, H</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">A-B-C-D-E-H</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1; color: #d97706; font-weight: bold;">5</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Alphabetical BFS</strong></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">A, B, G, C, F, H</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">A-G-H</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Reverse-alphabetical DFS</strong></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">A, G, H</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">A-G-H</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Reverse-alphabetical BFS</strong></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">A, G, B, H</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">A-G-H</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h3>4. Checks</h3>
+        <p>
+            <strong>All paths follow graph edges:</strong> the 5-edge path uses <code>A-B</code>, <code>B-C</code>, <code>C-D</code>, <code>D-E</code>, <code>E-H</code>,
+            and the 2-edge path uses <code>A-G</code>, <code>G-H</code>. All seven are in the edge list above.
+        </p>
+        <p>
+            <strong>Why no shorter path exists:</strong> a path with 0 edges would require <code>s = t</code>, which is false. A path with 1 edge would require the edge <code>A-H</code>,
+            but <code>A</code>'s only neighbours are <code>B</code> and <code>G</code>. So the distance is at least 2, and <code>A-G-H</code> shows it is exactly 2.
+            BFS confirms this: layer 1 is <code>{B, G}</code> and <code>H</code> appears in layer 2.
+        </p>
+
+        <h3>5. What Neighbour Order Can and Cannot Change</h3>
+        <p style="line-height: 1.6;">
+            <strong>What changes:</strong> neighbour order decides which unvisited vertex is explored next, so it changes the discovery order, the parent pointers and therefore the path
+            that gets reconstructed. For DFS the effect is dramatic: with alphabetical order DFS commits to the branch through <code>B</code> and reaches <code>H</code> after 5 edges,
+            while reverse order happens to pick <code>G</code> first and finds the 2-edge path. DFS gives no guarantee about path length, it returns whichever path its first deep dive hits.
+            For BFS, order only changes the tie-breaking between paths of equal length (and which vertices are discovered first inside a layer).
+        </p>
+        <p style="line-height: 1.6;">
+            <strong>What does not change:</strong> the shortest-path distance is a property of the graph itself (the minimum number of edges over <em>all</em> s-t paths),
+            not of the algorithm that explores it. Reordering neighbours does not add or remove any edge, so the set of possible paths, and the minimum of their lengths, stays the same.
+            That is why BFS, which explores layer by layer (all vertices at distance 1, then distance 2, ...), finds a 2-edge path in both orders.
+        </p>
+    </div>
+</details>
+<details>
+    <summary>Task T3: Found is not final</summary>
+    <div class="details-content">
+
+        <h3>1. The Weighted Graph</h3>
+        <p>
+            Connected, simple, undirected graph with 5 vertices and positive integer edge costs.
+            <strong>Source</strong> <code>s = S</code>, <strong>target</strong> <code>t = T</code>.
+        </p>
+        <pre style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; line-height: 1.5;">
+Edges (cost): S-A 1, A-B 1, B-C 1, C-T 1, S-C 5, S-T 10
+
+Adjacency lists (alphabetical):
+A: B(1), S(1)
+B: A(1), C(1)
+C: B(1), S(5), T(1)
+S: A(1), C(5), T(10)
+T: C(1), S(10)</pre>
+        <p>
+            <strong>Idea of the construction:</strong> the cheap route is the long chain <code>S-A-B-C-T</code> (every edge costs 1).
+            The direct edge <code>S-T</code> is the fewest-edge path but costs 10, so <code>T</code> gets an expensive tentative distance as soon as <code>S</code> is settled.
+            The shortcut <code>S-C</code> (cost 5) does the same to the non-target vertex <code>C</code>: it is discovered with 5 and later improved to 3 through the chain.
+        </p>
+
+        <div style="max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <canvas id="t3Graph"></canvas>
+        </div>
+
+        <h3>2. Dijkstra Step by Step</h3>
+        <p><em>Equal-distance queue ties are broken alphabetically, neighbours are scanned alphabetically, the search stops when t is popped.
+            The pill next to each vertex is its current tentative distance, a yellow pill marks an improvement.
+            Blue-ringed vertices are discovered but not settled yet, dark vertices are settled.</em></p>
+
+        <div style="font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; max-width: 700px; margin: 15px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; font-size: 12px; color: #475569; margin-bottom: 4px;">
+                <span><span class="lg-line" style="background: #3b82f6;"></span>Parent pointer</span>
+                <span><span class="lg-line" style="background: #f59e0b;"></span>Relaxed edge</span>
+                <span><span class="lg-line" style="background: #ef4444;"></span>Path to t</span>
+                <span><span class="lg-dot" style="background: #f59e0b;"></span>Being settled</span>
+                <span><span class="lg-dot" style="background: #1e293b;"></span>Settled</span>
+                <span><span class="lg-dot" style="background: #fff; border: 2px solid #3b82f6;"></span>Discovered (in queue)</span>
+                <span><span class="lg-dot" style="background: #fff; border: 2px solid #cbd5e1;"></span>Undiscovered</span>
+                <span><span class="lg-pill" style="background: #fde68a; color: #92400e;">5 → 3</span>Improvement</span>
+            </div>
+            <canvas id="t3Chart"></canvas>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin: 10px 0;">
+                <button id="t3First" class="trace-btn">⏮</button>
+                <button id="t3Prev" class="trace-btn">◀ Prev</button>
+                <button id="t3Play" class="trace-btn">▶ Play</button>
+                <button id="t3Next" class="trace-btn">Next ▶</button>
+                <button id="t3Last" class="trace-btn">⏭</button>
+            </div>
+            <div style="text-align: center; font-size: 13px; color: #64748b;" id="t3StepNo"></div>
+            <pre id="t3Info" style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; line-height: 1.5; min-height: 7.5em; white-space: pre-wrap;"></pre>
+        </div>
+
+        <h3>3. Trace Table</h3>
+        <p><em>State after each settled vertex has relaxed its edges. Each cell is <code>distance (parent)</code>, ✓ = settled, highlighted cells are improvements.</em></p>
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left;">
+            <thead>
+            <tr style="background: #e2e8f0; color: #333;">
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Settled</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">S</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">A</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">B</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">C</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">T</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Queue after relaxing</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><em>start</em></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0 (–)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">∞</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">∞</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">∞</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">∞</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">(0, S)</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>S</strong> (0)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">1 (S)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">∞</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">5 (S)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">10 (S)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">(1, A), (5, C), (10, T)</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>A</strong> (1)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">1 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">2 (A)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">5 (S)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">10 (S)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">(2, B), (5, C), (10, T)</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>B</strong> (2)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">1 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">2 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1; background: #fef3c7; color: #d97706; font-weight: bold;">3 (B) &nbsp;<s>5 (S)</s></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">10 (S)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">(3, C), (10, T)</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>C</strong> (3)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">1 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">2 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">3 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1; background: #fef3c7; color: #d97706; font-weight: bold;">4 (C) &nbsp;<s>10 (S)</s></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">(4, T)</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>T</strong> (4)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">0 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">1 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">2 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">3 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">4 ✓</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><em>t popped, stop</em></td>
+            </tr>
+            </tbody>
+        </table>
+        <p>
+            <strong>Parents at the end:</strong> <code>A←S</code>, <code>B←A</code>, <code>C←B</code>, <code>T←C</code>, so the reconstructed path is <code>S-A-B-C-T</code> with cost 4.
+            No equal-distance ties occur in the queue, so the tie rule never has to be applied.
+        </p>
+
+        <h3>4. Competing Paths</h3>
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left;">
+            <thead>
+            <tr style="background: #e2e8f0; color: #333;">
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Path</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Edges</th>
+                <th style="padding: 10px; border: 1px solid #cbd5e1;">Cost</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>S-T</strong> (fewest edges)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">1</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">10</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>S-C-T</strong></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">5 + 1 = 6</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>S-A-B-C-T</strong> (cheapest)</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1;">4</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e1; color: #d97706; font-weight: bold;">1 + 1 + 1 + 1 = 4</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h3>5. Checks</h3>
+        <ul style="line-height: 1.6;">
+            <li><strong>Fewest-edge path costs more:</strong> <code>S-T</code> has 1 edge and costs 10, while <code>S-A-B-C-T</code> has 4 edges and costs 4.</li>
+            <li><strong>Stopping at discovery gives the wrong cost:</strong> <code>T</code> is first discovered while settling <code>S</code>, with distance 10. The true distance is 4.</li>
+            <li><strong>A non-target vertex improves:</strong> <code>C</code> is discovered from <code>S</code> with 5 and improved to 3 (= dist(B) + 1) when <code>B</code> is settled. <code>T</code> later improves too: 10 → 4.</li>
+            <li><strong>Final cost is optimal:</strong> the only simple S-T paths are the three in the table above, the cheapest one costs 4, which matches dist(T).</li>
+        </ul>
+
+        <h3>6. Discovered vs Settled</h3>
+        <p style="line-height: 1.6;">
+            <strong>Discovered</strong> means the vertex has received <em>some</em> finite tentative distance: the cost of the best path found so far, using only edges from vertices that are already settled.
+            It is an upper bound, not the answer. <strong>Settled</strong> means the vertex was popped from the priority queue with the smallest tentative distance.
+            At that moment its distance is final: every other route to it would have to leave the settled set through some vertex whose distance is already at least as large,
+            and since all edge costs are positive, continuing from there can only add cost.
+        </p>
+        <p style="line-height: 1.6;">
+            <strong>Why a discovered vertex must still accept improvements:</strong> when <code>C</code> was discovered, only <code>S</code> was settled, so the only known route was the direct edge of cost 5.
+            The cheaper route through <code>A</code> and <code>B</code> was simply not explored yet. If <code>C</code> refused the update, it would keep the wrong distance 5 and the wrong parent <code>S</code>,
+            and every vertex reached through it (here <code>T</code>, 5 + 1 = 6 instead of 4) would inherit the error.
+        </p>
+        <p style="line-height: 1.6;">
+            <strong>Why stopping at discovery fails:</strong> discovery happens along the first edge that reaches a vertex, and the first edge is often an expensive one.
+            Here <code>T</code> is discovered right away through <code>S-T</code> with cost 10, while the cheap chain still has three vertices waiting in the queue.
+            Only when <code>T</code> is popped are all vertices with smaller distance already settled, so only then can no cheaper path appear.
+        </p>
+    </div>
+</details>
+</body>
+
+<script>
+    window.addEventListener('load', () => {
+        const COLORS = {
+            edge: '#e2e8f0',
+            parent: '#3b82f6',
+            active: '#f59e0b',
+            path: '#ef4444',
+            short: '#10b981',
+            ink: '#1e293b',
+            muted: '#94a3b8',
+            badge: '#fde68a',
+            badgeInk: '#92400e'
+        };
+        const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+        const R = 18;
+
+        const onPath = (path, u, v) => !!path && path.some((p, i) => i > 0 &&
+            ((path[i - 1] === u && p === v) || (path[i - 1] === v && p === u)));
+        const sameEdge = (e, u, v) => !!e && ((e[0] === u && e[1] === v) || (e[0] === v && e[1] === u));
+        const alpha = (hex, a) => hex + Math.round(a * 255).toString(16).padStart(2, '0');
+        const plainNode = { fill: COLORS.ink, stroke: COLORS.ink, text: '#ffffff' };
+
+        // Sorted adjacency lists: { u: [[v, w], ...] }
+        function adjacency(g) {
+            const adj = {};
+            Object.keys(g.nodes).forEach(n => adj[n] = []);
+            g.edges.forEach(([u, v, w]) => { adj[u].push([v, w]); adj[v].push([u, w]); });
+            Object.values(adj).forEach(list => list.sort((a, b) => a[0].localeCompare(b[0])));
+            return adj;
+        }
+
+        // Generic graph chart. g = { nodes, edges: [[u, v, w?]], S, T, x: [min, max], y: [min, max], arrowAt }
+        // view() returns:
+        //   edge(u, v)  -> { color, width, glow, label }
+        //   node(n)     -> { fill, stroke, text, halo }
+        //   arrows      -> [[child, parent, color], ...]
+        //   badges      -> { vertex: { text, fill, ink } }
+        function graphChart(canvas, g, view, legend) {
+            const names = Object.keys(g.nodes);
+            const weighted = g.edges.some(e => e[2] !== undefined);
+            const px = (chart, n) => ({
+                x: chart.scales.x.getPixelForValue(g.nodes[n].x),
+                y: chart.scales.y.getPixelForValue(g.nodes[n].y)
+            });
+
+            function pill(ctx, x, y, text, fill, ink, stroke) {
+                const w = Math.max(18, ctx.measureText(text).width + 10), h = 18;
+                ctx.fillStyle = fill;
+                ctx.strokeStyle = stroke || '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = ink;
+                ctx.fillText(text, x, y + 0.5);
+            }
+
+            const painter = {
+                id: 'graphPainter',
+                beforeDatasetsDraw(chart) {
+                    const { ctx, chartArea: a } = chart;
+                    const v = view();
+                    ctx.save();
+                    // Dot grid background
+                    ctx.fillStyle = '#e2e8f0';
+                    for (let x = a.left; x <= a.right; x += 22)
+                        for (let y = a.top; y <= a.bottom; y += 22) ctx.fillRect(x, y, 1.5, 1.5);
+                    // Soft glow under highlighted edges
+                    ctx.lineCap = 'round';
+                    g.edges.forEach(([u, w]) => {
+                        const st = v.edge(u, w);
+                        if (!st.glow) return;
+                        const p = px(chart, u), q = px(chart, w);
+                        ctx.strokeStyle = alpha(st.color, 0.18);
+                        ctx.lineWidth = st.width + 10;
+                        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+                    });
+                    ctx.restore();
+                },
+                afterDatasetsDraw(chart) {
+                    const { ctx } = chart;
+                    const v = view();
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    // Edge weights
+                    if (weighted) {
+                        ctx.font = `600 12px ${FONT}`;
+                        g.edges.forEach(([u, w, cost]) => {
+                            const p = px(chart, u), q = px(chart, w);
+                            const st = v.edge(u, w);
+                            const hot = st.color !== COLORS.edge;
+                            pill(ctx, (p.x + q.x) / 2, (p.y + q.y) / 2, String(cost),
+                                '#ffffff', hot ? st.color : '#64748b', hot ? st.color : '#cbd5e1');
+                        });
+                    }
+
+                    // Parent pointer arrowheads, pointing to the parent
+                    const at = g.arrowAt || 0.5;
+                    (v.arrows || []).forEach(([child, par, color]) => {
+                        const a = px(chart, child), b = px(chart, par);
+                        const ang = Math.atan2(b.y - a.y, b.x - a.x);
+                        const mx = a.x + (b.x - a.x) * at + Math.cos(ang) * 6;
+                        const my = a.y + (b.y - a.y) * at + Math.sin(ang) * 6;
+                        ctx.fillStyle = color;
+                        ctx.beginPath();
+                        ctx.moveTo(mx, my);
+                        ctx.lineTo(mx - 12 * Math.cos(ang - 0.45), my - 12 * Math.sin(ang - 0.45));
+                        ctx.lineTo(mx - 7 * Math.cos(ang), my - 7 * Math.sin(ang));
+                        ctx.lineTo(mx - 12 * Math.cos(ang + 0.45), my - 12 * Math.sin(ang + 0.45));
+                        ctx.closePath();
+                        ctx.fill();
+                    });
+
+                    // Vertices
+                    names.forEach(n => {
+                        const p = px(chart, n), st = v.node(n);
+                        if (st.halo) {
+                            ctx.fillStyle = alpha(st.halo, 0.2);
+                            ctx.beginPath(); ctx.arc(p.x, p.y, R + 9, 0, 2 * Math.PI); ctx.fill();
+                        }
+                        ctx.shadowColor = 'rgba(15, 23, 42, 0.18)';
+                        ctx.shadowBlur = 8;
+                        ctx.shadowOffsetY = 2;
+                        ctx.fillStyle = st.fill;
+                        ctx.beginPath(); ctx.arc(p.x, p.y, R, 0, 2 * Math.PI); ctx.fill();
+                        ctx.shadowColor = 'transparent';
+                        ctx.lineWidth = 2.5;
+                        ctx.strokeStyle = st.stroke;
+                        ctx.stroke();
+                        ctx.fillStyle = st.text;
+                        ctx.font = `600 15px ${FONT}`;
+                        ctx.fillText(n, p.x, p.y + 0.5);
+                    });
+
+                    // Source / target captions
+                    ctx.font = `500 11px ${FONT}`;
+                    ctx.fillStyle = COLORS.muted;
+                    [[g.S, 'source'], [g.T, 'target']].forEach(([n, text]) => {
+                        const p = px(chart, n);
+                        ctx.fillText(text, p.x, p.y + R + 14);
+                    });
+
+                    // Badges (discovery order or distance)
+                    ctx.font = `700 11px ${FONT}`;
+                    Object.entries(v.badges || {}).forEach(([n, b]) => {
+                        const p = px(chart, n);
+                        const text = b.text;
+                        const w = Math.max(18, ctx.measureText(text).width + 10);
+                        pill(ctx, p.x + R * 0.7 + w / 2 - 9, p.y - R * 0.8, text, b.fill || COLORS.badge, b.ink || COLORS.badgeInk);
+                    });
+                    ctx.restore();
+                }
+            };
+
+            const chart = new Chart(canvas.getContext('2d'), {
+                type: 'scatter',
+                data: {
+                    datasets: g.edges.map(([u, w]) => ({
+                        type: 'line',
+                        label: '',
+                        data: [g.nodes[u], g.nodes[w]],
+                        borderCapStyle: 'round',
+                        pointRadius: 0,
+                        fill: false
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    aspectRatio: 1.6,
+                    animation: false,
+                    events: [],
+                    layout: { padding: { top: 10, bottom: 10, left: 30, right: 30 } },
+                    scales: {
+                        x: { display: false, min: g.x[0], max: g.x[1] },
+                        y: { display: false, min: g.y[0], max: g.y[1] }
+                    },
+                    plugins: {
+                        legend: legend || { display: false },
+                        tooltip: { enabled: false }
+                    }
+                },
+                plugins: [painter]
+            });
+
+            chart.refresh = () => {
+                const v = view();
+                g.edges.forEach(([u, w], i) => {
+                    const st = v.edge(u, w);
+                    Object.assign(chart.data.datasets[i], { borderColor: st.color, borderWidth: st.width, label: st.label || '' });
+                });
+                chart.update('none');
+            };
+            chart.refresh();
+            return chart;
+        }
+
+        const overviewLegend = {
+            position: 'bottom',
+            labels: {
+                usePointStyle: true,
+                pointStyle: 'line',
+                font: { family: FONT, size: 12 },
+                color: '#475569',
+                // Show each legend entry only once
+                filter: (item, data) => data.datasets.findIndex(d => d.label === item.text) === item.datasetIndex
+            }
+        };
+
+        // Step viewer: tabs (if more than one run), first/prev/play/next/last buttons, info box
+        // state = { runs: [{ name, steps }], run, step }
+        function stepper(prefix, state, chart, info) {
+            const el = id => document.getElementById(prefix + id);
+            let timer = null;
+            const steps = () => state.runs[state.run].steps;
+
+            function render() {
+                chart.refresh();
+                el('Info').textContent = info(state.runs[state.run], steps()[state.step]);
+                el('StepNo').textContent = `${state.runs[state.run].name}: step ${state.step + 1} / ${steps().length}`;
+                const last = steps().length - 1;
+                el('First').disabled = el('Prev').disabled = state.step === 0;
+                el('Next').disabled = el('Last').disabled = state.step === last;
+                if (el('Tabs')) [...el('Tabs').children].forEach((t, i) => t.classList.toggle('active', i === state.run));
+            }
+
+            function stop() {
+                clearInterval(timer);
+                timer = null;
+                el('Play').textContent = '▶ Play';
+            }
+
+            function go(i) {
+                state.step = Math.max(0, Math.min(i, steps().length - 1));
+                render();
+            }
+
+            if (el('Tabs')) state.runs.forEach((run, i) => {
+                const tab = document.createElement('button');
+                tab.className = 'trace-tab';
+                tab.textContent = run.name;
+                tab.onclick = () => { stop(); state.run = i; go(0); };
+                el('Tabs').appendChild(tab);
+            });
+
+            el('First').onclick = () => { stop(); go(0); };
+            el('Prev').onclick = () => { stop(); go(state.step - 1); };
+            el('Next').onclick = () => { stop(); go(state.step + 1); };
+            el('Last').onclick = () => { stop(); go(steps().length - 1); };
+            el('Play').onclick = () => {
+                if (timer) return stop();
+                if (state.step === steps().length - 1) go(0);
+                el('Play').textContent = '⏸ Pause';
+                timer = setInterval(() => {
+                    if (state.step >= steps().length - 1) return stop();
+                    go(state.step + 1);
+                }, 1200);
+            };
+            render();
+        }
+
+        const cur = state => state.runs[state.run].steps[state.step];
+
+        function reconstruct(g, parents) {
+            const path = [g.T];
+            while (path[0] !== g.S) path.unshift(parents[path[0]]);
+            return path;
+        }
+
+        // ================= T1 =================
+        // Long branch A-B-C-D-E-H lies on an arc over the top, short branch A-G-H runs along the bottom
+        const g1 = {
+            nodes: {
+                A: { x: 0.0, y: 2.0 },
+                B: { x: 0.6, y: 3.8 },
+                C: { x: 2.1, y: 4.8 },
+                D: { x: 3.9, y: 4.8 },
+                E: { x: 5.4, y: 3.8 },
+                F: { x: 2.55, y: 2.4 },
+                G: { x: 3.0, y: 0.0 },
+                H: { x: 6.0, y: 2.0 }
+            },
+            edges: [['A','B'], ['A','G'], ['B','C'], ['C','D'], ['C','F'], ['D','E'], ['E','H'], ['F','G'], ['G','H']],
+            S: 'A', T: 'H',
+            x: [-0.5, 6.5], y: [-0.7, 5.6]
+        };
+
+        // Overview graph
+        const dfsPath = ['A', 'B', 'C', 'D', 'E', 'H'];
+        const shortPath = ['A', 'G', 'H'];
+        graphChart(document.getElementById('t1Graph'), g1, () => ({
+            edge: (u, v) => {
+                if (onPath(shortPath, u, v)) return { color: COLORS.short, width: 5, glow: true, label: 'Shortest path (2 edges)' };
+                if (onPath(dfsPath, u, v)) return { color: COLORS.path, width: 5, glow: true, label: 'Alphabetical DFS path (5 edges)' };
+                return { color: '#cbd5e1', width: 2.5, label: 'Other edges' };
+            },
+            node: n => n === g1.S || n === g1.T ? { fill: '#ffffff', stroke: COLORS.ink, text: COLORS.ink } : plainNode
+        }), overviewLegend);
+
+        // Step-by-step traces
+        const adj1 = adjacency(g1);
+
+        // Snapshot of the search state for one step
+        const snap = (st, extra) => ({
+            discovered: [...st.discovered],
+            parents: { ...st.parents },
+            frontier: [...st.frontier],
+            current: null, edge: null, path: null, msg: '',
+            ...extra
+        });
+
+        function finish(steps, st) {
+            const path = reconstruct(g1, st.parents);
+            steps.push(snap(st, {
+                path,
+                msg: `Reconstruct via parents: ${[...path].reverse().join(' ← ')}\nPath: ${path.join(' - ')} (${path.length - 1} edges)`
+            }));
+            return steps;
+        }
+
+        // Recursive-style DFS, marks vertices when discovered, stops when t is discovered
+        function traceDfs(reverse) {
+            const S = g1.S, T = g1.T;
+            const order = n => { const l = adj1[n].map(e => e[0]); return reverse ? l.reverse() : l; };
+            const st = { discovered: [S], parents: {}, frontier: [S] };
+            const steps = [snap(st, { current: S, msg: `Start: discover s = ${S}, call dfs(${S})` })];
+            let found = false;
+
+            function dfs(u) {
+                for (const v of order(u)) {
+                    if (found) return;
+                    if (st.discovered.includes(v)) {
+                        steps.push(snap(st, { current: u, edge: [u, v], msg: `dfs(${u}): neighbours ${order(u).join(', ')} → ${v} already discovered, skip` }));
+                        continue;
+                    }
+                    st.discovered.push(v);
+                    st.parents[v] = u;
+                    if (v === T) {
+                        found = true;
+                        steps.push(snap(st, { current: u, edge: [u, v], msg: `dfs(${u}): neighbours ${order(u).join(', ')} → discover ${v}(${u})\nt = ${T} discovered, stop` }));
+                        return;
+                    }
+                    st.frontier.push(v);
+                    steps.push(snap(st, { current: v, edge: [u, v], msg: `dfs(${u}): neighbours ${order(u).join(', ')} → discover ${v}(${u}), go deeper into dfs(${v})` }));
+                    dfs(v);
+                    if (found) return;
+                    st.frontier.pop();
+                    steps.push(snap(st, { current: u, msg: `dfs(${v}) finished, back to dfs(${u})` }));
+                }
+            }
+            dfs(S);
+            return finish(steps, st);
+        }
+
+        // BFS with a FIFO queue, marks vertices when discovered, stops when t is discovered
+        function traceBfs(reverse) {
+            const S = g1.S, T = g1.T;
+            const order = n => { const l = adj1[n].map(e => e[0]); return reverse ? l.reverse() : l; };
+            const st = { discovered: [S], parents: {}, frontier: [S] };
+            const steps = [snap(st, { msg: `Start: discover s = ${S}, queue = [${S}]` })];
+
+            while (st.frontier.length) {
+                const u = st.frontier.shift();
+                steps.push(snap(st, { current: u, msg: `Pop ${u}, neighbours ${order(u).join(', ')}` }));
+                for (const v of order(u)) {
+                    if (st.discovered.includes(v)) {
+                        steps.push(snap(st, { current: u, edge: [u, v], msg: `${u}: ${v} already discovered, skip` }));
+                        continue;
+                    }
+                    st.discovered.push(v);
+                    st.parents[v] = u;
+                    if (v === T) {
+                        steps.push(snap(st, { current: u, edge: [u, v], msg: `${u}: discover ${v}(${u})\nt = ${T} discovered, stop` }));
+                        return finish(steps, st);
+                    }
+                    st.frontier.push(v);
+                    steps.push(snap(st, { current: u, edge: [u, v], msg: `${u}: discover ${v}(${u}), enqueue` }));
+                }
+            }
+            return steps;
+        }
+
+        const t1 = {
+            runs: [
+                { name: '(1) Alphabetical DFS', kind: 'Stack', steps: traceDfs(false) },
+                { name: '(2) Alphabetical BFS', kind: 'Queue', steps: traceBfs(false) },
+                { name: '(3) Reverse-alphabetical DFS', kind: 'Stack', steps: traceDfs(true) },
+                { name: '(4) Reverse-alphabetical BFS', kind: 'Queue', steps: traceBfs(true) }
+            ],
+            run: 0, step: 0
+        };
+
+        function edgeStyle1(s, u, v) {
+            if (onPath(s.path, u, v)) return { color: COLORS.path, width: 5, glow: true };
+            if (sameEdge(s.edge, u, v)) return { color: COLORS.active, width: 5, glow: true };
+            if (s.parents[u] === v || s.parents[v] === u) return { color: COLORS.parent, width: 3.5 };
+            return { color: COLORS.edge, width: 2.5 };
+        }
+
+        function nodeStyle1(s, n) {
+            if (s.path && s.path.includes(n)) return { fill: COLORS.path, stroke: COLORS.path, text: '#ffffff' };
+            if (n === s.current) return { fill: COLORS.active, stroke: COLORS.active, text: '#ffffff', halo: COLORS.active };
+            if (s.discovered.includes(n)) return plainNode;
+            return { fill: '#ffffff', stroke: '#cbd5e1', text: COLORS.muted };
+        }
+
+        const traceChart = graphChart(document.getElementById('traceChart'), g1, () => {
+            const s = cur(t1);
+            const badges = {};
+            s.discovered.forEach((n, i) => badges[n] = { text: String(i + 1) });
+            return {
+                edge: (u, v) => edgeStyle1(s, u, v),
+                node: n => nodeStyle1(s, n),
+                arrows: Object.entries(s.parents).map(([c, p]) => [c, p, edgeStyle1(s, c, p).color]),
+                badges
+            };
+        });
+
+        stepper('trace', t1, traceChart, (run, s) => {
+            const parents = Object.entries(s.parents).map(([c, p]) => `${c}←${p}`).join(', ') || '—';
+            return `${s.msg}\n\n` +
+                `${run.kind}:      [${s.frontier.join(', ')}]\n` +
+                `Discovered: ${s.discovered.join(', ')}\n` +
+                `Parents:    ${parents}`;
+        });
+
+        // ================= T3 =================
+        // Cheap chain S-A-B-C-T over the top, expensive shortcut S-C, direct but most expensive edge S-T at the bottom
+        const g3 = {
+            nodes: {
+                S: { x: 0.0, y: 1.0 },
+                A: { x: 1.0, y: 3.9 },
+                B: { x: 3.0, y: 4.8 },
+                C: { x: 5.0, y: 3.9 },
+                T: { x: 6.0, y: 1.0 }
+            },
+            edges: [['S','A',1], ['A','B',1], ['B','C',1], ['C','T',1], ['S','C',5], ['S','T',10]],
+            S: 'S', T: 'T',
+            x: [-0.5, 6.5], y: [-0.3, 5.6],
+            arrowAt: 0.75
+        };
+        const adj3 = adjacency(g3);
+
+        // Overview graph
+        const fewestPath = ['S', 'T'];
+        const cheapPath = ['S', 'A', 'B', 'C', 'T'];
+        graphChart(document.getElementById('t3Graph'), g3, () => ({
+            edge: (u, v) => {
+                if (onPath(cheapPath, u, v)) return { color: COLORS.short, width: 5, glow: true, label: 'Cheapest path S-A-B-C-T (cost 4)' };
+                if (onPath(fewestPath, u, v)) return { color: COLORS.path, width: 5, glow: true, label: 'Fewest-edge path S-T (cost 10)' };
+                return { color: '#cbd5e1', width: 2.5, label: 'Other edges' };
+            },
+            node: n => n === g3.S || n === g3.T ? { fill: '#ffffff', stroke: COLORS.ink, text: COLORS.ink } : plainNode
+        }), overviewLegend);
+
+        // Dijkstra with step recording. Ties in the queue are broken alphabetically,
+        // neighbours are scanned alphabetically, stops when t is popped
+        function traceDijkstra() {
+            const S = g3.S, T = g3.T;
+            const dist = { [S]: 0 }, parents = {}, settled = [], queue = [S];
+            const steps = [];
+            const fmt = d => d === undefined ? '∞' : String(d);
+            const shot = extra => ({
+                dist: { ...dist }, parents: { ...parents }, settled: [...settled],
+                queue: [...queue].sort((a, b) => dist[a] - dist[b] || a.localeCompare(b)).map(n => `(${dist[n]}, ${n})`),
+                current: null, edge: null, improved: null, path: null, msg: '',
+                ...extra
+            });
+
+            steps.push(shot({ msg: `Start: dist(${S}) = 0, all other distances ∞, queue = [(0, ${S})]` }));
+
+            while (queue.length) {
+                queue.sort((a, b) => dist[a] - dist[b] || a.localeCompare(b));
+                const u = queue.shift();
+                settled.push(u);
+                if (u === T) {
+                    steps.push(shot({ current: u, msg: `Pop ${u} with dist ${dist[u]} → t is settled, stop` }));
+                    const path = reconstruct(g3, parents);
+                    steps.push(shot({
+                        path,
+                        msg: `Reconstruct via parents: ${[...path].reverse().join(' ← ')}\nPath: ${path.join(' - ')}, cost ${dist[T]}`
+                    }));
+                    return steps;
+                }
+                steps.push(shot({ current: u, msg: `Pop ${u} with dist ${dist[u]} → settled (final). Relax its edges: ${adj3[u].map(e => e[0]).join(', ')}` }));
+
+                for (const [v, w] of adj3[u]) {
+                    if (settled.includes(v)) {
+                        steps.push(shot({ current: u, edge: [u, v], msg: `${u}-${v}: ${v} already settled, skip` }));
+                        continue;
+                    }
+                    const nd = dist[u] + w;
+                    const old = dist[v];
+                    if (old === undefined) {
+                        dist[v] = nd; parents[v] = u; queue.push(v);
+                        let msg = `${u}-${v}: ${dist[u]} + ${w} = ${nd} < ∞ → discover ${v}, dist(${v}) = ${nd}, parent ${u}`;
+                        if (v === T) msg += `\nt is discovered with ${nd}, but it is NOT settled. Stopping here would report cost ${nd}`;
+                        steps.push(shot({ current: u, edge: [u, v], msg }));
+                    } else if (nd < old) {
+                        dist[v] = nd; parents[v] = u;
+                        steps.push(shot({ current: u, edge: [u, v], improved: { v, old },
+                            msg: `${u}-${v}: ${dist[u]} + ${w} = ${nd} < ${old} → IMPROVE dist(${v}): ${old} → ${nd}, parent ${u}` }));
+                    } else {
+                        steps.push(shot({ current: u, edge: [u, v], msg: `${u}-${v}: ${dist[u]} + ${w} = ${nd} ≥ ${fmt(old)} → no change` }));
+                    }
+                }
+            }
+            return steps;
+        }
+
+        const t3 = { runs: [{ name: 'Dijkstra from S', steps: traceDijkstra() }], run: 0, step: 0 };
+
+        function nodeStyle3(s, n) {
+            if (s.path && s.path.includes(n)) return { fill: COLORS.path, stroke: COLORS.path, text: '#ffffff' };
+            if (n === s.current) return { fill: COLORS.active, stroke: COLORS.active, text: '#ffffff', halo: COLORS.active };
+            if (s.settled.includes(n)) return plainNode;
+            if (s.dist[n] !== undefined) return { fill: '#ffffff', stroke: COLORS.parent, text: COLORS.ink };
+            return { fill: '#ffffff', stroke: '#cbd5e1', text: COLORS.muted };
+        }
+
+        const t3Chart = graphChart(document.getElementById('t3Chart'), g3, () => {
+            const s = cur(t3);
+            const badges = {};
+            Object.keys(g3.nodes).forEach(n => {
+                const d = s.dist[n];
+                if (s.improved && s.improved.v === n)
+                    badges[n] = { text: `${s.improved.old} → ${d}`, fill: COLORS.badge, ink: COLORS.badgeInk };
+                else if (d === undefined)
+                    badges[n] = { text: '∞', fill: '#f1f5f9', ink: COLORS.muted };
+                else if (s.settled.includes(n))
+                    badges[n] = { text: String(d), fill: '#e2e8f0', ink: COLORS.ink };
+                else
+                    badges[n] = { text: String(d), fill: '#dbeafe', ink: '#1d4ed8' };
+            });
+            return {
+                edge: (u, v) => edgeStyle1(s, u, v),
+                node: n => nodeStyle3(s, n),
+                arrows: Object.entries(s.parents).map(([c, p]) => [c, p, edgeStyle1(s, c, p).color]),
+                badges
+            };
+        });
+
+        stepper('t3', t3, t3Chart, (run, s) => {
+            const names = Object.keys(g3.nodes);
+            const dist = names.map(n => `${n}=${s.dist[n] === undefined ? '∞' : s.dist[n]}`).join(', ');
+            const parents = Object.entries(s.parents).map(([c, p]) => `${c}←${p}`).join(', ') || '—';
+            return `${s.msg}\n\n` +
+                `Queue:    [${s.queue.join(', ')}]\n` +
+                `Settled:  ${s.settled.join(', ') || '—'}\n` +
+                `dist:     ${dist}\n` +
+                `Parents:  ${parents}`;
+        });
+    });
+</script>
+</html>
