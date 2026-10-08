@@ -25,6 +25,8 @@
         .trace-btn:disabled { opacity: 0.4; cursor: default; }
         .lg-line { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
         .lg-pill { display: inline-block; padding: 0 6px; border-radius: 8px; font-size: 10px; font-weight: bold; line-height: 14px; vertical-align: middle; margin-right: 6px; }
+        .graph-card { max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .trace-widget { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; max-width: 700px; margin: 15px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .lg-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: middle; margin-right: 6px; box-sizing: border-box; }
     </style>
 </head>
@@ -33,12 +35,25 @@
     <summary>Task T1: Make DFS take the long way round</summary>
     <div class="details-content">
 
-        <h3>1. The Graph</h3>
         <p>
-            Connected, undirected, unweighted graph with 8 vertices (<code>A</code>–<code>H</code>), 9 edges, no self-loops or duplicate edges.
-            <strong>Source</strong> <code>s = A</code>, <strong>target</strong> <code>t = H</code>.
+            Three different graphs that satisfy the task: connected, undirected, unweighted, at most eight vertices, no self-loops or duplicate edges, distinct letter labels.
+            In each one alphabetical DFS first reaches <code>t</code> along a path of at least five edges, while the shortest path has exactly two edges.
+            Pick a variant in the tabs below.
         </p>
-        <pre style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; line-height: 1.5;">
+
+        <div id="t1Variants" style="font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 2px solid #e2e8f0; margin: 15px 0;">
+            <button class="trace-tab active" data-panel="v1Panel">Variant 1: Two branches</button>
+            <button class="trace-tab" data-panel="v2Panel">Variant 2: Ring with a centre</button>
+            <button class="trace-tab" data-panel="v3Panel">Variant 3: Cube</button>
+        </div>
+
+        <!-- ===== Variant 1 ===== -->
+        <div id="v1Panel" class="variant-panel">
+            <h3>1. The Graph</h3>
+            <p>
+                8 vertices (<code>A</code>–<code>H</code>), 9 edges. <strong>Source</strong> <code>s = A</code>, <strong>target</strong> <code>t = H</code>.
+            </p>
+            <pre style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; line-height: 1.5;">
 Edges: A-B, A-G, B-C, C-D, C-F, D-E, E-H, F-G, G-H
 
 Adjacency lists (alphabetical):
@@ -50,105 +65,240 @@ E: D, H
 F: C, G
 G: A, F, H
 H: E, G</pre>
-        <p>
-            <strong>Idea of the construction:</strong> the long branch starts at <code>B</code> and the short one at <code>G</code>.
-            Since <code>B</code> comes before <code>G</code> alphabetically, alphabetical DFS dives into the long branch first and follows it all the way to <code>H</code>
-            before it ever returns to <code>A</code> to try <code>G</code>. Vertex <code>F</code> is a side branch: at <code>C</code> DFS prefers <code>D</code> over <code>F</code>, so it keeps going along the long chain.
-        </p>
+            <p>
+                <strong>Idea of the construction:</strong> the long branch starts at <code>B</code> and the short one at <code>G</code>.
+                Since <code>B</code> comes before <code>G</code> alphabetically, alphabetical DFS dives into the long branch first and follows it all the way to <code>H</code>
+                before it ever returns to <code>A</code> to try <code>G</code>. Vertex <code>F</code> is a side branch: at <code>C</code> DFS prefers <code>D</code> over <code>F</code>, so it keeps going along the long chain.
+            </p>
+            <div class="graph-card"><canvas id="v1Graph"></canvas></div>
 
-        <div style="max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <canvas id="t1Graph"></canvas>
+            <h3>2. Traces (until t is first discovered)</h3>
+            <div class="trace-widget" data-prefix="v1"></div>
+
+            <h3>3. Summary of Paths</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left;">
+                <thead>
+                <tr style="background: #e2e8f0; color: #333;">
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Run</th>
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Discovery Order</th>
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Path to t</th>
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Edges</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Alphabetical DFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A, B, C, D, E, H</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A-B-C-D-E-H</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1; color: #d97706; font-weight: bold;">5</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Alphabetical BFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A, B, G, C, F, H</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A-G-H</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Reverse-alphabetical DFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A, G, H</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A-G-H</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Reverse-alphabetical BFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A, G, B, H</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A-G-H</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <h3>4. Checks</h3>
+            <p>
+                <strong>All paths follow graph edges:</strong> the 5-edge path uses <code>A-B</code>, <code>B-C</code>, <code>C-D</code>, <code>D-E</code>, <code>E-H</code>,
+                and the 2-edge path uses <code>A-G</code>, <code>G-H</code>. All seven are in the edge list above.
+            </p>
+            <p>
+                <strong>Why no shorter path exists:</strong> a path with 0 edges would require <code>s = t</code>, which is false. A path with 1 edge would require the edge <code>A-H</code>,
+                but <code>A</code>'s only neighbours are <code>B</code> and <code>G</code>. So the distance is at least 2, and <code>A-G-H</code> shows it is exactly 2.
+                BFS confirms this: layer 1 is <code>{B, G}</code> and <code>H</code> appears in layer 2.
+            </p>
         </div>
 
-        <h3>2. Traces (until t is first discovered)</h3>
-        <p><em>Vertices are marked when discovered. Recursive-style DFS follows one branch fully before returning.
-            Pick a run in the tabs and step through it. The number next to each vertex is its discovery order,
-            blue arrows are parent pointers, the orange vertex is the one being expanded, the orange edge is the one being examined.
-            The last step reconstructs the path to t (red).</em></p>
+        <!-- ===== Variant 2 ===== -->
+        <div id="v2Panel" class="variant-panel" style="display: none;">
+            <h3>1. The Graph</h3>
+            <p>
+                A ring of six vertices <code>A</code>–<code>F</code> with a centre vertex <code>G</code> joined to every second ring vertex. 7 vertices, 9 edges.
+                <strong>Source</strong> <code>s = B</code>, <strong>target</strong> <code>t = G</code>.
+                <em>(Originally numbered 1–7, relabelled 1→A, 2→B, …, 7→G as the task asks for letter labels. The order is preserved, so the traces are the same.)</em>
+            </p>
+            <pre style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; line-height: 1.5;">
+Ring edges:   A-B, B-C, C-D, D-E, E-F, A-F
+Centre edges: A-G, C-G, E-G
 
-        <div style="font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; max-width: 700px; margin: 15px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <div id="traceTabs" style="display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 2px solid #e2e8f0; margin-bottom: 12px;"></div>
-            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; font-size: 12px; color: #475569; margin-bottom: 4px;">
-                <span><span class="lg-line" style="background: #3b82f6;"></span>Parent pointer</span>
-                <span><span class="lg-line" style="background: #f59e0b;"></span>Examined edge</span>
-                <span><span class="lg-line" style="background: #ef4444;"></span>Path to t</span>
-                <span><span class="lg-dot" style="background: #f59e0b;"></span>Expanded</span>
-                <span><span class="lg-dot" style="background: #1e293b;"></span>Discovered</span>
-                <span><span class="lg-dot" style="background: #fff; border: 2px solid #cbd5e1;"></span>Undiscovered</span>
-                <span><span class="lg-dot" style="background: #fde68a; width: 14px; height: 14px; font-size: 9px; text-align: center; line-height: 14px; color: #92400e; font-weight: bold;">1</span>Discovery order</span>
-            </div>
-            <canvas id="traceChart"></canvas>
-            <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin: 10px 0;">
-                <button id="traceFirst" class="trace-btn">⏮</button>
-                <button id="tracePrev" class="trace-btn">◀ Prev</button>
-                <button id="tracePlay" class="trace-btn">▶ Play</button>
-                <button id="traceNext" class="trace-btn">Next ▶</button>
-                <button id="traceLast" class="trace-btn">⏭</button>
-            </div>
-            <div style="text-align: center; font-size: 13px; color: #64748b;" id="traceStepNo"></div>
-            <pre id="traceInfo" style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; line-height: 1.5; min-height: 6em; white-space: pre-wrap;"></pre>
+Adjacency lists (alphabetical):
+A: B, F, G
+B: A, C
+C: B, D, G
+D: C, E
+E: D, F, G
+F: A, E
+G: A, C, E</pre>
+            <p>
+                <strong>Idea of the construction:</strong> <code>s = B</code> is one of the two ring vertices that are not joined to the centre, so <code>G</code> is two edges away
+                (<code>B-A-G</code> or <code>B-C-G</code>). But the centre is the last letter: at <code>A</code> DFS prefers <code>F</code> over <code>G</code>,
+                at <code>E</code> it prefers <code>D</code> over <code>G</code>, so it walks almost the whole ring the long way round and reaches <code>G</code> only from <code>C</code>.
+            </p>
+            <div class="graph-card"><canvas id="v2Graph"></canvas></div>
+
+            <h3>2. Traces (until t is first discovered)</h3>
+            <div class="trace-widget" data-prefix="v2"></div>
+
+            <h3>3. Summary of Paths</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left;">
+                <thead>
+                <tr style="background: #e2e8f0; color: #333;">
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Run</th>
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Discovery Order</th>
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Path to t</th>
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Edges</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Alphabetical DFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">B, A, F, E, D, C, G</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">B-A-F-E-D-C-G</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1; color: #d97706; font-weight: bold;">6</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Alphabetical BFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">B, A, C, F, G</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">B-A-G</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Reverse-alphabetical DFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">B, C, G</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">B-C-G</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Reverse-alphabetical BFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">B, C, A, G</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">B-C-G</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <h3>4. Checks</h3>
+            <p>
+                <strong>All paths follow graph edges:</strong> the 6-edge path uses <code>B-A</code>, <code>A-F</code>, <code>F-E</code>, <code>E-D</code>, <code>D-C</code>, <code>C-G</code>;
+                the 2-edge paths use <code>B-A</code>, <code>A-G</code> and <code>B-C</code>, <code>C-G</code>. All of them are in the edge lists above.
+            </p>
+            <p>
+                <strong>Why no shorter path exists:</strong> <code>s ≠ t</code>, and <code>B</code>'s only neighbours are <code>A</code> and <code>C</code>, so there is no edge <code>B-G</code>.
+                The distance is at least 2, and <code>B-A-G</code> shows it is exactly 2. BFS confirms this: layer 1 is <code>{A, C}</code> and <code>G</code> appears in layer 2.
+            </p>
         </div>
 
-        <h3>3. Summary of Paths</h3>
-        <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left;">
-            <thead>
-            <tr style="background: #e2e8f0; color: #333;">
-                <th style="padding: 10px; border: 1px solid #cbd5e1;">Run</th>
-                <th style="padding: 10px; border: 1px solid #cbd5e1;">Discovery Order</th>
-                <th style="padding: 10px; border: 1px solid #cbd5e1;">Path to t</th>
-                <th style="padding: 10px; border: 1px solid #cbd5e1;">Edges</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Alphabetical DFS</strong></td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">A, B, C, D, E, H</td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">A-B-C-D-E-H</td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1; color: #d97706; font-weight: bold;">5</td>
-            </tr>
-            <tr style="background: #f8fafc;">
-                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Alphabetical BFS</strong></td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">A, B, G, C, F, H</td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">A-G-H</td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
-            </tr>
-            <tr>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Reverse-alphabetical DFS</strong></td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">A, G, H</td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">A-G-H</td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
-            </tr>
-            <tr style="background: #f8fafc;">
-                <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Reverse-alphabetical BFS</strong></td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">A, G, B, H</td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">A-G-H</td>
-                <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
-            </tr>
-            </tbody>
-        </table>
+        <!-- ===== Variant 3 ===== -->
+        <div id="v3Panel" class="variant-panel" style="display: none;">
+            <h3>1. The Graph</h3>
+            <p>
+                The wireframe of a cube: bottom face <code>A-B-C-D</code>, top face <code>E-F-G-H</code> and four vertical edges. 8 vertices, 12 edges, every vertex has degree 3.
+                <strong>Source</strong> <code>s = A</code>, <strong>target</strong> <code>t = F</code>.
+            </p>
+            <pre style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; line-height: 1.5;">
+Bottom face: A-B, B-C, C-D, A-D
+Top face:    E-F, F-G, G-H, E-H
+Verticals:   A-E, B-F, C-G, D-H
 
-        <h3>4. Checks</h3>
-        <p>
-            <strong>All paths follow graph edges:</strong> the 5-edge path uses <code>A-B</code>, <code>B-C</code>, <code>C-D</code>, <code>D-E</code>, <code>E-H</code>,
-            and the 2-edge path uses <code>A-G</code>, <code>G-H</code>. All seven are in the edge list above.
-        </p>
-        <p>
-            <strong>Why no shorter path exists:</strong> a path with 0 edges would require <code>s = t</code>, which is false. A path with 1 edge would require the edge <code>A-H</code>,
-            but <code>A</code>'s only neighbours are <code>B</code> and <code>G</code>. So the distance is at least 2, and <code>A-G-H</code> shows it is exactly 2.
-            BFS confirms this: layer 1 is <code>{B, G}</code> and <code>H</code> appears in layer 2.
-        </p>
+Adjacency lists (alphabetical):
+A: B, D, E
+B: A, C, F
+C: B, D, G
+D: A, C, H
+E: A, F, H
+F: B, E, G
+G: C, F, H
+H: D, E, G</pre>
+            <p>
+                <strong>Idea of the construction:</strong> <code>F</code> is diagonally across the front face from <code>A</code>, so it is two edges away (<code>A-B-F</code> or <code>A-E-F</code>).
+                Alphabetical DFS goes to <code>B</code>, but there it prefers <code>C</code> over <code>F</code>, and from then on it runs around the bottom face
+                (<code>C</code>, <code>D</code>), climbs to <code>H</code>, goes to <code>E</code> and only then reaches <code>F</code>.
+            </p>
+            <div class="graph-card"><canvas id="v3Graph"></canvas></div>
+
+            <h3>2. Traces (until t is first discovered)</h3>
+            <div class="trace-widget" data-prefix="v3"></div>
+
+            <h3>3. Summary of Paths</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; text-align: left;">
+                <thead>
+                <tr style="background: #e2e8f0; color: #333;">
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Run</th>
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Discovery Order</th>
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Path to t</th>
+                    <th style="padding: 10px; border: 1px solid #cbd5e1;">Edges</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Alphabetical DFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A, B, C, D, H, E, F</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A-B-C-D-H-E-F</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1; color: #d97706; font-weight: bold;">6</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Alphabetical BFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A, B, D, E, C, F</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A-B-F</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Reverse-alphabetical DFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A, E, H, G, F</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A-E-H-G-F</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1; color: #d97706; font-weight: bold;">4</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;"><strong>Reverse-alphabetical BFS</strong></td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A, E, D, B, H, F</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">A-E-F</td>
+                    <td style="padding: 10px; border: 1px solid #cbd5e1;">2</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <h3>4. Checks</h3>
+            <p>
+                <strong>All paths follow graph edges:</strong> the 6-edge path uses <code>A-B</code>, <code>B-C</code>, <code>C-D</code>, <code>D-H</code>, <code>H-E</code>, <code>E-F</code>;
+                the 4-edge path uses <code>A-E</code>, <code>E-H</code>, <code>H-G</code>, <code>G-F</code>; the 2-edge paths use <code>A-B</code>, <code>B-F</code> and <code>A-E</code>, <code>E-F</code>. All are cube edges.
+            </p>
+            <p>
+                <strong>Why no shorter path exists:</strong> <code>s ≠ t</code>, and <code>A</code>'s neighbours are <code>B</code>, <code>D</code>, <code>E</code>, so there is no edge <code>A-F</code>.
+                The distance is at least 2, and <code>A-B-F</code> shows it is exactly 2. BFS confirms this: layer 1 is <code>{B, D, E}</code> and <code>F</code> appears in layer 2.
+            </p>
+            <p>
+                <strong>Note:</strong> here even reverse-alphabetical DFS does not find a shortest path. From <code>A</code> it goes to <code>E</code>, but at <code>E</code> it tries
+                <code>H</code> before <code>F</code> and reaches <code>F</code> only after 4 edges. Changing the neighbour order did not "fix" DFS, it only picked a different detour.
+            </p>
+        </div>
 
         <h3>5. What Neighbour Order Can and Cannot Change</h3>
         <p style="line-height: 1.6;">
             <strong>What changes:</strong> neighbour order decides which unvisited vertex is explored next, so it changes the discovery order, the parent pointers and therefore the path
-            that gets reconstructed. For DFS the effect is dramatic: with alphabetical order DFS commits to the branch through <code>B</code> and reaches <code>H</code> after 5 edges,
-            while reverse order happens to pick <code>G</code> first and finds the 2-edge path. DFS gives no guarantee about path length, it returns whichever path its first deep dive hits.
-            For BFS, order only changes the tie-breaking between paths of equal length (and which vertices are discovered first inside a layer).
+            that gets reconstructed. For DFS the effect is dramatic: in all three variants alphabetical DFS commits to one branch and reaches <code>t</code> after 5 or 6 edges.
+            With reverse order it found a 2-edge path in variants 1 and 2, but a 4-edge path in variant 3. DFS gives no guarantee about path length, it returns whichever path its first deep dive hits.
+            For BFS, order only changes the tie-breaking between paths of equal length (for example <code>B-A-G</code> vs <code>B-C-G</code> in variant 2, <code>A-B-F</code> vs <code>A-E-F</code> in variant 3).
         </p>
         <p style="line-height: 1.6;">
             <strong>What does not change:</strong> the shortest-path distance is a property of the graph itself (the minimum number of edges over <em>all</em> s-t paths),
             not of the algorithm that explores it. Reordering neighbours does not add or remove any edge, so the set of possible paths, and the minimum of their lengths, stays the same.
-            That is why BFS, which explores layer by layer (all vertices at distance 1, then distance 2, ...), finds a 2-edge path in both orders.
+            That is why BFS, which explores layer by layer (all vertices at distance 1, then distance 2, ...), finds a 2-edge path in both orders in every variant.
         </p>
     </div>
 </details>
@@ -483,6 +633,9 @@ T: C(1), S(10)</pre>
                     ctx.fillStyle = COLORS.muted;
                     [[g.S, 'source'], [g.T, 'target']].forEach(([n, text]) => {
                         const p = px(chart, n);
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 4;
+                        ctx.strokeText(text, p.x, p.y + R + 14);
                         ctx.fillText(text, p.x, p.y + R + 14);
                     });
 
@@ -613,37 +766,56 @@ T: C(1), S(10)</pre>
         }
 
         // ================= T1 =================
-        // Long branch A-B-C-D-E-H lies on an arc over the top, short branch A-G-H runs along the bottom
-        const g1 = {
-            nodes: {
-                A: { x: 0.0, y: 2.0 },
-                B: { x: 0.6, y: 3.8 },
-                C: { x: 2.1, y: 4.8 },
-                D: { x: 3.9, y: 4.8 },
-                E: { x: 5.4, y: 3.8 },
-                F: { x: 2.55, y: 2.4 },
-                G: { x: 3.0, y: 0.0 },
-                H: { x: 6.0, y: 2.0 }
+        const variants = {
+            // Long branch A-B-C-D-E-H lies on an arc over the top, short branch A-G-H runs along the bottom
+            v1: {
+                nodes: {
+                    A: { x: 0.0, y: 2.0 },
+                    B: { x: 0.6, y: 3.8 },
+                    C: { x: 2.1, y: 4.8 },
+                    D: { x: 3.9, y: 4.8 },
+                    E: { x: 5.4, y: 3.8 },
+                    F: { x: 2.55, y: 2.4 },
+                    G: { x: 3.0, y: 0.0 },
+                    H: { x: 6.0, y: 2.0 }
+                },
+                edges: [['A','B'], ['A','G'], ['B','C'], ['C','D'], ['C','F'], ['D','E'], ['E','H'], ['F','G'], ['G','H']],
+                S: 'A', T: 'H',
+                x: [-0.5, 6.5], y: [-0.7, 5.6]
             },
-            edges: [['A','B'], ['A','G'], ['B','C'], ['C','D'], ['C','F'], ['D','E'], ['E','H'], ['F','G'], ['G','H']],
-            S: 'A', T: 'H',
-            x: [-0.5, 6.5], y: [-0.7, 5.6]
+            // Hexagon A-F with the centre G joined to A, C and E
+            v2: {
+                nodes: {
+                    A: { x: 1.3, y: 3.75 },
+                    B: { x: 3.0, y: 5.0 },
+                    C: { x: 4.7, y: 3.75 },
+                    D: { x: 4.7, y: 1.25 },
+                    E: { x: 3.0, y: 0.0 },
+                    F: { x: 1.3, y: 1.25 },
+                    G: { x: 3.0, y: 2.5 }
+                },
+                edges: [['A','B'], ['B','C'], ['C','D'], ['D','E'], ['E','F'], ['A','F'], ['A','G'], ['C','G'], ['E','G']],
+                S: 'B', T: 'G',
+                x: [-0.5, 6.5], y: [-0.7, 5.6]
+            },
+            // Cube in oblique projection: bottom face A-B-C-D, top face E-F-G-H
+            v3: {
+                nodes: {
+                    A: { x: 0.8, y: 0.0 },
+                    B: { x: 4.0, y: 0.0 },
+                    C: { x: 5.5, y: 1.4 },
+                    D: { x: 2.3, y: 1.4 },
+                    E: { x: 0.8, y: 3.4 },
+                    F: { x: 4.0, y: 3.4 },
+                    G: { x: 5.5, y: 4.8 },
+                    H: { x: 2.3, y: 4.8 }
+                },
+                edges: [['A','B'], ['B','C'], ['C','D'], ['A','D'], ['E','F'], ['F','G'], ['G','H'], ['E','H'],
+                        ['A','E'], ['B','F'], ['C','G'], ['D','H']],
+                S: 'A', T: 'F',
+                x: [-0.5, 6.5], y: [-0.7, 5.6]
+            }
         };
-
-        // Overview graph
-        const dfsPath = ['A', 'B', 'C', 'D', 'E', 'H'];
-        const shortPath = ['A', 'G', 'H'];
-        graphChart(document.getElementById('t1Graph'), g1, () => ({
-            edge: (u, v) => {
-                if (onPath(shortPath, u, v)) return { color: COLORS.short, width: 5, glow: true, label: 'Shortest path (2 edges)' };
-                if (onPath(dfsPath, u, v)) return { color: COLORS.path, width: 5, glow: true, label: 'Alphabetical DFS path (5 edges)' };
-                return { color: '#cbd5e1', width: 2.5, label: 'Other edges' };
-            },
-            node: n => n === g1.S || n === g1.T ? { fill: '#ffffff', stroke: COLORS.ink, text: COLORS.ink } : plainNode
-        }), overviewLegend);
-
-        // Step-by-step traces
-        const adj1 = adjacency(g1);
 
         // Snapshot of the search state for one step
         const snap = (st, extra) => ({
@@ -654,8 +826,8 @@ T: C(1), S(10)</pre>
             ...extra
         });
 
-        function finish(steps, st) {
-            const path = reconstruct(g1, st.parents);
+        function finish(g, steps, st) {
+            const path = reconstruct(g, st.parents);
             steps.push(snap(st, {
                 path,
                 msg: `Reconstruct via parents: ${[...path].reverse().join(' ← ')}\nPath: ${path.join(' - ')} (${path.length - 1} edges)`
@@ -664,9 +836,9 @@ T: C(1), S(10)</pre>
         }
 
         // Recursive-style DFS, marks vertices when discovered, stops when t is discovered
-        function traceDfs(reverse) {
-            const S = g1.S, T = g1.T;
-            const order = n => { const l = adj1[n].map(e => e[0]); return reverse ? l.reverse() : l; };
+        function traceDfs(g, adj, reverse) {
+            const S = g.S, T = g.T;
+            const order = n => { const l = adj[n].map(e => e[0]); return reverse ? l.reverse() : l; };
             const st = { discovered: [S], parents: {}, frontier: [S] };
             const steps = [snap(st, { current: S, msg: `Start: discover s = ${S}, call dfs(${S})` })];
             let found = false;
@@ -694,13 +866,13 @@ T: C(1), S(10)</pre>
                 }
             }
             dfs(S);
-            return finish(steps, st);
+            return finish(g, steps, st);
         }
 
         // BFS with a FIFO queue, marks vertices when discovered, stops when t is discovered
-        function traceBfs(reverse) {
-            const S = g1.S, T = g1.T;
-            const order = n => { const l = adj1[n].map(e => e[0]); return reverse ? l.reverse() : l; };
+        function traceBfs(g, adj, reverse) {
+            const S = g.S, T = g.T;
+            const order = n => { const l = adj[n].map(e => e[0]); return reverse ? l.reverse() : l; };
             const st = { discovered: [S], parents: {}, frontier: [S] };
             const steps = [snap(st, { msg: `Start: discover s = ${S}, queue = [${S}]` })];
 
@@ -716,7 +888,7 @@ T: C(1), S(10)</pre>
                     st.parents[v] = u;
                     if (v === T) {
                         steps.push(snap(st, { current: u, edge: [u, v], msg: `${u}: discover ${v}(${u})\nt = ${T} discovered, stop` }));
-                        return finish(steps, st);
+                        return finish(g, steps, st);
                     }
                     st.frontier.push(v);
                     steps.push(snap(st, { current: u, edge: [u, v], msg: `${u}: discover ${v}(${u}), enqueue` }));
@@ -724,16 +896,6 @@ T: C(1), S(10)</pre>
             }
             return steps;
         }
-
-        const t1 = {
-            runs: [
-                { name: '(1) Alphabetical DFS', kind: 'Stack', steps: traceDfs(false) },
-                { name: '(2) Alphabetical BFS', kind: 'Queue', steps: traceBfs(false) },
-                { name: '(3) Reverse-alphabetical DFS', kind: 'Stack', steps: traceDfs(true) },
-                { name: '(4) Reverse-alphabetical BFS', kind: 'Queue', steps: traceBfs(true) }
-            ],
-            run: 0, step: 0
-        };
 
         function edgeStyle1(s, u, v) {
             if (onPath(s.path, u, v)) return { color: COLORS.path, width: 5, glow: true };
@@ -749,24 +911,84 @@ T: C(1), S(10)</pre>
             return { fill: '#ffffff', stroke: '#cbd5e1', text: COLORS.muted };
         }
 
-        const traceChart = graphChart(document.getElementById('traceChart'), g1, () => {
-            const s = cur(t1);
-            const badges = {};
-            s.discovered.forEach((n, i) => badges[n] = { text: String(i + 1) });
-            return {
-                edge: (u, v) => edgeStyle1(s, u, v),
-                node: n => nodeStyle1(s, n),
-                arrows: Object.entries(s.parents).map(([c, p]) => [c, p, edgeStyle1(s, c, p).color]),
-                badges
+        // Markup of one trace viewer: tabs, legend, canvas, buttons, info box
+        const traceWidgetHtml = p => `
+            <div id="${p}Tabs" style="display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 2px solid #e2e8f0; margin-bottom: 12px;"></div>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; font-size: 12px; color: #475569; margin-bottom: 4px;">
+                <span><span class="lg-line" style="background: #3b82f6;"></span>Parent pointer</span>
+                <span><span class="lg-line" style="background: #f59e0b;"></span>Examined edge</span>
+                <span><span class="lg-line" style="background: #ef4444;"></span>Path to t</span>
+                <span><span class="lg-dot" style="background: #f59e0b;"></span>Expanded</span>
+                <span><span class="lg-dot" style="background: #1e293b;"></span>Discovered</span>
+                <span><span class="lg-dot" style="background: #fff; border: 2px solid #cbd5e1;"></span>Undiscovered</span>
+                <span><span class="lg-pill" style="background: #fde68a; color: #92400e;">1</span>Discovery order</span>
+            </div>
+            <canvas id="${p}Chart"></canvas>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin: 10px 0;">
+                <button id="${p}First" class="trace-btn">⏮</button>
+                <button id="${p}Prev" class="trace-btn">◀ Prev</button>
+                <button id="${p}Play" class="trace-btn">▶ Play</button>
+                <button id="${p}Next" class="trace-btn">Next ▶</button>
+                <button id="${p}Last" class="trace-btn">⏭</button>
+            </div>
+            <div style="text-align: center; font-size: 13px; color: #64748b;" id="${p}StepNo"></div>
+            <pre id="${p}Info" style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; line-height: 1.5; min-height: 6em; white-space: pre-wrap;"></pre>`;
+
+        Object.entries(variants).forEach(([p, g]) => {
+            const adj = adjacency(g);
+            const state = {
+                runs: [
+                    { name: '(1) Alphabetical DFS', kind: 'Stack', steps: traceDfs(g, adj, false) },
+                    { name: '(2) Alphabetical BFS', kind: 'Queue', steps: traceBfs(g, adj, false) },
+                    { name: '(3) Reverse-alphabetical DFS', kind: 'Stack', steps: traceDfs(g, adj, true) },
+                    { name: '(4) Reverse-alphabetical BFS', kind: 'Queue', steps: traceBfs(g, adj, true) }
+                ],
+                run: 0, step: 0
             };
+
+            // Overview graph: final paths of alphabetical DFS and alphabetical BFS
+            const finalPath = run => run.steps[run.steps.length - 1].path;
+            const dfsPath = finalPath(state.runs[0]), bfsPath = finalPath(state.runs[1]);
+            graphChart(document.getElementById(p + 'Graph'), g, () => ({
+                edge: (u, v) => {
+                    if (onPath(bfsPath, u, v)) return { color: COLORS.short, width: 5, glow: true, label: `Shortest path (${bfsPath.length - 1} edges)` };
+                    if (onPath(dfsPath, u, v)) return { color: COLORS.path, width: 5, glow: true, label: `Alphabetical DFS path (${dfsPath.length - 1} edges)` };
+                    return { color: '#cbd5e1', width: 2.5, label: 'Other edges' };
+                },
+                node: n => n === g.S || n === g.T ? { fill: '#ffffff', stroke: COLORS.ink, text: COLORS.ink } : plainNode
+            }), overviewLegend);
+
+            // Step-by-step trace viewer
+            const holder = document.querySelector(`.trace-widget[data-prefix="${p}"]`);
+            holder.innerHTML = traceWidgetHtml(p);
+            const chart = graphChart(document.getElementById(p + 'Chart'), g, () => {
+                const s = cur(state);
+                const badges = {};
+                s.discovered.forEach((n, i) => badges[n] = { text: String(i + 1) });
+                return {
+                    edge: (u, v) => edgeStyle1(s, u, v),
+                    node: n => nodeStyle1(s, n),
+                    arrows: Object.entries(s.parents).map(([c, par]) => [c, par, edgeStyle1(s, c, par).color]),
+                    badges
+                };
+            });
+
+            stepper(p, state, chart, (run, s) => {
+                const parents = Object.entries(s.parents).map(([c, par]) => `${c}←${par}`).join(', ') || '—';
+                return `${s.msg}\n\n` +
+                    `${run.kind}:      [${s.frontier.join(', ')}]\n` +
+                    `Discovered: ${s.discovered.join(', ')}\n` +
+                    `Parents:    ${parents}`;
+            });
         });
 
-        stepper('trace', t1, traceChart, (run, s) => {
-            const parents = Object.entries(s.parents).map(([c, p]) => `${c}←${p}`).join(', ') || '—';
-            return `${s.msg}\n\n` +
-                `${run.kind}:      [${s.frontier.join(', ')}]\n` +
-                `Discovered: ${s.discovered.join(', ')}\n` +
-                `Parents:    ${parents}`;
+        // Variant tabs
+        const variantTabs = [...document.getElementById('t1Variants').children];
+        variantTabs.forEach(tab => tab.onclick = () => {
+            variantTabs.forEach(t => {
+                t.classList.toggle('active', t === tab);
+                document.getElementById(t.dataset.panel).style.display = t === tab ? '' : 'none';
+            });
         });
 
         // ================= T3 =================
