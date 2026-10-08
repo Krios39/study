@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shader Playground - Mondrian &amp; Gray-Scott</title>
+<style>
+:root{--bg:#fff;--panel:#f8fafc;--line:#e2e8f0;--fg:#111;--dim:#4b5563;--acc:#2563eb}
+*{box-sizing:border-box}
+body{margin:40px auto;max-width:1280px;padding:0 20px;background:var(--bg);color:var(--fg);font:15px/1.6 Arial,Helvetica,sans-serif}
+header{padding:0 0 4px}
+h1{margin:0 0 12px;font-size:22px;border-bottom:1px solid #ccc;padding-bottom:10px}
+header p{margin:8px 0 0;color:var(--dim);font-size:14px}
+nav{display:flex;gap:4px;margin-top:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+nav button{background:none;border:0;border-bottom:3px solid transparent;color:var(--dim);font:inherit;font-weight:600;padding:8px 14px;cursor:pointer}
+nav button:hover{background:var(--panel)}
+nav button.on{color:var(--fg);border-color:var(--acc)}
+.tab{display:none;padding:20px 0 40px}
+.tab.on{display:block}
+h2{font-size:18px;margin:0 0 8px}
+.note{color:var(--dim);font-size:14px;margin:0 0 16px;max-width:900px}
+.triple{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+figure{margin:0}
+figure canvas,.cssM{display:block;width:100%;height:auto;aspect-ratio:1;background:#000;border:1px solid #d0d7de;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+figcaption{color:#57606a;font-size:13px;margin-top:8px;text-align:center;font-style:italic}
+.bar-row,.row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:16px}
+label{font-size:13px;color:var(--dim);display:flex;gap:8px;align-items:center}
+label b{color:var(--fg);font-weight:600;min-width:46px;display:inline-block}
+input[type=range]{width:150px;accent-color:var(--acc)}
+input[type=radio]{accent-color:var(--acc)}
+select{background:#fff;color:var(--fg);border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;font:inherit;font-size:13px}
+button.btn{background:#fff;color:var(--acc);border:1px solid #bfd6fb;border-radius:6px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+button.btn:hover{background:#f0f6ff;border-color:var(--acc)}
+#bRun,#gsPause{background:var(--acc);color:#fff;border-color:var(--acc)}
+#bRun:hover,#gsPause:hover{background:#1d4ed8}
+button.btn:disabled{opacity:.5;cursor:default}
+.err{background:#fdecec;border:1px solid #f5b5b5;color:#9b1c1c;padding:10px 12px;border-radius:6px;font-size:13px;margin-top:8px}
+.cssM{display:grid;grid-template-columns:22fr 52fr 14fr 12fr;grid-template-rows:20fr 25fr 33fr 22fr;gap:8px;background:#111}
+.cssM div{background:#f2efe6}
+.cssM .r{background:#c8281f}.cssM .y{background:#f5d01e}.cssM .b{background:#1a45a0}
+.gs{display:grid;grid-template-columns:minmax(300px,640px) minmax(280px,1fr);gap:24px;align-items:start}
+.gs canvas{width:100%;aspect-ratio:1;background:#000;display:block;touch-action:none;cursor:crosshair;border:1px solid #d0d7de;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.panel{background:#fff;border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:6px;padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.panel .grp{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.panel hr{border:0;border-top:1px solid #f1f5f9;width:100%;margin:2px 0}
+.stat{font:12.5px Consolas,ui-monospace,monospace;color:var(--dim);margin-top:8px;min-height:36px}
+table{border-collapse:collapse;width:100%;max-width:900px;font:13px Consolas,ui-monospace,monospace;margin:15px 0}
+th,td{padding:6px 10px;border:1px solid #ddd;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:#2d2d2d;color:#fff;font-weight:600;border-color:#444}
+tr:nth-child(odd) td{background:#f9f9f9}
+.bar{height:10px;background:var(--acc);border-radius:3px;min-width:2px}
+td.barcell{width:30%;text-align:left}
+ul.insights{color:var(--dim);font-size:14px;max-width:900px;padding-left:20px}
+ul.insights li{margin-bottom:4px}
+code{background:#f1f5f9;padding:1px 5px;border-radius:4px;font:12.5px Consolas,monospace}
+@media (max-width:760px){.gs{grid-template-columns:1fr}body{margin:20px auto;padding:0 16px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Shader Playground</h1>
+  <p>Task A (Piet Mondrian) and Task C (physics simulation on the GPU), one file, plain JavaScript + WebGL2, no libraries.</p>
+</header>
+<nav>
+  <button data-tab="A" class="on">A - Mondrian</button>
+  <button data-tab="C">C - Gray-Scott simulation</button>
+  <button data-tab="D">Bonus - CPU workers vs GPU</button>
+</nav>
+
+<!-- ======================= TASK A ======================= -->
+<section id="tab-A" class="tab on">
+  <h2>A - Piet Mondrian, three ways</h2>
+  <p class="note">One composition, stored as plain data (rectangles + colours). The same <code>rect(st, pos, size)</code> idea is evaluated three times: by a GLSL fragment shader on the GPU, by the identical algorithm in JavaScript on the CPU (per pixel), and by CSS grid. Sliders affect the first two.</p>
+  <div class="bar-row">
+    <label>edge softness <input type="range" id="mAA" min="0.0005" max="0.02" step="0.0005" value="0.0008"><b id="mAAV"></b></label>
+    <label>paper grain <input type="range" id="mGrain" min="0" max="0.12" step="0.005" value="0.04"><b id="mGrainV"></b></label>
+    <button class="btn" id="saveGL">Save GLSL PNG</button>
+    <button class="btn" id="saveCPU">Save CPU PNG</button>
+  </div>
+  <div class="triple">
+    <figure>
+      <canvas id="glM" width="600" height="600"></canvas>
+      <figcaption>1. GLSL fragment shader (WebGL2). JS only uploads the rectangle list as uniform arrays; the shader loops over it for every pixel.</figcaption>
+    </figure>
+    <figure>
+      <canvas id="cpuM" width="600" height="600"></canvas>
+      <figcaption id="cpuCap">2. The same shader logic as a JS function over ImageData.</figcaption>
+    </figure>
+    <figure>
+      <div class="cssM">
+        <div style="grid-area:1/1/3/2"></div>
+        <div class="r" style="grid-area:1/2/3/3"></div>
+        <div class="y" style="grid-area:1/3/2/5"></div>
+        <div style="grid-area:2/3/4/5"></div>
+        <div class="b" style="grid-area:3/1/5/2"></div>
+        <div style="grid-area:3/2/4/3"></div>
+        <div style="grid-area:4/2/5/4"></div>
+        <div class="b" style="grid-area:4/4/5/5"></div>
+      </div>
+      <figcaption>3. Pure CSS: a 4x4 grid, <code>gap</code> on a black background draws the lines. Zero JS, the joke version.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="tab-C" class="tab">
+  <h2>C - Gray-Scott reaction-diffusion on the GPU</h2>
+  <p class="note">Two chemicals A and B live in the RG channels of a float texture. A fragment shader computes one time step per pixel, the result goes into a second texture, then the two swap (ping-pong). JavaScript only drives the loop, mouse and uniforms. Enhancements over the textbook version: parameter map, walls (absorbing or reflecting), anisotropic diffusion, relief rendering.</p>
+  <div class="gs">
+    <div>
+      <canvas id="gsCanvas" width="512" height="512"></canvas>
+      <div class="stat" id="gsStat"></div>
+      <div class="stat" id="gsHover"></div>
+    </div>
+    <div class="panel" id="gsPanel">
+      <div class="grp">
+        <label>f/k mode
+          <select id="gsMode"><option value="0">uniform (sliders)</option><option value="1">map (k to the right, f up)</option></select>
+        </label>
+        <label>grid <select id="gsSize"><option>256</option><option selected>512</option><option>1024</option></select></label>
+      </div>
+      <div class="grp">
+        <label>feed f <input type="range" id="gsF" min="0.010" max="0.090" step="0.0005" value="0.0545"><b id="gsFV"></b></label>
+        <label>kill k <input type="range" id="gsK" min="0.040" max="0.075" step="0.0005" value="0.062"><b id="gsKV"></b></label>
+      </div>
+      <div class="grp">
+        <span style="font-size:13px;color:var(--dim)">presets (approx.):</span>
+        <button class="btn" data-f="0.0545" data-k="0.062">coral</button>
+        <button class="btn" data-f="0.0367" data-k="0.0649">mitosis</button>
+        <button class="btn" data-f="0.029" data-k="0.057">maze</button>
+      </div>
+      <hr>
+      <div class="grp">
+        <label>Da <input type="range" id="gsDa" min="0.5" max="1.2" step="0.01" value="1"><b id="gsDaV"></b></label>
+        <label>Db <input type="range" id="gsDb" min="0.2" max="0.7" step="0.01" value="0.5"><b id="gsDbV"></b></label>
+      </div>
+      <div class="grp">
+        <label>anisotropy <input type="range" id="gsAniso" min="-0.8" max="0.8" step="0.05" value="0"><b id="gsAnisoV"></b></label>
+        <label>steps/frame <input type="range" id="gsSteps" min="1" max="30" step="1" value="10"><b id="gsStepsV"></b></label>
+      </div>
+      <hr>
+      <div class="grp">
+        <span style="font-size:13px;color:var(--dim)">mouse:</span>
+        <label><input type="radio" name="brush" value="1" checked> seed B</label>
+        <label><input type="radio" name="brush" value="2"> draw wall</label>
+        <label><input type="radio" name="brush" value="3"> erase wall</label>
+      </div>
+      <div class="grp">
+        <label>brush <input type="range" id="gsRadius" min="2" max="40" step="1" value="10"><b id="gsRadiusV"></b></label>
+        <label>walls <select id="gsWall"><option value="0">absorbing</option><option value="1">reflecting</option></select></label>
+        <label>view <select id="gsView"><option value="0">thermal</option><option value="1" selected>relief</option><option value="2">grayscale B</option></select></label>
+      </div>
+      <hr>
+      <div class="grp">
+        <button class="btn" id="gsPause">Pause</button>
+        <button class="btn" id="gsReset">Reset (keep walls)</button>
+        <button class="btn" id="gsClear">Clear all</button>
+        <button class="btn" id="gsSave">Save PNG</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-D" class="tab">
+  <h2>Bonus - the same simulation on CPU workers and on the GPU</h2>
+  <p class="note">Identical Gray-Scott step, identical start state. The CPU version splits the grid into horizontal strips, one Web Worker per strip. Each worker gets its strip plus a halo of 10 rows on both sides and runs 10 steps before the strips are stitched back together (the halo shrinks by one valid row per step, so the core stays exact). The GPU runs the pixel shader.</p>
+  <div class="bar-row">
+    <label>grid <select id="bGrid"><option>256</option><option selected>512</option><option>1024</option></select></label>
+    <label>steps <select id="bSteps"><option>50</option><option selected>100</option><option>200</option></select></label>
+    <button class="btn" id="bRun">Run benchmark</button>
+    <span id="bStatus" style="color:var(--dim);font-size:13px"></span>
+  </div>
+  <div id="bOut"></div>
+  <ul class="insights">
+    <li>Bars use a log scale, otherwise the CPU rows would be invisible next to the GPU.</li>
+    <li>Workers cannot share memory here: <code>SharedArrayBuffer</code> needs cross-origin isolation, which a double-clicked <code>file://</code> page does not have. So data is copied each round, and that copy is part of the CPU time.</li>
+    <li>The GPU time includes a 1-pixel <code>readPixels</code> at the end, which forces the queued work to finish; without it the timer would only measure command submission.</li>
+  </ul>
+</section>
+
+<script>
+'use strict';
+
+
+function mulberry32(a){return function(){var t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+
+function makeInitialAB(W,H,seed){
+  const a=new Float32Array(W*H).fill(1), b=new Float32Array(W*H);
+  const rnd=mulberry32(seed>>>0), blobs=Math.round(W*H/4000);
+  for(let n=0;n<blobs;n++){
+    const cx=(rnd()*W)|0, cy=(rnd()*H)|0, r=3+((rnd()*4)|0);
+    for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+      if(dx*dx+dy*dy>r*r)continue;
+      const x=(cx+dx+W)%W, y=(cy+dy+H)%H;
+      a[y*W+x]=0.5; b[y*W+x]=1;
+    }
+  }
+  return {a:a,b:b};
+}
+
+
+function gsKernel(a,b,W,R,steps,f,k,da,db){
+  let a2=new Float32Array(a.length), b2=new Float32Array(b.length);
+  for(let s=0;s<steps;s++){
+    for(let y=1;y<R-1;y++){
+      const r0=(y-1)*W, r1=y*W, r2=(y+1)*W;
+      for(let x=0;x<W;x++){
+        const xl=x===0?W-1:x-1, xr=x===W-1?0:x+1, i=r1+x;
+        const A=a[i], B=b[i];
+        const lapA=-A+0.2*(a[r1+xl]+a[r1+xr]+a[r0+x]+a[r2+x])+0.05*(a[r0+xl]+a[r0+xr]+a[r2+xl]+a[r2+xr]);
+        const lapB=-B+0.2*(b[r1+xl]+b[r1+xr]+b[r0+x]+b[r2+x])+0.05*(b[r0+xl]+b[r0+xr]+b[r2+xl]+b[r2+xr]);
+        const r=A*B*B;
+        const na=A+da*lapA-r+f*(1-A), nb=B+db*lapB+r-(k+f)*B;
+        a2[i]=na<0?0:na>1?1:na;
+        b2[i]=nb<0?0:nb>1?1:nb;
+      }
+    }
+    let t=a;a=a2;a2=t; t=b;b=b2;b2=t;
+  }
+  return [a,b];
+}
+
+function stripBounds(H,n,i){const per=Math.floor(H/n);return [i*per,i===n-1?H:(i+1)*per];}
+
+function makeStripJob(A,B,W,H,y0,y1,S){
+  const core=y1-y0, R=core+2*S;
+  const sa=new Float32Array(R*W), sb=new Float32Array(R*W);
+  for(let r=0;r<R;r++){
+    const sy=(((y0-S+r)%H)+H)%H;
+    sa.set(A.subarray(sy*W,sy*W+W),r*W);
+    sb.set(B.subarray(sy*W,sy*W+W),r*W);
+  }
+  return {a:sa,b:sb,W:W,R:R,S:S,core:core};
+}
+
+const $=s=>document.querySelector(s);
+const VERT=`#version 300 es
+void main(){
+  vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));
+  gl_Position=vec4(p*2.0-1.0,0.0,1.0);
+}`;
+
+function makeProgram(gl,fsSrc){
+  const mk=(type,src)=>{
+    const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  };
+  const p=gl.createProgram();
+  gl.attachShader(p,mk(gl.VERTEX_SHADER,VERT));
+  gl.attachShader(p,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
+  p.u={};
+  const n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);
+  for(let i=0;i<n;i++){const info=gl.getActiveUniform(p,i);p.u[info.name.replace(/\[0\]$/,'')]=gl.getUniformLocation(p,info.name);}
+  return p;
+}
+function showError(el,msg){el.insertAdjacentHTML('afterend','<div class="err">'+msg+'</div>');}
+function savePNG(cv,name){const a=document.createElement('a');a.download=name;a.href=cv.toDataURL('image/png');a.click();}
+function bind(id,fn,fmt){
+  const el=$('#'+id), lab=$('#'+id+'V');
+  const upd=()=>{
+    const v=el.type==='range'?parseFloat(el.value):parseInt(el.value,10);
+    if(lab)lab.textContent=fmt?fmt(v):v;
+    fn(v);
+  };
+  el.addEventListener('input',upd);upd();return el;
+}
+
+
+const T=0.018, V1=0.22, V2=0.74, V3=0.90, H1=0.20, H2=0.66, H3=0.86, H4=0.45;
+const PAPER=[0.95,0.94,0.90];
+const COLORS={red:[0.78,0.11,0.10],yellow:[0.97,0.82,0.12],blue:[0.10,0.27,0.60],black:[0.07,0.07,0.07]};
+const SHAPES=[
+  [V1+T, H1+T, V2-V1-T, H2-H1-T, 'red'],
+  [V2+T, 0,    1-V2-T,  H1,      'yellow'],
+  [0,    H2+T, V1,      1-H2-T,  'blue'],
+  [V3+T, H3+T, 1-V3-T,  1-H3-T,  'blue'],
+  [V1, 0,  T,    1,     'black'],
+  [V2, 0,  T,    1,     'black'],
+  [V3, H1, T,    1-H1,  'black'],
+  [0,  H1, 1,    T,     'black'],
+  [0,  H2, V2,   T,     'black'],
+  [V1, H3, 1-V1, T,     'black'],
+  [V2, H4, 1-V2, T,     'black']
+];
+
+const MOND_FS=N=>`#version 300 es
+precision highp float;
+#define N ${N}
+uniform vec2 uRes;
+uniform vec4 uRect[N];   // x, y, w, h  (origin top-left, 0..1)
+uniform vec3 uCol[N];
+uniform vec3 uPaper;
+uniform float uAA;
+uniform float uGrain;
+out vec4 outColor;
+
+// 1.0 inside the rectangle, 0.0 outside, soft edge of width ~uAA
+float rect(vec2 st, vec2 pos, vec2 size, float aa){
+  vec2 lo = smoothstep(pos - aa, pos + aa, st);
+  vec2 hi = 1.0 - smoothstep(pos + size - aa, pos + size + aa, st);
+  vec2 m = lo * hi;
+  return m.x * m.y;
+}
+float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+
+void main(){
+  vec2 st = gl_FragCoord.xy / uRes;
+  st.y = 1.0 - st.y;                       // flip: GL origin is bottom-left
+  vec3 c = uPaper;
+  for (int i = 0; i < N; i++)
+    c = mix(c, uCol[i], rect(st, uRect[i].xy, uRect[i].zw, uAA));
+  c += (hash(gl_FragCoord.xy) - 0.5) * uGrain;
+  outColor = vec4(c, 1.0);
+}`;
+
+let mondGL=null;
+function initMondrianGL(){
+  const cv=$('#glM');
+  const gl=cv.getContext('webgl2',{preserveDrawingBuffer:true});
+  if(!gl){showError(cv,'WebGL2 is not available in this browser.');return null;}
+  const N=SHAPES.length, pr=makeProgram(gl,MOND_FS(N));
+  const rects=new Float32Array(N*4), cols=new Float32Array(N*3);
+  SHAPES.forEach((s,i)=>{rects.set(s.slice(0,4),i*4);cols.set(COLORS[s[4]],i*3);});
+  return (aa,grain)=>{
+    gl.viewport(0,0,cv.width,cv.height);gl.useProgram(pr);
+    const u=pr.u;
+    gl.uniform2f(u.uRes,cv.width,cv.height);
+    gl.uniform4fv(u.uRect,rects);gl.uniform3fv(u.uCol,cols);gl.uniform3fv(u.uPaper,PAPER);
+    gl.uniform1f(u.uAA,aa);gl.uniform1f(u.uGrain,grain);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+  };
+}
+
+const smoothstep=(e0,e1,x)=>{const t=Math.min(1,Math.max(0,(x-e0)/(e1-e0)));return t*t*(3-2*t);};
+function rectMask(sx,sy,x,y,w,h,aa){
+  return smoothstep(x-aa,x+aa,sx)*(1-smoothstep(x+w-aa,x+w+aa,sx))
+        *smoothstep(y-aa,y+aa,sy)*(1-smoothstep(y+h-aa,y+h+aa,sy));
+}
+function renderCPU(aa,grain){
+  const cv=$('#cpuM'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  const img=ctx.createImageData(W,H),d=img.data,t0=performance.now();
+  const sh=SHAPES.map(s=>({x:s[0],y:s[1],w:s[2],h:s[3],c:COLORS[s[4]]}));
+  for(let y=0;y<H;y++){
+    const sy=(y+0.5)/H;
+    for(let x=0;x<W;x++){
+      const sx=(x+0.5)/W;
+      let r=PAPER[0],g=PAPER[1],b=PAPER[2];
+      for(const s of sh){
+        if(sx<s.x-aa||sx>s.x+s.w+aa||sy<s.y-aa||sy>s.y+s.h+aa)continue;
+        const m=rectMask(sx,sy,s.x,s.y,s.w,s.h,aa);
+        r+=(s.c[0]-r)*m;g+=(s.c[1]-g)*m;b+=(s.c[2]-b)*m;
+      }
+      const hh=Math.sin((x+0.5)*12.9898+(H-y-0.5)*78.233)*43758.5453;
+      const n=(hh-Math.floor(hh)-0.5)*grain, i=(y*W+x)*4;
+      d[i]=(r+n)*255;d[i+1]=(g+n)*255;d[i+2]=(b+n)*255;d[i+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+  $('#cpuCap').textContent='2. The same shader logic as a JS function over ImageData: '+(performance.now()-t0).toFixed(0)+' ms for '+(W*H)+' pixels x '+sh.length+' rects, on one CPU thread.';
+}
+
+(function setupA(){
+  mondGL=initMondrianGL();
+  let aa=0.0008,grain=0.04,queued=false;
+  const redraw=()=>{if(mondGL)mondGL(aa,grain);};
+  const redrawCPU=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;renderCPU(aa,grain);});};
+  bind('mAA',v=>{aa=v;redraw();redrawCPU();},v=>v.toFixed(4));
+  bind('mGrain',v=>{grain=v;redraw();redrawCPU();},v=>v.toFixed(3));
+  $('#saveGL').onclick=()=>{redraw();savePNG($('#glM'),'mondrian_glsl.png');};
+  $('#saveCPU').onclick=()=>savePNG($('#cpuM'),'mondrian_cpu.png');
+})();
+
+const FR=[0.010,0.080], KR=[0.045,0.070];
+
+const SIM_FS=`#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uState;
+uniform ivec2 uSize;
+uniform float uF,uK,uDa,uDb,uDt,uAniso;
+uniform int uMap;            // 0: uniform f,k   1: f,k vary over the grid
+uniform vec2 uFRange,uKRange;
+uniform int uReflect;        // walls: 0 absorbing, 1 reflecting
+uniform vec4 uBrush;         // segment x0,y0,x1,y1 in grid pixels
+uniform float uBrushR;
+uniform int uBrushMode;      // 0 none, 1 seed B, 2 draw wall, 3 erase wall
+out vec4 o;
+
+// neighbour value; walls either absorb (A=1,B=0) or reflect (copy of centre = zero flux)
+vec2 nb(ivec2 q, vec2 centre){
+  vec4 v = texelFetch(uState, (q + uSize) % uSize, 0);
+  if (v.b > 0.5) return (uReflect == 1) ? centre : vec2(1.0, 0.0);
+  return v.rg;
+}
+
+void main(){
+  ivec2 p = ivec2(gl_FragCoord.xy);
+  vec4 c = texelFetch(uState, p, 0);
+  float wall = c.b;
+  vec2 ab = c.rg, nx = vec2(1.0, 0.0);
+
+  if (wall < 0.5) {
+    float wh = 0.2 * (1.0 + uAniso), wv = 0.2 * (1.0 - uAniso);   // horizontal / vertical weights
+    vec2 lap = -ab
+      + wh * (nb(p + ivec2(-1, 0), ab) + nb(p + ivec2(1, 0), ab))
+      + wv * (nb(p + ivec2(0, -1), ab) + nb(p + ivec2(0, 1), ab))
+      + 0.05 * (nb(p + ivec2(-1,-1), ab) + nb(p + ivec2(1,-1), ab)
+              + nb(p + ivec2(-1, 1), ab) + nb(p + ivec2(1, 1), ab));
+
+    float f = uF, k = uK;
+    if (uMap == 1) {
+      vec2 uv = (vec2(p) + 0.5) / vec2(uSize);
+      k = mix(uKRange.x, uKRange.y, uv.x);
+      f = mix(uFRange.x, uFRange.y, uv.y);
+    }
+    float A = ab.x, B = ab.y, r = A * B * B;
+    nx = ab + uDt * vec2(uDa * lap.x - r + f * (1.0 - A),
+                         uDb * lap.y + r - (k + f) * B);
+    nx = clamp(nx, 0.0, 1.0);
+  }
+
+  if (uBrushMode > 0) {
+    vec2 a = uBrush.xy, b = uBrush.zw, q = vec2(p) + 0.5, ba = b - a;
+    float t = clamp(dot(q - a, ba) / max(dot(ba, ba), 1e-6), 0.0, 1.0);
+    if (length(q - (a + ba * t)) < uBrushR) {
+      if (uBrushMode == 1 && wall < 0.5) nx = vec2(0.5, 1.0);
+      else if (uBrushMode == 2) { wall = 1.0; nx = vec2(1.0, 0.0); }
+      else if (uBrushMode == 3) wall = 0.0;
+    }
+  }
+  o = vec4(nx, wall, 1.0);
+}`;
+
+const DRAW_FS=`#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uState;
+uniform ivec2 uSize;
+uniform int uView;           // 0 thermal, 1 relief, 2 grayscale
+out vec4 o;
+
+vec3 pal(float v){
+  vec3 c1=vec3(0.02,0.03,0.12), c2=vec3(0.0,0.55,0.65), c3=vec3(1.0,0.42,0.05), c4=vec3(1.0,0.93,0.65);
+  vec3 c = mix(c1, c2, smoothstep(0.0, 0.4, v));
+  c = mix(c, c3, smoothstep(0.4, 0.75, v));
+  return mix(c, c4, smoothstep(0.75, 1.0, v));
+}
+float bAt(ivec2 q){ return texelFetch(uState, (q + uSize) % uSize, 0).g; }
+
+void main(){
+  ivec2 p = ivec2(gl_FragCoord.xy);
+  vec4 c = texelFetch(uState, p, 0);
+  if (c.b > 0.5) {                                   // wall: hatched grey
+    float s = (mod(float(p.x + p.y), 8.0) < 2.0) ? 0.34 : 0.17;
+    o = vec4(vec3(s), 1.0); return;
+  }
+  float v = clamp(c.g * 2.4, 0.0, 1.0);
+  if (uView == 2) { o = vec4(vec3(1.0 - v), 1.0); return; }
+  vec3 col = pal(v);
+  if (uView == 1) {                                  // B as a height field, lit from the upper left
+    float dx = bAt(p + ivec2(-1, 0)) - bAt(p + ivec2(1, 0));
+    float dy = bAt(p + ivec2(0, -1)) - bAt(p + ivec2(0, 1));
+    vec3 n = normalize(vec3(dx * 10.0, dy * 10.0, 1.0));
+    vec3 L = normalize(vec3(-0.5, 0.6, 0.7));
+    float diff = max(dot(n, L), 0.0);
+    float spec = pow(max(dot(n, normalize(L + vec3(0.0, 0.0, 1.0))), 0.0), 40.0);
+    col = col * (0.30 + 0.90 * diff) + 0.25 * spec;
+  }
+  o = vec4(col, 1.0);
+}`;
+
+class GrayScott{
+  constructor(gl,W,H){
+    this.gl=gl;this.W=W;this.H=H;
+    if(!gl.getExtension('EXT_color_buffer_float'))
+      throw new Error('EXT_color_buffer_float is not supported, so float textures cannot be rendered to.');
+    this.simProg=makeProgram(gl,SIM_FS);
+    this.drawProg=makeProgram(gl,DRAW_FS);
+    this.tex=[0,1].map(()=>{
+      const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,W,H,0,gl.RGBA,gl.FLOAT,null);
+      return t;
+    });
+    this.fbo=this.tex.map(t=>{
+      const f=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,f);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t,0);
+      if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)
+        throw new Error('Float framebuffer is incomplete on this GPU/browser.');
+      return f;
+    });
+    this.cur=0;
+  }
+  reset(keepWalls,seed){
+    const gl=this.gl,W=this.W,H=this.H;
+    let walls=null;
+    if(keepWalls){
+      walls=new Float32Array(W*H*4);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,this.fbo[this.cur]);
+      gl.readPixels(0,0,W,H,gl.RGBA,gl.FLOAT,walls);
+    }
+    const ab=makeInitialAB(W,H,seed===undefined?((Math.random()*1e9)|0):seed);
+    const d=new Float32Array(W*H*4);
+    for(let i=0;i<W*H;i++){
+      const wall=walls&&walls[4*i+2]>0.5;
+      d[4*i]=wall?1:ab.a[i];d[4*i+1]=wall?0:ab.b[i];d[4*i+2]=wall?1:0;d[4*i+3]=1;
+    }
+    gl.bindTexture(gl.TEXTURE_2D,this.tex[this.cur]);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,W,H,0,gl.RGBA,gl.FLOAT,d);
+  }
+  step(p,seg){
+    const gl=this.gl,pr=this.simProg,u=pr.u,W=this.W,H=this.H;
+    gl.useProgram(pr);
+    gl.uniform2i(u.uSize,W,H);
+    gl.uniform1f(u.uF,p.f);gl.uniform1f(u.uK,p.k);gl.uniform1f(u.uDa,p.da);gl.uniform1f(u.uDb,p.db);
+    gl.uniform1f(u.uDt,1.0);gl.uniform1f(u.uAniso,p.aniso);
+    gl.uniform1i(u.uMap,p.mode);gl.uniform2f(u.uFRange,FR[0],FR[1]);gl.uniform2f(u.uKRange,KR[0],KR[1]);
+    gl.uniform1i(u.uReflect,p.reflect);
+    const s=seg||[0,0,0,0];
+    gl.uniform4f(u.uBrush,s[0],s[1],s[2],s[3]);
+    gl.uniform1f(u.uBrushR,p.radius*W/512);
+    gl.uniform1i(u.uBrushMode,seg?p.brush:0);
+    gl.activeTexture(gl.TEXTURE0);gl.uniform1i(u.uState,0);
+    gl.viewport(0,0,W,H);
+    for(let i=0;i<p.steps;i++){
+      gl.bindFramebuffer(gl.FRAMEBUFFER,this.fbo[1-this.cur]);
+      gl.bindTexture(gl.TEXTURE_2D,this.tex[this.cur]);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+      this.cur=1-this.cur;
+    }
+  }
+  draw(view){
+    const gl=this.gl,pr=this.drawProg;
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    gl.viewport(0,0,this.W,this.H);
+    gl.useProgram(pr);
+    gl.uniform2i(pr.u.uSize,this.W,this.H);gl.uniform1i(pr.u.uView,view);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.tex[this.cur]);gl.uniform1i(pr.u.uState,0);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+  }
+  sync(){ // reading one pixel forces the GPU to finish everything queued before it
+    const gl=this.gl,px=new Float32Array(4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,this.fbo[this.cur]);
+    gl.readPixels(0,0,1,1,gl.RGBA,gl.FLOAT,px);
+  }
+  dispose(){
+    const gl=this.gl;
+    this.tex.forEach(t=>gl.deleteTexture(t));this.fbo.forEach(f=>gl.deleteFramebuffer(f));
+    gl.deleteProgram(this.simProg);gl.deleteProgram(this.drawProg);
+  }
+}
+
+let currentTab='A';
+(function setupC(){
+  const cv=$('#gsCanvas');
+  const P={mode:0,f:0.0545,k:0.062,da:1,db:0.5,aniso:0,steps:10,view:1,reflect:0,brush:1,radius:10,paused:false};
+  let gl,gs=null;
+  try{gl=cv.getContext('webgl2',{preserveDrawingBuffer:true});if(!gl)throw new Error('WebGL2 is not available in this browser.');}
+  catch(e){showError(cv,e.message);return;}
+
+  function makeSim(W){
+    try{
+      if(gs)gs.dispose();
+      cv.width=cv.height=W;
+      gs=new GrayScott(gl,W,W);gs.reset(false);
+    }catch(e){gs=null;showError(cv,'Cannot start the simulation: '+e.message);}
+  }
+  makeSim(512);
+
+  bind('gsMode',v=>{P.mode=v;$('#gsF').style.opacity=$('#gsK').style.opacity=v?0.35:1;});
+  bind('gsF',v=>P.f=v,v=>v.toFixed(4));
+  bind('gsK',v=>P.k=v,v=>v.toFixed(4));
+  bind('gsDa',v=>P.da=v,v=>v.toFixed(2));
+  bind('gsDb',v=>P.db=v,v=>v.toFixed(2));
+  bind('gsAniso',v=>P.aniso=v,v=>v.toFixed(2));
+  bind('gsSteps',v=>P.steps=v);
+  bind('gsRadius',v=>P.radius=v);
+  bind('gsWall',v=>P.reflect=v);
+  bind('gsView',v=>P.view=v);
+  $('#gsSize').addEventListener('change',e=>makeSim(parseInt(e.target.value,10)));
+  document.querySelectorAll('input[name=brush]').forEach(r=>r.addEventListener('change',()=>P.brush=parseInt(r.value,10)));
+  document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{
+    $('#gsMode').value='0';$('#gsMode').dispatchEvent(new Event('input'));
+    $('#gsF').value=b.dataset.f;$('#gsF').dispatchEvent(new Event('input'));
+    $('#gsK').value=b.dataset.k;$('#gsK').dispatchEvent(new Event('input'));
+    if(gs)gs.reset(true);
+  });
+  $('#gsPause').onclick=e=>{P.paused=!P.paused;e.target.textContent=P.paused?'Resume':'Pause';};
+  $('#gsReset').onclick=()=>gs&&gs.reset(true);
+  $('#gsClear').onclick=()=>gs&&gs.reset(false);
+  $('#gsSave').onclick=()=>{if(gs){gs.draw(P.view);savePNG(cv,'gray_scott.png');}};
+
+  const ptr={down:false,x:0,y:0,px:0,py:0};
+  const toGrid=e=>{const r=cv.getBoundingClientRect();return [(e.clientX-r.left)/r.width*cv.width,(1-(e.clientY-r.top)/r.height)*cv.height];};
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptr.down=true;[ptr.x,ptr.y]=toGrid(e);ptr.px=ptr.x;ptr.py=ptr.y;});
+  cv.addEventListener('pointermove',e=>{
+    [ptr.x,ptr.y]=toGrid(e);
+    const u=ptr.x/cv.width,v=ptr.y/cv.height;
+    $('#gsHover').textContent=P.mode
+      ?'under cursor:  f = '+(FR[0]+(FR[1]-FR[0])*v).toFixed(4)+'   k = '+(KR[0]+(KR[1]-KR[0])*u).toFixed(4)
+      :'f = '+P.f.toFixed(4)+'   k = '+P.k.toFixed(4)+' (uniform)';
+  });
+  const up=()=>{ptr.down=false;};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+
+  const fps={t:performance.now(),n:0,steps:0};
+  function loop(){
+    requestAnimationFrame(loop);
+    if(currentTab!=='C'||!gs)return;
+    if(!P.paused){
+      gs.step(P,ptr.down?[ptr.px,ptr.py,ptr.x,ptr.y]:null);
+      ptr.px=ptr.x;ptr.py=ptr.y;fps.steps+=P.steps;
+    }
+    gs.draw(P.view);
+    fps.n++;
+    const now=performance.now();
+    if(now-fps.t>1000){
+      const s=(now-fps.t)/1000;
+      $('#gsStat').textContent=(fps.n/s).toFixed(0)+' fps, '+(fps.steps/s).toFixed(0)+' sim steps/s, grid '+gs.W+'x'+gs.H;
+      fps.t=now;fps.n=0;fps.steps=0;
+    }
+  }
+  requestAnimationFrame(loop);
+})();
+
+
+const HALO=10;
+const WORKER_SRC=gsKernel.toString()+`
+self.onmessage=function(e){
+  var d=e.data, r=gsKernel(d.a,d.b,d.W,d.R,d.S,d.f,d.k,d.da,d.db);
+  var oa=r[0].slice(d.S*d.W,(d.S+d.core)*d.W), ob=r[1].slice(d.S*d.W,(d.S+d.core)*d.W);
+  self.postMessage({a:oa,b:ob},[oa.buffer,ob.buffer]);
+};`;
+let workerURL=null;
+const getWorkerURL=()=>workerURL||(workerURL=URL.createObjectURL(new Blob([WORKER_SRC],{type:'text/javascript'})));
+const BENCH_PARAMS={f:0.0545,k:0.062,da:1,db:0.5};
+const tick=()=>new Promise(r=>setTimeout(r,0));
+
+async function benchWorkers(n,A0,B0,W,H,steps){
+  const A=A0.slice(),B=B0.slice();
+  const ws=Array.from({length:n},()=>new Worker(getWorkerURL()));
+  const round=async()=>{
+    const jobs=ws.map((w,i)=>{
+      const [y0,y1]=stripBounds(H,n,i);
+      const job=makeStripJob(A,B,W,H,y0,y1,HALO);
+      return new Promise(res=>{
+        w.onmessage=e=>res({y0:y0,a:e.data.a,b:e.data.b});
+        w.postMessage({a:job.a,b:job.b,W:W,R:job.R,S:HALO,core:job.core,f:BENCH_PARAMS.f,k:BENCH_PARAMS.k,da:BENCH_PARAMS.da,db:BENCH_PARAMS.db},[job.a.buffer,job.b.buffer]);
+      });
+    });
+    const out=await Promise.all(jobs);
+    for(const o of out){A.set(o.a,o.y0*W);B.set(o.b,o.y0*W);}
+  };
+  await round();
+  A.set(A0);B.set(B0);
+  const t0=performance.now();
+  for(let i=0;i<steps/HALO;i++)await round();
+  const ms=performance.now()-t0;
+  ws.forEach(w=>w.terminate());
+  return ms;
+}
+
+function benchGPU(W,steps){
+  const c=document.createElement('canvas');c.width=c.height=W;
+  const gl=c.getContext('webgl2');
+  if(!gl)throw new Error('WebGL2 is not available.');
+  const g=new GrayScott(gl,W,W);g.reset(false,1);
+  const p={f:BENCH_PARAMS.f,k:BENCH_PARAMS.k,da:BENCH_PARAMS.da,db:BENCH_PARAMS.db,mode:0,aniso:0,reflect:0,radius:0,brush:0,steps:10};
+  g.step(p,null);g.sync();                                  // warm-up
+  g.reset(false,1);g.sync();
+  const t0=performance.now();
+  for(let i=0;i<steps/10;i++)g.step(p,null);
+  g.sync();
+  const ms=performance.now()-t0;
+  g.dispose();
+  const ext=gl.getExtension('WEBGL_lose_context');if(ext)ext.loseContext();
+  return ms;
+}
+
+$('#bRun').onclick=async()=>{
+  const btn=$('#bRun'),st=$('#bStatus'),out=$('#bOut');
+  const W=parseInt($('#bGrid').value,10),H=W,steps=parseInt($('#bSteps').value,10);
+  btn.disabled=true;out.innerHTML='';
+  try{
+    const ab=makeInitialAB(W,H,1);
+    const maxN=Math.min(16,navigator.hardwareConcurrency||4);
+    const counts=[];for(let n=1;n<=maxN;n*=2)counts.push(n);
+    if(counts[counts.length-1]!==maxN)counts.push(maxN);
+    const rows=[];
+    for(const n of counts){
+      st.textContent='running: '+n+' worker'+(n>1?'s':'')+' ...';await tick();
+      rows.push({name:'Web Workers x'+n,ms:await benchWorkers(n,ab.a,ab.b,W,H,steps)});
+    }
+    st.textContent='running: GPU ...';await tick();
+    try{rows.push({name:'GPU (WebGL2 shader)',ms:benchGPU(W,steps)});}
+    catch(e){rows.push({name:'GPU: '+e.message,ms:NaN});}
+    const base=rows[0].ms;
+    const vals=rows.map(r=>steps/(r.ms/1000)).filter(isFinite);
+    const lo=Math.log10(Math.min.apply(null,vals)*0.5),hi=Math.log10(Math.max.apply(null,vals));
+    let html='<table><tr><th>method</th><th>time</th><th>steps/s</th><th>M cell-updates/s</th><th>vs 1 worker</th><th></th></tr>';
+    for(const r of rows){
+      if(!isFinite(r.ms)){html+='<tr><td colspan="6">'+r.name+'</td></tr>';continue;}
+      const sps=steps/(r.ms/1000);
+      html+='<tr><td>'+r.name+'</td><td>'+r.ms.toFixed(0)+' ms</td><td>'+sps.toFixed(0)+'</td><td>'+(sps*W*H/1e6).toFixed(0)+
+            '</td><td>x'+(base/r.ms).toFixed(1)+'</td><td class="barcell"><div class="bar" style="width:'+
+            (100*(Math.log10(sps)-lo)/(hi-lo)).toFixed(1)+'%"></div></td></tr>';
+    }
+    out.innerHTML=html+'</table>';
+    st.textContent='done: '+W+'x'+H+' grid, '+steps+' steps, '+(navigator.hardwareConcurrency||'?')+' logical cores';
+  }catch(e){st.textContent='';out.innerHTML='<div class="err">'+e.message+'</div>';}
+  btn.disabled=false;
+};
+
+function openTab(name){
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.tab===name));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+name));
+  currentTab=name;
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>openTab(b.dataset.tab));
+const hashTab=location.hash.replace('#','');
+if(['A','C','D'].includes(hashTab))openTab(hashTab);
+</script>
+</body>
+</html>

@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homework Report - Playing around with Shaders</title>
+    </head>
+    <body>
+        <p>
+            <strong>Why JavaScript:</strong> I work as a JavaScript developer, so I decided to experiment and do this
+            assignment in plain JS in the browser instead of a dedicated engine. I wanted to find out what JavaScript is
+            actually capable of here, and how realistic and how easy it is to use it for parallel computing (Web Workers on
+            the CPU, shaders on the GPU) and for shader graphics.
+        </p>
+        <p>
+            <strong>Scope:</strong> I chose tasks <strong>A</strong> and <strong>C</strong> and added a small
+            CPU-vs-GPU benchmark as the bonus. Everything lives in one self-contained file,
+            <a href="index.html"><code>index.html</code></a> (plain JavaScript + WebGL2, no libraries). Task B (Godot port) is not part of this report.
+        </p>
+
+        <details>
+            <summary>Exercise A: Piet Mondrian painting</summary>
+            <div class="details-content">
+                <p><strong>Implementation Strategy:</strong></p>
+                <p>
+                    The painting is stored as plain data: a list of rectangles <code>[x, y, w, h, colour]</code> in the
+                    range 0..1 with the origin at the top-left. JavaScript uploads this list to the shader as the uniform arrays
+                    <code>uRect[N]</code> and <code>uCol[N]</code>, and the fragment shader loops over it for every pixel. The
+                    requested function is <code>rect(st, pos, size, aa)</code>: it returns 1.0 inside a rectangle and 0.0 outside,
+                    so moving or placing a rectangle means changing only <code>pos</code> and <code>size</code>.
+                    The colour blocks are drawn first and the black lines on top, which gives the characteristic thick grid.
+                </p>
+
+                <p><strong>Shader code (the full source is in <code>index.html</code>):</strong></p>
+                <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>// 1.0 inside the rectangle, 0.0 outside, soft edge of width ~uAA
+float rect(vec2 st, vec2 pos, vec2 size, float aa){
+  vec2 lo = smoothstep(pos - aa, pos + aa, st);
+  vec2 hi = 1.0 - smoothstep(pos + size - aa, pos + size + aa, st);
+  vec2 m = lo * hi;
+  return m.x * m.y;
+}
+
+void main(){
+  vec2 st = gl_FragCoord.xy / uRes;
+  st.y = 1.0 - st.y;                       // flip: GL origin is bottom-left
+  vec3 c = uPaper;
+  for (int i = 0; i &lt; N; i++)
+    c = mix(c, uCol[i], rect(st, uRect[i].xy, uRect[i].zw, uAA));
+  c += (hash(gl_FragCoord.xy) - 0.5) * uGrain;   // paper grain
+  outColor = vec4(c, 1.0);
+}</code></pre>
+
+                <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>// the composition itself is just data (T = line thickness)
+const SHAPES=[
+  [V1+T, H1+T, V2-V1-T, H2-H1-T, 'red'],
+  [V2+T, 0,    1-V2-T,  H1,      'yellow'],
+  [0,    H2+T, V1,      1-H2-T,  'blue'],
+  [V3+T, H3+T, 1-V3-T,  1-H3-T,  'blue'],
+  [V1, 0,  T,    1,     'black'],   // ... plus 6 more black lines
+  ...
+];</code></pre>
+
+                <p><strong>Three renderers of the same painting:</strong></p>
+                <ul>
+                    <li><strong>GLSL (WebGL2):</strong> the solution to the task as stated.</li>
+                    <li><strong>JavaScript on the CPU:</strong> the identical <code>rect()</code> logic evaluated per pixel over <code>ImageData</code>. It is there to make the point that a shader is just "a function from pixel position to colour" that the GPU happens to run in parallel; the demo prints the measured CPU time under the canvas.</li>
+                    <li><strong>Pure CSS:</strong> a 4x4 <code>display: grid</code> with a black background and <code>gap</code> producing the lines. No JavaScript, a joke version (its composition is its own, since a uniform gap means every line runs edge to edge). I tried it just for fun: I had seen cases where people build whole pages and even games in pure CSS, without JavaScript, and wanted to see how close CSS alone gets to the painting. It has no practical value for this assignment, I simply decided to keep it.</li>
+                </ul>
+
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; margin-bottom: 20px;">
+                    <div style="flex: 1; min-width: 240px;">
+                        <img src="mondrian_glsl.png" alt="Mondrian rendered by a GLSL fragment shader">
+                        <p><em>Figure: GLSL fragment shader (WebGL2).</em></p>
+                    </div>
+                    <div style="flex: 1; min-width: 240px;">
+                        <img src="mondrian_cpu.png" alt="Mondrian rendered per pixel in JavaScript">
+                        <p><em>Figure: the same logic in JavaScript, per pixel on the CPU.</em></p>
+                    </div>
+                    <div style="flex: 1; min-width: 240px;">
+                        <img src="mondrian_css.png" alt="Mondrian made with CSS grid">
+                        <p><em>Figure: pure CSS grid, zero JavaScript.</em></p>
+                    </div>
+                </div>
+
+                <div class="try-it">
+                    <div>
+                        <strong>Try it by hand</strong><br>
+                        <span>Runs live in the browser: drag the edge-softness and paper-grain sliders, or save the canvases as PNG.</span>
+                    </div>
+                    <a class="try-btn" href="index.html#A" target="_blank" rel="noopener">Open the live demo &rarr;</a>
+                </div>
+
+                <h2>What I had to study:</h2>
+                <ul>
+                    <li><strong>Shape from math, not from geometry:</strong> in the Shapes chapter of The Book of Shaders a rectangle is a mask built from <code>step()</code>. I replaced <code>step()</code> with <code>smoothstep()</code> to get anti-aliased edges and a tunable softness. Multiplying the lower-left and upper-right masks acts as a logical AND.</li>
+                    <li><strong>Compositing with <code>mix()</code>:</strong> <code>mix(c, colour, mask)</code> paints a shape over whatever is already there, so the draw order is simply the order of the loop.</li>
+                    <li><strong>Coordinate systems:</strong> <code>gl_FragCoord</code> starts at the bottom-left, while I wanted to write the composition top-down as on paper, hence <code>st.y = 1.0 - st.y</code> (the CPU twin does the same with its row index).</li>
+                    <li><strong>Passing data to a shader:</strong> uniform arrays with a compile-time size (the <code>#define N</code> is injected from JavaScript), plus how to find uniform locations for array names.</li>
+                    <li><strong>WebGL2 plumbing:</strong> compiling and linking with error reporting, and drawing one full-screen triangle generated from <code>gl_VertexID</code> so that no vertex buffer is needed.</li>
+                    <li><strong>Pseudo-random grain:</strong> the classic <code>fract(sin(dot(p, ...)) * 43758.5453)</code> hash, used to give the paper a slight texture.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Exercise C: Physics simulation with shaders (Gray-Scott reaction-diffusion)</summary>
+            <div class="details-content">
+                <p><strong>Why this simulation:</strong></p>
+                <p>
+                    I chose the Gray-Scott reaction-diffusion model because it is the cleanest example of "computation lives in a
+                    texture". Every cell only needs its eight neighbours, so every pixel can be updated independently and in parallel,
+                    which is exactly what a fragment shader does. It also has a very rich parameter space: two numbers, the feed rate
+                    $f$ and the kill rate $k$, switch the system between spots, stripes, labyrinths and splitting cells. That makes an
+                    "enhancement" visible in a single picture instead of requiring a table of numbers.
+                </p>
+
+                <p><strong>The model:</strong></p>
+                <p>
+                    Two chemicals $A$ and $B$ diffuse over a grid and react as $A + 2B \to 3B$; $A$ is fed in at rate $f$ and $B$ is removed at rate $f + k$:
+                </p>
+                <p class="math math-left">
+                    $$\frac{\partial A}{\partial t} = D_A \nabla^2 A - AB^2 + f\,(1 - A), \qquad
+                    \frac{\partial B}{\partial t} = D_B \nabla^2 B + AB^2 - (k + f)\,B$$
+                </p>
+                <p>
+                    The Laplacian is the usual 3x3 stencil (centre -1, edges 0.2, corners 0.05), with $D_A = 1$, $D_B = 0.5$ and one explicit Euler step per pass.
+                </p>
+
+                <p><strong>Implementation Strategy (GPGPU through WebGL2):</strong></p>
+                <ul>
+                    <li><strong>State:</strong> one <code>RGBA32F</code> texture; R holds $A$, G holds $B$, B is a wall mask. 32-bit floats are needed because the per-step changes are tiny and half precision would stall the pattern.</li>
+                    <li><strong>Ping-pong:</strong> a fragment shader reads texture 0 with <code>texelFetch</code> and writes the next state into texture 1 through a framebuffer; then the roles swap. A feedback loop (reading and writing the same texture) is not allowed, which is why two textures are needed.</li>
+                    <li><strong>JavaScript's role:</strong> it only runs the frame loop (several simulation steps per frame), turns mouse movement into a brush segment, sets uniforms, and finally draws the state to the screen with a second shader.</li>
+                    <li><strong>Boundaries:</strong> the grid wraps around (a torus) using integer modulo on the texel coordinates.</li>
+                </ul>
+
+                <p><strong>Enhancements and their effect:</strong></p>
+                <ol>
+                    <li>
+                        <strong>Parameter map.</strong> Instead of one global $(f, k)$, the shader can compute $k$ from the x coordinate and $f$ from the y coordinate of each pixel
+                        ($f \in [0.010, 0.080]$, $k \in [0.045, 0.070]$). One frame then shows a whole slice of the parameter space, and the hover readout in the demo prints the
+                        $(f, k)$ under the cursor. Effect: the different regimes appear side by side with the borders between them, which is much easier to study than switching sliders one value at a time.
+                    </li>
+                    <li>
+                        <strong>Walls drawn with the mouse.</strong> A wall flag lives in the B channel of the state. Neighbours that are walls either <em>absorb</em> (they count as $A = 1, B = 0$, so $B$ is drained at the wall)
+                        or <em>reflect</em> (a wall neighbour is replaced by the cell's own value, i.e. zero flux). Effect: reaction fronts stop at or slide along obstacles, and a gap in a wall acts as a nozzle
+                        (see the map figure below).
+                    </li>
+                    <li>
+                        <strong>Anisotropic diffusion.</strong> The horizontal and vertical edge weights become $0.2\,(1 + a)$ and $0.2\,(1 - a)$ for an anisotropy $a \in [-0.8, 0.8]$. Their sum stays the same, so the stencil is still normalised.
+                        Effect: diffusion is faster along one axis and the stripes line up along that axis.
+                        <br>To check this with a number and not only by eye, I ran the coral preset for 20 000 steps and measured the ratio of the average vertical to the average horizontal brightness gradient (about 1 means no preferred direction, above 1 means horizontal stripes):
+                        $a = 0$ gives 0.95-1.07, $a = 0.6$ gives 1.5-1.7 (stripes run horizontally, the fast direction), and $a = -0.6$ gives 0.63-0.66 (stripes run vertically).
+                        The effect is clear in the numbers but only moderate to the eye: the pattern is still a labyrinth, just with a preferred direction.
+                        <br>At $a = 0.8$ the pattern breaks down completely: within about 3 000 steps $B$ fills almost the whole grid and only thin, jagged fronts remain. Here the vertical weight $0.2 \cdot 0.2 = 0.04$ is smaller than the diagonal weight 0.05, so the 3x3 stencil is no longer a good approximation of the Laplacian, and this is most likely a numerical artefact rather than physics. The useful range of the slider is therefore about $|a| \le 0.6$.
+                    </li>
+                    <li>
+                        <strong>Rendering.</strong> Three views: a thermal palette, a plain grayscale one, and a "relief" view that treats $B$ as a height field, builds a normal from the finite differences and applies diffuse plus specular lighting.
+                        It changes nothing in the physics, but it makes the thickness of the fronts visible (compare the two coral figures).
+                    </li>
+                    <li>
+                        <strong>Interactive controls:</strong> presets, sliders for $D_A$, $D_B$ and the number of steps per frame, grid size 256/512/1024, pause, reset that keeps the walls, and a seeding brush.
+                    </li>
+                </ol>
+
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; margin-bottom: 20px;">
+                    <div style="flex: 1; min-width: 280px;">
+                        <img src="gs_coral_thermal.png" alt="Gray-Scott coral pattern, thermal palette">
+                        <p><em>Figure: preset "coral" ($f = 0.0545$, $k = 0.062$), thermal palette.</em></p>
+                    </div>
+                    <div style="flex: 1; min-width: 280px;">
+                        <img src="gs_coral_relief.png" alt="Same state rendered as a relief">
+                        <p><em>Figure: exactly the same state in the relief view.</em></p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; margin-bottom: 20px;">
+                    <div style="flex: 1; min-width: 220px;">
+                        <img src="gs_aniso_pos.png" alt="Coral pattern with anisotropy +0.6">
+                        <p><em>Figure: anisotropy $a = +0.6$, stripes tend to run horizontally.</em></p>
+                    </div>
+                    <div style="flex: 1; min-width: 220px;">
+                        <img src="gs_aniso_neg.png" alt="Coral pattern with anisotropy -0.6">
+                        <p><em>Figure: anisotropy $a = -0.6$, stripes tend to run vertically.</em></p>
+                    </div>
+                    <div style="flex: 1; min-width: 220px;">
+                        <img src="gs_aniso_08.png" alt="Pattern collapse at anisotropy 0.8">
+                        <p><em>Figure: $a = 0.8$, the pattern collapses ($B$ floods the grid).</em></p>
+                    </div>
+                </div>
+
+                <img src="gs_map_walls.png" alt="Parameter map with two walls and a gap" style="max-width: 520px;">
+                <p><em>Figure: parameter map ($k$ grows to the right, $f$ grows upward) with two absorbing walls and a gap between them.</em></p>
+
+                <p><strong>What the figures show:</strong></p>
+                <ul>
+                    <li><strong>Coral preset:</strong> it grows into a maze of stripes with dead ends, branching and occasional closed loops, which matches the "coral" name of the preset.</li>
+                    <li><strong>Parameter map:</strong> on the left, where $k$ is smallest, $B$ floods almost the whole region and the front simply expands; towards the right, where $k$ is larger, the same seeds stay as isolated spots and small rings, with elongated fingers in the transition zone. The chemistry is identical everywhere, only $(f, k)$ changes with position.</li>
+                    <li><strong>Walls:</strong> the flooded region on the left stops at the absorbing wall, and the fingers on the right are concentrated around the gap, which is the only place where activity can pass.</li>
+                    <li><strong>Absorbing vs reflecting walls:</strong> I repeated the same setup (parameter map, the same two walls with a gap, 15 000 steps) with both wall types, see the two figures below. With <em>absorbing</em> walls $B$ is drained at the wall, so a thin depleted strip runs along both sides of it (the bright rim in the relief view) and the patterns keep a small distance from the wall. With <em>reflecting</em> walls nothing is lost at the wall: the flooded region and the stripes touch it directly, stripes often meet it at a right angle (the typical picture for a zero-flux boundary), and the flood that passes the gap spreads up along the far side of the upper wall instead of staying near the gap.</li>
+                    <li><strong>Preset names:</strong> "mitosis" fits well. After about 4 000 steps every seed has split into small groups of spots, and the spots keep dividing until, after 20 000 steps, the whole grid is a dense packing of spots. "Maze" gives a labyrinth of stripes, but it looks very similar to the coral preset: both values lie in the same stripe regime, so the names are only approximate (which is why the demo labels the presets "approx.").</li>
+                </ul>
+
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; margin-bottom: 20px;">
+                    <div style="flex: 1; min-width: 280px;">
+                        <img src="gs_walls_absorb.png" alt="Parameter map with absorbing walls">
+                        <p><em>Figure: absorbing walls, 15 000 steps.</em></p>
+                    </div>
+                    <div style="flex: 1; min-width: 280px;">
+                        <img src="gs_walls_reflect.png" alt="Parameter map with reflecting walls">
+                        <p><em>Figure: reflecting walls, same setup, 15 000 steps.</em></p>
+                    </div>
+                </div>
+
+                <p><strong>Core of the simulation shader (the full source is in <code>index.html</code>):</strong></p>
+                <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>// neighbour value; walls either absorb (A=1,B=0) or reflect (copy of centre = zero flux)
+vec2 nb(ivec2 q, vec2 centre){
+  vec4 v = texelFetch(uState, (q + uSize) % uSize, 0);
+  if (v.b &gt; 0.5) return (uReflect == 1) ? centre : vec2(1.0, 0.0);
+  return v.rg;
+}
+
+void main(){
+  ivec2 p = ivec2(gl_FragCoord.xy);
+  vec4 c = texelFetch(uState, p, 0);
+  float wall = c.b;
+  vec2 ab = c.rg, nx = vec2(1.0, 0.0);
+
+  if (wall &lt; 0.5) {
+    float wh = 0.2 * (1.0 + uAniso), wv = 0.2 * (1.0 - uAniso);
+    vec2 lap = -ab
+      + wh * (nb(p + ivec2(-1, 0), ab) + nb(p + ivec2(1, 0), ab))
+      + wv * (nb(p + ivec2(0, -1), ab) + nb(p + ivec2(0, 1), ab))
+      + 0.05 * (nb(p + ivec2(-1,-1), ab) + nb(p + ivec2(1,-1), ab)
+              + nb(p + ivec2(-1, 1), ab) + nb(p + ivec2(1, 1), ab));
+
+    float f = uF, k = uK;
+    if (uMap == 1) {                       // parameter map
+      vec2 uv = (vec2(p) + 0.5) / vec2(uSize);
+      k = mix(uKRange.x, uKRange.y, uv.x);
+      f = mix(uFRange.x, uFRange.y, uv.y);
+    }
+    float A = ab.x, B = ab.y, r = A * B * B;
+    nx = ab + uDt * vec2(uDa * lap.x - r + f * (1.0 - A),
+                         uDb * lap.y + r - (k + f) * B);
+    nx = clamp(nx, 0.0, 1.0);
+  }
+  // ... brush (seed B / draw wall / erase wall) ...
+  o = vec4(nx, wall, 1.0);
+}</code></pre>
+
+                <p><strong>A note on WebCL:</strong></p>
+                <p>
+                    The task text mentions WebCL. As far as I could find, WebCL is no longer maintained and is not implemented in current browsers, so I used the way the linked page by Amanda Ghassaei works:
+                    general-purpose computation through WebGL fragment shaders and render-to-texture. WebGPU compute shaders would be the modern alternative.
+                </p>
+
+                <div class="try-it">
+                    <div>
+                        <strong>Try it by hand</strong><br>
+                        <span>Seed, draw walls and change $f$ and $k$ in real time. Switch the mode to "map" to see the whole parameter space at once.</span>
+                    </div>
+                    <a class="try-btn" href="index.html#C" target="_blank" rel="noopener">Open the live demo &rarr;</a>
+                </div>
+            </div>
+        </details>
+
+        <details>
+            <summary>Bonus: the same simulation on CPU Web Workers vs the GPU</summary>
+            <div class="details-content">
+                <p><strong>Objective:</strong></p>
+                <p>
+                    To see what "one thread per pixel" actually buys, I ran the identical Gray-Scott step (same stencil, $f = 0.0545$, $k = 0.062$, $D_A = 1$, $D_B = 0.5$, same start state) in two ways:
+                    on the CPU with a pool of Web Workers, and on the GPU with the pixel shader from Exercise C.
+                </p>
+
+                <p><strong>CPU parallelisation strategy:</strong></p>
+                <ul>
+                    <li><strong>Domain decomposition:</strong> the grid is cut into horizontal strips, one per worker.</li>
+                    <li><strong>Halo with temporal blocking:</strong> each worker receives its strip plus 10 extra rows above and below and runs 10 steps without any communication. Every step invalidates one more outer row, so after 10 steps exactly the core rows are still correct. Only then are the strips copied back and the next round starts. This replaces a message exchange on every step by one on every tenth step.</li>
+                    <li><strong>No shared memory:</strong> <code>SharedArrayBuffer</code> requires cross-origin isolation, which a page opened from <code>file://</code> does not have, so data is copied with <code>postMessage</code> (transferable buffers). That copy is part of the measured CPU time.</li>
+                    <li><strong>GPU timing:</strong> a 1-pixel <code>readPixels</code> at the end forces the queued work to finish; without it the timer would only measure command submission.</li>
+                </ul>
+
+                <p><strong>Correctness check:</strong></p>
+                <p>
+                    The strip decomposition was compared with a naive reference that wraps around in both directions (<code>verify_strips.js</code>, 64x64 grid, 30 steps).
+                    For 1, 3, 4 and 7 strips the maximum absolute difference was exactly 0, so the halo scheme reproduces the sequential result bit for bit.
+                </p>
+
+                <p><strong>Empirical Measurements:</strong></p>
+                <p>
+                    Machine: 14 logical cores (<code>navigator.hardwareConcurrency</code>), integrated Intel GPU
+                    (WebGL renderer: ANGLE, Direct3D 11), Chromium-based browser. Grid 512 x 512, 100 steps.
+                    The CPU numbers jumped quite a lot between runs (one worker took anywhere from 734 to 1351 ms), so the table shows the
+                    <strong>median of 5 runs</strong>. The GPU time was stable (94-98 ms).
+                </p>
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: right;">
+                    <thead>
+                        <tr style="background: #2d2d2d; color: #fff; text-align: center;"><th style="padding: 8px; border: 1px solid #444;">Method</th><th style="padding: 8px; border: 1px solid #444;">Time (ms)</th><th style="padding: 8px; border: 1px solid #444;">Steps / s</th><th style="padding: 8px; border: 1px solid #444;">M cell-updates / s</th><th style="padding: 8px; border: 1px solid #444;">Speedup vs 1 worker</th></tr>
+                    </thead>
+                    <tbody style="text-align: center;">
+                        <tr><td style="padding: 6px; border: 1px solid #ddd;">Web Workers x1</td><td style="padding: 6px; border: 1px solid #ddd;">781</td><td style="padding: 6px; border: 1px solid #ddd;">128</td><td style="padding: 6px; border: 1px solid #ddd;">34</td><td style="padding: 6px; border: 1px solid #ddd;">1.0x</td></tr>
+                        <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">Web Workers x2</td><td style="padding: 6px; border: 1px solid #ddd;">420</td><td style="padding: 6px; border: 1px solid #ddd;">238</td><td style="padding: 6px; border: 1px solid #ddd;">62</td><td style="padding: 6px; border: 1px solid #ddd;">1.9x</td></tr>
+                        <tr><td style="padding: 6px; border: 1px solid #ddd;">Web Workers x4</td><td style="padding: 6px; border: 1px solid #ddd;">293</td><td style="padding: 6px; border: 1px solid #ddd;">341</td><td style="padding: 6px; border: 1px solid #ddd;">89</td><td style="padding: 6px; border: 1px solid #ddd;">2.7x</td></tr>
+                        <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">Web Workers x8</td><td style="padding: 6px; border: 1px solid #ddd;">221</td><td style="padding: 6px; border: 1px solid #ddd;">452</td><td style="padding: 6px; border: 1px solid #ddd;">119</td><td style="padding: 6px; border: 1px solid #ddd;">3.5x</td></tr>
+                        <tr><td style="padding: 6px; border: 1px solid #ddd;">Web Workers x14 (all logical cores)</td><td style="padding: 6px; border: 1px solid #ddd;">279</td><td style="padding: 6px; border: 1px solid #ddd;">358</td><td style="padding: 6px; border: 1px solid #ddd;">94</td><td style="padding: 6px; border: 1px solid #ddd;">2.8x</td></tr>
+                        <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">GPU (WebGL2 shader)</td><td style="padding: 6px; border: 1px solid #ddd;">96</td><td style="padding: 6px; border: 1px solid #ddd;">1042</td><td style="padding: 6px; border: 1px solid #ddd;">273</td><td style="padding: 6px; border: 1px solid #ddd;">8.1x</td></tr>
+                    </tbody>
+                </table>
+
+                <p>To see how the gap depends on the problem size I also ran 256 and 1024 once each (100 steps):</p>
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: right;">
+                    <thead>
+                        <tr style="background: #2d2d2d; color: #fff; text-align: center;"><th style="padding: 8px; border: 1px solid #444;">Grid</th><th style="padding: 8px; border: 1px solid #444;">Best CPU row</th><th style="padding: 8px; border: 1px solid #444;">GPU</th><th style="padding: 8px; border: 1px solid #444;">GPU vs best CPU</th><th style="padding: 8px; border: 1px solid #444;">GPU M cell-updates / s</th></tr>
+                    </thead>
+                    <tbody style="text-align: center;">
+                        <tr><td style="padding: 6px; border: 1px solid #ddd;">256 x 256</td><td style="padding: 6px; border: 1px solid #ddd;">88 ms (x4)</td><td style="padding: 6px; border: 1px solid #ddd;">32 ms</td><td style="padding: 6px; border: 1px solid #ddd;">2.8x</td><td style="padding: 6px; border: 1px solid #ddd;">207</td></tr>
+                        <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">512 x 512</td><td style="padding: 6px; border: 1px solid #ddd;">221 ms (x8)</td><td style="padding: 6px; border: 1px solid #ddd;">96 ms</td><td style="padding: 6px; border: 1px solid #ddd;">2.3x</td><td style="padding: 6px; border: 1px solid #ddd;">273</td></tr>
+                        <tr><td style="padding: 6px; border: 1px solid #ddd;">1024 x 1024</td><td style="padding: 6px; border: 1px solid #ddd;">995 ms (x8)</td><td style="padding: 6px; border: 1px solid #ddd;">315 ms</td><td style="padding: 6px; border: 1px solid #ddd;">3.2x</td><td style="padding: 6px; border: 1px solid #ddd;">333</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Analysis:</h2>
+                <ul>
+                    <li><strong>The workers scale, but far from ideally.</strong> 8 workers give 3.5x instead of 8x, and going from 8 to all 14 logical cores makes it <em>slower</em> (2.8x). The main reason is the halo: every strip carries 2 x 10 extra rows that are computed only to be thrown away. With 8 strips of 64 rows that is about 30% redundant work, with 14 strips of about 36 rows it is already more than 50%. On top of that, every round the main thread cuts the grid into jobs, the data is copied to the workers and back (no <code>SharedArrayBuffer</code> on <code>file://</code>), and the strips are stitched together on one thread. This serial part does not shrink when workers are added (Amdahl's law).</li>
+                    <li><strong>Not all cores are equal.</strong> The 14 logical cores are not 14 identical fast cores, and the browser, the OS and the GPU driver also need CPU time, so the last workers add little. The best result came from 8 workers on all three grid sizes except the smallest one.</li>
+                    <li><strong>The run-to-run noise is a CPU effect.</strong> Turbo frequency, heat and background load change the CPU timing by almost 2x between runs, while the GPU stayed within a few percent.</li>
+                    <li><strong>Even an integrated GPU wins.</strong> The shader is 8x faster than one worker and 2.3-3.2x faster than the best worker configuration, with a fraction of the code complexity: no strips, no halos, no copying. Every pixel is simply its own thread.</li>
+                    <li><strong>The GPU likes bigger problems.</strong> Its throughput grows from 207 to 333 million cell updates per second when the grid grows from 256 to 1024, because the fixed cost of each draw call is spread over more pixels. The CPU throughput per configuration stays roughly flat. With a discrete GPU the difference would be much larger.</li>
+                    <li><strong>For JavaScript in general:</strong> Web Workers are easy to start, but without shared memory the communication cost dominates quickly. For a stencil computation like this one the GPU is clearly the right tool, even from plain JavaScript.</li>
+                </ul>
+
+                <div class="try-it">
+                    <div>
+                        <strong>Try it by hand</strong><br>
+                        <span>Choose grid size and step count and run the benchmark on your own hardware.</span>
+                    </div>
+                    <a class="try-btn" href="index.html#D" target="_blank" rel="noopener">Open the live demo &rarr;</a>
+                </div>
+            </div>
+        </details>
+
+        <details>
+            <summary>Hurdles, alternatives considered and why I chose this approach</summary>
+            <div class="details-content">
+                <p><strong>Hurdles I ran into:</strong></p>
+                <ul>
+                    <li><strong>WebCL does not exist anymore.</strong> The task mentions WebCL, but no current browser supports it. The way out was to do general-purpose computation with WebGL2 fragment shaders: the state of the simulation is a texture, and "drawing" one full-screen triangle runs the update for every pixel in parallel.</li>
+                    <li><strong>A shader cannot read and write the same texture.</strong> This is not allowed (feedback loop), so the simulation uses two textures and swaps them after every step (ping-pong).</li>
+                    <li><strong>Rendering into float textures is an extension.</strong> WebGL2 can create <code>RGBA32F</code> textures but cannot draw into them without <code>EXT_color_buffer_float</code>. With 8-bit or half precision the tiny per-step changes of Gray-Scott get rounded away and the pattern stalls, so the demo checks for the extension and shows an error instead of silently producing garbage.</li>
+                    <li><strong>Two coordinate systems.</strong> <code>gl_FragCoord</code> starts at the bottom-left, while the Mondrian composition and the mouse events use the top-left. Forgetting the flip mirrors the painting and makes the brush draw in the wrong place.</li>
+                    <li><strong>Measuring GPU time is tricky.</strong> WebGL calls only queue work, so a plain timer measured almost nothing. A 1-pixel <code>readPixels</code> at the end forces the GPU to finish before the timer stops.</li>
+                    <li><strong>Web Workers from a local file.</strong> A page opened by double-click (<code>file://</code>) cannot load a separate worker script, so the worker code is built from the same function as a string and started through a <code>Blob</code> URL. The same page also has no cross-origin isolation, so <code>SharedArrayBuffer</code> is unavailable and data has to be copied between threads. To pay for the copy less often, each worker gets 10 extra halo rows and runs 10 steps per round instead of 1.</li>
+                    <li><strong>Checking that the parallel CPU version is correct.</strong> Off-by-one errors in the halo are easy to make and hard to see in a picture, so I wrote <code>verify_strips.js</code>, which compares the strip version with a simple sequential one in Node.</li>
+                </ul>
+
+                <p><strong>Alternatives I considered:</strong></p>
+                <ul>
+                    <li><strong>WebGPU compute shaders.</strong> This is the modern successor of WebCL and the closest match to "parallel computing": real compute kernels, storage buffers, workgroups and shared memory. I stayed with WebGL2 because the Book of Shaders and the Amanda Ghassaei examples are built on it, and because it runs in every browser. A WebGPU version would be the natural next step.</li>
+                    <li><strong>Libraries (three.js, regl, p5.js, gpu.js).</strong> three.js even has a ready-made <code>GPUComputationRenderer</code> for ping-pong simulations, and gpu.js turns a JS function into a shader automatically. I decided against them on purpose: the goal was to see how much raw JavaScript and WebGL can do and what the GPU plumbing actually looks like, not to hide it behind a library.</li>
+                    <li><strong>Modifying an existing simulation instead of writing one.</strong> The task allows both. Writing Gray-Scott from scratch was small enough (the core shader is about 30 lines) and made it easier to add walls, the parameter map and anisotropy without fighting someone else's code structure.</li>
+                    <li><strong>A local server with <code>SharedArrayBuffer</code>.</strong> Serving the page with COOP/COEP headers would let workers share memory and avoid the copies. I chose a single <code>index.html</code> that opens with a double click and needs no setup, and accepted the copy cost (it is measured and visible in the benchmark).</li>
+                    <li><strong><code>step()</code> instead of <code>smoothstep()</code> for the rectangles.</strong> <code>step()</code>, as in the book, gives jagged edges. <code>smoothstep()</code> gives anti-aliased edges and a softness slider for almost no extra cost.</li>
+                </ul>
+
+                <p><strong>Conclusion on JavaScript:</strong></p>
+                <p>
+                    For shader graphics JavaScript turned out to be a very practical choice: the shader itself is the same GLSL as anywhere else, and JS only needs a few dozen lines of setup.
+                    For parallel computing it is realistic too, but with caveats: on the GPU you have to think in textures and draw calls (WebGL) or move to WebGPU, and on the CPU Web Workers work well only if you keep communication rare, because without <code>SharedArrayBuffer</code> every exchange is a copy.
+                </p>
+            </div>
+        </details>
+
+        <div class="report-references">
+            <h3>Learning resources</h3>
+            <ol>
+                <li><span class="ref-title">The Book of Shaders, chapter 07 "Shapes"</span> - <a href="https://thebookofshaders.com/07/" target="_blank" rel="noopener">https://thebookofshaders.com/07/</a></li>
+                <li><span class="ref-title">Amanda Ghassaei, GPU physics simulations in WebGL</span> - <a href="https://amandaghassaei.com/projects/shaders/" target="_blank" rel="noopener">https://amandaghassaei.com/projects/shaders/</a></li>
+                <li><span class="ref-title">Karl Sims, Reaction-Diffusion Tutorial</span> - <a href="https://www.karlsims.com/rd.html" target="_blank" rel="noopener">https://www.karlsims.com/rd.html</a></li>
+                <li><span class="ref-title">Robert Munafo, Gray-Scott parameter map (Xmorphia)</span> - <a href="https://mrob.com/pub/comp/xmorphia/" target="_blank" rel="noopener">https://mrob.com/pub/comp/xmorphia/</a></li>
+                <li><span class="ref-title">J. E. Pearson, "Complex Patterns in a Simple System", Science 261 (1993)</span> - the classification of Gray-Scott patterns that the f/k map reproduces.</li>
+            </ol>
+        </div>
+    </body>
+    <script>
+        function loadKaTeXAndRender() {
+            const katexCSS = document.createElement("link");
+            katexCSS.rel = "stylesheet";
+            katexCSS.href =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(katexCSS);
+
+            const katexScript = document.createElement("script");
+            katexScript.src =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+            katexScript.defer = true;
+
+            katexScript.onload = () => {
+                const autoRenderScript = document.createElement("script");
+                autoRenderScript.src =
+                    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                autoRenderScript.defer = true;
+
+                autoRenderScript.onload = () => {
+                    if (window.renderMathInElement) {
+                        window.renderMathInElement(document.body, {
+                            delimiters: [
+                                { left: "$$", right: "$$", display: true },
+                                { left: "$", right: "$", display: false },
+                            ],
+                            throwOnError: false,
+                        });
+                    }
+                };
+                document.head.appendChild(autoRenderScript);
+            };
+
+            document.head.appendChild(katexScript);
+        }
+        loadKaTeXAndRender();
+    </script>
+</html>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.6;
+        color: #111;
+        background-color: #fff;
+        max-width: 1280px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 8px 0;
+    }
+
+    .math {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 17px;
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+
+    ul {
+        margin: 8px 0 16px 20px;
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    .report-header {
+        margin-bottom: 28px;
+    }
+
+    .report-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #111;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table th {
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        width: 15%;
+        padding: 3px 6px 3px 0;
+        white-space: nowrap;
+    }
+
+    .report-meta-table td {
+        color: #111;
+        width: 35%;
+        padding: 3px 12px 3px 0;
+    }
+
+    .report-meta-table a {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .report-meta-table a:hover {
+        text-decoration: underline;
+    }
+
+    .report-divider {
+        border: 0;
+        border-top: 1px solid #d1d5db;
+        margin-top: 8px;
+    }
+
+    .math-left .katex-display {
+        text-align: left !important;
+    }
+
+    .math-left .katex-display > .katex {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    /* Сноски в тексте */
+    a.ref-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0 1px;
+    }
+
+    a.ref-link:hover {
+        text-decoration: underline;
+    }
+
+    .report-references {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .report-references h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .report-references ol {
+        padding-left: 20px;
+    }
+
+    .report-references li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
+
+    .report-references .ref-title {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .report-references a {
+        color: #1a73e8 !important;
+        text-decoration: underline !important;
+        word-break: break-all;
+        cursor: pointer;
+    }
+
+    details {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin: 16px 0;
+        background-color: #fff;
+        transition: all 0.2s ease;
+    }
+
+    details[open] {
+        border-color: #cbd5e1;
+    }
+
+    details > :not(summary) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    summary {
+        cursor: pointer;
+        padding: 10px 14px;
+        user-select: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    summary:hover {
+        background-color: #f8fafc;
+    }
+
+    summary h2 {
+        display: inline;
+        font-size: 16px;
+        margin: 0 0 0 6px;
+    }
+
+    .details-content {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 16px auto;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    img + p {
+        text-align: center;
+        font-size: 13px;
+        color: #57606a;
+        margin-top: -8px;
+        margin-bottom: 20px;
+    }
+
+    /* "Try it by hand" callout under the figures */
+    .try-it {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin: 18px 0;
+        padding: 14px 18px;
+        background: #f0f6ff;
+        border: 1px solid #bfd6fb;
+        border-left: 4px solid #2563eb;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .try-it span {
+        color: #4b5563;
+    }
+
+    .try-btn {
+        background: #2563eb;
+        color: #fff !important;
+        text-decoration: none !important;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+
+    .try-btn:hover {
+        background: #1d4ed8;
+    }
+
+    /* places the author still has to fill in */
+    .todo {
+        background: #fff4cc;
+        color: #7a5b00;
+        padding: 0 4px;
+        border-radius: 3px;
+        font-weight: 600;
+    }
+</style>
