@@ -1,0 +1,32 @@
+{
+  "source": "op-monitor",
+  "mode": "provider_only",
+  "found_consumer": 0,
+  "found_provider": 3000,
+  "expected": 3000,
+  "measured": 1000,
+  "joined": 1000,
+  "failed": 0,
+  "stages": {
+    "p_req": {
+      "mean": 334.95,
+      "p50": 184,
+      "p90": 297
+    },
+    "is": {
+      "mean": 0.87,
+      "p50": 0,
+      "p90": 1
+    },
+    "p_resp": {
+      "mean": 479.71,
+      "p50": 207,
+      "p90": 341
+    },
+    "p_total": {
+      "mean": 815.53,
+      "p50": 400.5,
+      "p90": 612.3
+    }
+  }
+}

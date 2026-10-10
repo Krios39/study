@@ -51,7 +51,7 @@ const ENV = readEnv();
 // Контейнеры других машин — через docker context (созданы multihost/setup.sh: ssh по подсети свитча),
 // compose на них — через ssh в тот же каталог (у каждой машины свой .env с профилем и интерфейсом).
 // Без STAND_HOST всё как раньше, на одной машине.
-const THIS_HOST = ENV.STAND_HOST || null;
+const THIS_HOST = (process.env.STAND_HOST ?? ENV.STAND_HOST) || null;   // env перекрывает .env (разбор старых прогонов)
 const HOSTS = ['l1', 'l2', 'l3'];
 const HOST_OF = { cs: 'l1', ca: 'l1', ss0: 'l1', ss3: 'l1', 'is-provider-b': 'l1', hurl: 'l1', ss1: 'l2', ss2: 'l3', 'is-provider': 'l3' };
 const hostOf = (c) => (THIS_HOST ? HOST_OF[c] || THIS_HOST : null);

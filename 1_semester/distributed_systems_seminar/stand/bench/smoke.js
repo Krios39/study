@@ -31,7 +31,12 @@ function smoke(dir) {
     if (meta.target === 'xroad2' && !(meta.link_bytes_ss3?.xroad_tx > 0)) problems.push(`${d}: два провайдера, но на ss3 ничего не ушло`);
     if (meta.config !== 'notsa' && !meta.timestamping?.completed) problems.push(`${d}: метки не проставились до чистки`);
     if (!meta.ca_calls) problems.push(`${d}: нет обращений к CA в meta (логи ca?)`);
+    const of = path.join(dir, d, 'opmon.json');
+    const om = fs.existsSync(of) ? L.readJson(of) : null;
+    if (!om) problems.push(`${d}: нет opmon.json (op-monitoring)`);
+    else if (om.mode || om.joined < om.measured - om.failed) problems.push(`${d}: op-monitoring склеил ${om.joined}/${om.measured}${om.mode ? ' ' + om.mode : ''}`);
   }
+  if (node('opmon.js', dir) !== 0) problems.push('opmon.js failed');
   if (node('analyze.js', dir) !== 0) problems.push('analyze.js failed');
   L.log(`smoke: ${runs.length} прогонов, ${problems.length ? problems.length + ' проблем' : 'всё ok'}`);
   for (const p of problems) L.log(`  !! ${p}`);

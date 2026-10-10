@@ -28,6 +28,7 @@ node bench/up.js                  # 1. поднять: compose up, ждать he
 node bench/check.js               # 2. готов ли стенд: контейнеры, эхо, X-Road к обоим провайдерам, БД, конфигурация = full, лог testca, простой CPU, диагностика SS
 node bench/run.js                 # 3. замер: контроль (full дважды) + полная сетка по bench/matrix.json → results/<дата>/, ~4 ч
 node bench/analyze.js results\<дата>   # 4. сводка → summary.md / summary.csv
+node bench/opmon.js results\<дата>     # этапы задержки из op-monitoring → opmon.md (run.js пишет opmon.json сам)
 node bench/night.js 3                   # на ночь: 3 сетки подряд (~14 ч), каждая в свой каталог, авто-resume после обрыва, в конце объединённая сводка
 ```
 
@@ -74,6 +75,7 @@ k6 и curl запускаются контейнерами внутри `xroad-n
 | `bench/check.js` | 2: готовность стенда (`--quick` без hurl-диагностики) |
 | `bench/run.js` | 3: контроль + сетка (см. флаги выше) |
 | `bench/analyze.js` | 4: медианы по повторам, Δ против full, байты/запрос, рост лога, OCSP/TSA за прогон, оценка контроля |
+| `bench/opmon.js` | этапы задержки по меткам op-monitoring X-Road (ss1 + провайдер, склейка по `x_request_id`): `opmon.json` на прогон (сырые этапы в `opmon.csv.gz`, не в git), `opmon.md` — средние этапов и Δ против full. X-Road хранит записи 7 дней — задним числом только последняя неделя |
 | `bench/night.js [N]` | N сеток подряд: check → run (до 5 попыток с `config.js full` + проверка TSA + `--resume`) → analyze; итог `results/night-<дата>/merged.md`, журнал `results/night-<дата>.log` |
 | `bench/matrix.json` | малая сетка (с 30.09, по письму руководителя): `full`/`nobody`/`synctsa`, точки 10 КБ×1 VU, 1 МБ×1 VU, 10 КБ×4/16/32 VU — одни и те же для `direct`; 5 повторов; контроль в начале каждого повтора и в конце. 106 прогонов |
 | `bench/matrix-wide.json` | прежняя полная сетка (182 прогона): `node bench/run.js --matrix bench/matrix-wide.json` |

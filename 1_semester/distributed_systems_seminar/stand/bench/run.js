@@ -17,6 +17,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const L = require('./lib');
+const opmon = require('./opmon');
 const { apply: applyConfig } = require('./config');
 const { clean } = require('./clean');
 
@@ -159,9 +160,17 @@ async function runOne(r, dir, warmup, extra = {}) {
     ...extra,
   };
   L.writeJson(path.join(dir, 'meta.json'), meta);
+  // этапы из op-monitoring (opmon.json); демон op-monitor пишет записи с задержкой — если склеилось не всё, ещё раз через 10 с
+  let om = null;
+  if (xroad) {
+    try {
+      om = opmon.extract(dir);
+      if (om && om.joined + om.failed < om.measured) { await L.sleep(10000); om = opmon.extract(dir); }
+    } catch (e) { L.log(`opmon failed: ${e.message.split('\n')[0]}`); }
+  }
   const s = summary || {};
   const st = stamping ? `  stamped=${stamping.completed ? 'yes' : 'NO'}${stamping.wait_s != null ? ` +${stamping.wait_s}s` : ''}` : '';
-  L.log(`${runName(r)}  p50=${(s.p50 || 0).toFixed(1)} p90=${(s.p90 || 0).toFixed(1)} p99=${(s.p99 || 0).toFixed(1)} err=${s.errors ?? '?'}  ocsp=${ca.ocsp} tsa=${ca.tsa}${st}  ${wall.toFixed(0)}s`);
+  L.log(`${runName(r)}  p50=${(s.p50 || 0).toFixed(1)} p90=${(s.p90 || 0).toFixed(1)} p99=${(s.p99 || 0).toFixed(1)} err=${s.errors ?? '?'}${om ? `  opmon=${om.joined}/${om.measured}` : ''}  ocsp=${ca.ocsp} tsa=${ca.tsa}${st}  ${wall.toFixed(0)}s`);
   if (!summary) throw new Error(`no summary.json for ${runName(r)} — k6 failed:\n${res}`);
 }
 

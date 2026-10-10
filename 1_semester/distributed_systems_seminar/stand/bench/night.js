@@ -46,6 +46,7 @@ async function grid(i) {
     await recover();
   }
   node('analyze.js', dir);
+  node('opmon.js', dir);                                           // этапы уже посчитаны run.js — только сводка opmon.md
   return dir;
 }
 
@@ -67,6 +68,8 @@ async function grid(i) {
     const mergedDir = path.join(RESULTS, `night-${stamp}`);
     fs.mkdirSync(mergedDir, { recursive: true });
     node('analyze.js', ...done);                                   // пишет results/merged.md
+    node('opmon.js', ...done);                                     // results/opmon-merged.md
+    if (fs.existsSync(path.join(RESULTS, 'opmon-merged.md'))) fs.renameSync(path.join(RESULTS, 'opmon-merged.md'), path.join(mergedDir, 'opmon.md'));
     for (const f of ['merged.md', 'merged.csv']) if (fs.existsSync(path.join(RESULTS, f))) fs.renameSync(path.join(RESULTS, f), path.join(mergedDir, f));
     L.log(`merged summary → ${mergedDir}/merged.md`);
   }

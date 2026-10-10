@@ -11,6 +11,7 @@ parcomp_key*
 1_semester/distributed_systems_seminar/stand/.env
 # по-запросные логи k6 и docker stats: десятки МБ на сетку; summary.json/meta.json/summary.md остаются
 1_semester/distributed_systems_seminar/stand/results/**/requests.csv.gz
+1_semester/distributed_systems_seminar/stand/results/**/opmon.csv.gz
 1_semester/distributed_systems_seminar/stand/results/**/stats.csv
 # сборка echo
 1_semester/distributed_systems_seminar/stand/echo/target/
