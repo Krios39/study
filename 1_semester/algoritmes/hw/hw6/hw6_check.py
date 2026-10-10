@@ -48,6 +48,16 @@ def t4():
     fig.savefig("HW6_routes_AB.png", dpi=150)
     plt.close(fig)
 
+    fig, axes = plt.subplots(1, 2, figsize=(16, 7.6), constrained_layout=True)
+    for ax, case in zip(axes, ("A", "B")):
+        grid = make_terrain(case)
+        settled = as_path(results[case]["dijkstra_settled"])
+        draw_terrain(grid, path=as_path(results[case]["dijkstra_path"]), settled=settled,
+                     source=source, target=target, ax=ax,
+                     title=f"Map {case}: Dijkstra settled {len(settled)} vertices (cost {results[case]['dijkstra_cost']})")
+    fig.savefig("HW6_dijkstra_settled_AB.png", dpi=150)
+    plt.close(fig)
+
 
 def t5():
     print("=== T5 ===")

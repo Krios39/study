@@ -15,10 +15,13 @@ fn main() {
         let dij = astar(grid, source, target, |_| 0);
         println!("{case:<5} {:<9} {:>10} {:>12}", "BFS", bfs_path.len() - 1, path_cost(grid, &bfs_path));
         println!("{case:<5} {:<9} {:>10} {:>12}", "Dijkstra", dij.path.len() - 1, dij.cost);
+        let open = grid.iter().flatten().filter(|&&v| v != 0).count();
+        println!("{case:<5} Dijkstra settled {} of {open} traversable cells", dij.settled.len());
         out.insert(case.into(), json!({
             "bfs_path": cells_json(&bfs_path),
             "dijkstra_path": cells_json(&dij.path),
             "dijkstra_cost": dij.cost,
+            "dijkstra_settled": cells_json(&dij.settled),
         }));
     }
     fs::write("HW6_T4_results.json", serde_json::to_string(&out).unwrap()).unwrap();
