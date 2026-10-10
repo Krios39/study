@@ -1,0 +1,66 @@
+{
+  "run": "nobody_s10240_v32_r3",
+  "rep": 3,
+  "config": "nobody",
+  "target": "xroad",
+  "size": 10240,
+  "vus": 32,
+  "n": 1000,
+  "warmup": 200,
+  "wall_s": 11.412,
+  "started": "2026-10-09T18:13:35.538Z",
+  "finished": "2026-10-09T18:13:48.055Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 34270924,
+      "tx": 32988722
+    },
+    "ss2": {
+      "rx": 32298534,
+      "tx": 34428830
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 25092096,
+    "ss2": 25108480
+  },
+  "link_bytes": {
+    "xroad_rx": 32956066,
+    "link_rx": 32956066,
+    "xroad_tx": 19427926,
+    "link_tx": 19427926
+  },
+  "timestamping": {
+    "completed": true,
+    "wait_s": 42,
+    "ss1": {
+      "unstamped_after_run": 2400,
+      "unstamped_final": 0
+    },
+    "ss2": {
+      "unstamped_after_run": 2400,
+      "unstamped_final": 0
+    },
+    "ca_calls_while_waiting": {
+      "ocsp": 0,
+      "tsa": 2,
+      "sign": 0,
+      "ocsp_rt_mean_s": null,
+      "tsa_rt_mean_s": 0.0085
+    }
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 0,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": null
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\nmessage-body-logging = false\n\n\n[proxy]",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\nmessage-body-logging = false\n\n\n[proxy]"
+  },
+  "k6_stdout": "nobody\txroad\tsize=10240\tvus=32\trep=3\tp50=288.2\tp90=374.9\tp99=444.4\terrors=0",
+  "tsa_probe_after": "200",
+  "tsa_restarted_before": false
+}
