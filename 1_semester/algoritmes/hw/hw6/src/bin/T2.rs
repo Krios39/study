@@ -82,13 +82,11 @@ fn print_ladder(graph: &Graph, source: &str, target: &str) {
 fn main() {
     let graph = load_graph("HW6_word_graph.json");
 
-    // ---- Statistics ----
     let vertices = graph.len();
     let degree_sum: usize = graph.values().map(Vec::len).sum();
     let edges = degree_sum / 2;
     let isolated = graph.values().filter(|adj| adj.is_empty()).count();
 
-    // Connected components: BFS from every unvisited word, in alphabetical order
     let mut component_of: BTreeMap<String, usize> = BTreeMap::new();
     let mut components: Vec<Vec<String>> = Vec::new();
     for word in graph.keys() {
