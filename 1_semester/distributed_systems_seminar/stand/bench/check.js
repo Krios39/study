@@ -61,6 +61,8 @@ check('TSA (openssl ts -query → ca:8899)', () => { const r = L.tsaProbe(); ret
 check('ca tsa_server.py многопоточный', () => { const l = L.sh('docker', [...L.ctx('ca'), 'logs', 'ca'], { ok: true }); const m = /tsa_server: (\d+) workers/.exec(l); return { ok: !!m, note: m ? `${m[1]} workers` : 'оригинальный однопоточный — docker compose up -d ca' }; });
 
 check('link counters ss1 <-> ss2 (iptables, stand-netcount)', () => { const b = L.linkBytes(); return { ok: 'xroad_tx' in b, note: JSON.stringify(b) }; });
+// задержка WAN-сетки (tc netem) снимается run.js в конце и при ошибке; если осталась — обычная сетка мерила бы не LAN
+check('no WAN emulation ss1 <-> ss2 (tc netem)', () => { const st = L.netemState(); return { ok: !st.ss1 && !st.ss2, note: st.ss1 || st.ss2 ? `${JSON.stringify(st)} — node -e "require('./bench/lib').netem(0)"` : 'none' }; });
 
 // --- доступ к БД, которым пользуются clean.js и config.js
 for (const c of ['ss0', 'ss1', 'ss2', ...(ss3 ? ['ss3'] : [])]) check(`${c} messagelog db`, () => ({ ok: true, note: L.pgTable(c, 'messagelog', 'logrecord') }));

@@ -131,7 +131,9 @@ For this study the mechanisms divide by their position relative to the request p
   connections are reused~\cite{naylor2014}. By default they are not: the client-side pool reuse
   (\texttt{pool-enable-connection-reuse}) and the provider-side support for pooled connections
   (\texttt{server-support-clients-pooled-connections}) are both off, so each message opens a new
-  connection with a full handshake~\cite{xroadsyspar}.
+  TCP connection and performs a TLS handshake~\cite{xroadsyspar}. In our traffic captures this is a
+  TLS~1.2 handshake resumed from a session ticket, without a certificate exchange, which costs one
+  round trip on top of the TCP one.
   \item \textbf{Asynchronous}, amortised or deferred: certificate status checking, which uses cached
   OCSP responses refreshed on a fixed interval (20 minutes by default) rather than one query per
   message; time-stamping, applied in batches over a hash chain of log records (once per minute by
@@ -216,8 +218,10 @@ free of foreground activity, which makes the runs reproducible by others.
   moved off 172.17.0.0/16, as the operator's documentation requires.
   \item \emph{C2, a single virtual machine (fallback).} Everything on one instance of 8 vCPU, 32\,GB
   RAM and 60\,GB disk, no externally opened ports. There is no network between the Security Servers,
-  so RQ3 is addressed only through emulated latency (\texttt{tc netem}, 1--50\,ms), which is a
-  weaker answer and is reported as such.
+  so RQ3 is addressed only through emulated latency (\texttt{tc netem}~\cite{hemminger2005}, 1--50\,ms),
+  as in TLS benchmarking where emulation isolates the effect of latency and does not need
+  Internet-scale infrastructure~\cite{paquin2020}. It is a weaker answer than a real wide-area link
+  and is reported as such.
 \end{itemize}
 
 \emph{Pitfalls:} lead time for the virtual machines and for opening the ports is outside our
@@ -484,6 +488,17 @@ A.~Georges, D.~Buytaert, L.~Eeckhout.
 \newblock Statistically Rigorous Java Performance Evaluation.
 \newblock In \emph{OOPSLA '07}, pp.~57--76, ACM, 2007.
 \newblock DOI: 10.1145/1297027.1297033.
+
+\bibitem{paquin2020}
+C.~Paquin, D.~Stebila, G.~Tamvada.
+\newblock Benchmarking Post-quantum Cryptography in TLS.
+\newblock In \emph{PQCrypto 2020}, LNCS vol.~12100, pp.~72--91, Springer, 2020.
+\newblock Cryptology ePrint Archive 2019/1447.
+
+\bibitem{hemminger2005}
+S.~Hemminger.
+\newblock Network Emulation with NetEm.
+\newblock In \emph{linux.conf.au 2005}, Canberra, 2005.
 
 \end{thebibliography}
 

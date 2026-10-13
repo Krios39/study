@@ -52,8 +52,10 @@ for (const r of runs) {
   if (r.meta.tag) continue;
   // два провайдера (target xroad2) — отдельной строкой: full+ss3 рядом с full при той же нагрузке
   const config = r.config + (r.meta.target === 'xroad2' ? '+ss3' : '');
-  const key = `${config}|${r.size}|${r.vus}`;
-  if (!groups.has(key)) groups.set(key, { config, size: r.size, vus: r.vus, runs: [] });
+  // WAN-сетка (bench/matrix-wan.json): задержка ss1 <-> ss2 — ещё одно измерение точки
+  const rtt = r.meta.rtt_ms ?? null;
+  const key = `${config}|${r.size}|${r.vus}|${rtt}`;
+  if (!groups.has(key)) groups.set(key, { config, size: r.size, vus: r.vus, rtt, runs: [] });
   groups.get(key).runs.push(r);
 }
 // размах между повторами: (max − min) / медиана, % — чувствителен к одиночному выбросу
@@ -65,11 +67,11 @@ const rows = [];
 for (const g of groups.values()) {
   const invalid = g.runs.filter(isInvalid).length;
   g.runs = g.runs.filter((r) => !isInvalid(r));
-  if (!g.runs.length) { rows.push({ config: g.config, size: g.size, vus: g.vus, reps: 0, invalid, errors: NaN }); continue; }
+  if (!g.runs.length) { rows.push({ config: g.config, size: g.size, vus: g.vus, rtt: g.rtt, reps: 0, invalid, errors: NaN }); continue; }
   const per = (f) => median(g.runs.map(f));
   const n = g.runs[0].n;
   rows.push({
-    config: g.config, size: g.size, vus: g.vus, reps: g.runs.length, invalid,
+    config: g.config, size: g.size, vus: g.vus, rtt: g.rtt, reps: g.runs.length, invalid,
     p50: per((r) => r.p50), p90: per((r) => r.p90), p99: per((r) => r.p99), avg: per((r) => r.avg),
     rps: per((r) => r.rps_measured), errors: g.runs.reduce((a, r) => a + r.errors, 0),
     ok: g.runs.reduce((a, r) => a + r.n - r.errors, 0),                // успешных запросов в измеряемой фазе, по всем повторам
@@ -94,12 +96,12 @@ for (const g of groups.values()) {
     iqr_rps: iqr(g.runs.map((r) => r.rps_measured)),
   });
 }
-rows.sort((a, b) => a.size - b.size || a.vus - b.vus || a.config.localeCompare(b.config));
+rows.sort((a, b) => a.size - b.size || a.vus - b.vus || (a.rtt ?? 0) - (b.rtt ?? 0) || a.config.localeCompare(b.config));
 
 // разности с full при тех же size/vus
-const full = new Map(rows.filter((r) => r.config === 'full').map((r) => [`${r.size}|${r.vus}`, r]));
+const full = new Map(rows.filter((r) => r.config === 'full').map((r) => [`${r.size}|${r.vus}|${r.rtt}`, r]));
 for (const r of rows) {
-  const f = full.get(`${r.size}|${r.vus}`);
+  const f = full.get(`${r.size}|${r.vus}|${r.rtt}`);
   const cmp = f && r.config !== 'full' && r.config !== 'direct';   // direct — не конфигурация X-Road, Δ бессмысленна
   r.d_p50 = cmp ? r.p50 - f.p50 : NaN;
   r.d_p90 = cmp ? r.p90 - f.p90 : NaN;
@@ -108,7 +110,7 @@ for (const r of rows) {
 // в md: канал ss1 <-> ss2, если он мерился (с 30.09); иначе старая колонка tx eth0 ss1. В csv — всё.
 const hasLink = runs.some((r) => r.meta.link_bytes);
 const COLS = [
-  ['config', 'config'], ['size', 'size'], ['vus', 'vus'], ['reps', 'reps'],
+  ['config', 'config'], ['size', 'size'], ['vus', 'vus'], ...(rows.some((r) => r.rtt != null) ? [['rtt', 'RTT ms']] : []), ['reps', 'reps'],
   ['p50', 'p50 ms'], ['p90', 'p90 ms'], ['p99', 'p99 ms'], ['d_p50', 'Δp50 vs full'], ['d_p90', 'Δp90 vs full'],
   ['iqr_p50', 'IQR p50 %'], ['spread_p50', 'размах p50 %'], ['rps', 'req/s'], ['iqr_rps', 'IQR req/s %'], ['spread_rps', 'размах req/s %'],
   ...(hasLink ? [['link_tx', 'ss1→ss2 B/req'], ['link_rx', 'ss2→ss1 B/req']] : [['wire_tx_ss1', 'tx eth0 ss1 B/req']]),
@@ -118,7 +120,7 @@ const COLS = [
 ];
 const cols = COLS.map(([c]) => c);
 const csvCols = [...new Set([...cols, 'wire_tx_ss1', 'wire_rx_ss2', 'link_tx', 'link_rx', 'log_ss2', 'tsa_total', 'stamped'])];
-const intCols = new Set(['size', 'vus', 'reps', 'errors', 'ok', 'tsa_flags', 'invalid', 'ocsp', 'tsa', 'tsa_total', 'wire_tx_ss1', 'wire_rx_ss2', 'link_tx', 'link_rx', 'log_ss1', 'log_ss2']);
+const intCols = new Set(['size', 'vus', 'rtt', 'reps', 'errors', 'ok', 'tsa_flags', 'invalid', 'ocsp', 'tsa', 'tsa_total', 'wire_tx_ss1', 'wire_rx_ss2', 'link_tx', 'link_rx', 'log_ss1', 'log_ss2']);
 let md = `| ${COLS.map(([, h]) => h).join(' | ')} |\n| ${COLS.map(() => '---').join(' | ')} |\n`;
 let csv = csvCols.join(',') + '\n';
 for (const r of rows) {

@@ -250,6 +250,43 @@ function linkBytes(from = 'ss1', to = 'ss2') {
   return res;
 }
 
+// эмуляция WAN: tc netem в namespace ss1 и ss2, задержка rtt/2 на исходящих пакетах к пиру (фильтр по его IP) — RTT между
+// ними растёт на rtt, а k6 → ss1, обращения к CS/CA/TSA и всё остальное идут без задержки. rtt = 0 снимает правила.
+// Возвращает фактическое состояние { ss1: 'delay 10ms' | null, ss2: … }. Правила живут до рестарта контейнера SS.
+function netcountTc(c) {
+  if (shCode('docker', [...ctx(c), 'run', '--rm', '--entrypoint', 'sh', 'stand-netcount', '-c', 'command -v tc']) !== 0)
+    composeOn(hostOf(c) || THIS_HOST, '--profile', 'tools', 'build', 'netcount');
+}
+function netemScript(peerIp, rttMs) {
+  const dev = `DEV=$(ip -o route get ${peerIp} | sed -n 's/.* dev \\([^ ]*\\).*/\\1/p')`;
+  const add = rttMs > 0
+    ? `tc qdisc add dev $DEV root handle 1: prio bands 4 priomap 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 && `
+      + `tc qdisc add dev $DEV parent 1:4 handle 40: netem delay ${rttMs / 2}ms limit 100000 && `
+      + `tc filter add dev $DEV parent 1: protocol ip prio 1 u32 match ip dst ${peerIp}/32 flowid 1:4; `
+    : '';
+  return `${dev}; tc qdisc del dev $DEV root 2>/dev/null; ${add}tc qdisc show dev $DEV | grep -o 'netem.*delay [0-9.]*ms' || true`;
+}
+function netem(rttMs, a = 'ss1', b = 'ss2') {
+  const state = {};
+  for (const [c, peer] of [[a, b], [b, a]]) {
+    netcountTc(c);
+    const ip = dexec(c, 'getent', 'hosts', peer).split(/\s+/)[0];
+    const out = sh('docker', [...ctx(c), 'run', '--rm', '--net', `container:${c}`, '--cap-add', 'NET_ADMIN', 'stand-netcount', 'sh', '-c', netemScript(ip, rttMs)]);
+    state[c] = (out.match(/delay [0-9.]+ms/) || [null])[0];
+  }
+  return state;
+}
+// текущее состояние без изменений (check.js: перед обычной сеткой задержки быть не должно)
+function netemState(a = 'ss1', b = 'ss2') {
+  const state = {};
+  for (const c of [a, b]) {
+    netcountTc(c);
+    const out = sh('docker', [...ctx(c), 'run', '--rm', '--net', `container:${c}`, 'stand-netcount', 'sh', '-c', 'tc qdisc show 2>/dev/null || true'], { ok: true });
+    state[c] = (out.match(/netem.*?delay [0-9.]+ms/) || [null])[0];
+  }
+  return state;
+}
+
 // режим процессора машины: governor, EPP, частоты. На Windows (Docker Desktop) sysfs недоступен — null.
 // Режим питания меняет задержки в разы (05.10: 79.7 мс в balanced против 28.7 в performance) — пишется в env.json
 // Windows 11: режим «Максимальная производительность» = overlay ded574b5-… поверх схемы (Параметры → Питание),
@@ -342,5 +379,5 @@ module.exports = {
   STAND, NET, NETARGS, CLIENT, PROVIDERS, MEASURED_SS, ENV, THIS_HOST, HOSTS, hostOf, ctx, hostCtx, shq,
   setLogFile, tee, sh, shCode, docker, dctl, dexec, dexecOk, compose, composeOn, health, running, statsTargets, sleep, log, smoke, smokeErr, smokeDirect, tsaProbe, ensureTsa, waitSmoke, restartProxy,
   iniSet, iniDel, iniDump, hurl, psql, pgSchema, pgTable, csParamSet, csParamDel, csParamDump,
-  netBytes, linkBytes, ensureProvider, cpuMode, unstamped, waitStamped, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
+  netBytes, linkBytes, netem, netemState, ensureProvider, cpuMode, unstamped, waitStamped, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
 };

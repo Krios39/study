@@ -24,7 +24,7 @@ Why now: proposals like post-quantum signatures or a decentralised PKI, a public
 
 A load generator plays the client. The consumer's Security Server signs and logs the request and sends it over mutual TLS to the provider's Security Server, which verifies, logs, and passes it to an echo service. The response goes back the same way.
 
-Paid on every request: signing, verification and logging, on both sides. And, which I found from the traffic: by default every message also opens a new TLS connection with a full handshake.
+Paid on every request: signing, verification and logging, on both sides. And, which I found from the traffic: by default every message also opens a new TLS connection with a handshake, a short one resumed from a session ticket.
 
 Deferred: time stamps are taken in batches, about two calls per thousand messages in my runs, and certificate status comes from a cache refreshed every twenty minutes. So OCSP has no per-request cost to measure.
 

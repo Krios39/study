@@ -102,13 +102,14 @@ function summarize(dirs) {
       if (d.startsWith('_') || !fs.existsSync(f) || !fs.existsSync(m)) continue;
       const meta = L.readJson(m), o = L.readJson(f);
       if (/^control/.test(meta.tag || '') || !o.joined) continue;
-      const k = `${label(meta)}|${meta.size}|${meta.vus}`;
-      if (!groups.has(k)) groups.set(k, { config: label(meta), size: meta.size, vus: meta.vus, runs: [] });
+      const rtt = meta.rtt_ms ?? null;                                // WAN-сетка: задержка ss1 <-> ss2
+      const k = `${label(meta)}|${meta.size}|${meta.vus}|${rtt}`;
+      if (!groups.has(k)) groups.set(k, { config: label(meta), size: meta.size, vus: meta.vus, rtt, runs: [] });
       groups.get(k).runs.push(o);
     }
   }
   const order = ['full', 'nobody', 'reuse', 'synctsa', 'full+ss3'];
-  const rowsOut = [...groups.values()].sort((a, b) => a.size - b.size || a.vus - b.vus || order.indexOf(a.config) - order.indexOf(b.config));
+  const rowsOut = [...groups.values()].sort((a, b) => a.size - b.size || a.vus - b.vus || (a.rtt ?? 0) - (b.rtt ?? 0) || order.indexOf(a.config) - order.indexOf(b.config));
   for (const g of rowsOut) {
     g.reps = g.runs.length;
     g.joined = g.runs.reduce((s, o) => s + o.joined, 0);
@@ -116,17 +117,19 @@ function summarize(dirs) {
     for (const k of [...STAGES, 'resp_start', 'total']) g[k] = median(g.runs.map((o) => o.stages[k]?.mean ?? NaN));
     g.total_p50 = median(g.runs.map((o) => o.stages.total?.p50 ?? NaN));
   }
-  const full = new Map(rowsOut.filter((g) => g.config === 'full').map((g) => [`${g.size}|${g.vus}`, g]));
-  const head = ['config', 'size', 'vus', 'reps', 'склеено', 'total p50', 'total mean', ...STAGES];
+  const full = new Map(rowsOut.filter((g) => g.config === 'full').map((g) => [`${g.size}|${g.vus}|${g.rtt}`, g]));
+  const hasRtt = rowsOut.some((g) => g.rtt != null);
+  const rttCol = (g) => (hasRtt ? [g.rtt ?? 0] : []);
+  const head = ['config', 'size', 'vus', ...(hasRtt ? ['RTT ms'] : []), 'reps', 'склеено', 'total p50', 'total mean', ...STAGES];
   let md = `| ${head.join(' | ')} |\n|${head.map(() => ' --- ').join('|')}|\n`;
-  for (const g of rowsOut) md += `| ${[g.config, g.size, g.vus, g.reps, `${g.joined}/${g.expected}`, fmt(g.total_p50), fmt(g.total), ...STAGES.map((k) => fmt(g[k]))].join(' | ')} |\n`;
+  for (const g of rowsOut) md += `| ${[g.config, g.size, g.vus, ...rttCol(g), g.reps, `${g.joined}/${g.expected}`, fmt(g.total_p50), fmt(g.total), ...STAGES.map((k) => fmt(g[k]))].join(' | ')} |\n`;
   md += '\nΔ средних этапов против full в той же точке (мс):\n\n';
-  const dh = ['config', 'size', 'vus', 'Δ total', ...STAGES.map((k) => `Δ ${k}`)];
+  const dh = ['config', 'size', 'vus', ...(hasRtt ? ['RTT ms'] : []), 'Δ total', ...STAGES.map((k) => `Δ ${k}`)];
   md += `| ${dh.join(' | ')} |\n|${dh.map(() => ' --- ').join('|')}|\n`;
   for (const g of rowsOut) {
-    const f = full.get(`${g.size}|${g.vus}`);
+    const f = full.get(`${g.size}|${g.vus}|${g.rtt}`);
     if (g.config === 'full' || !f) continue;
-    md += `| ${[g.config, g.size, g.vus, fmt(g.total - f.total), ...STAGES.map((k) => fmt(g[k] - f[k]))].join(' | ')} |\n`;
+    md += `| ${[g.config, g.size, g.vus, ...rttCol(g), fmt(g.total - f.total), ...STAGES.map((k) => fmt(g[k] - f[k]))].join(' | ')} |\n`;
   }
   md += `\nЭтапы — средние по прогону (мс), по точке — медиана по повторам. Источник: opmonitor.operational_data на ss1 и провайдере, `
     + `склейка по x_request_id; разрешение меток 1 мс. c_req → net_req → p_req → is → p_resp → c_resp идут подряд, их сумма = total mean. `

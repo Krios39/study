@@ -8,6 +8,7 @@
 //   node bench/run.js --dry                # показать порядок прогонов, ничего не запускать
 //   node bench/run.js --out results/X      # писать в заданный каталог (для night.js)
 //   node bench/run.js --matrix bench/matrix-wide.json   # другая сетка (по умолчанию bench/matrix.json)
+//   node bench/run.js --matrix bench/matrix-wan.json    # эмуляция WAN: M.rtts — задержка ss1 <-> ss2 (tc netem), прогоны _rtt<мс>
 // На каждый прогон: конфигурация (если сменилась) → clean → счётчики до → k6 → счётчики после →
 // ожидание меток времени (пакетное проставление должно закрыть все сообщения прогона до чистки) → meta.json.
 // ss3 (второй провайдер, в измеряемом пути не участвует) останавливается и после сетки остаётся остановленным: запущенный
@@ -33,7 +34,11 @@ if (!flag('--dry')) {
   fs.mkdirSync(RESULTS, { recursive: true });
   L.setLogFile(path.join(RESULTS, 'run.log'));    // полный журнал прогона, включая вывод hurl/compose/k6 и ошибки
 }
-process.on('uncaughtException', (e) => { L.log('FATAL', e.stack || e.message); process.exit(1); });
+process.on('uncaughtException', (e) => {
+  L.log('FATAL', e.stack || e.message);
+  if (M.rtts) { try { L.netem(0); } catch { /* стенд недоступен — check.js покажет оставшуюся задержку */ } }
+  process.exit(1);
+});
 
 // два провайдера: только full — config.js меняет local.ini лишь на ss1/ss2, у ss3 остались бы настройки по умолчанию
 const TWO = M.two_providers || null;
@@ -60,21 +65,24 @@ function buildPlan() {
     ...M.latency.sizes.flatMap((size) => M.latency.vus.map((vus) => [size, vus])),
     ...M.concurrency.sizes.flatMap((size) => M.concurrency.vus.map((vus) => [size, vus])),
   ];
-  const directPoints = M.points || M.baseline.sizes.flatMap((size) => M.baseline.vus.map((vus) => [size, vus]));
+  const directPoints = M.direct === false ? [] : M.points || M.baseline.sizes.flatMap((size) => M.baseline.vus.map((vus) => [size, vus]));
   for (let rep = 1; rep <= M.reps; rep++) {
     if (withControl && M.control.per_rep) plan.push(controlRun(`control_r${rep}`));
     for (const [size, vus] of directPoints) plan.push({ rep, config: 'direct', target: 'direct', size, vus });
     for (const config of shuffle(configs.slice())) {
       // M.two_providers: те же точки, но запросы по очереди на ss2 и ss3 (target xroad2) — в блоке своей конфигурации
       const two = TWO && TWO.configs.includes(config) ? TWO.points.map(([size, vus]) => ({ rep, config, target: 'xroad2', size, vus })) : [];
-      plan.push(...shuffle([...xroadPoints.map(([size, vus]) => ({ rep, config, target: 'xroad', size, vus })), ...two]));
+      // M.rtts: каждая точка при каждой задержке ss1 <-> ss2 (эмуляция WAN), вперемешку внутри блока конфигурации
+      const rtts = M.rtts || [undefined];
+      const pts = xroadPoints.flatMap(([size, vus]) => rtts.map((rtt) => ({ rep, config, target: 'xroad', size, vus, ...(rtt != null ? { rtt } : {}) })));
+      plan.push(...shuffle([...pts, ...two]));
     }
   }
   if (withControl && M.control.per_rep) plan.push(controlRun('control_end'));
   return plan;
 }
 
-const runName = (r) => `${r.config}${r.target === 'xroad2' ? '-2p' : ''}_s${r.size}_v${r.vus}_r${r.rep}${r.tag ? '_' + r.tag : ''}`;
+const runName = (r) => `${r.config}${r.target === 'xroad2' ? '-2p' : ''}_s${r.size}_v${r.vus}${r.rtt != null ? '_rtt' + r.rtt : ''}_r${r.rep}${r.tag ? '_' + r.tag : ''}`;
 
 // spawn с ожиданием: k6 нельзя запускать через spawnSync — он блокирует цикл событий, и docker stats в фоне не пишется
 function run(cmd, args) {
@@ -203,6 +211,15 @@ function controlVerdict() {
   // ss3 нужен только прогонам с двумя провайдерами; без них — остановить, чтобы не ел CPU
   if (todo.some((r) => r.target === 'xroad2')) await L.ensureProvider('ss3', L.PROVIDERS.ss3);
   else if (L.running('ss3')) { L.log('stopping ss3 (not in the measured path)'); L.dctl('ss3', 'stop'); }
+  // задержка ss1 <-> ss2: в обычной сетке её быть не должно (снимаем, если осталась от прерванной WAN-сетки)
+  let rttNow = M.rtts ? null : 0;
+  const setRtt = (rtt) => {
+    if (rtt === rttNow) return;
+    const st = L.netem(rtt);
+    L.log(`netem rtt ${rtt} ms: ${JSON.stringify(st)}`);
+    rttNow = rtt;
+  };
+  if (!M.rtts) { const st = L.netemState(); if (st.ss1 || st.ss2) { L.log(`netem left over ${JSON.stringify(st)} — removing`); L.netem(0); } }
   let current = null;
   for (const r of todo) {
     let warmup = M.warmup_next;
@@ -215,6 +232,7 @@ function controlVerdict() {
       if (M.burnin) {
         const b = { rep: r.rep, config: r.config, target: 'xroad', size: M.burnin.size, vus: M.burnin.vus, tag: 'burnin' };
         clean();
+        if (M.rtts) setRtt(0);
         await runOne(b, path.join(RESULTS, '_burnin', `${r.config}_r${r.rep}`), M.burnin.warmup);
       }
     }
@@ -222,9 +240,15 @@ function controlVerdict() {
     if (r.target === 'direct') warmup = 100;
     clean();
     const tsaRestarted = r.target !== 'direct' ? await L.ensureTsa() : false;   // TSA жив? иначе restart ca (помечается в meta)
-    await runOne(r, path.join(RESULTS, runName(r)), warmup, { tsa_restarted_before: tsaRestarted });
+    if (M.rtts && r.target !== 'direct') setRtt(r.rtt || 0);
+    await runOne(r, path.join(RESULTS, runName(r)), warmup, { tsa_restarted_before: tsaRestarted, ...(M.rtts ? { rtt_ms: r.rtt || 0 } : {}) });
     if (/^control/.test(r.tag || '')) controlVerdict();
   }
+  if (M.rtts) setRtt(0);
   if (current && current !== 'full') { L.log('restoring config full'); await applyConfig('full'); }
   L.log('done');
-})().catch((e) => { L.log('ERROR', e.stack || e.message); process.exit(1); });
+})().catch((e) => {
+  L.log('ERROR', e.stack || e.message);
+  if (M.rtts) { try { L.netem(0); L.log('netem removed'); } catch (e2) { L.log('netem removal failed: ' + e2.message); } }
+  process.exit(1);
+});

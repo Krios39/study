@@ -3,6 +3,7 @@
 //   node bench/night.js            # 3 сетки (~4.5 ч каждая)
 //   node bench/night.js 2          # две
 //   node bench/night.js 2 --no-smoke   # без сквозной проверки (bench/smoke.js, ~20 мин) перед сетками
+//   node bench/night.js 1 --matrix bench/matrix-wan.json   # другая сетка (эмуляция WAN), каталоги wan-<дата>-g<N>
 // Перед каждой сеткой: node bench/check.js (при FAIL — config.js full и ещё одна попытка). Сетка упала — config.js full,
 // TSA-проверка, --resume; до 5 попыток на сетку. После каждой сетки analyze.js, в конце — объединённая сводка по всем
 // сеткам этой ночи (results/night-<дата>/merged.md). Журнал: results/night-<дата>.log.
@@ -15,10 +16,14 @@ const { smoke } = require('./smoke');
 
 const COUNT = Number(process.argv.slice(2).find((a) => /^\d+$/.test(a)) || 3);
 const SMOKE = !process.argv.includes('--no-smoke');
+const mi = process.argv.indexOf('--matrix');
+const MATRIX = mi >= 0 ? path.resolve(process.argv[mi + 1]) : null;
+// префикс каталогов по имени сетки: matrix-wan.json → wan-<дата>-g1
+const PREFIX = MATRIX ? path.basename(MATRIX, '.json').replace(/^matrix-?/, '') + '-' : '';
 const RETRIES = 5;
 const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
 const RESULTS = path.join(L.STAND, 'results');
-L.setLogFile(path.join(RESULTS, `night-${stamp}.log`));
+L.setLogFile(path.join(RESULTS, `night-${PREFIX}${stamp}.log`));
 
 const node = (script, ...args) => spawnSync(process.execPath, [path.join(__dirname, script), ...args], { stdio: 'inherit', cwd: L.STAND }).status;
 
@@ -29,7 +34,7 @@ async function recover() {
 }
 
 async function grid(i) {
-  const dir = path.join(RESULTS, `${stamp}-g${i}`);
+  const dir = path.join(RESULTS, `${PREFIX}${stamp}-g${i}`);
   L.log(`=== grid ${i}/${COUNT} → ${dir}`);
   if (node('check.js', '--quick') !== 0) {
     L.log('check failed — trying to recover');
@@ -37,7 +42,7 @@ async function grid(i) {
     if (node('check.js', '--quick') !== 0) throw new Error('stand not ready');
   }
   for (let attempt = 1; attempt <= RETRIES; attempt++) {
-    const args = attempt === 1 ? ['--out', dir] : ['--resume', dir];
+    const args = [...(attempt === 1 ? ['--out', dir] : ['--resume', dir]), ...(MATRIX ? ['--matrix', MATRIX] : [])];
     L.log(`run.js ${args.join(' ')} (attempt ${attempt})`);
     if (node('run.js', ...args) === 0) break;
     if (attempt === RETRIES) throw new Error(`grid ${i} failed after ${RETRIES} attempts`);
@@ -65,7 +70,7 @@ async function grid(i) {
     L.log(`elapsed ${((Date.now() - t0) / 3600e3).toFixed(1)} h, grids done: ${done.length}`);
   }
   if (done.length > 1) {
-    const mergedDir = path.join(RESULTS, `night-${stamp}`);
+    const mergedDir = path.join(RESULTS, `night-${PREFIX}${stamp}`);
     fs.mkdirSync(mergedDir, { recursive: true });
     node('analyze.js', ...done);                                   // пишет results/merged.md
     node('opmon.js', ...done);                                     // results/opmon-merged.md
