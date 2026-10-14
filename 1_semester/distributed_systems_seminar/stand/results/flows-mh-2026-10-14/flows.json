@@ -1,0 +1,2107 @@
+{
+  "size": 10240,
+  "n": 20,
+  "ss1": "10.10.0.21",
+  "ss2": "10.10.0.22",
+  "cases": [
+    {
+      "config": "full",
+      "rtt": 0,
+      "netem": {
+        "ss1": null,
+        "ss2": null
+      },
+      "requests": 20,
+      "curl_ms_median": 62.092,
+      "total_ms_median": 49.7789306640625,
+      "syn_rtt_ms_median": 0.510498046875,
+      "flow_rtt": {
+        "sockets": 1,
+        "minrtt_ms": 0.527,
+        "minrtt_min_ms": 0.527,
+        "srtt_ms": 0.677
+      },
+      "conn": {
+        "new TCP + resumed TLS": 20
+      },
+      "gaps_median": 4,
+      "gap_ms_sum_median": 45.4202880859375,
+      "other_ports": [],
+      "example": {
+        "conn": "new TCP + resumed TLS",
+        "total_ms": 50.658935546875,
+        "syn_rtt_ms": 0.5048828125,
+        "gaps": [
+          {
+            "ms": 2.239013671875,
+            "after": "← ss2 ACK",
+            "before": "← ss2 TLS hs 2+4 2660 B"
+          },
+          {
+            "ms": 16.613037109375,
+            "after": "ss1 → ChangeCipherSpec 6 B",
+            "before": "ss1 → Finished (enc.) 2896 B"
+          },
+          {
+            "ms": 11.51611328125,
+            "after": "ss1 → data (cont.) 985 B",
+            "before": "← ss2 data 224 B"
+          },
+          {
+            "ms": 11.302978515625,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data 31 B"
+          },
+          {
+            "ms": 4.885009765625,
+            "after": "← ss2 FIN 31 B",
+            "before": "← ss2 FIN 31 B"
+          }
+        ],
+        "timeline": [
+          {
+            "ms": 0,
+            "what": "ss1 → SYN"
+          },
+          {
+            "ms": 0.5048828125,
+            "what": "← ss2 SYN-ACK"
+          },
+          {
+            "ms": 0.52197265625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 0.97509765625,
+            "what": "ss1 → ClientHello 2800 B"
+          },
+          {
+            "ms": 1.135009765625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1.217041015625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 3.4560546875,
+            "what": "← ss2 TLS hs 2+4 2660 B"
+          },
+          {
+            "ms": 3.4560546875,
+            "what": "← ss2 ChangeCipherSpec 6 B"
+          },
+          {
+            "ms": 3.4560546875,
+            "what": "← ss2 Finished (enc.) 45 B"
+          },
+          {
+            "ms": 3.468017578125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3.47314453125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3.475830078125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3.9150390625,
+            "what": "ss1 → ChangeCipherSpec 6 B"
+          },
+          {
+            "ms": 20.528076171875,
+            "what": "ss1 → Finished (enc.) 2896 B"
+          },
+          {
+            "ms": 20.614013671875,
+            "what": "ss1 → data (cont.) 7240 B"
+          },
+          {
+            "ms": 21.344970703125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 21.34619140625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 21.35888671875,
+            "what": "ss1 → data (cont.) 985 B"
+          },
+          {
+            "ms": 32.875,
+            "what": "← ss2 data 224 B"
+          },
+          {
+            "ms": 32.995849609375,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 32.9970703125,
+            "what": "← ss2 data 106 B"
+          },
+          {
+            "ms": 32.9970703125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 32.9970703125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 33.072021484375,
+            "what": "← ss2 data 419 B"
+          },
+          {
+            "ms": 33.280029296875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 33.281005859375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 33.282958984375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 33.3330078125,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 33.3330078125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 33.3759765625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 33.385009765625,
+            "what": "← ss2 data 102 B"
+          },
+          {
+            "ms": 33.43701171875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 33.550048828125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 33.623046875,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 33.631103515625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 33.673095703125,
+            "what": "← ss2 data (cont.) 2310 B"
+          },
+          {
+            "ms": 33.673095703125,
+            "what": "← ss2 data 2196 B"
+          },
+          {
+            "ms": 33.693115234375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 44.99609375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 44.99609375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 44.99609375,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 45.0361328125,
+            "what": "← ss2 data 103 B"
+          },
+          {
+            "ms": 45.136962890625,
+            "what": "← ss2 data 62 B"
+          },
+          {
+            "ms": 45.13818359375,
+            "what": "← ss2 data 438 B"
+          },
+          {
+            "ms": 45.23291015625,
+            "what": "← ss2 data 62 B"
+          },
+          {
+            "ms": 45.23388671875,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 45.23388671875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.23388671875,
+            "what": "← ss2 data 65 B"
+          },
+          {
+            "ms": 45.330078125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.3310546875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.3310546875,
+            "what": "← ss2 data 696 B"
+          },
+          {
+            "ms": 45.35107421875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 45.428955078125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.428955078125,
+            "what": "← ss2 data 94 B"
+          },
+          {
+            "ms": 45.429931640625,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.525146484375,
+            "what": "← ss2 data 64 B"
+          },
+          {
+            "ms": 45.525146484375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.525146484375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.680908203125,
+            "what": "← ss2 data 8031 B"
+          },
+          {
+            "ms": 45.680908203125,
+            "what": "← ss2 data 62 B"
+          },
+          {
+            "ms": 45.7041015625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 45.721923828125,
+            "what": "← ss2 data 94 B"
+          },
+          {
+            "ms": 45.77294921875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.77392578125,
+            "what": "← ss2 FIN 31 B"
+          },
+          {
+            "ms": 50.658935546875,
+            "what": "← ss2 FIN 31 B"
+          }
+        ]
+      }
+    },
+    {
+      "config": "full",
+      "rtt": 5,
+      "netem": {
+        "ss1": "delay 2.5ms",
+        "ss2": "delay 2.5ms"
+      },
+      "requests": 20,
+      "curl_ms_median": 78.0805,
+      "total_ms_median": 61.673095703125,
+      "syn_rtt_ms_median": 3.2545166015625,
+      "flow_rtt": {
+        "sockets": 1,
+        "minrtt_ms": 5.54,
+        "minrtt_min_ms": 5.54,
+        "srtt_ms": 5.578
+      },
+      "conn": {
+        "new TCP + resumed TLS": 20
+      },
+      "gaps_median": 12.5,
+      "gap_ms_sum_median": 58.4796142578125,
+      "other_ports": [],
+      "example": {
+        "conn": "new TCP + resumed TLS",
+        "total_ms": 62.093017578125,
+        "syn_rtt_ms": 3.029052734375,
+        "gaps": [
+          {
+            "ms": 3.029052734375,
+            "after": "ss1 → SYN",
+            "before": "← ss2 SYN-ACK"
+          },
+          {
+            "ms": 2.576171875,
+            "after": "← ss2 SYN-ACK",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 2.68701171875,
+            "after": "ss1 → ClientHello 2800 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 2.527099609375,
+            "after": "← ss2 Finished (enc.) 45 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 14.802978515625,
+            "after": "ss1 → ChangeCipherSpec 6 B",
+            "before": "ss1 → Finished (enc.) 2896 B"
+          },
+          {
+            "ms": 3.027099609375,
+            "after": "ss1 → data (cont.) 2896 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 2.535888671875,
+            "after": "← ss2 ACK",
+            "before": "ss1 → data (cont.) 985 B"
+          },
+          {
+            "ms": 11.39306640625,
+            "after": "ss1 → data (cont.) 985 B",
+            "before": "← ss2 data 224 B"
+          },
+          {
+            "ms": 2.712158203125,
+            "after": "← ss2 data 63 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 2.779052734375,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data 5792 B"
+          },
+          {
+            "ms": 2.530029296875,
+            "after": "← ss2 data (cont.) 326 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 3.0341796875,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data 31 B"
+          },
+          {
+            "ms": 2.504150390625,
+            "after": "← ss2 data 31 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 2.60693359375,
+            "after": "ss1 → ACK",
+            "before": "← ss2 FIN 8375 B"
+          }
+        ],
+        "timeline": [
+          {
+            "ms": 0,
+            "what": "ss1 → SYN"
+          },
+          {
+            "ms": 3.029052734375,
+            "what": "← ss2 SYN-ACK"
+          },
+          {
+            "ms": 5.605224609375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 6.01708984375,
+            "what": "ss1 → ClientHello 2800 B"
+          },
+          {
+            "ms": 8.7041015625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 8.705078125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 10.44189453125,
+            "what": "← ss2 TLS hs 2+4 2660 B"
+          },
+          {
+            "ms": 10.443115234375,
+            "what": "← ss2 ChangeCipherSpec 6 B"
+          },
+          {
+            "ms": 10.443115234375,
+            "what": "← ss2 Finished (enc.) 45 B"
+          },
+          {
+            "ms": 12.97021484375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 12.97705078125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 12.97802734375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 13.38720703125,
+            "what": "ss1 → ChangeCipherSpec 6 B"
+          },
+          {
+            "ms": 28.190185546875,
+            "what": "ss1 → Finished (enc.) 2896 B"
+          },
+          {
+            "ms": 28.196044921875,
+            "what": "ss1 → data (cont.) 4344 B"
+          },
+          {
+            "ms": 28.197998046875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 31.22509765625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 31.22509765625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 31.22509765625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 33.760986328125,
+            "what": "ss1 → data (cont.) 985 B"
+          },
+          {
+            "ms": 45.154052734375,
+            "what": "← ss2 data 224 B"
+          },
+          {
+            "ms": 45.154052734375,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 45.154052734375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.249267578125,
+            "what": "← ss2 data 75 B"
+          },
+          {
+            "ms": 45.249267578125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.249267578125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.250244140625,
+            "what": "← ss2 data 419 B"
+          },
+          {
+            "ms": 45.39013671875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.39013671875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 45.445068359375,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 48.1572265625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 50.936279296875,
+            "what": "← ss2 data 5792 B"
+          },
+          {
+            "ms": 50.988037109375,
+            "what": "← ss2 data (cont.) 4344 B"
+          },
+          {
+            "ms": 50.989013671875,
+            "what": "← ss2 data (cont.) 326 B"
+          },
+          {
+            "ms": 53.51904296875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 53.52392578125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 56.55810546875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.55810546875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.55810546875,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 56.616943359375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.616943359375,
+            "what": "← ss2 data 72 B"
+          },
+          {
+            "ms": 56.616943359375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.6181640625,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.6611328125,
+            "what": "← ss2 data 438 B"
+          },
+          {
+            "ms": 56.6611328125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.715087890625,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.715087890625,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 56.715087890625,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.716064453125,
+            "what": "← ss2 data 65 B"
+          },
+          {
+            "ms": 56.76806640625,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.76806640625,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.76904296875,
+            "what": "← ss2 data 696 B"
+          },
+          {
+            "ms": 56.76904296875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.76904296875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 56.76904296875,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 56.81787109375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 59.322021484375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 59.486083984375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 62.093017578125,
+            "what": "← ss2 FIN 8375 B"
+          }
+        ]
+      }
+    },
+    {
+      "config": "full",
+      "rtt": 20,
+      "netem": {
+        "ss1": "delay 10ms",
+        "ss2": "delay 10ms"
+      },
+      "requests": 20,
+      "curl_ms_median": 147.793,
+      "total_ms_median": 123.6722412109375,
+      "syn_rtt_ms_median": 10.994873046875,
+      "flow_rtt": {
+        "sockets": 3,
+        "minrtt_ms": 20.782,
+        "minrtt_min_ms": 20.458,
+        "srtt_ms": 21.258
+      },
+      "conn": {
+        "new TCP + resumed TLS": 20
+      },
+      "gaps_median": 11,
+      "gap_ms_sum_median": 120.5762939453125,
+      "other_ports": [],
+      "example": {
+        "conn": "new TCP + resumed TLS",
+        "total_ms": 123.67919921875,
+        "syn_rtt_ms": 10.943115234375,
+        "gaps": [
+          {
+            "ms": 10.943115234375,
+            "after": "ss1 → SYN",
+            "before": "← ss2 SYN-ACK"
+          },
+          {
+            "ms": 10.087158203125,
+            "after": "← ss2 SYN-ACK",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 10.2001953125,
+            "after": "ss1 → ClientHello 2800 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 10.030029296875,
+            "after": "← ss2 Finished (enc.) 45 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 16.2421875,
+            "after": "ss1 → ChangeCipherSpec 6 B",
+            "before": "ss1 → Finished (enc.) 2896 B"
+          },
+          {
+            "ms": 11.268798828125,
+            "after": "ss1 → data (cont.) 1448 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 10.10498046875,
+            "after": "← ss2 ACK",
+            "before": "ss1 → data (cont.) 985 B"
+          },
+          {
+            "ms": 10.762939453125,
+            "after": "ss1 → data (cont.) 985 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 8.742919921875,
+            "after": "← ss2 ACK",
+            "before": "← ss2 data 224 B"
+          },
+          {
+            "ms": 10.3349609375,
+            "after": "← ss2 data 63 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 11.39794921875,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data 2896 B"
+          }
+        ],
+        "timeline": [
+          {
+            "ms": 0,
+            "what": "ss1 → SYN"
+          },
+          {
+            "ms": 10.943115234375,
+            "what": "← ss2 SYN-ACK"
+          },
+          {
+            "ms": 21.0302734375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 21.572021484375,
+            "what": "ss1 → ClientHello 2800 B"
+          },
+          {
+            "ms": 31.772216796875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 34.032958984375,
+            "what": "← ss2 TLS hs 2+4 2660 B"
+          },
+          {
+            "ms": 34.033935546875,
+            "what": "← ss2 ChangeCipherSpec 6 B"
+          },
+          {
+            "ms": 34.033935546875,
+            "what": "← ss2 Finished (enc.) 45 B"
+          },
+          {
+            "ms": 44.06396484375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 44.070068359375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 44.071044921875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 44.5830078125,
+            "what": "ss1 → ChangeCipherSpec 6 B"
+          },
+          {
+            "ms": 60.8251953125,
+            "what": "ss1 → Finished (enc.) 2896 B"
+          },
+          {
+            "ms": 60.835205078125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 60.8369140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 60.840087890625,
+            "what": "ss1 → data (cont.) 1448 B"
+          },
+          {
+            "ms": 72.10888671875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 72.10888671875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 72.110107421875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 82.215087890625,
+            "what": "ss1 → data (cont.) 985 B"
+          },
+          {
+            "ms": 92.97802734375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 101.720947265625,
+            "what": "← ss2 data 224 B"
+          },
+          {
+            "ms": 101.721923828125,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 101.721923828125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 101.721923828125,
+            "what": "← ss2 data 75 B"
+          },
+          {
+            "ms": 101.721923828125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 101.722900390625,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 101.722900390625,
+            "what": "← ss2 data 419 B"
+          },
+          {
+            "ms": 101.84716796875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 101.84814453125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 101.84814453125,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 112.18310546875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 123.5810546875,
+            "what": "← ss2 data 2896 B"
+          },
+          {
+            "ms": 123.58203125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 123.58203125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 123.5830078125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 123.677978515625,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 123.677978515625,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 123.67919921875,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 123.67919921875,
+            "what": "← ss2 FIN 428 B"
+          }
+        ]
+      }
+    },
+    {
+      "config": "full",
+      "rtt": 50,
+      "netem": {
+        "ss1": "delay 25ms",
+        "ss2": "delay 25ms"
+      },
+      "requests": 20,
+      "curl_ms_median": 297.88300000000004,
+      "total_ms_median": 258.76806640625,
+      "syn_rtt_ms_median": 26.033935546875,
+      "flow_rtt": {
+        "sockets": 4,
+        "minrtt_ms": 51.1075,
+        "minrtt_min_ms": 50.958,
+        "srtt_ms": 52.076499999999996
+      },
+      "conn": {
+        "new TCP + resumed TLS": 20
+      },
+      "gaps_median": 7,
+      "gap_ms_sum_median": 179.7032470703125,
+      "other_ports": [],
+      "example": {
+        "conn": "new TCP + resumed TLS",
+        "total_ms": 258.8291015625,
+        "syn_rtt_ms": 25.98095703125,
+        "gaps": [
+          {
+            "ms": 25.47119140625,
+            "after": "← ss2 SYN-ACK",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 26.206787109375,
+            "after": "ss1 → ClientHello 2800 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 25.078125,
+            "after": "← ss2 Finished (enc.) 45 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 25.9111328125,
+            "after": "ss1 → data (cont.) 1448 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 25.094970703125,
+            "after": "← ss2 ACK",
+            "before": "ss1 → data (cont.) 985 B"
+          },
+          {
+            "ms": 25.9931640625,
+            "after": "← ss2 data 63 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 26.25390625,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data 2896 B"
+          }
+        ],
+        "timeline": [
+          {
+            "ms": 0,
+            "what": "ss1 → SYN"
+          },
+          {
+            "ms": 11.192138671875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 11.193115234375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 25.98095703125,
+            "what": "← ss2 SYN-ACK"
+          },
+          {
+            "ms": 51.4521484375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 51.533203125,
+            "what": "ss1 → ClientHello 2800 B"
+          },
+          {
+            "ms": 77.739990234375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 79.613037109375,
+            "what": "← ss2 TLS hs 2+4 2660 B"
+          },
+          {
+            "ms": 79.614013671875,
+            "what": "← ss2 ChangeCipherSpec 6 B"
+          },
+          {
+            "ms": 79.614013671875,
+            "what": "← ss2 Finished (enc.) 45 B"
+          },
+          {
+            "ms": 104.692138671875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 104.696044921875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 104.697021484375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 105.60400390625,
+            "what": "ss1 → ChangeCipherSpec 6 B"
+          },
+          {
+            "ms": 120.037109375,
+            "what": "ss1 → Finished (enc.) 2896 B"
+          },
+          {
+            "ms": 120.083251953125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 120.085205078125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 120.0869140625,
+            "what": "ss1 → data (cont.) 1448 B"
+          },
+          {
+            "ms": 145.998046875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 145.9990234375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 145.9990234375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 171.093994140625,
+            "what": "ss1 → data (cont.) 985 B"
+          },
+          {
+            "ms": 188.155029296875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 197.006103515625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 206.47509765625,
+            "what": "← ss2 data 224 B"
+          },
+          {
+            "ms": 206.47607421875,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 206.47607421875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 206.47607421875,
+            "what": "← ss2 data 75 B"
+          },
+          {
+            "ms": 206.47607421875,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 206.47705078125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 206.47705078125,
+            "what": "← ss2 data 419 B"
+          },
+          {
+            "ms": 206.47705078125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 206.532958984375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 206.533935546875,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 232.527099609375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 258.781005859375,
+            "what": "← ss2 data 2896 B"
+          },
+          {
+            "ms": 258.781982421875,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 258.781982421875,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 258.781982421875,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 258.828125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 258.8291015625,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 258.8291015625,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 258.8291015625,
+            "what": "← ss2 FIN 428 B"
+          }
+        ]
+      }
+    },
+    {
+      "config": "reuse",
+      "rtt": 0,
+      "netem": {
+        "ss1": null,
+        "ss2": null
+      },
+      "requests": 20,
+      "curl_ms_median": 58.254999999999995,
+      "total_ms_median": 27.445556640625,
+      "syn_rtt_ms_median": null,
+      "flow_rtt": {
+        "sockets": 4,
+        "minrtt_ms": 0.147,
+        "minrtt_min_ms": 0.147,
+        "srtt_ms": 4.804
+      },
+      "conn": {
+        "reused connection": 20
+      },
+      "gaps_median": 2,
+      "gap_ms_sum_median": 25.6112060546875,
+      "other_ports": [],
+      "example": {
+        "conn": "reused connection",
+        "total_ms": 27.531982421875,
+        "syn_rtt_ms": null,
+        "gaps": [
+          {
+            "ms": 12.4970703125,
+            "after": "ss1 → data (cont.) 842 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 13.13037109375,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data 36 B"
+          }
+        ],
+        "timeline": [
+          {
+            "ms": 0,
+            "what": "ss1 → data 2994 B"
+          },
+          {
+            "ms": 0.109130859375,
+            "what": "ss1 → data (cont.) 7240 B"
+          },
+          {
+            "ms": 0.779052734375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 0.779052734375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 0.79296875,
+            "what": "ss1 → data (cont.) 842 B"
+          },
+          {
+            "ms": 13.2900390625,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 13.291015625,
+            "what": "← ss2 data 105 B"
+          },
+          {
+            "ms": 13.291015625,
+            "what": "← ss2 data 117 B"
+          },
+          {
+            "ms": 13.292236328125,
+            "what": "← ss2 data 462 B"
+          },
+          {
+            "ms": 13.292236328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 13.292236328125,
+            "what": "← ss2 data 105 B"
+          },
+          {
+            "ms": 13.35791015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 13.359130859375,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 13.4111328125,
+            "what": "← ss2 data 72 B"
+          },
+          {
+            "ms": 13.552001953125,
+            "what": "← ss2 data (cont.) 1448 B"
+          },
+          {
+            "ms": 13.608154296875,
+            "what": "← ss2 data (cont.) 6662 B"
+          },
+          {
+            "ms": 13.660888671875,
+            "what": "← ss2 data 2203 B"
+          },
+          {
+            "ms": 14.037841796875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 27.168212890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 27.169189453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 27.169189453125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 27.169189453125,
+            "what": "← ss2 data 150 B"
+          },
+          {
+            "ms": 27.169921875,
+            "what": "← ss2 data 481 B"
+          },
+          {
+            "ms": 27.169921875,
+            "what": "← ss2 data 141 B"
+          },
+          {
+            "ms": 27.169921875,
+            "what": "← ss2 data 143 B"
+          },
+          {
+            "ms": 27.216064453125,
+            "what": "← ss2 data 739 B"
+          },
+          {
+            "ms": 27.222900390625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 27.322998046875,
+            "what": "← ss2 data 283 B"
+          },
+          {
+            "ms": 27.376953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 27.376953125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 27.399169921875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 27.428955078125,
+            "what": "← ss2 data (cont.) 5143 B"
+          },
+          {
+            "ms": 27.428955078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 27.47998046875,
+            "what": "← ss2 data 177 B"
+          },
+          {
+            "ms": 27.531982421875,
+            "what": "← ss2 data 36 B"
+          }
+        ]
+      }
+    },
+    {
+      "config": "reuse",
+      "rtt": 5,
+      "netem": {
+        "ss1": "delay 2.5ms",
+        "ss2": "delay 2.5ms"
+      },
+      "requests": 19,
+      "curl_ms_median": 60.163,
+      "total_ms_median": 31.02294921875,
+      "syn_rtt_ms_median": null,
+      "flow_rtt": {
+        "sockets": 4,
+        "minrtt_ms": 0.147,
+        "minrtt_min_ms": 0.147,
+        "srtt_ms": 10.702
+      },
+      "conn": {
+        "reused connection": 19
+      },
+      "gaps_median": 5,
+      "gap_ms_sum_median": 30.06494140625,
+      "other_ports": [],
+      "example": {
+        "conn": "reused connection",
+        "total_ms": 31.02294921875,
+        "syn_rtt_ms": null,
+        "gaps": [
+          {
+            "ms": 3.89599609375,
+            "after": "ss1 → data (cont.) 7240 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 2.52197265625,
+            "after": "← ss2 ACK",
+            "before": "ss1 → data (cont.) 842 B"
+          },
+          {
+            "ms": 12.7470703125,
+            "after": "ss1 → data (cont.) 842 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 2.801025390625,
+            "after": "← ss2 data 2203 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 8.098876953125,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data 36 B"
+          }
+        ],
+        "timeline": [
+          {
+            "ms": 0,
+            "what": "ss1 → data 2994 B"
+          },
+          {
+            "ms": 0.0078125,
+            "what": "ss1 → data (cont.) 7240 B"
+          },
+          {
+            "ms": 3.90380859375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 6.42578125,
+            "what": "ss1 → data (cont.) 842 B"
+          },
+          {
+            "ms": 19.1728515625,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 19.173828125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 19.173828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 19.202880859375,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 19.203857421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 19.221923828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 19.222900390625,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 19.491943359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 19.491943359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 19.492919921875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 19.572998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 19.572998046875,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 19.572998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 19.573974609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 19.81298828125,
+            "what": "← ss2 data 8110 B"
+          },
+          {
+            "ms": 19.81396484375,
+            "what": "← ss2 data 2203 B"
+          },
+          {
+            "ms": 22.614990234375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 30.7138671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.7138671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.71484375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 30.71484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.71484375,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 30.7158203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.7158203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.7158203125,
+            "what": "← ss2 data 445 B"
+          },
+          {
+            "ms": 30.73779296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.73779296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.73779296875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 30.73779296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.739013671875,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 30.739013671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.739013671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.739013671875,
+            "what": "← ss2 data 703 B"
+          },
+          {
+            "ms": 30.760009765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.760009765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.760986328125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 30.760986328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.760986328125,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 30.760986328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 30.760986328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 31.007080078125,
+            "what": "← ss2 data 8039 B"
+          },
+          {
+            "ms": 31.007080078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 31.008056640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 31.02294921875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 31.02294921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 31.02294921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 31.02294921875,
+            "what": "← ss2 data 36 B"
+          }
+        ]
+      }
+    },
+    {
+      "config": "reuse",
+      "rtt": 20,
+      "netem": {
+        "ss1": "delay 10ms",
+        "ss2": "delay 10ms"
+      },
+      "requests": 20,
+      "curl_ms_median": 91.0515,
+      "total_ms_median": 53.2744140625,
+      "syn_rtt_ms_median": null,
+      "flow_rtt": {
+        "sockets": 4,
+        "minrtt_ms": 0.147,
+        "minrtt_min_ms": 0.147,
+        "srtt_ms": 26.002
+      },
+      "conn": {
+        "reused connection": 20
+      },
+      "gaps_median": 4,
+      "gap_ms_sum_median": 52.280029296875,
+      "other_ports": [],
+      "example": {
+        "conn": "reused connection",
+        "total_ms": 53.349853515625,
+        "syn_rtt_ms": null,
+        "gaps": [
+          {
+            "ms": 11.2041015625,
+            "after": "ss1 → data (cont.) 7240 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 10.31494140625,
+            "after": "← ss2 ACK",
+            "before": "ss1 → data (cont.) 842 B"
+          },
+          {
+            "ms": 21.19287109375,
+            "after": "ss1 → data (cont.) 842 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 9.9130859375,
+            "after": "← ss2 data 2203 B",
+            "before": "← ss2 data 36 B"
+          }
+        ],
+        "timeline": [
+          {
+            "ms": 0,
+            "what": "ss1 → data 2994 B"
+          },
+          {
+            "ms": 0.048095703125,
+            "what": "ss1 → data (cont.) 7240 B"
+          },
+          {
+            "ms": 11.252197265625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 21.567138671875,
+            "what": "ss1 → data (cont.) 842 B"
+          },
+          {
+            "ms": 42.760009765625,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 42.760986328125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 42.760986328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 42.760986328125,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 42.761962890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 42.761962890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 42.761962890625,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 42.762939453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 42.80712890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 42.80712890625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 42.80712890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 42.80810546875,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 42.80810546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 42.80810546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 43.044921875,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 43.14404296875,
+            "what": "← ss2 data (cont.) 2318 B"
+          },
+          {
+            "ms": 43.14501953125,
+            "what": "← ss2 data 2203 B"
+          },
+          {
+            "ms": 53.05810546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.05908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.05908203125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 53.05908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.06005859375,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 53.06005859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.06005859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.06005859375,
+            "what": "← ss2 data 445 B"
+          },
+          {
+            "ms": 53.091064453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.092041015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.092041015625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 53.092041015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.092041015625,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 53.093017578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.093017578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.093017578125,
+            "what": "← ss2 data 703 B"
+          },
+          {
+            "ms": 53.116943359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.116943359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.116943359375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 53.117919921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.117919921875,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 53.18505859375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 53.226806640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.226806640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.33203125,
+            "what": "← ss2 data 8039 B"
+          },
+          {
+            "ms": 53.33203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.3330078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.348876953125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 53.348876953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.348876953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 53.349853515625,
+            "what": "← ss2 data 36 B"
+          }
+        ]
+      }
+    },
+    {
+      "config": "reuse",
+      "rtt": 50,
+      "netem": {
+        "ss1": "delay 25ms",
+        "ss2": "delay 25ms"
+      },
+      "requests": 20,
+      "curl_ms_median": 153.333,
+      "total_ms_median": 99.431884765625,
+      "syn_rtt_ms_median": null,
+      "flow_rtt": {
+        "sockets": 4,
+        "minrtt_ms": 0.147,
+        "minrtt_min_ms": 0.147,
+        "srtt_ms": 56.2525
+      },
+      "conn": {
+        "reused connection": 20
+      },
+      "gaps_median": 3,
+      "gap_ms_sum_median": 87.27734375,
+      "other_ports": [],
+      "example": {
+        "conn": "reused connection",
+        "total_ms": 100.0908203125,
+        "syn_rtt_ms": null,
+        "gaps": [
+          {
+            "ms": 26.214111328125,
+            "after": "ss1 → data (cont.) 7240 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 25.479736328125,
+            "after": "← ss2 ACK",
+            "before": "ss1 → data (cont.) 842 B"
+          },
+          {
+            "ms": 36.5322265625,
+            "after": "ss1 → data (cont.) 842 B",
+            "before": "← ss2 data 236 B"
+          }
+        ],
+        "timeline": [
+          {
+            "ms": 0,
+            "what": "ss1 → data 2994 B"
+          },
+          {
+            "ms": 0.010986328125,
+            "what": "ss1 → data (cont.) 7240 B"
+          },
+          {
+            "ms": 26.22509765625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 51.704833984375,
+            "what": "ss1 → data (cont.) 842 B"
+          },
+          {
+            "ms": 88.237060546875,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 88.237060546875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 88.238037109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 88.238037109375,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 88.238037109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 88.238037109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 88.239013671875,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 88.3759765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 88.376953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 88.376953125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 88.376953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 88.376953125,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 88.3779296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 88.3779296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 88.64892578125,
+            "what": "← ss2 data 8110 B"
+          },
+          {
+            "ms": 88.736083984375,
+            "what": "← ss2 data 2203 B"
+          },
+          {
+            "ms": 100.019775390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.019775390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.020751953125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 100.020751953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.020751953125,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 100.020751953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.02197265625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.02197265625,
+            "what": "← ss2 data 445 B"
+          },
+          {
+            "ms": 100.044921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.0458984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.0458984375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 100.0458984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.0458984375,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 100.046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.046875,
+            "what": "← ss2 data 703 B"
+          },
+          {
+            "ms": 100.07080078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.07080078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.07177734375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 100.07177734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.07177734375,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 100.07177734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.072998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.072998046875,
+            "what": "← ss2 data 8039 B"
+          },
+          {
+            "ms": 100.090087890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.090087890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.090087890625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 100.090087890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.0908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 100.0908203125,
+            "what": "← ss2 data 36 B"
+          }
+        ]
+      }
+    }
+  ]
+}
