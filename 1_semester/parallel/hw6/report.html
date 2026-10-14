@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homework 6 Report - Parallel Computing</title>
+    </head>
+    <body>
+    <details>
+        <summary>Test environment and benchmark configuration</summary>
+        <div class="details-content">
+            <ul style="font-size: 14px;">
+                <li><strong>CPU:</strong> Intel Core Ultra 7 265U (laptop, hybrid design with performance and efficiency cores). Inside WSL, <code>lscpu</code> reports 1 socket, 7 cores per socket, 2 threads per core, so <strong>7 physical cores</strong> are available to MPI.</li>
+                <li><strong>OS:</strong> Ubuntu running under WSL 2 on Windows 11. All processes run on one node and communicate through shared memory.</li>
+                <li><strong>MPI:</strong> Open MPI v5.0.10 (Debian package), used through mpi4py with the uppercase buffer methods only.</li>
+                <li><strong>NumPy / BLAS:</strong> NumPy for Python 3.14 linked against OpenBLAS 0.3.34 (scipy-openblas, <code>DYNAMIC_ARCH</code>). All data is <code>np.float64</code>.</li>
+                <li><strong>Thread settings:</strong> <code>OMP_NUM_THREADS=1</code>, <code>OPENBLAS_NUM_THREADS=1</code>, <code>MKL_NUM_THREADS=1</code>, so every MPI process uses exactly one thread and there is no hidden second level of parallelism.</li>
+                <li><strong>Process counts:</strong> $P = 1, 2, 4$. $P = 8$ was attempted, but Open MPI refused to start it (<code>prte-rmaps-base:alloc-error</code>) because only 7 physical cores are visible. Running it with <code>--oversubscribe</code> would break the "do not oversubscribe" rule of the assignment, so $P = 8$ and $P = 16$ were not measured.</li>
+                <li><strong>Timing method:</strong> every timed region starts and ends with <code>comm.Barrier()</code> and <code>MPI.Wtime()</code>. Each process measures its own time and the <strong>maximum over all processes</strong> is taken with <code>comm.Reduce(..., op=MPI.MAX)</code>. Each configuration is run once as a warm-up (also checked against NumPy, not recorded) and then <strong>10 times</strong>; tables report the median, plots also show min..max.</li>
+                <li><strong>Time split:</strong> <em>setup</em> = broadcasting $N$ and distributing $A$ and $x$ once (for the column versions this includes transposing $A$ on rank 0); <em>mult</em> = the $K$ multiplications including all communication and the final collection of $y$ on rank 0; <em>total</em> = setup + mult.</li>
+                <li><strong>Benchmark matrix:</strong> a random matrix divided by $N$ (fixed seed), so that $A^K x$ stays bounded.</li>
+                <li><strong>Noise:</strong> a first benchmark series (5 runs per configuration) showed up to 2.6x differences between identical configurations, so it was discarded. All numbers below come from a second series with 10 runs per configuration and less background load on the laptop.</li>
+            </ul>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exercise 6.1: Repeated matrix-vector multiplication with column-block distribution</summary>
+        <div class="details-content">
+            <h3>Warm-up: what must move</h3>
+            <ul style="font-size: 14px;">
+                <li><strong>Row-block:</strong> process $i$ owns $N/P$ complete rows, so it needs the <em>whole</em> $x$ and produces $N/P$ <em>final</em> elements of $y$. The pieces of different processes are different elements of $y$, so they only have to be <strong>concatenated</strong>: <code>Allgather</code>.</li>
+                <li><strong>Column-block:</strong> process $i$ owns $N/P$ complete columns and only the matching segment $x_i$. Because $y = \sum_i A_i x_i$, its local product $z_i = A_i x_i$ has full length $N$ but is only a <em>partial sum</em> of every element of $y$. The contributions overlap and must be <strong>added</strong>: <code>Allreduce(op=MPI.SUM)</code>.</li>
+                <li><strong>The 4x4 example:</strong> $z_0 = [3, 11, 19, 27]$ and $z_1 = [7, 15, 23, 31]$ are summed to $y = [10, 26, 42, 58]$. <code>Allreduce</code> gives both processes the complete $y$, but they do <em>not</em> need all of it: process 0 only needs $y[0:2]$ and process 1 only $y[2:4]$ as their next input. That is exactly what <code>Reduce_scatter_block</code> delivers (Bonus 6b).</li>
+                <li><strong>Where $x$ lives:</strong> before an iteration process $i$ holds only its segment $x_i$ ($N/P$ elements). After the local product it holds a length-$N$ partial result $z_i$. After <code>Allreduce</code> every process holds the full new vector, keeps its own segment <code>y[i*N/P:(i+1)*N/P]</code> and the cycle repeats.</li>
+            </ul>
+
+            <h3>Implementation (<code>task6_1.py</code>, <code>Ax_columnblock</code>)</h3>
+            <ul style="font-size: 14px;">
+                <li><strong>Distribution, once before the loop:</strong> consecutive columns of a C-order NumPy matrix are not contiguous in memory, so a plain <code>Scatter</code> of column blocks is impossible. Rank 0 builds <code>np.ascontiguousarray(A.T)</code>: row block $i$ of $A^T$ is exactly column block $i$ of $A$ and it is contiguous, so one <code>Scatter</code> distributes all column blocks. Each process keeps <code>local_AT</code> ($N/P \times N$) and multiplies with the view <code>local_AT.T</code>, which BLAS handles as a transposed matrix-vector product without copying. $x$ is distributed with a second <code>Scatter</code>.</li>
+                <li><strong>Loop:</strong> <code>np.dot(local_AT.T, x_local, out=z)</code>, then <code>Allreduce(z, y, op=MPI.SUM)</code> and <code>x_local[:] = y[lo:hi]</code>.</li>
+                <li><strong>Last iteration:</strong> only rank 0 needs the complete answer, so the last <code>Allreduce</code> is replaced by <code>Reduce(..., root=0)</code>, which saves one broadcast of $N$ values.</li>
+                <li><strong>$K = 0$:</strong> no multiplication and no distribution of $A$; rank 0 returns a copy of $x$.</li>
+                <li><strong>Preconditions:</strong> rank 0 checks that $A$ is $N \times N$ and $x$ has length $N$, then broadcasts $N$. All ranks raise <code>ValueError</code> together if $N \bmod P \ne 0$, so no rank is left waiting inside a collective.</li>
+                <li>The row-block function from Exercise 4.2 was moved into the same file with the same signature, so both are tested and timed by identical code.</li>
+            </ul>
+
+            <h3>Correctness tests (<code>a6_test.py</code>)</h3>
+            <p>All four implementations (row-block, column-block, cell-block and the <code>Reduce_scatter_block</code> variant) are tested on the 4x4 example from the assignment and on identity, zero, diagonal and dense random matrices of size 8x8 and 64x64, each with $K = 0, 1, 2, 5, 10$. Only rank 0 receives $A$ and $x$, the other ranks get <code>None</code>. The result on rank 0 is compared with repeated sequential NumPy multiplication using <code>np.testing.assert_allclose(rtol=1e-10, atol=1e-12)</code>; bitwise equality is not expected because the summation order differs. The cell-block version is skipped for $P = 2$ because it needs a square number of processes.</p>
+            <p><strong>Raw Terminal Output (abbreviated, every line was PASS):</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw6$ mpiexec -n 1 python3 a6_test.py
+P = 1
+[PASS] Ax_rowblock          example 4x4      K=0
+[PASS] Ax_rowblock          example 4x4      K=1
+...                         (180 lines, all PASS)
+[PASS] Ax_cellblock         dense 64x64      K=10
+
+passed 180, failed 0, skipped 0 (method not applicable for P=1)
+user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw6$ mpiexec -n 2 python3 a6_test.py
+P = 2
+[PASS] Ax_rowblock          example 4x4      K=0
+...                         (135 lines, all PASS)
+[PASS] Ax_columnblock_rsb   dense 64x64      K=10
+
+passed 135, failed 0, skipped 45 (method not applicable for P=2)
+user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw6$ mpiexec -n 4 python3 a6_test.py
+P = 4
+[PASS] Ax_rowblock          example 4x4      K=0
+...                         (180 lines, all PASS)
+[PASS] Ax_cellblock         dense 64x64      K=10
+
+passed 180, failed 0, skipped 0 (method not applicable for P=4)</code></pre>
+
+            <h2>The answer (Collective operations):</h2>
+            <p>
+                The <strong>row-block</strong> algorithm uses <code>Bcast</code> (whole $x$) and <code>Scatter</code> (row blocks) once, and <strong><code>Allgather</code></strong> between iterations, because every process computes different, already final elements of $y$ and everybody needs the whole vector in the next iteration. The <strong>column-block</strong> algorithm uses two <code>Scatter</code> calls once (column blocks via $A^T$, and segments of $x$), and <strong><code>Allreduce(SUM)</code></strong> between iterations, because every process holds a partial sum of <em>all</em> elements of $y$ and the partial sums have to be added; the last iteration uses <code>Reduce</code> to rank 0. Concatenation versus addition follows directly from what is split: splitting the rows splits the <em>output</em>, splitting the columns splits the <em>inner sum</em> of the product.
+            </p>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exercise 6.2: Performance testing and comparison</summary>
+        <div class="details-content">
+            <h3>1. Experiment A: strong scaling ($N = 4096$, $K = 50$)</h3>
+            <p>$N = 4096$ gives a 134 MB matrix, divides by every tested $P$ and makes one run long enough (0.2 to 0.6 s) to stay far above the timer resolution. The benchmark is <code>task6_2.py</code>. The speedup is computed both from the total time and from the multiplication phase alone, because the one-time distribution behaves very differently in the two algorithms.</p>
+            <p><strong>Raw Terminal Output:</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw6$ mpiexec -n 1 python3 task6_2.py --N 4096 --K 50 --runs 10 --methods row,col,rsb,cell --experiment scaling
+row   P=  1 N= 4096 K=  50  setup 0.0198s  mult 0.2975s  total 0.3183s  (total min 0.2907 / max 0.4063, 10 runs)
+col   P=  1 N= 4096 K=  50  setup 0.3096s  mult 0.3040s  total 0.6202s  (total min 0.5938 / max 0.6850, 10 runs)
+rsb   P=  1 N= 4096 K=  50  setup 0.3158s  mult 0.3083s  total 0.6217s  (total min 0.5983 / max 0.7400, 10 runs)
+cell  P=  1 N= 4096 K=  50  setup 0.0408s  mult 0.2849s  total 0.3248s  (total min 0.3130 / max 0.3513, 10 runs)
+user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw6$ mpiexec -n 2 python3 task6_2.py --N 4096 --K 50 --runs 10 --methods row,col,rsb,cell --experiment scaling
+row   P=  2 N= 4096 K=  50  setup 0.0273s  mult 0.2252s  total 0.2548s  (total min 0.2080 / max 0.2890, 10 runs)
+col   P=  2 N= 4096 K=  50  setup 0.3365s  mult 0.2225s  total 0.5580s  (total min 0.5191 / max 0.6952, 10 runs)
+rsb   P=  2 N= 4096 K=  50  setup 0.3289s  mult 0.2193s  total 0.5522s  (total min 0.5068 / max 0.6475, 10 runs)
+skip cell: not applicable for N=4096, P=2
+user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw6$ mpiexec -n 4 python3 task6_2.py --N 4096 --K 50 --runs 10 --methods row,col,rsb,cell --experiment scaling
+row   P=  4 N= 4096 K=  50  setup 0.0398s  mult 0.1729s  total 0.2226s  (total min 0.1896 / max 0.3618, 10 runs)
+col   P=  4 N= 4096 K=  50  setup 0.4020s  mult 0.1819s  total 0.5766s  (total min 0.5058 / max 0.9287, 10 runs)
+rsb   P=  4 N= 4096 K=  50  setup 0.3505s  mult 0.2141s  total 0.5443s  (total min 0.4904 / max 0.8018, 10 runs)
+cell  P=  4 N= 4096 K=  50  setup 0.0630s  mult 0.1831s  total 0.2471s  (total min 0.2264 / max 0.2887, 10 runs)</code></pre>
+
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: right;">
+                <thead>
+                    <tr style="background: #2d2d2d; color: #fff; text-align: center;">
+                        <th style="padding: 8px; border: 1px solid #444;">Method</th>
+                        <th style="padding: 8px; border: 1px solid #444;">P</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Setup (s)</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Mult (s)</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Total (s)</th>
+                        <th style="padding: 8px; border: 1px solid #444;">S(P) total</th>
+                        <th style="padding: 8px; border: 1px solid #444;">E(P) total</th>
+                        <th style="padding: 8px; border: 1px solid #444;">S(P) mult</th>
+                        <th style="padding: 8px; border: 1px solid #444;">E(P) mult</th>
+                    </tr>
+                </thead>
+                <tbody style="text-align: center;">
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">row-block (Allgather)</td><td style="padding: 6px; border: 1px solid #ddd;">1</td><td style="padding: 6px; border: 1px solid #ddd;">0.0198</td><td style="padding: 6px; border: 1px solid #ddd;">0.2975</td><td style="padding: 6px; border: 1px solid #ddd;">0.3183</td><td style="padding: 6px; border: 1px solid #ddd;">1.00x</td><td style="padding: 6px; border: 1px solid #ddd;">100%</td><td style="padding: 6px; border: 1px solid #ddd;">1.00x</td><td style="padding: 6px; border: 1px solid #ddd;">100%</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;"></td><td style="padding: 6px; border: 1px solid #ddd;">2</td><td style="padding: 6px; border: 1px solid #ddd;">0.0273</td><td style="padding: 6px; border: 1px solid #ddd;">0.2252</td><td style="padding: 6px; border: 1px solid #ddd;">0.2548</td><td style="padding: 6px; border: 1px solid #ddd;">1.25x</td><td style="padding: 6px; border: 1px solid #ddd;">62%</td><td style="padding: 6px; border: 1px solid #ddd;">1.32x</td><td style="padding: 6px; border: 1px solid #ddd;">66%</td></tr>
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;"></td><td style="padding: 6px; border: 1px solid #ddd;">4</td><td style="padding: 6px; border: 1px solid #ddd;">0.0398</td><td style="padding: 6px; border: 1px solid #ddd;">0.1729</td><td style="padding: 6px; border: 1px solid #ddd;">0.2226</td><td style="padding: 6px; border: 1px solid #ddd;">1.43x</td><td style="padding: 6px; border: 1px solid #ddd;">36%</td><td style="padding: 6px; border: 1px solid #ddd;">1.72x</td><td style="padding: 6px; border: 1px solid #ddd;">43%</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">column-block (Allreduce)</td><td style="padding: 6px; border: 1px solid #ddd;">1</td><td style="padding: 6px; border: 1px solid #ddd;">0.3096</td><td style="padding: 6px; border: 1px solid #ddd;">0.3040</td><td style="padding: 6px; border: 1px solid #ddd;">0.6202</td><td style="padding: 6px; border: 1px solid #ddd;">1.00x</td><td style="padding: 6px; border: 1px solid #ddd;">100%</td><td style="padding: 6px; border: 1px solid #ddd;">1.00x</td><td style="padding: 6px; border: 1px solid #ddd;">100%</td></tr>
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;"></td><td style="padding: 6px; border: 1px solid #ddd;">2</td><td style="padding: 6px; border: 1px solid #ddd;">0.3365</td><td style="padding: 6px; border: 1px solid #ddd;">0.2225</td><td style="padding: 6px; border: 1px solid #ddd;">0.5580</td><td style="padding: 6px; border: 1px solid #ddd;">1.11x</td><td style="padding: 6px; border: 1px solid #ddd;">56%</td><td style="padding: 6px; border: 1px solid #ddd;">1.37x</td><td style="padding: 6px; border: 1px solid #ddd;">68%</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;"></td><td style="padding: 6px; border: 1px solid #ddd;">4</td><td style="padding: 6px; border: 1px solid #ddd;">0.4020</td><td style="padding: 6px; border: 1px solid #ddd;">0.1819</td><td style="padding: 6px; border: 1px solid #ddd;">0.5766</td><td style="padding: 6px; border: 1px solid #ddd;">1.08x</td><td style="padding: 6px; border: 1px solid #ddd;">27%</td><td style="padding: 6px; border: 1px solid #ddd;">1.67x</td><td style="padding: 6px; border: 1px solid #ddd;">42%</td></tr>
+                </tbody>
+            </table>
+
+            <img src="plots/scaling_N4096_K50.png" alt="Execution time and speedup, N=4096, K=50">
+            <p>Execution time (median, bars show min..max of 10 runs) and total speedup with the ideal linear reference. The plot also contains the cell-block and Reduce_scatter_block variants discussed in Exercise 6.3 and Bonus 6b.</p>
+
+            <h3>2. Experiment B: matrix size ($P = 4$, $K = 50$)</h3>
+            <p><strong>Raw Terminal Output:</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw6$ mpiexec -n 4 python3 task6_2.py --N 512 1024 2048 4096 --K 50 --runs 10 --methods row,col,rsb --experiment size
+row   P=  4 N=  512 K=  50  setup 0.0003s  mult 0.0009s  total 0.0011s  (total min 0.0010 / max 0.0024, 10 runs)
+col   P=  4 N=  512 K=  50  setup 0.0013s  mult 0.0017s  total 0.0029s  (total min 0.0023 / max 0.0046, 10 runs)
+rsb   P=  4 N=  512 K=  50  setup 0.0009s  mult 0.0010s  total 0.0019s  (total min 0.0018 / max 0.0021, 10 runs)
+row   P=  4 N= 1024 K=  50  setup 0.0011s  mult 0.0061s  total 0.0072s  (total min 0.0063 / max 0.0098, 10 runs)
+col   P=  4 N= 1024 K=  50  setup 0.0089s  mult 0.0082s  total 0.0176s  (total min 0.0139 / max 0.0298, 10 runs)
+rsb   P=  4 N= 1024 K=  50  setup 0.0075s  mult 0.0087s  total 0.0166s  (total min 0.0124 / max 0.0216, 10 runs)
+row   P=  4 N= 2048 K=  50  setup 0.0049s  mult 0.0436s  total 0.0481s  (total min 0.0442 / max 0.0759, 10 runs)
+col   P=  4 N= 2048 K=  50  setup 0.0617s  mult 0.0419s  total 0.1036s  (total min 0.0996 / max 0.1907, 10 runs)
+rsb   P=  4 N= 2048 K=  50  setup 0.0605s  mult 0.0425s  total 0.1033s  (total min 0.0951 / max 0.1131, 10 runs)
+row   P=  4 N= 4096 K=  50  setup 0.0319s  mult 0.1833s  total 0.2151s  (total min 0.1935 / max 0.3156, 10 runs)
+col   P=  4 N= 4096 K=  50  setup 0.3305s  mult 0.1773s  total 0.5095s  (total min 0.4970 / max 0.5736, 10 runs)
+rsb   P=  4 N= 4096 K=  50  setup 0.3329s  mult 0.1739s  total 0.5220s  (total min 0.4753 / max 0.5814, 10 runs)</code></pre>
+
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: right;">
+                <thead>
+                    <tr style="background: #2d2d2d; color: #fff; text-align: center;">
+                        <th style="padding: 8px; border: 1px solid #444;">N</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Matrix size</th>
+                        <th style="padding: 8px; border: 1px solid #444;">row: ms / mult</th>
+                        <th style="padding: 8px; border: 1px solid #444;">col: ms / mult</th>
+                        <th style="padding: 8px; border: 1px solid #444;">rsb: ms / mult</th>
+                        <th style="padding: 8px; border: 1px solid #444;">row: matrix read rate</th>
+                    </tr>
+                </thead>
+                <tbody style="text-align: center;">
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">512</td><td style="padding: 6px; border: 1px solid #ddd;">2 MB</td><td style="padding: 6px; border: 1px solid #ddd;">0.018</td><td style="padding: 6px; border: 1px solid #ddd;">0.034</td><td style="padding: 6px; border: 1px solid #ddd;">0.020</td><td style="padding: 6px; border: 1px solid #ddd;">~116 GB/s</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">1024</td><td style="padding: 6px; border: 1px solid #ddd;">8 MB</td><td style="padding: 6px; border: 1px solid #ddd;">0.122</td><td style="padding: 6px; border: 1px solid #ddd;">0.164</td><td style="padding: 6px; border: 1px solid #ddd;">0.174</td><td style="padding: 6px; border: 1px solid #ddd;">~69 GB/s</td></tr>
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">2048</td><td style="padding: 6px; border: 1px solid #ddd;">34 MB</td><td style="padding: 6px; border: 1px solid #ddd;">0.872</td><td style="padding: 6px; border: 1px solid #ddd;">0.838</td><td style="padding: 6px; border: 1px solid #ddd;">0.850</td><td style="padding: 6px; border: 1px solid #ddd;">~38 GB/s</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">4096</td><td style="padding: 6px; border: 1px solid #ddd;">134 MB</td><td style="padding: 6px; border: 1px solid #ddd;">3.666</td><td style="padding: 6px; border: 1px solid #ddd;">3.546</td><td style="padding: 6px; border: 1px solid #ddd;">3.478</td><td style="padding: 6px; border: 1px solid #ddd;">~37 GB/s</td></tr>
+                </tbody>
+            </table>
+            <img src="plots/matrix_size.png" alt="Time per multiplication vs N">
+            <p>The last column divides the matrix size by the time of one row-block multiplication, i.e. how fast the 4 processes together stream the matrix from memory.</p>
+
+            <h3>3. Experiment C: setup amortisation ($P = 4$, $N = 2048$)</h3>
+            <p><strong>Raw Terminal Output:</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw6$ mpiexec -n 4 python3 task6_2.py --N 2048 --K 1 5 20 100 --runs 10 --methods row,col --experiment amortisation
+row   P=  4 N= 2048 K=   1  setup 0.0042s  mult 0.0009s  total 0.0053s  (total min 0.0048 / max 0.0130, 10 runs)
+col   P=  4 N= 2048 K=   1  setup 0.0661s  mult 0.0011s  total 0.0672s  (total min 0.0614 / max 0.0714, 10 runs)
+row   P=  4 N= 2048 K=   5  setup 0.0041s  mult 0.0043s  total 0.0083s  (total min 0.0080 / max 0.0097, 10 runs)
+col   P=  4 N= 2048 K=   5  setup 0.0815s  mult 0.0068s  total 0.0887s  (total min 0.0783 / max 0.1072, 10 runs)
+row   P=  4 N= 2048 K=  20  setup 0.0044s  mult 0.0176s  total 0.0222s  (total min 0.0209 / max 0.0229, 10 runs)
+col   P=  4 N= 2048 K=  20  setup 0.0745s  mult 0.0203s  total 0.0947s  (total min 0.0825 / max 0.1087, 10 runs)
+row   P=  4 N= 2048 K= 100  setup 0.0045s  mult 0.0929s  total 0.0975s  (total min 0.0887 / max 0.1057, 10 runs)
+col   P=  4 N= 2048 K= 100  setup 0.0747s  mult 0.1217s  total 0.1969s  (total min 0.1812 / max 0.2596, 10 runs)</code></pre>
+
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: right;">
+                <thead>
+                    <tr style="background: #2d2d2d; color: #fff; text-align: center;">
+                        <th style="padding: 8px; border: 1px solid #444;">K</th>
+                        <th style="padding: 8px; border: 1px solid #444;">row: setup share</th>
+                        <th style="padding: 8px; border: 1px solid #444;">col: setup share</th>
+                        <th style="padding: 8px; border: 1px solid #444;">col total / row total</th>
+                    </tr>
+                </thead>
+                <tbody style="text-align: center;">
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">1</td><td style="padding: 6px; border: 1px solid #ddd;">79%</td><td style="padding: 6px; border: 1px solid #ddd;">98%</td><td style="padding: 6px; border: 1px solid #ddd;">12.7x</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">5</td><td style="padding: 6px; border: 1px solid #ddd;">49%</td><td style="padding: 6px; border: 1px solid #ddd;">92%</td><td style="padding: 6px; border: 1px solid #ddd;">10.7x</td></tr>
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">20</td><td style="padding: 6px; border: 1px solid #ddd;">20%</td><td style="padding: 6px; border: 1px solid #ddd;">79%</td><td style="padding: 6px; border: 1px solid #ddd;">4.3x</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">100</td><td style="padding: 6px; border: 1px solid #ddd;">5%</td><td style="padding: 6px; border: 1px solid #ddd;">38%</td><td style="padding: 6px; border: 1px solid #ddd;">2.0x</td></tr>
+                </tbody>
+            </table>
+            <img src="plots/amortisation.png" alt="Share of setup time vs K">
+
+            <h3>4. Discussion</h3>
+            <p><strong>Both methods do about $N^2/P$ multiply-adds per iteration. Why can their runtimes differ?</strong></p>
+            <ul style="font-size: 14px;">
+                <li><strong>Setup dominates the difference.</strong> In the multiplication phase both algorithms are almost equally fast ($P = 4$: 0.173 s row vs 0.182 s column). The total differs by a factor of 2.6 because the column version needs 0.31 to 0.40 s for the distribution against 0.02 to 0.04 s for the row version. The reason is <code>np.ascontiguousarray(A.T)</code> on rank 0: transposing 134 MB reads the matrix with a stride of 32 KB between consecutive elements, which defeats the caches and the hardware prefetcher. The row version scatters the matrix in the order it already has in memory.</li>
+                <li><strong>Different communication volume.</strong> <code>Allgather</code> moves $N/P$ elements from every process, while <code>Allreduce</code> combines a full length-$N$ vector from every process and also performs the additions. At $N = 512$, where communication is a visible part of a 20 &micro;s iteration, the column version is about 2x slower per multiplication (0.034 ms vs 0.018 ms); at $N = 2048$ it is still 10 to 30% slower in Experiment C. At $N = 4096$ a 32 KB vector is negligible next to 134 MB of matrix data and the difference disappears in the noise.</li>
+                <li><strong>Different number of collectives.</strong> The column version needs one more collective at setup (a second <code>Scatter</code> for $x$) and a <code>Reduce</code> at the end; this is small but counts at small $N$.</li>
+            </ul>
+            <p><strong>Which communication operation does each method use between iterations?</strong> Row-block: <code>Allgather</code> (concatenation of final segments). Column-block: <code>Allreduce(SUM)</code> (addition of partial sums), with <code>Reduce</code> in the last iteration.</p>
+            <p><strong>When does increasing $P$ stop helping?</strong></p>
+            <ul style="font-size: 14px;">
+                <li><strong>Memory bandwidth.</strong> A matrix-vector product performs only 2 floating-point operations per 8-byte matrix element, so its speed is limited by how fast the matrix can be read, not by arithmetic. From the row-block numbers: one multiplication takes 5.95 ms at $P = 1$ (about 22 GB/s) and 3.46 ms at $P = 4$ (about 39 GB/s). Four times more cores give less than twice the memory throughput because all cores share the same memory controller. This is why the multiplication speedup is only 1.72x at $P = 4$ (efficiency 43%).</li>
+                <li><strong>Cache effects confirm it.</strong> In Experiment B the same 4 processes read the matrix at about 116 GB/s for $N = 512$ (2 MB) and 69 GB/s for $N = 1024$ (8 MB), where the per-process blocks fit into the caches, but only 37 to 38 GB/s for $N = 2048$ and $4096$, where they do not.</li>
+                <li><strong>Communication that does not shrink.</strong> In the column version every process sends and receives a full length-$N$ vector per iteration regardless of $P$, so its share grows as the computation per process shrinks.</li>
+                <li><strong>Hardware.</strong> Only 7 physical cores are visible in WSL, and the cores of the Core Ultra 7 265U are not identical. Some ranks can land on slower efficiency cores, and the others then wait for them at every collective (the time of the slowest rank counts). Running more processes than physical cores would only add context switches.</li>
+            </ul>
+            <p><strong>Does the method that is fastest for one $N$ or $P$ remain fastest for all sizes?</strong> For the total time the row-block method was fastest in every measured configuration, because its distribution is 7 to 15 times cheaper. Looking only at the multiplication phase, the ranking is not stable: row-block wins clearly at small $N$ (512, 1024), where the smaller <code>Allgather</code> matters, while at $N = 2048$ and $4096$ all variants are within about 5%, which is inside the run-to-run noise. Experiment C shows that a larger $K$ amortises the setup (the column version's setup share falls from 98% at $K = 1$ to 38% at $K = 100$), but because the column version is not faster per iteration either, it never overtakes the row version on this machine.</p>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exercise 6.3: Two-dimensional (cell-block) matrix distribution</summary>
+        <div class="details-content">
+            <h3>Implementation (<code>task6_3.py</code>, <code>Ax_cellblock</code>, steps 6.3a and 6.3b)</h3>
+            <ul style="font-size: 14px;">
+                <li><strong>Process grid:</strong> $P = p \times p$, <code>Create_cart([p, p], reorder=False)</code>, so world rank $r$ has grid coordinates $(i, j)$. Two subcommunicators are created: <code>row_comm</code> (processes $(i, 0..p-1)$, rank inside = $j$) and <code>col_comm</code> (processes $(0..p-1, j)$, rank inside = $i$).</li>
+                <li><strong>Distribution, once:</strong> rank 0 copies block $A_{ij}$ ($N/p \times N/p$) and segment $x_j$ for every rank into contiguous send buffers and distributes them with two <code>Scatter</code> calls. Process $(i, j)$ needs exactly $x_j$, because $A_{ij}$ only touches the columns of block $j$.</li>
+                <li><strong>One multiplication (6.3a):</strong> $z_{ij} = A_{ij} x_j$; the output block $y_i = \sum_j z_{ij}$ is a sum over the process row, computed with <code>row_comm.Reduce</code>. For a 2x2 grid this is literally $y_0 = A_{00} x_0 + A_{01} x_1$ and $y_1 = A_{10} x_0 + A_{11} x_1$.</li>
+                <li><strong>Repeated multiplications (6.3b):</strong> in the next iteration process $(i, j)$ needs $x_j^{new} = y_j$, but $y_j$ is produced in process <em>row</em> $j$. The row sum is therefore reduced onto the <strong>diagonal</strong> process $(i, i)$, which then broadcasts it down its own process column with <code>col_comm.Bcast(root=j)</code>: the diagonal process $(j, j)$ owns $y_j$, and every process in column $j$ needs it. Each iteration costs one <code>Reduce</code> and one <code>Bcast</code>, both on messages of only $N/p$ elements.</li>
+                <li><strong>Final result:</strong> in the last iteration the row sums go to column 0 instead, and <code>col_comm.Gather</code> in column 0 assembles the complete $y$ on process $(0, 0)$, which is rank 0.</li>
+                <li>Tested together with the other methods for $P = 1$ and $P = 4$ (all cases PASS, see Exercise 6.1).</li>
+            </ul>
+
+            <h3>Performance comparison (6.3c, $N = 4096$, $K = 50$, $P = 4$)</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: right;">
+                <thead>
+                    <tr style="background: #2d2d2d; color: #fff; text-align: center;">
+                        <th style="padding: 8px; border: 1px solid #444;">Method</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Setup (s)</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Mult (s)</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Total (s)</th>
+                    </tr>
+                </thead>
+                <tbody style="text-align: center;">
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">row-block</td><td style="padding: 6px; border: 1px solid #ddd;">0.0398</td><td style="padding: 6px; border: 1px solid #ddd;">0.1729</td><td style="padding: 6px; border: 1px solid #ddd;">0.2226</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">column-block</td><td style="padding: 6px; border: 1px solid #ddd;">0.4020</td><td style="padding: 6px; border: 1px solid #ddd;">0.1819</td><td style="padding: 6px; border: 1px solid #ddd;">0.5766</td></tr>
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">cell-block 2D</td><td style="padding: 6px; border: 1px solid #ddd;">0.0630</td><td style="padding: 6px; border: 1px solid #ddd;">0.1831</td><td style="padding: 6px; border: 1px solid #ddd;">0.2471</td></tr>
+                </tbody>
+            </table>
+            <p>The 2D version is as fast as the 1D versions in the multiplication phase and slightly behind the row-block version overall: its setup has to copy the matrix into $p^2$ separate blocks (0.063 s vs 0.040 s), and every iteration needs two collectives instead of one.</p>
+
+            <h2>The answer (When is a 2D distribution useful?):</h2>
+            <p>
+                In a 1D distribution every process has to receive or contribute a vector of length $N$ in each iteration (the whole $x$ for row-block, a whole partial $y$ for column-block), so the communication per process does not shrink with $P$. In a 2D distribution every message has only $N/\sqrt{P}$ elements and involves only the $\sqrt{P}$ processes of one row or column. With thousands of processes on a real network this difference is decisive, and it is why large-scale libraries such as ScaLAPACK use 2D block(-cyclic) layouts; for matrix-matrix operations a 2D layout also reduces how much data each process has to fetch. For a dense matrix-vector product on a single node with $P = 4$ none of this matters: the work is bound by memory bandwidth, the vector is tiny compared with the matrix, and the extra collective per iteration plus the more complex block packing make 2D slightly slower. A 2D layout should therefore not be assumed to be faster automatically.
+            </p>
+        </div>
+    </details>
+
+    <details>
+        <summary>Bonus 6: Is Allreduce faster than Reduce followed by Bcast?</summary>
+        <div class="details-content">
+            <p><strong>Method (<code>task6_bonus.py</code>):</strong> both variants sum a <code>float64</code> buffer over all processes with uppercase calls: <code>Allreduce(send, recv, op=MPI.SUM)</code> versus <code>Reduce(send, recv, op=MPI.SUM, root=0)</code> followed by <code>Bcast(recv, root=0)</code>. Before timing, every process checks its result against the analytic sum and the flags are combined with a logical-AND reduction (the "OK" column). Small messages take only microseconds, so each timed batch repeats the call up to 1000 times and divides by the count. 7 batches are measured after a warm-up, the maximum over ranks is taken per batch and the median is reported.</p>
+            <p><strong>Raw Terminal Output:</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0;"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw6$ mpiexec -n 2 python3 task6_bonus.py
+Allreduce     P=  2 n=       1  median       0.87 us/call  (min 0.74, max 1.53, 1000 calls x 7)  OK
+Reduce+Bcast  P=  2 n=       1  median       2.09 us/call  (min 1.27, max 3.18, 1000 calls x 7)  OK
+Allreduce     P=  2 n=     100  median       1.83 us/call  (min 1.69, max 2.67, 1000 calls x 7)  OK
+Reduce+Bcast  P=  2 n=     100  median       3.36 us/call  (min 2.00, max 4.90, 1000 calls x 7)  OK
+Allreduce     P=  2 n=   10000  median      21.47 us/call  (min 14.12, max 23.52, 200 calls x 7)  OK
+Reduce+Bcast  P=  2 n=   10000  median      18.50 us/call  (min 14.52, max 22.13, 200 calls x 7)  OK
+Allreduce     P=  2 n= 1000000  median    2870.97 us/call  (min 2827.39, max 3270.72, 5 calls x 7)  OK
+Reduce+Bcast  P=  2 n= 1000000  median    3740.68 us/call  (min 3577.87, max 3795.72, 5 calls x 7)  OK
+user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw6$ mpiexec -n 4 python3 task6_bonus.py
+Allreduce     P=  4 n=       1  median       3.50 us/call  (min 2.59, max 4.43, 1000 calls x 7)  OK
+Reduce+Bcast  P=  4 n=       1  median       5.27 us/call  (min 3.54, max 6.82, 1000 calls x 7)  OK
+Allreduce     P=  4 n=     100  median       5.25 us/call  (min 4.65, max 15.21, 1000 calls x 7)  OK
+Reduce+Bcast  P=  4 n=     100  median       6.44 us/call  (min 5.84, max 7.63, 1000 calls x 7)  OK
+Allreduce     P=  4 n=   10000  median      56.90 us/call  (min 50.23, max 67.02, 200 calls x 7)  OK
+Reduce+Bcast  P=  4 n=   10000  median      95.79 us/call  (min 60.07, max 121.78, 200 calls x 7)  OK
+Allreduce     P=  4 n= 1000000  median    7089.92 us/call  (min 6194.96, max 7679.01, 5 calls x 7)  OK
+Reduce+Bcast  P=  4 n= 1000000  median   13940.11 us/call  (min 13306.28, max 15681.46, 5 calls x 7)  OK</code></pre>
+
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: right;">
+                <thead>
+                    <tr style="background: #2d2d2d; color: #fff; text-align: center;">
+                        <th style="padding: 8px; border: 1px solid #444;">P</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Elements</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Allreduce (&micro;s)</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Reduce + Bcast (&micro;s)</th>
+                        <th style="padding: 8px; border: 1px solid #444;">Reduce+Bcast / Allreduce</th>
+                    </tr>
+                </thead>
+                <tbody style="text-align: center;">
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">2</td><td style="padding: 6px; border: 1px solid #ddd;">1</td><td style="padding: 6px; border: 1px solid #ddd;">0.87</td><td style="padding: 6px; border: 1px solid #ddd;">2.09</td><td style="padding: 6px; border: 1px solid #ddd;">2.41</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">2</td><td style="padding: 6px; border: 1px solid #ddd;">100</td><td style="padding: 6px; border: 1px solid #ddd;">1.83</td><td style="padding: 6px; border: 1px solid #ddd;">3.36</td><td style="padding: 6px; border: 1px solid #ddd;">1.84</td></tr>
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">2</td><td style="padding: 6px; border: 1px solid #ddd;">10 000</td><td style="padding: 6px; border: 1px solid #ddd;">21.47</td><td style="padding: 6px; border: 1px solid #ddd;">18.50</td><td style="padding: 6px; border: 1px solid #ddd;">0.86</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">2</td><td style="padding: 6px; border: 1px solid #ddd;">1 000 000</td><td style="padding: 6px; border: 1px solid #ddd;">2870.97</td><td style="padding: 6px; border: 1px solid #ddd;">3740.68</td><td style="padding: 6px; border: 1px solid #ddd;">1.30</td></tr>
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">4</td><td style="padding: 6px; border: 1px solid #ddd;">1</td><td style="padding: 6px; border: 1px solid #ddd;">3.50</td><td style="padding: 6px; border: 1px solid #ddd;">5.27</td><td style="padding: 6px; border: 1px solid #ddd;">1.51</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">4</td><td style="padding: 6px; border: 1px solid #ddd;">100</td><td style="padding: 6px; border: 1px solid #ddd;">5.25</td><td style="padding: 6px; border: 1px solid #ddd;">6.44</td><td style="padding: 6px; border: 1px solid #ddd;">1.23</td></tr>
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">4</td><td style="padding: 6px; border: 1px solid #ddd;">10 000</td><td style="padding: 6px; border: 1px solid #ddd;">56.90</td><td style="padding: 6px; border: 1px solid #ddd;">95.79</td><td style="padding: 6px; border: 1px solid #ddd;">1.68</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">4</td><td style="padding: 6px; border: 1px solid #ddd;">1 000 000</td><td style="padding: 6px; border: 1px solid #ddd;">7089.92</td><td style="padding: 6px; border: 1px solid #ddd;">13940.10</td><td style="padding: 6px; border: 1px solid #ddd;">1.97</td></tr>
+                </tbody>
+            </table>
+            <img src="plots/bonus_allreduce.png" alt="Allreduce vs Reduce+Bcast">
+
+            <h2>The answer:</h2>
+            <ul style="font-size: 14px;">
+                <li><strong>Small messages (1 and 100 elements):</strong> <code>Allreduce</code> is 1.2 to 2.4x faster. The time is pure latency, and <code>Reduce</code> + <code>Bcast</code> means two collectives, i.e. two synchronisations and roughly twice as many communication steps (about $2\log_2 P$ instead of $\log_2 P$ with recursive doubling).</li>
+                <li><strong>Medium messages (10 000 elements):</strong> at $P = 2$ the two are equal within noise (the minimum values are 14.1 and 14.5 &micro;s; the median even slightly favours Reduce + Bcast). At $P = 4$ <code>Allreduce</code> is 1.7x faster.</li>
+                <li><strong>Large messages (1 000 000 elements = 8 MB):</strong> <code>Allreduce</code> is 1.3x faster at $P = 2$ and 2x faster at $P = 4$. For large data the MPI library can use bandwidth-optimal algorithms (for example reduce-scatter followed by allgather, or a ring), where every process sends and receives only about $2n(P-1)/P$ elements and the additions are spread over all processes. With <code>Reduce</code> + <code>Bcast</code> all data flows through the root, which has to receive, add and then send the whole vector again, so the root becomes the bottleneck and the gap grows with $P$.</li>
+                <li><strong>Why the result depends on the library and hardware:</strong> MPI libraries choose different algorithms per collective, message size and process count (Open MPI switches algorithms at internal size thresholds; MPICH or Intel MPI use other rules). Here all processes are on one node and communicate through shared memory; on a cluster with a network the latency/bandwidth ratio and the topology are different, so the crossover points would move. In these measurements <code>Allreduce</code> was never clearly slower, so it is the right default.</li>
+            </ul>
+        </div>
+    </details>
+
+    <details>
+        <summary>Bonus 6b: Communication optimisation with Reduce_scatter_block</summary>
+        <div class="details-content">
+            <p><strong>Implementation (<code>task6_bonus_b.py</code>, <code>Ax_columnblock_rsb</code>):</strong> the distribution is the same as in the column-block version. In each iteration <code>Allreduce</code> plus "take my segment" is replaced by a single <code>Reduce_scatter_block(z, x_local, op=MPI.SUM)</code>: the length-$N$ partial results are summed and each process receives only the $N/P$ elements it needs as its next input. No process stores the full vector during the loop; at the end <code>Gather</code> assembles $y$ on rank 0. It passed the same tests as the other methods for $P = 1, 2, 4$.</p>
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: right;">
+                <thead>
+                    <tr style="background: #2d2d2d; color: #fff; text-align: center;">
+                        <th style="padding: 8px; border: 1px solid #444;">N (P = 4, K = 50)</th>
+                        <th style="padding: 8px; border: 1px solid #444;">col mult (s)</th>
+                        <th style="padding: 8px; border: 1px solid #444;">rsb mult (s)</th>
+                        <th style="padding: 8px; border: 1px solid #444;">rsb vs col</th>
+                    </tr>
+                </thead>
+                <tbody style="text-align: center;">
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">512</td><td style="padding: 6px; border: 1px solid #ddd;">0.0017</td><td style="padding: 6px; border: 1px solid #ddd;">0.0010</td><td style="padding: 6px; border: 1px solid #ddd;">1.7x faster</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">1024</td><td style="padding: 6px; border: 1px solid #ddd;">0.0082</td><td style="padding: 6px; border: 1px solid #ddd;">0.0087</td><td style="padding: 6px; border: 1px solid #ddd;">equal</td></tr>
+                    <tr><td style="padding: 6px; border: 1px solid #ddd;">2048</td><td style="padding: 6px; border: 1px solid #ddd;">0.0419</td><td style="padding: 6px; border: 1px solid #ddd;">0.0425</td><td style="padding: 6px; border: 1px solid #ddd;">equal</td></tr>
+                    <tr style="background: #f9f9f9;"><td style="padding: 6px; border: 1px solid #ddd;">4096</td><td style="padding: 6px; border: 1px solid #ddd;">0.1773</td><td style="padding: 6px; border: 1px solid #ddd;">0.1739</td><td style="padding: 6px; border: 1px solid #ddd;">equal</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Comparison:</strong> where communication is a noticeable part of an iteration ($N = 512$) the Reduce_scatter_block version is 1.7x faster than Allreduce and almost reaches the row-block version (0.0010 s vs 0.0009 s): each process receives $N/P$ instead of $N$ summed values, and the broadcast part of Allreduce is skipped. From $N = 1024$ upward an iteration is dominated by reading the matrix and both variants are equal within noise; in the strong-scaling series at $P = 4$ the variant was even slightly slower (0.214 s vs 0.182 s), which is inside the spread of the runs.</p>
+            <p><strong>When avoiding replicated vectors helps:</strong> when the vector is large relative to the local computation, i.e. with many processes (the local work $N^2/P$ shrinks while a replicated vector stays at $N$), on networks where bandwidth is expensive, and when memory is tight, since every process stores $N/P$ instead of $N$ values. On a single node with 4 processes and a memory-bound kernel the benefit only shows for small matrices.</p>
+        </div>
+    </details>
+
+    <details>
+        <summary>Limitations</summary>
+        <div class="details-content">
+            <ul style="font-size: 14px;">
+                <li>Only $P = 1, 2, 4$ could be measured without oversubscribing the 7 physical cores visible in WSL, so the scaling curves are short.</li>
+                <li>All runs are on one laptop: communication goes through shared memory, not a network, so communication costs are much lower than on a cluster and the conclusions about collectives may not carry over.</li>
+                <li>The laptop CPU changes its clock with temperature and power state and mixes fast and slow cores. Even with 10 runs, differences below about 10% should not be interpreted.</li>
+                <li>WSL adds a virtualisation layer between MPI and the hardware.</li>
+                <li>Python call overhead is included in every iteration; for small $N$ it is a noticeable part of the measured time.</li>
+            </ul>
+        </div>
+    </details>
+    </body>
+    <script>
+        function loadKaTeXAndRender() {
+            const katexCSS = document.createElement("link");
+            katexCSS.rel = "stylesheet";
+            katexCSS.href =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(katexCSS);
+
+            const katexScript = document.createElement("script");
+            katexScript.src =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+            katexScript.defer = true;
+
+            katexScript.onload = () => {
+                const autoRenderScript = document.createElement("script");
+                autoRenderScript.src =
+                    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                autoRenderScript.defer = true;
+
+                autoRenderScript.onload = () => {
+                    if (window.renderMathInElement) {
+                        window.renderMathInElement(document.body, {
+                            delimiters: [
+                                { left: "$$", right: "$$", display: true },
+                                { left: "$", right: "$", display: false },
+                            ],
+                            throwOnError: false,
+                        });
+                    }
+                };
+                document.head.appendChild(autoRenderScript);
+            };
+
+            document.head.appendChild(katexScript);
+        }
+        loadKaTeXAndRender();
+    </script>
+</html>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.6;
+        color: #111;
+        background-color: #fff;
+        max-width: 1280px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 8px 0;
+    }
+
+    .math {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 17px;
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+
+    ul {
+        margin: 8px 0 16px 20px;
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    .report-header {
+        margin-bottom: 28px;
+    }
+
+    .report-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #111;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table th {
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        width: 15%;
+        padding: 3px 6px 3px 0;
+        white-space: nowrap;
+    }
+
+    .report-meta-table td {
+        color: #111;
+        width: 35%;
+        padding: 3px 12px 3px 0;
+    }
+
+    .report-meta-table a {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .report-meta-table a:hover {
+        text-decoration: underline;
+    }
+
+    .report-divider {
+        border: 0;
+        border-top: 1px solid #d1d5db;
+        margin-top: 8px;
+    }
+
+    .math-left .katex-display {
+        text-align: left !important;
+    }
+
+    .math-left .katex-display > .katex {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    /* Сноски в тексте */
+    a.ref-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0 1px;
+    }
+
+    a.ref-link:hover {
+        text-decoration: underline;
+    }
+
+    .report-references {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .report-references h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .report-references ol {
+        padding-left: 20px;
+    }
+
+    .report-references li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
+
+    .report-references .ref-title {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .report-references a {
+        color: #1a73e8 !important;
+        text-decoration: underline !important;
+        word-break: break-all;
+        cursor: pointer;
+    }
+
+    details {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin: 16px 0;
+        background-color: #fff;
+        transition: all 0.2s ease;
+    }
+
+    details[open] {
+        border-color: #cbd5e1;
+    }
+
+    details > :not(summary) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    summary {
+        cursor: pointer;
+        padding: 10px 14px;
+        user-select: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    summary:hover {
+        background-color: #f8fafc;
+    }
+
+    summary h2 {
+        display: inline;
+        font-size: 16px;
+        margin: 0 0 0 6px;
+    }
+
+    .details-content {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 16px auto;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    img + p {
+        text-align: center;
+        font-size: 13px;
+        color: #57606a;
+        margin-top: -8px;
+        margin-bottom: 20px;
+    }
+</style>
