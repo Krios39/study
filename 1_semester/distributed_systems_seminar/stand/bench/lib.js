@@ -254,7 +254,7 @@ function linkBytes(from = 'ss1', to = 'ss2') {
 // ними растёт на rtt, а k6 → ss1, обращения к CS/CA/TSA и всё остальное идут без задержки. rtt = 0 снимает правила.
 // Возвращает фактическое состояние { ss1: 'delay 10ms' | null, ss2: … }. Правила живут до рестарта контейнера SS.
 function netcountTc(c) {
-  if (shCode('docker', [...ctx(c), 'run', '--rm', '--entrypoint', 'sh', 'stand-netcount', '-c', 'command -v tc']) !== 0)
+  if (shCode('docker', [...ctx(c), 'run', '--rm', '--entrypoint', 'sh', 'stand-netcount', '-c', 'command -v tc && command -v tshark']) !== 0)
     composeOn(hostOf(c) || THIS_HOST, '--profile', 'tools', 'build', 'netcount');
 }
 function netemScript(peerIp, rttMs) {
@@ -276,6 +276,22 @@ function netem(rttMs, a = 'ss1', b = 'ss2') {
   }
   return state;
 }
+// фактический RTT измеряемого потока: ss -tin в namespace ss1 по соединениям к пиру:5500, `samples` снимков через 1 с
+// после паузы `afterS` (запускается параллельно с k6). Ядро даёт по сокету minrtt (минимум за жизнь соединения) и
+// сглаженный rtt — это RTT самих соединений X-Road, а не ping. Возвращает аргументы docker и разбор вывода.
+function flowRttCmd(from = 'ss1', to = 'ss2', { port = 5500, samples = 5, afterS = 3 } = {}) {
+  netcountTc(from);
+  const ip = dexec(from, 'getent', 'hosts', to).split(/\s+/)[0];
+  return ['docker', [...ctx(from), 'run', '--rm', '--net', `container:${from}`, 'stand-netcount', 'sh', '-c',
+    `sleep ${afterS}; for i in $(seq 1 ${samples}); do ss -tin state established dst ${ip}:${port}; echo ---; sleep 1; done`]];
+}
+function parseFlowRtt(out) {
+  const minrtt = [...out.matchAll(/minrtt:([0-9.]+)/g)].map((m) => Number(m[1]));
+  const srtt = [...out.matchAll(/\brtt:([0-9.]+)\//g)].map((m) => Number(m[1]));
+  const med = (a) => { if (!a.length) return null; const b = a.slice().sort((x, y) => x - y); const k = b.length; return k % 2 ? b[(k - 1) / 2] : (b[k / 2 - 1] + b[k / 2]) / 2; };
+  return { sockets: minrtt.length, minrtt_ms: med(minrtt), minrtt_min_ms: minrtt.length ? Math.min(...minrtt) : null, srtt_ms: med(srtt) };
+}
+
 // текущее состояние без изменений (check.js: перед обычной сеткой задержки быть не должно)
 function netemState(a = 'ss1', b = 'ss2') {
   const state = {};
@@ -379,5 +395,5 @@ module.exports = {
   STAND, NET, NETARGS, CLIENT, PROVIDERS, MEASURED_SS, ENV, THIS_HOST, HOSTS, hostOf, ctx, hostCtx, shq,
   setLogFile, tee, sh, shCode, docker, dctl, dexec, dexecOk, compose, composeOn, health, running, statsTargets, sleep, log, smoke, smokeErr, smokeDirect, tsaProbe, ensureTsa, waitSmoke, restartProxy,
   iniSet, iniDel, iniDump, hurl, psql, pgSchema, pgTable, csParamSet, csParamDel, csParamDump,
-  netBytes, linkBytes, netem, netemState, ensureProvider, cpuMode, unstamped, waitStamped, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
+  netBytes, linkBytes, netem, netemState, flowRttCmd, parseFlowRtt, ensureProvider, cpuMode, unstamped, waitStamped, messagelogBytes, caCalls, imageDigests, readJson, writeJson,
 };

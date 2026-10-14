@@ -137,6 +137,8 @@ async function runOne(r, dir, warmup, extra = {}) {
     '-e', `CONFIG=${r.config}`, '-e', `TARGET=${r.target}`, '-e', `SIZE=${r.size}`, '-e', `VUS=${r.vus}`,
     '-e', `N=${n}`, '-e', `WARMUP=${warmup}`, '-e', `REP=${r.rep}`, '-e', 'OUT=/out', '/k6/grid.js'];
   const t0 = Date.now();
+  // фактический RTT соединений ss1 → ss2:5500 (ss -tin в namespace ss1) — параллельно с k6
+  const rttProbe = xroad ? run(...L.flowRttCmd('ss1', 'ss2')) : null;
   const res = (await run('docker', k6args)).out;
   const wall = (Date.now() - t0) / 1000;
   stopStats();
@@ -165,6 +167,8 @@ async function runOne(r, dir, warmup, extra = {}) {
     local_ini: Object.fromEntries(L.MEASURED_SS.map((c) => [c, L.iniDump(c)])),
     k6_stdout: res,
     tsa_probe_after: xroad ? L.tsaProbe() : null,   // '200' = TSA пережил прогон
+    // RTT измеряемого потока по ядру: minrtt/srtt сокетов ss1 → ss2:5500 за несколько снимков во время прогона
+    flow_rtt: rttProbe ? L.parseFlowRtt((await rttProbe).out) : null,
     ...extra,
   };
   L.writeJson(path.join(dir, 'meta.json'), meta);
@@ -213,9 +217,11 @@ function controlVerdict() {
   else if (L.running('ss3')) { L.log('stopping ss3 (not in the measured path)'); L.dctl('ss3', 'stop'); }
   // задержка ss1 <-> ss2: в обычной сетке её быть не должно (снимаем, если осталась от прерванной WAN-сетки)
   let rttNow = M.rtts ? null : 0;
+  let netemNow = null;                         // фактические правила tc с обеих сторон — в meta каждого прогона
   const setRtt = (rtt) => {
     if (rtt === rttNow) return;
     const st = L.netem(rtt);
+    netemNow = st;
     L.log(`netem rtt ${rtt} ms: ${JSON.stringify(st)}`);
     rttNow = rtt;
   };
@@ -241,7 +247,7 @@ function controlVerdict() {
     clean();
     const tsaRestarted = r.target !== 'direct' ? await L.ensureTsa() : false;   // TSA жив? иначе restart ca (помечается в meta)
     if (M.rtts && r.target !== 'direct') setRtt(r.rtt || 0);
-    await runOne(r, path.join(RESULTS, runName(r)), warmup, { tsa_restarted_before: tsaRestarted, ...(M.rtts ? { rtt_ms: r.rtt || 0 } : {}) });
+    await runOne(r, path.join(RESULTS, runName(r)), warmup, { tsa_restarted_before: tsaRestarted, ...(M.rtts ? { rtt_ms: r.rtt || 0, netem: netemNow } : {}) });
     if (/^control/.test(r.tag || '')) controlVerdict();
   }
   if (M.rtts) setRtt(0);

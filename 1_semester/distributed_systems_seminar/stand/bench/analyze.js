@@ -73,7 +73,9 @@ for (const g of groups.values()) {
   rows.push({
     config: g.config, size: g.size, vus: g.vus, rtt: g.rtt, reps: g.runs.length, invalid,
     p50: per((r) => r.p50), p90: per((r) => r.p90), p99: per((r) => r.p99), avg: per((r) => r.avg),
-    rps: per((r) => r.rps_measured), errors: g.runs.reduce((a, r) => a + r.errors, 0),
+    rps: per((r) => r.rps_measured),
+    // фактический RTT потока ss1 → ss2:5500 по ядру (meta.flow_rtt.srtt_ms — сглаженный rtt сокетов; minrtt у соединений пула помнит задержку до смены netem) — проверка netem
+    rtt_flow: per((r) => r.meta.flow_rtt?.srtt_ms ?? NaN), errors: g.runs.reduce((a, r) => a + r.errors, 0),
     ok: g.runs.reduce((a, r) => a + r.n - r.errors, 0),                // успешных запросов в измеряемой фазе, по всем повторам
     // байты: счётчики / число запросов (прогрев включён в счётчик → делим на warmup+n).
     // wire_* — eth0 целиком (у ss1 это и ответ клиенту, и CS/CA — не канал между SS); link_* — только ss1 <-> ss2:5500, IP-уровень
@@ -110,7 +112,7 @@ for (const r of rows) {
 // в md: канал ss1 <-> ss2, если он мерился (с 30.09); иначе старая колонка tx eth0 ss1. В csv — всё.
 const hasLink = runs.some((r) => r.meta.link_bytes);
 const COLS = [
-  ['config', 'config'], ['size', 'size'], ['vus', 'vus'], ...(rows.some((r) => r.rtt != null) ? [['rtt', 'RTT ms']] : []), ['reps', 'reps'],
+  ['config', 'config'], ['size', 'size'], ['vus', 'vus'], ...(rows.some((r) => r.rtt != null) ? [['rtt', 'RTT ms'], ['rtt_flow', 'RTT потока ms']] : []), ['reps', 'reps'],
   ['p50', 'p50 ms'], ['p90', 'p90 ms'], ['p99', 'p99 ms'], ['d_p50', 'Δp50 vs full'], ['d_p90', 'Δp90 vs full'],
   ['iqr_p50', 'IQR p50 %'], ['spread_p50', 'размах p50 %'], ['rps', 'req/s'], ['iqr_rps', 'IQR req/s %'], ['spread_rps', 'размах req/s %'],
   ...(hasLink ? [['link_tx', 'ss1→ss2 B/req'], ['link_rx', 'ss2→ss1 B/req']] : [['wire_tx_ss1', 'tx eth0 ss1 B/req']]),
