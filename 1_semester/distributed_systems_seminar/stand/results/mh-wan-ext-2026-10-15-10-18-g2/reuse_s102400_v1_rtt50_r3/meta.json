@@ -1,0 +1,78 @@
+{
+  "run": "reuse_s102400_v1_rtt50_r3",
+  "rep": 3,
+  "config": "reuse",
+  "target": "xroad",
+  "size": 102400,
+  "vus": 1,
+  "rtt": 50,
+  "n": 1000,
+  "warmup": 200,
+  "wall_s": 171.739,
+  "started": "2026-10-15T21:04:57.323Z",
+  "finished": "2026-10-15T21:07:54.083Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 144367603,
+      "tx": 139543083
+    },
+    "ss2": {
+      "rx": 138918304,
+      "tx": 143238314
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 192897024,
+    "ss2": 192765952
+  },
+  "link_bytes": {
+    "xroad_rx": 141900211,
+    "link_rx": 141900211,
+    "xroad_tx": 14491939,
+    "link_tx": 14491939
+  },
+  "timestamping": {
+    "completed": true,
+    "wait_s": 43,
+    "ss1": {
+      "unstamped_after_run": 121,
+      "unstamped_final": 0
+    },
+    "ss2": {
+      "unstamped_after_run": 214,
+      "unstamped_final": 0
+    },
+    "ca_calls_while_waiting": {
+      "ocsp": 0,
+      "tsa": 2,
+      "sign": 0,
+      "ocsp_rt_mean_s": null,
+      "tsa_rt_mean_s": 0.012
+    }
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 6,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 0.012166666666666666
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]\npool-enable-connection-reuse = true\nserver-support-clients-pooled-connections = true\nserver-connector-max-idle-time = 120000",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]\npool-enable-connection-reuse = true\nserver-support-clients-pooled-connections = true\nserver-connector-max-idle-time = 120000"
+  },
+  "k6_stdout": "reuse\txroad\tsize=102400\tvus=1\trep=3\tp50=133.7\tp90=141.4\tp99=166.5\terrors=0",
+  "tsa_probe_after": "200",
+  "flow_rtt": {
+    "sockets": 5,
+    "minrtt_ms": 50.582,
+    "minrtt_min_ms": 50.582,
+    "srtt_ms": 53.613
+  },
+  "tsa_restarted_before": false,
+  "rtt_ms": 50,
+  "netem": {
+    "ss1": "delay 25ms",
+    "ss2": "delay 25ms"
+  }
+}

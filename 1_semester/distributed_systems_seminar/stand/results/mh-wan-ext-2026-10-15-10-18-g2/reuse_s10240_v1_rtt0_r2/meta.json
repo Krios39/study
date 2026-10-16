@@ -1,0 +1,78 @@
+{
+  "run": "reuse_s10240_v1_rtt0_r2",
+  "rep": 2,
+  "config": "reuse",
+  "target": "xroad",
+  "size": 10240,
+  "vus": 1,
+  "rtt": 0,
+  "n": 1000,
+  "warmup": 200,
+  "wall_s": 44.943,
+  "started": "2026-10-15T20:10:40.262Z",
+  "finished": "2026-10-15T20:11:30.284Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 28263962,
+      "tx": 27179432
+    },
+    "ss2": {
+      "rx": 26703802,
+      "tx": 28158753
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 40435712,
+    "ss2": 47947776
+  },
+  "link_bytes": {
+    "xroad_rx": 27461788,
+    "link_rx": 27461788,
+    "xroad_tx": 13926009,
+    "link_tx": 13926009
+  },
+  "timestamping": {
+    "completed": true,
+    "wait_s": 1,
+    "ss1": {
+      "unstamped_after_run": 0,
+      "unstamped_final": 0
+    },
+    "ss2": {
+      "unstamped_after_run": 0,
+      "unstamped_final": 0
+    },
+    "ca_calls_while_waiting": {
+      "ocsp": 0,
+      "tsa": 1,
+      "sign": 0,
+      "ocsp_rt_mean_s": null,
+      "tsa_rt_mean_s": 0.012
+    }
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 1,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 0.012
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]\npool-enable-connection-reuse = true\nserver-support-clients-pooled-connections = true\nserver-connector-max-idle-time = 120000",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]\npool-enable-connection-reuse = true\nserver-support-clients-pooled-connections = true\nserver-connector-max-idle-time = 120000"
+  },
+  "k6_stdout": "reuse\txroad\tsize=10240\tvus=1\trep=2\tp50=28.6\tp90=35.1\tp99=50.1\terrors=0",
+  "tsa_probe_after": "200",
+  "flow_rtt": {
+    "sockets": 5,
+    "minrtt_ms": 0.14,
+    "minrtt_min_ms": 0.14,
+    "srtt_ms": 2.586
+  },
+  "tsa_restarted_before": false,
+  "rtt_ms": 0,
+  "netem": {
+    "ss1": null,
+    "ss2": null
+  }
+}
