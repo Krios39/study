@@ -1,3 +1,5 @@
+pub mod draw;
+
 use std::fs::{self, File};
 
 use serde_json::Value;
@@ -33,15 +35,103 @@ pub fn load_png(path: &str) -> Image {
 pub struct Pca {
     pub mean: [f64; 3],
     pub axes: [[f64; 3]; 3],
+    pub variance: [f64; 3],
+}
+
+fn jacobi_eigen(mut a: [[f64; 3]; 3]) -> ([f64; 3], [[f64; 3]; 3]) {
+    let mut v = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]];
+    for _ in 0..100 {
+        let off = a[0][1].powi(2) + a[0][2].powi(2) + a[1][2].powi(2);
+        if off < 1e-30 {
+            break;
+        }
+        for (p, q) in [(0, 1), (0, 2), (1, 2)] {
+            if a[p][q].abs() < 1e-300 {
+                continue;
+            }
+            let theta = (a[q][q] - a[p][p]) / (2.0 * a[p][q]);
+            let t = theta.signum() / (theta.abs() + (theta * theta + 1.0).sqrt());
+            let t = if theta == 0.0 { 1.0 } else { t };
+            let c = 1.0 / (t * t + 1.0).sqrt();
+            let s = t * c;
+            for k in 0..3 {
+                let (akp, akq) = (a[k][p], a[k][q]);
+                a[k][p] = c * akp - s * akq;
+                a[k][q] = s * akp + c * akq;
+            }
+            for k in 0..3 {
+                let (apk, aqk) = (a[p][k], a[q][k]);
+                a[p][k] = c * apk - s * aqk;
+                a[q][k] = s * apk + c * aqk;
+            }
+            for k in 0..3 {
+                let (vkp, vkq) = (v[k][p], v[k][q]);
+                v[k][p] = c * vkp - s * vkq;
+                v[k][q] = s * vkp + c * vkq;
+            }
+        }
+    }
+    ([a[0][0], a[1][1], a[2][2]], v)
 }
 
 impl Pca {
+    pub fn fit(image: &Image) -> Pca {
+        let n = image.len() as f64;
+        let mut mean = [0.0; 3];
+        for px in image.rgb.chunks_exact(3) {
+            for k in 0..3 {
+                mean[k] += px[k] as f64 / 255.0;
+            }
+        }
+        mean = mean.map(|m| m / n);
+        let mut cov = [[0.0; 3]; 3];
+        for px in image.rgb.chunks_exact(3) {
+            let d = [0, 1, 2].map(|k| px[k] as f64 / 255.0 - mean[k]);
+            for i in 0..3 {
+                for j in 0..3 {
+                    cov[i][j] += d[i] * d[j];
+                }
+            }
+        }
+        let cov = cov.map(|row| row.map(|x| x / n));
+        let (values, vectors) = jacobi_eigen(cov);
+        let mut order = [0, 1, 2];
+        order.sort_by(|&i, &j| values[j].partial_cmp(&values[i]).unwrap());
+        let mut axes = [[0.0; 3]; 3];
+        let mut variance = [0.0; 3];
+        for (col, &src) in order.iter().enumerate() {
+            variance[col] = values[src].max(0.0);
+            let mut column = [0, 1, 2].map(|r| vectors[r][src]);
+            let biggest = (0..3).max_by(|&i, &j| column[i].abs().partial_cmp(&column[j].abs()).unwrap()).unwrap();
+            if column[biggest] < 0.0 {
+                column = column.map(|x| -x);
+            }
+            for r in 0..3 {
+                axes[r][col] = column[r];
+            }
+        }
+        Pca { mean, axes, variance }
+    }
+
+    pub fn explained(&self) -> [f64; 3] {
+        let total: f64 = self.variance.iter().sum();
+        self.variance.map(|v| v / total)
+    }
+
+    pub fn to_json(&self) -> Value {
+        serde_json::json!({
+            "mean": self.mean, "axes_columns": self.axes, "variance": self.variance, "explained_fraction": self.explained(),
+            "scaling": "RGB/255; centred; no whitening or per-channel standardisation",
+        })
+    }
+
     pub fn load(path: &str) -> Pca {
         let data: Value = serde_json::from_str(&fs::read_to_string(path).expect("cannot read PCA model")).unwrap();
         let m = &data["model"];
         let mean = [0, 1, 2].map(|i| m["mean"][i].as_f64().unwrap());
         let axes = [0, 1, 2].map(|r| [0, 1, 2].map(|c| m["axes_columns"][r][c].as_f64().unwrap()));
-        Pca { mean, axes }
+        let variance = [0, 1, 2].map(|i| m["variance"][i].as_f64().unwrap());
+        Pca { mean, axes, variance }
     }
 
     pub fn project(&self, rgb: [u8; 3]) -> [f64; 3] {
