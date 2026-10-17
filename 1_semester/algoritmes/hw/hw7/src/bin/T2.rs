@@ -1,8 +1,8 @@
 use std::collections::BTreeSet;
 use std::fs;
 
-use hw7::draw::{FONT, rgb, tag};
-use hw7::{Image, NineTree, Pca, Rect, SplitMix64, load_png};
+use hw7::draw::{FONT, equal_ranges, rgb, tag};
+use hw7::{Image, NineTree, Pca, Rect, SplitMix64, load_png, sample_ids};
 use plotters::coord::Shift;
 use plotters::prelude::*;
 use serde_json::{Value, json};
@@ -11,18 +11,6 @@ const DEPTH: u32 = 4;
 const SEED: u64 = 7;
 const PLOT_SEED: u64 = 2026;
 const PLOT_SAMPLE: usize = 30_000;
-
-fn sample_ids(candidates: &[usize], count: usize, seed: u64) -> Vec<usize> {
-    if candidates.len() <= count {
-        return candidates.to_vec();
-    }
-    let mut rng = SplitMix64(seed);
-    let mut chosen = BTreeSet::new();
-    while chosen.len() < count {
-        chosen.insert(candidates[rng.below(candidates.len() as u64) as usize]);
-    }
-    chosen.into_iter().collect()
-}
 
 fn pca_panel(area: &DrawingArea<BitMapBackend, Shift>, title: &str, axes: (usize, usize), x: (f64, f64), y: (f64, f64),
              points: &[usize], scores: &[[f64; 3]], img: &Image, radius: u32, view: &Value, zoom: bool) {
@@ -65,19 +53,6 @@ fn pca_panel(area: &DrawingArea<BitMapBackend, Shift>, title: &str, axes: (usize
             let label = (rank + 1).to_string();
             tag(&mut chart, ((b[0] + b[2]) / 2.0, b[3]), &label, (-(label.len() as i32) * 4 - 4, -24), WHITE, 13);
         }
-    }
-}
-
-fn equal_ranges(x: (f64, f64), y: (f64, f64), w: f64, h: f64) -> ((f64, f64), (f64, f64)) {
-    let (dx, dy) = (x.1 - x.0, y.1 - y.0);
-    if dx / w > dy / h {
-        let half = dx * h / w / 2.0;
-        let c = (y.0 + y.1) / 2.0;
-        (x, (c - half, c + half))
-    } else {
-        let half = dy * w / h / 2.0;
-        let c = (x.0 + x.1) / 2.0;
-        ((c - half, c + half), y)
     }
 }
 

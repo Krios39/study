@@ -1,5 +1,7 @@
 pub mod draw;
+pub mod palette;
 
+use std::collections::BTreeSet;
 use std::fs::{self, File};
 
 use serde_json::Value;
@@ -235,6 +237,23 @@ impl SplitMix64 {
         z ^ (z >> 31)
     }
 
+    pub fn uniform(&mut self) -> f64 {
+        (self.next() >> 11) as f64 / (1u64 << 53) as f64
+    }
+
+    pub fn normals(&mut self, count: usize) -> Vec<f64> {
+        let mut out = Vec::with_capacity(count + 1);
+        while out.len() < count {
+            let u1 = 1.0 - self.uniform();
+            let u2 = self.uniform();
+            let r = (-2.0 * u1.ln()).sqrt();
+            out.push(r * (2.0 * std::f64::consts::PI * u2).cos());
+            out.push(r * (2.0 * std::f64::consts::PI * u2).sin());
+        }
+        out.truncate(count);
+        out
+    }
+
     pub fn below(&mut self, n: u64) -> u64 {
         let zone = u64::MAX - u64::MAX % n;
         loop {
@@ -244,4 +263,34 @@ impl SplitMix64 {
             }
         }
     }
+}
+
+pub fn sample_ids(candidates: &[usize], count: usize, seed: u64) -> Vec<usize> {
+    if candidates.len() <= count {
+        return candidates.to_vec();
+    }
+    let mut rng = SplitMix64(seed);
+    let mut chosen = BTreeSet::new();
+    while chosen.len() < count {
+        chosen.insert(candidates[rng.below(candidates.len() as u64) as usize]);
+    }
+    chosen.into_iter().collect()
+}
+
+pub fn strip_count(img: &Image) -> usize {
+    img.height * (img.width - 4)
+}
+
+pub fn strip_xy(img: &Image, id: usize) -> (usize, usize) {
+    (id % (img.width - 4), id / (img.width - 4))
+}
+
+pub fn strip_vector(img: &Image, id: usize) -> [f64; 15] {
+    let (x, y) = strip_xy(img, id);
+    let start = 3 * (y * img.width + x);
+    let mut v = [0.0; 15];
+    for k in 0..15 {
+        v[k] = img.rgb[start + k] as f64 / 255.0;
+    }
+    v
 }

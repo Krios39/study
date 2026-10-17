@@ -85,3 +85,16 @@ pub fn plasma(t: f64) -> RGBColor {
     let mix = |a: f64, b: f64| (a + (b - a) * f) as u8;
     RGBColor(mix(stops[i].0, stops[i + 1].0), mix(stops[i].1, stops[i + 1].1), mix(stops[i].2, stops[i + 1].2))
 }
+
+pub fn equal_ranges(x: (f64, f64), y: (f64, f64), w: f64, h: f64) -> ((f64, f64), (f64, f64)) {
+    let (dx, dy) = (x.1 - x.0, y.1 - y.0);
+    if dx / w > dy / h {
+        let half = dx * h / w / 2.0;
+        let c = (y.0 + y.1) / 2.0;
+        (x, (c - half, c + half))
+    } else {
+        let half = dy * w / h / 2.0;
+        let c = (x.0 + x.1) / 2.0;
+        ((c - half, c + half), y)
+    }
+}
