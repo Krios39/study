@@ -582,7 +582,7 @@
             horizontally along w itself (the value s) and vertically along a second random direction perpendicular to w. In this view the whole 14-dimensional hyperplane w·x = t
             is seen edge-on, as one vertical line. The selected strip and its five nearest neighbours in 15D (smallest Euclidean distance over all 1,568,768 strips, overlapping strips of the same row excluded)
             are marked: similar patterns are close in 15D, so they usually fall on the same side of the hyperplane, but a strip near the line can have neighbours on the other side.
-            The filter is the one chosen in section 6 (seed 7 by default).
+            The filter is the one chosen in section 7 (seed 7 by default).
         </em></p>
         <div class="trace-widget" id="spWidget" style="max-width: 1320px;">
             <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px;">
@@ -614,13 +614,55 @@
                         <span><span class="lg-dot" style="border-radius: 0; width: 3px; height: 14px; background: #000;"></span>hyperplane at the median</span>
                         <span><span class="lg-dot" style="border-radius: 0; width: 3px; height: 14px; background: repeating-linear-gradient(#dc2626 0 3px, transparent 3px 6px);"></span>through the anchor</span>
                     </div>
-                    <div class="fs-tall" style="position: relative; height: 400px;"><canvas id="spSpace"></canvas></div>
+                    <div class="fs-tall" style="position: relative; height: 400px;"><canvas id="spSpace"></canvas>
+                        <div id="spTip" style="display: none; position: absolute; pointer-events: none; z-index: 5; background: rgba(15, 23, 42, 0.92); color: #f8fafc; font-size: 12px; line-height: 1.5; padding: 8px 10px; border-radius: 6px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.25);"></div>
+                    </div>
                     <div id="spNeighbours" style="margin-top: 6px; overflow-x: auto;"></div>
                 </div>
             </div>
         </div>
 
-        <h3>6. Interactive: the Split over the Whole Image (a Convolution)</h3>
+
+        <h3>6. Interactive: the Convolution Step by Step</h3>
+        <p style="line-height: 1.6;"><em>
+            This is how a convolution computes its output map. The yellow window (five pixels of one row) slides over the magnified patch one pixel at a time; at every position
+            the 15 numbers under the window are multiplied by the 15 weights of the kernel and summed into one output value s, which fills one cell of the output map.
+            After the last position of a row the window moves to the next row. Doing this for every position of the image gives the map of section 7.
+            Click the small image to choose the patch.
+        </em></p>
+        <div class="trace-widget" id="ccWidget" style="max-width: 1320px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin-bottom: 10px;">
+                <button id="ccFirst" class="trace-btn">⏮</button>
+                <button id="ccPrev" class="trace-btn">◀ Step</button>
+                <button id="ccPlay" class="trace-btn">▶ Play</button>
+                <button id="ccNext" class="trace-btn">Step ▶</button>
+                <button id="ccLast" class="trace-btn">⏭</button>
+                <select id="ccSpeed" class="trace-btn"><option value="400">slow</option><option value="140" selected>normal</option><option value="30">fast</option></select>
+                <span style="width: 12px;"></span>
+                <span style="font-size: 13px; color: #475569;">Output colour:</span>
+                <button class="trace-tab active" data-cc="value">value s</button>
+                <button class="trace-tab" data-cc="side">side of the median</button>
+                <span style="width: 12px;"></span>
+                <button class="trace-btn fs-btn" data-target="ccWidget">⛶ Full screen</button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px 22px; align-items: start;">
+                <div style="min-width: 0;">
+                    <div style="font-size: 13px; color: #334155; margin-bottom: 4px;">Choose the patch (click):</div>
+                    <canvas id="ccThumb" width="512" height="342" style="width: 100%; height: auto; cursor: crosshair; border: 1px solid #cbd5e1; border-radius: 4px;"></canvas>
+                    <div style="font-size: 13px; color: #334155; margin: 10px 0 4px;">Kernel w (rows R, G, B; columns = window pixels 0–4):</div>
+                    <canvas id="ccKernel" width="420" height="190" style="width: 100%; max-width: 420px; height: auto;"></canvas>
+                </div>
+                <div style="min-width: 0; grid-column: span 2;">
+                    <div style="font-size: 13px; color: #334155; margin-bottom: 4px;">Input patch (32 × 8 pixels of image A, magnified):</div>
+                    <canvas id="ccInput" width="768" height="192" style="width: 100%; height: auto; border: 1px solid #cbd5e1; border-radius: 4px;"></canvas>
+                    <div id="ccCalc" style="font-size: 13px; color: #0f172a; margin: 8px 0; min-height: 4.2em; line-height: 1.6;"></div>
+                    <div style="font-size: 13px; color: #334155; margin-bottom: 4px;">Output map (28 × 8 values s, one per window position):</div>
+                    <canvas id="ccOutput" width="768" height="192" style="width: 100%; height: auto; border: 1px solid #cbd5e1; border-radius: 4px;"></canvas>
+                    <div id="ccLegend" style="font-size: 12px; color: #475569; margin-top: 4px;"></div>
+                </div>
+            </div>
+        </div>
+        <h3>7. Interactive: the Split over the Whole Image (a Convolution)</h3>
         <p style="line-height: 1.6;"><em>
             The projection s = w·x of a five-pixel strip is a weighted sum over a 1 × 5 window, evaluated at every window position: exactly what one filter of a convolutional layer computes,
             only with random instead of learned weights. Like a CNN filter, it can be visualised by its weights and by its response map. The page decodes the original image A (embedded losslessly)
@@ -1026,22 +1068,56 @@ window.addEventListener('load', async () => {
         });
     }
     el('spSpace').style.cursor = 'pointer';
-    el('spSpace').addEventListener('click', e => {
+    function pick(e) {
         const r = el('spSpace').getBoundingClientRect();
         const ex = e.clientX - r.left, ey = e.clientY - r.top;
         const { x, y } = spaceChart.scales;
-        let best = null, bestD = 15 * 15;
+        let best = null, bestD = 8 * 8, bestPt = null;
         const consider = (pt, id) => {
             const dx = x.getPixelForValue(pt.x) - ex, dy = y.getPixelForValue(pt.y) - ey;
             const d = dx * dx + dy * dy;
-            if (d < bestD) { bestD = d; best = id; }
+            if (d < bestD) { bestD = d; best = id; bestPt = pt; }
         };
-        spaceChart.data.datasets[0].data.forEach((pt, i) => consider(pt, spaceIds[i]));
         spaceChart.data.datasets[1].data.forEach((pt, i) => consider(pt, neighbours[i].k));
-        if (best === null || best === current) return;
-        current = best;
+        const sel = spaceChart.data.datasets[2].data[0];
+        if (sel) consider(sel, current);
+        if (best === null) {
+            bestD = 15 * 15;
+            spaceChart.data.datasets[0].data.forEach((pt, i) => consider(pt, spaceIds[i]));
+        }
+        return best === null ? null : { id: best, pt: bestPt, ex, ey };
+    }
+    el('spSpace').addEventListener('click', e => {
+        const hit = pick(e);
+        if (!hit || hit.id === current) return;
+        current = hit.id;
         updateStrip();
+        el('spTip').style.display = 'none';
     });
+    el('spSpace').addEventListener('mousemove', e => {
+        const tip = el('spTip');
+        const hit = pick(e);
+        if (!hit) { tip.style.display = 'none'; return; }
+        const a = vec(hit.id), b = vec(current);
+        const d15 = Math.sqrt(a.reduce((acc, v, k) => acc + (v - b[k]) ** 2, 0));
+        const sel = spaceChart.data.datasets[2].data[0];
+        const d2 = 255 * Math.hypot(hit.pt.x - sel.x, hit.pt.y - sel.y);
+        const rank = neighbours.findIndex(n => n.k === hit.id);
+        const label = hit.id === current ? '<b style="color: #facc15;">selected strip</b>'
+            : rank >= 0 ? `<b style="color: #22d3ee;">neighbour ${rank + 1} of 5</b>` : 'not one of the 5 neighbours';
+        tip.innerHTML = `strip ${hit.id.toLocaleString()} at (x ${hit.id % SW}, y ${Math.floor(hit.id / SW)}) · ${label}<br>
+            ${swatches(a)}<br>
+            s = ${proj[hit.id].toFixed(4)} · ${sideOf(proj[hit.id]).replace(/color: #[0-9a-f]+;/, 'color: #fde68a;')}<br>
+            distance to the selected strip (0–255 units):<br>
+            &nbsp;&nbsp;on this graph (2 of 15 directions): <b>${d2.toFixed(1)}</b><br>
+            &nbsp;&nbsp;in 15D (all 15 numbers): <b>${d15.toFixed(1)}</b>${rank < 0 && hit.id !== current && neighbours.length ? ` &nbsp;(5th neighbour: ${Math.sqrt(neighbours[4].d).toFixed(1)})` : ''}`;
+        tip.style.display = 'block';
+        const box = el('spSpace').getBoundingClientRect();
+        const left = hit.ex + 16 + tip.offsetWidth > box.width ? hit.ex - tip.offsetWidth - 12 : hit.ex + 16;
+        tip.style.left = `${Math.max(0, left)}px`;
+        tip.style.top = `${Math.max(0, Math.min(hit.ey + 12, box.height - tip.offsetHeight))}px`;
+    });
+    el('spSpace').addEventListener('mouseleave', () => { el('spTip').style.display = 'none'; });
 
     let zoomed = false;
     function drawSpace(j) {
@@ -1089,6 +1165,128 @@ window.addEventListener('load', async () => {
         current = { flat: flatId, edge: edgeId, low: lowEx.id, high: highEx.id, plane: planeId }[b.dataset.preset] ?? randomRng.below(N);
         updateStrip();
     });
+
+
+    const PW = 32, PH = 8, OW = PW - 4;
+    let px0 = 1296, py0 = 730, step = 0, ccTimer = null, ccMode = 'value';
+    const ccThumb = el('ccThumb'), cct = ccThumb.getContext('2d');
+    const cin = el('ccInput').getContext('2d'), cout = el('ccOutput').getContext('2d'), ck = el('ccKernel').getContext('2d');
+    const cell = el('ccInput').width / PW;
+    const pixel = (x, y) => { const i = 4 * (y * W + x); return [rgba[i], rgba[i + 1], rgba[i + 2]]; };
+    const diverge = (v, m) => {
+        const a = Math.min(1, Math.abs(v) / m);
+        return v >= 0 ? `rgb(255, ${Math.round(255 * (1 - a * 0.85))}, ${Math.round(255 * (1 - a))})`
+                      : `rgb(${Math.round(255 * (1 - a))}, ${Math.round(255 * (1 - a * 0.85))}, 255)`;
+    };
+    function drawKernel() {
+        const cw = 70, chh = 50, x0 = 50, y0 = 22;
+        ck.clearRect(0, 0, el('ccKernel').width, el('ccKernel').height);
+        ck.font = '13px system-ui, sans-serif'; ck.textAlign = 'center'; ck.textBaseline = 'middle';
+        const m = Math.max(...w.map(Math.abs));
+        for (let p = 0; p < 5; p++) {
+            ck.fillStyle = '#475569'; ck.fillText(`px${p}`, x0 + p * cw + cw / 2, 10);
+            for (let c = 0; c < 3; c++) {
+                const v = w[3 * p + c];
+                ck.fillStyle = diverge(v, m);
+                ck.fillRect(x0 + p * cw + 2, y0 + c * chh + 2, cw - 4, chh - 4);
+                ck.fillStyle = '#0f172a'; ck.fillText(v.toFixed(2), x0 + p * cw + cw / 2, y0 + c * chh + chh / 2);
+            }
+        }
+        ['R', 'G', 'B'].forEach((n, c) => { ck.fillStyle = ['#dc2626', '#16a34a', '#2563eb'][c]; ck.fillText(n, 22, y0 + c * chh + chh / 2); });
+    }
+    function drawThumb2() {
+        cct.drawImage(bitmap, 0, 0, ccThumb.width, ccThumb.height);
+        const sx2 = ccThumb.width / W, sy2 = ccThumb.height / H;
+        cct.strokeStyle = '#000'; cct.lineWidth = 4;
+        cct.strokeRect(px0 * sx2 - 3, py0 * sy2 - 3, PW * sx2 + 6, PH * sy2 + 6);
+        cct.strokeStyle = '#facc15'; cct.lineWidth = 2;
+        cct.strokeRect(px0 * sx2 - 3, py0 * sy2 - 3, PW * sx2 + 6, PH * sy2 + 6);
+    }
+    function render2() {
+        const total = OW * PH, k = Math.min(step, total - 1);
+        const wr = Math.floor(k / OW), wc = k % OW;
+        for (let y = 0; y < PH; y++)
+            for (let x = 0; x < PW; x++) {
+                const [r, g, b] = pixel(px0 + x, py0 + y);
+                cin.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                cin.fillRect(x * cell, y * cell, cell, cell);
+            }
+        cin.strokeStyle = 'rgba(255, 255, 255, 0.25)'; cin.lineWidth = 1;
+        for (let x = 0; x <= PW; x++) { cin.beginPath(); cin.moveTo(x * cell, 0); cin.lineTo(x * cell, PH * cell); cin.stroke(); }
+        for (let y = 0; y <= PH; y++) { cin.beginPath(); cin.moveTo(0, y * cell); cin.lineTo(PW * cell, y * cell); cin.stroke(); }
+        cin.strokeStyle = '#000'; cin.lineWidth = 5; cin.strokeRect(wc * cell, wr * cell, 5 * cell, cell);
+        cin.strokeStyle = '#facc15'; cin.lineWidth = 3; cin.strokeRect(wc * cell, wr * cell, 5 * cell, cell);
+
+        const m = Math.max(Math.abs(lo), Math.abs(hi));
+        cout.fillStyle = '#f1f5f9'; cout.fillRect(0, 0, el('ccOutput').width, el('ccOutput').height);
+        const ocell = el('ccOutput').width / OW, ocellH = el('ccOutput').height / PH;
+        for (let i = 0; i <= k; i++) {
+            const y = Math.floor(i / OW), x = i % OW;
+            const v = proj[(py0 + y) * SW + px0 + x];
+            cout.fillStyle = ccMode === 'value' ? diverge(v, m) : (v < median ? '#2b8fb3' : v > median ? '#d98a2b' : '#ff00ff');
+            cout.fillRect(x * ocell + 1, y * ocellH + 1, ocell - 2, ocellH - 2);
+        }
+        cout.strokeStyle = '#000'; cout.lineWidth = 4; cout.strokeRect(wc * ocell, wr * ocellH, ocell, ocellH);
+        cout.strokeStyle = '#facc15'; cout.lineWidth = 2; cout.strokeRect(wc * ocell, wr * ocellH, ocell, ocellH);
+
+        const id = (py0 + wr) * SW + px0 + wc;
+        const parts = [0, 1, 2, 3, 4].map(p => {
+            const [r, g, b] = pixel(px0 + wc + p, py0 + wr);
+            const c = w[3 * p] * r / 255 + w[3 * p + 1] * g / 255 + w[3 * p + 2] * b / 255;
+            return { r, g, b, c };
+        });
+        const sum = parts.reduce((a, q) => a + q.c, 0);
+        el('ccCalc').innerHTML = `Step ${k + 1} of ${total}: window at row ${wr + 1}, column ${wc + 1} of the patch (strip ${id.toLocaleString()}, image x = ${px0 + wc}…${px0 + wc + 4}, y = ${py0 + wr})<br>` +
+            parts.map((q, p) => `<span style="display: inline-block; width: 12px; height: 12px; background: rgb(${q.r}, ${q.g}, ${q.b}); border: 1px solid #94a3b8; vertical-align: middle;"></span> px${p}: ${q.c >= 0 ? '+' : '−'}${Math.abs(q.c).toFixed(3)}`).join(' &nbsp; ') +
+            `<br>s = sum of the five pixel contributions = <b>${sum.toFixed(4)}</b> → output cell (${wr + 1}, ${wc + 1}) · ${sum < median ? '<span style="color: #2b8fb3;"><b>below</b></span>' : '<span style="color: #d98a2b;"><b>above</b></span>'} the median t = ${median.toFixed(4)}`;
+        el('ccLegend').innerHTML = ccMode === 'value'
+            ? 'cell colour: <span style="color: #3b5bff;">blue = negative s</span>, white ≈ 0, <span style="color: #ef4444;">red = positive s</span> (same scale as the response map of section 7)'
+            : 'cell colour: <span style="color: #2b8fb3;">blue = s below the median</span>, <span style="color: #d98a2b;">orange = above</span> (the same split as section 7)';
+        el('ccFirst').disabled = el('ccPrev').disabled = k === 0;
+        el('ccNext').disabled = el('ccLast').disabled = k === total - 1;
+    }
+    function ccStop() { clearInterval(ccTimer); ccTimer = null; el('ccPlay').textContent = '▶ Play'; }
+    function ccGo(k) { step = Math.max(0, Math.min(k, OW * PH - 1)); render2(); }
+    el('ccFirst').onclick = () => { ccStop(); ccGo(0); };
+    el('ccPrev').onclick = () => { ccStop(); ccGo(step - 1); };
+    el('ccNext').onclick = () => { ccStop(); ccGo(step + 1); };
+    el('ccLast').onclick = () => { ccStop(); ccGo(OW * PH - 1); };
+    el('ccPlay').onclick = () => {
+        if (ccTimer) return ccStop();
+        if (step >= OW * PH - 1) ccGo(0);
+        el('ccPlay').textContent = '⏸ Pause';
+        ccTimer = setInterval(() => { if (step >= OW * PH - 1) return ccStop(); ccGo(step + 1); }, +el('ccSpeed').value);
+    };
+    el('ccSpeed').onchange = () => { if (ccTimer) { ccStop(); el('ccPlay').click(); } };
+    document.querySelectorAll('#ccWidget [data-cc]').forEach(b => b.onclick = () => {
+        ccMode = b.dataset.cc;
+        document.querySelectorAll('#ccWidget [data-cc]').forEach(x => x.classList.toggle('active', x === b));
+        render2();
+    });
+    ccThumb.onclick = e => {
+        const r = ccThumb.getBoundingClientRect();
+        px0 = Math.max(0, Math.min(W - PW, Math.floor((e.clientX - r.left) / r.width * W) - PW / 2));
+        py0 = Math.max(0, Math.min(H - PH, Math.floor((e.clientY - r.top) / r.height * H) - PH / 2));
+        ccAuto = false;
+        ccStop(); drawThumb2(); ccGo(0);
+    };
+    const afterDirection = onDirection;
+    let ccAuto = true;
+    function liveliestPatch() {
+        let best = -1;
+        for (let y0 = 0; y0 + PH <= H; y0 += 8)
+            for (let x0 = 0; x0 + PW <= W; x0 += 8) {
+                let sum = 0, sq = 0;
+                for (let y = 0; y < PH; y++)
+                    for (let x = 0; x < OW; x++) {
+                        const v = proj[(y0 + y) * SW + x0 + x];
+                        sum += v; sq += v * v;
+                    }
+                const n = OW * PH, varv = sq / n - (sum / n) ** 2;
+                if (varv > best) { best = varv; px0 = x0; py0 = y0; }
+            }
+    }
+    onDirection = () => { afterDirection(); if (ccAuto) liveliestPatch(); drawKernel(); drawThumb2(); ccGo(0); };
 
     const setExpanded = (target, on) => {
         target.classList.toggle('expanded', on);
