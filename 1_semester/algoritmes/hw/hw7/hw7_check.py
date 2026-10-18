@@ -172,3 +172,25 @@ for key in ("low", "high"):
     assert (int(xs[0]), int(ys[0])) == (e["x"], e["y"])
     assert [list(map(int, image_a[e["y"], e["x"] + k])) for k in range(5)] == e["rgb"]
 print("T5: the two example strips have the reported locations and colours")
+
+b1 = json.load(open("HW7_B1_results.json"))
+b2 = json.load(open("HW7_B2_results.json"))
+image_b = nb["load_rgb"](nb["IMAGE_B"])
+ids_a, ids_b = np.array(b1["ids_a"]), np.array(b1["ids_b"])
+assert len(set(ids_a.tolist())) == len(ids_a) == b1["sample_a"] and len(set(ids_b.tolist())) == len(ids_b) == b1["sample_b"]
+va = np.rint(nb["strip_vectors"](image_a, ids_a) * 255).astype(np.int64)
+vb = np.rint(nb["strip_vectors"](image_b, ids_b) * 255).astype(np.int64)
+assert b1["b_total"] == len(ids_b) and b1["largest_leaf"] <= b1["leaf_size"]
+for row in b1["top"]:
+    for key, img in (("a_strip", image_a), ("b_strip", image_b)):
+        st = row[key]
+        assert [list(map(int, img[st["y"], st["x"] + k])) for k in range(5)] == st["rgb"]
+print(f"B1: {len(ids_a)} + {len(ids_b)} distinct sampled strips match the notebook's strip_vectors; B visits sum to {b1['b_total']}; top-leaf strips verified")
+
+qid = np.array(b2["query_ids"])
+pos = {s: i for i, s in enumerate(ids_b.tolist())}
+for q, result in zip(qid, b2["k10"]):
+    d2 = ((va - vb[pos[int(q)]]) ** 2).sum(axis=1)
+    order = np.lexsort((ids_a, d2))[:10]
+    assert [[int(ids_a[i]), int(d2[i])] for i in order] == result, int(q)
+print(f"B2: NumPy exhaustive search gives the same ordered K = 10 neighbours (distance, then A strip ID) for all {len(qid)} queries")

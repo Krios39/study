@@ -1,5 +1,6 @@
 pub mod draw;
 pub mod palette;
+pub mod rptree;
 
 use std::collections::BTreeSet;
 use std::fs::{self, File};
