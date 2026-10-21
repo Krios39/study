@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1. Свёртка и фильтры</title>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<a class="back" href="index.html">← к списку</a>
+<h1>1. Свёртка: как фильтр 3×3 находит края</h1>
+<p class="lead">Выбери фильтр и наведи мышь на любую клетку средней таблицы: жёлтыми рамками отмечено окно 3×3 на картинке, внизу видно, как считается число.</p>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px" id="btns"></div>
+<div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
+  <div><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">1. Картинка 12×12</div><div id="g0"></div></div>
+  <div><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">2. После фильтра 10×10</div><div id="g1"></div></div>
+  <div><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">3. ReLU + pool 5×5</div><div id="g2"></div></div>
+</div>
+<div id="calc" style="margin-top:14px;font-size:14px;line-height:1.6;background:var(--surface-1);border-radius:var(--radius);padding:10px 14px;min-height:44px;font-family:var(--font-mono)">Наведи мышь на любую клетку в средней таблице.</div>
+<div style="display:flex;gap:14px;margin-top:10px;font-size:12px;color:var(--text-secondary)"><span><span style="display:inline-block;width:10px;height:10px;background:#378ADD;border-radius:2px"></span> положительное</span><span><span style="display:inline-block;width:10px;height:10px;background:#E24B4A;border-radius:2px"></span> отрицательное</span><span><span style="display:inline-block;width:10px;height:10px;border:0.5px solid var(--border-strong);border-radius:2px"></span> ноль</span></div>
+<script>
+const N=12,C=18;
+const img=[];for(let y=0;y<N;y++){img.push([]);for(let x=0;x<N;x++){let v=0;if(x>=2&&x<=6&&y>=2&&y<=6)v=9;if(x>=8&&x<=10&&y>=7&&y<=10)v=5;if(y==9&&x<7)v=0;img[y].push(v);}}
+const F={
+ 'Вертикальные края':[[-1,0,1],[-1,0,1],[-1,0,1]],
+ 'Горизонтальные края':[[-1,-1,-1],[0,0,0],[1,1,1]],
+ 'Размытие':[[1,1,1],[1,1,1],[1,1,1]]
+};
+let cur='Вертикальные края';
+const btns=document.getElementById('btns');
+Object.keys(F).forEach(k=>{const b=document.createElement('button');b.textContent=k;b.onclick=()=>{cur=k;render();};btns.appendChild(b);});
+function mk(id,n){const g=document.getElementById(id);g.style.cssText='display:grid;grid-template-columns:repeat('+n+','+C+'px);gap:1px';g.innerHTML='';const c=[];for(let i=0;i<n*n;i++){const d=document.createElement('div');d.style.cssText='width:'+C+'px;height:'+C+'px;font-size:9px;display:flex;align-items:center;justify-content:center;border-radius:2px';g.appendChild(d);c.push(d);}return c;}
+const c0=mk('g0',N),c1=mk('g1',N-2),c2=mk('g2',5);
+let out=[];
+function render(){
+ [...btns.children].forEach(b=>{b.style.background=b.textContent===cur?'var(--surface-1)':'transparent';b.style.borderColor=b.textContent===cur?'var(--border-stronger)':'';});
+ const f=F[cur],div=cur==='Размытие'?9:1;
+ out=[];for(let y=0;y<N-2;y++){out.push([]);for(let x=0;x<N-2;x++){let s=0;for(let i=0;i<3;i++)for(let j=0;j<3;j++)s+=img[y+i][x+j]*f[i][j];out[y].push(Math.round(s/div*10)/10);}}
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++){const g=Math.round(255-img[y][x]*255/9*0.9);const d=c0[y*N+x];d.style.background='rgb('+g+','+g+','+g+')';d.style.outline='';d.textContent=img[y][x]||'';d.style.color=img[y][x]>4?'#fff':'#666';}
+ let mx=0;out.forEach(r=>r.forEach(v=>mx=Math.max(mx,Math.abs(v))));mx=mx||1;
+ for(let y=0;y<N-2;y++)for(let x=0;x<N-2;x++){const v=out[y][x],d=c1[y*(N-2)+x];d.style.background=col(v,mx);d.textContent=v?Math.round(v):'';d.style.color=Math.abs(v)/mx>0.5?'#fff':'var(--text-secondary)';d.style.outline='';d.style.cursor='pointer';d.onmouseenter=()=>hover(x,y);d.onmouseleave=()=>{hover(-1,-1)};}
+ for(let y=0;y<5;y++)for(let x=0;x<5;x++){let m=0;for(let i=0;i<2;i++)for(let j=0;j<2;j++)m=Math.max(m,out[y*2+i][x*2+j]);const d=c2[y*5+x];d.style.background=col(m,mx);d.textContent=m?Math.round(m):'';d.style.color=m/mx>0.5?'#fff':'var(--text-secondary)';}
+ hover(-1,-1);
+}
+function col(v,mx){if(!v)return 'transparent';const a=Math.min(1,Math.abs(v)/mx);return v>0?'rgba(55,138,221,'+(0.12+0.88*a)+')':'rgba(226,75,74,'+(0.12+0.88*a)+')';}
+function hover(x,y){
+ c0.forEach(d=>d.style.outline='');c1.forEach(d=>d.style.outline='');
+ const el=document.getElementById('calc');
+ if(x<0){el.textContent='Наведи мышь на любую клетку в средней таблице.';return;}
+ const f=F[cur],div=cur==='Размытие'?9:1;
+ for(let i=0;i<3;i++)for(let j=0;j<3;j++)c0[(y+i)*N+x+j].style.outline='2px solid #EF9F27';
+ c1[y*(N-2)+x].style.outline='2px solid #EF9F27';
+ let terms=[];for(let i=0;i<3;i++)for(let j=0;j<3;j++){terms.push(img[y+i][x+j]+'·'+(f[i][j]<0?'('+f[i][j]+')':f[i][j]));}
+ el.innerHTML='окно: '+terms.slice(0,3).join(' + ')+'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ '+terms.slice(3,6).join(' + ')+'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ '+terms.slice(6,9).join(' + ')+(div>1?' ; всё делим на 9':'')+'<br>= <b style="font-weight:500">'+out[y][x]+'</b>';
+}
+render();
+</script>
+</body>
+</html>

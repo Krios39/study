@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>U-Net: интерактивные демо</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.it{display:block;text-decoration:none;color:inherit;border:0.5px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:10px;background:var(--surface-2)}
+.it:hover{border-color:var(--border-strong);background:var(--surface-1)}
+.it b{font-weight:500;font-size:16px}
+.it span{display:block;font-size:14px;color:var(--text-secondary);line-height:1.5;margin-top:2px}
+</style>
+</head>
+<body>
+<h1>U-Net: интерактивные демо</h1>
+<p class="lead">Пять страниц, по порядку от простого к сложному. Каждая открывается локально, интернет не нужен. Держи все файлы в одной папке (общие стили в theme.css).</p>
+<a class="it" href="1_convolution.html"><b>1. Свёртка и фильтры</b><span>Как фильтр 3×3 скользит по картинке и находит края. ReLU и max pooling на реальных числах.</span></a>
+<a class="it" href="2_unet_forward.html"><b>2. Мини-U-Net по уровням</b><span>Картинка с двумя касающимися клетками проходит спуск, дно и подъём. Можно выключить серые стрелки.</span></a>
+<a class="it" href="3_skip_connection.html"><b>3. Серая стрелка</b><span>Пошагово: откуда берётся копия карты, почему без неё пропадает тонкая щель и как копия её возвращает.</span></a>
+<a class="it" href="4_weight_map.html"><b>4. Весовая карта</b><span>Формула (3) из статьи: вес пикселей между касающимися клетками и доля ошибки, которую они дают.</span></a>
+<a class="it" href="5_training.html"><b>5. Обучение (SGD)</b><span>Цикл: плитка, прямой проход, ошибка, градиент, обновление чисел фильтра. График ошибки, скорость обучения и momentum.</span></a>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>4. Весовая карта</title>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<a class="back" href="index.html">← к списку</a>
+<h1>4. Весовая карта и взвешенная ошибка</h1>
+<p class="lead">Двигай клетки ближе или дальше. Вес растёт только для пикселей, которые близко к двум клеткам сразу. Внизу видно, какую долю ошибки дают такие пиксели без веса и с весом.</p>
+
+<style>
+.pn{width:200px}
+.pn canvas{width:200px;height:200px;image-rendering:pixelated;display:block;border-radius:4px;background:#111}
+.pn .t{font-size:13px;font-weight:500;margin-bottom:4px}
+.pn .s{font-size:11px;color:var(--text-secondary);margin-top:3px;line-height:1.3}
+.sl{display:flex;align-items:center;gap:8px;font-size:13px;flex:1;min-width:190px}
+.sl span.v{min-width:26px;font-weight:500;text-align:right}
+.br{height:14px;border-radius:3px;background:var(--surface-1);overflow:hidden}
+.br div{height:100%;transition:width .15s}
+</style>
+<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px">
+<label class="sl">щель между клетками<input type="range" id="g" min="1" max="16" step="1" value="3" style="flex:1"><span class="v" id="gv">3</span></label>
+<label class="sl">w0<input type="range" id="w0" min="0" max="20" step="1" value="10" style="flex:1"><span class="v" id="w0v">10</span></label>
+<label class="sl">σ<input type="range" id="sg" min="2" max="10" step="1" value="5" style="flex:1"><span class="v" id="sgv">5</span></label>
+</div>
+<div style="display:flex;gap:16px;flex-wrap:wrap">
+<div class="pn"><div class="t">1. Разметка</div><canvas id="c1" width="64" height="64"></canvas><div class="s">белое: клетка, чёрное: фон. Между клетками щель в несколько пикселей</div></div>
+<div class="pn"><div class="t">2. Вес w(x)</div><canvas id="c2" width="64" height="64"></canvas><div class="s" id="s2">чем светлее, тем важнее пиксель</div></div>
+<div class="pn"><div class="t">3. Вклад в ошибку</div><canvas id="c3" width="64" height="64"></canvas><div style="display:flex;gap:6px;margin-top:4px"><button id="m0" style="flex:1;padding:2px 4px;font-size:12px">без веса</button><button id="m1" style="flex:1;padding:2px 4px;font-size:12px">с весом</button></div><div class="s">сеть, которая слила клетки: в щели она уверена, что там клетка</div></div>
+</div>
+<div style="margin-top:14px;display:grid;gap:8px">
+<div><div style="font-size:13px;margin-bottom:3px">Доля ошибки, которую дают пиксели щели, без веса: <b style="font-weight:500" id="p0"></b></div><div class="br"><div id="b0" style="background:#888780"></div></div></div>
+<div><div style="font-size:13px;margin-bottom:3px">Та же доля с весом: <b style="font-weight:500" id="p1"></b></div><div class="br"><div id="b1" style="background:#378ADD"></div></div></div>
+<div id="info" style="font-size:13px;color:var(--text-secondary);line-height:1.6"></div>
+</div>
+<div id="hv" style="margin-top:8px;font-size:12px;color:var(--text-secondary);font-family:var(--font-mono);min-height:18px">наведи мышь на любую картинку</div>
+<script>
+const N=64,R=12,CY=32;
+const RAMP=[[20,24,40],[48,60,140],[190,70,110],[250,200,60]];
+function ramp(t){t=Math.min(1,Math.max(0,t))*3;const i=Math.min(2,Math.floor(t)),f=t-i,a=RAMP[i],b=RAMP[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f];}
+let g=3,w0=10,sg=5,mode=1,D;
+function compute(){
+const cx1=32-R-g/2,cx2=32+R+g/2;
+const n=N*N,truth=new Uint8Array(n),d1=new Float32Array(n),d2=new Float32Array(n),W=new Float32Array(n),gap=new Uint8Array(n),L=new Float32Array(n);
+let gapN=0,tot0=0,gap0=0,tot1=0,gap1=0;
+for(let y=0;y<N;y++)for(let x=0;x<N;x++){const i=y*N+x;
+ const a=Math.hypot(x+0.5-cx1,y+0.5-CY)-R,b=Math.hypot(x+0.5-cx2,y+0.5-CY)-R;
+ const inside=a<0||b<0;truth[i]=inside?1:0;
+ if(!inside){d1[i]=Math.min(a,b);d2[i]=Math.max(a,b);W[i]=1+w0*Math.exp(-Math.pow(d1[i]+d2[i],2)/(2*sg*sg));if(d1[i]+d2[i]<=g+3){gap[i]=1;gapN++;}}
+ else{d1[i]=0;d2[i]=0;W[i]=1;}
+ const p=gap[i]?0.1:0.97;L[i]=-Math.log(p);
+ tot0+=L[i];tot1+=L[i]*W[i];if(gap[i]){gap0+=L[i];gap1+=L[i]*W[i];}}
+D={truth,d1,d2,W,gap,L,s0:gap0/tot0,s1:gap1/tot1,gapN,mid:1+w0*Math.exp(-g*g/(2*sg*sg))};}
+function put(id,f){const c=document.getElementById(id),x=c.getContext('2d'),im=x.createImageData(N,N);for(let i=0;i<N*N;i++){const [r,g_,b]=f(i);im.data[i*4]=r;im.data[i*4+1]=g_;im.data[i*4+2]=b;im.data[i*4+3]=255;}x.putImageData(im,0,0);}
+function paint(){
+document.getElementById('gv').textContent=g;document.getElementById('w0v').textContent=w0;document.getElementById('sgv').textContent=sg;
+put('c1',i=>D.truth[i]?[240,240,240]:[15,15,15]);
+put('c2',i=>w0>0?ramp((D.W[i]-1)/w0):[20,24,40]);
+let mx=0;const A=new Float32Array(N*N);for(let i=0;i<N*N;i++){A[i]=mode?D.L[i]*D.W[i]:D.L[i];if(A[i]>mx)mx=A[i];}
+put('c3',i=>ramp(A[i]/mx));
+document.getElementById('s2').textContent='от 1 (тёмное) до '+(1+w0)+' (светлое). Вес растёт только там, где пиксель близко к двум клеткам сразу';
+document.getElementById('p0').textContent=Math.round(D.s0*100)+'%';document.getElementById('p1').textContent=Math.round(D.s1*100)+'%';
+document.getElementById('b0').style.width=(D.s0*100)+'%';document.getElementById('b1').style.width=(D.s1*100)+'%';
+document.getElementById('info').innerHTML='Пикселей в щели: '+D.gapN+' из '+(N*N)+'. Пиксель в середине щели весит <b style="font-weight:500">'+(Math.round(D.mid*10)/10)+'</b> вместо 1.';
+document.getElementById('m0').style.background=mode?'transparent':'var(--surface-1)';document.getElementById('m1').style.background=mode?'var(--surface-1)':'transparent';
+}
+['g','w0','sg'].forEach(id=>document.getElementById(id).oninput=e=>{const v=+e.target.value;if(id==='g')g=v;else if(id==='w0')w0=v;else sg=v;compute();paint();});
+document.getElementById('m0').onclick=()=>{mode=0;paint();};document.getElementById('m1').onclick=()=>{mode=1;paint();};
+['c1','c2','c3'].forEach(id=>document.getElementById(id).onmousemove=e=>{const c=e.target,r=c.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/r.width*N),y=Math.floor((e.clientY-r.top)/r.height*N);if(x<0||y<0||x>=N||y>=N)return;const i=y*N+x;const t=D.truth[i]?'клетка':'фон';document.getElementById('hv').textContent='x='+x+' y='+y+' '+t+(D.truth[i]?'':'; d1='+Math.round(D.d1[i]*10)/10+' d2='+Math.round(D.d2[i]*10)/10)+'; вес w='+Math.round(D.W[i]*100)/100+'; штраф без веса '+Math.round(D.L[i]*100)/100+', с весом '+Math.round(D.L[i]*D.W[i]*100)/100;});
+compute();paint();
+</script>
+</body>
+</html>

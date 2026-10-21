@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>5. Обучение: цикл SGD</title>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<a class="back" href="index.html">← к списку</a>
+<h1>5. Обучение: как числа в фильтре подбираются сами</h1>
+<p class="lead">Мини-сеть с одним фильтром 3×3 учится отличать светлые «клетки» от шумного фона. На каждом шаге: плитка, прямой проход, ошибка, градиент, обновление чисел фильтра. Жми «Следующая фаза» или «100 шагов» и смотри, как меняется фильтр и график ошибки.</p>
+
+<style>
+.cv{width:128px;height:128px;image-rendering:pixelated;display:block;border-radius:4px;background:#111}
+.ph{width:128px;height:128px;border:1px dashed var(--border-strong);border-radius:4px;box-sizing:border-box}
+.cp{font-size:12px;color:var(--text-secondary);margin-top:3px;text-align:center;line-height:1.3}
+.chip{font-size:12px;padding:3px 9px;border-radius:12px;border:0.5px solid var(--border);color:var(--text-secondary)}
+.chip.on{background:var(--bg-accent);color:var(--text-accent);border-color:var(--border-accent)}
+.gr{display:grid;grid-template-columns:repeat(3,48px);gap:2px}
+.gc{height:48px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;line-height:1.25}
+.sl{display:flex;align-items:center;gap:8px;font-size:13px;flex:1;min-width:210px}
+.sl .v{min-width:34px;font-weight:500;text-align:right}
+</style>
+<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px">
+<label class="sl">скорость обучения η<input type="range" id="lr" min="0.05" max="5" step="0.05" value="1" style="flex:1"><span class="v" id="lrv">1</span></label>
+<label class="sl">momentum<input type="range" id="mu" min="0" max="0.99" step="0.01" value="0" style="flex:1"><span class="v" id="muv">0</span></label>
+</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="chips"></div>
+<div id="tx" style="font-size:14px;line-height:1.6;background:var(--bg-accent);color:var(--text-accent);border-radius:var(--radius);padding:8px 12px;margin-bottom:12px;min-height:66px"></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap" id="row1"></div>
+<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;align-items:flex-start">
+<div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Фильтр 3×3 (9 чисел)</div><div class="gr" id="wg"></div><div id="bb" style="font-size:12px;color:var(--text-secondary);margin-top:4px"></div></div>
+<div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Градиент по каждому числу</div><div class="gr" id="gg"></div><div style="font-size:11px;color:var(--text-secondary);margin-top:4px;max-width:150px;line-height:1.3">красное: вес надо уменьшить, синее: увеличить</div></div>
+<div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Ошибка по шагам</div><canvas id="ch" width="300" height="140" style="width:300px;height:140px;border-radius:4px"></canvas><div id="cst" style="font-size:12px;color:var(--text-secondary);margin-top:3px"></div></div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+<button id="bn">Следующая фаза →</button>
+<button id="b1">Полный шаг</button><button id="b10">10 шагов</button><button id="b100">100 шагов</button><button id="br">Сброс</button>
+</div>
+<div style="margin-top:14px"><div style="font-size:13px;font-weight:500;margin-bottom:4px">Проверка на новой плитке (сеть её ни разу не видела)</div><div style="display:flex;gap:10px" id="row3"></div></div>
+<script>
+const RNG=s=>()=>{s=(s*16807)%2147483647;return s/2147483647};
+function mk(rnd){const gauss=()=>{let u=rnd()||1e-9,v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};const n=16,m=new Float32Array(n*n),x=new Float32Array(n*n),k=2+Math.floor(rnd()*2);
+for(let c=0;c<k;c++){const cx=2+rnd()*12,cy=2+rnd()*12,r=2.5+rnd()*2.5;for(let y=0;y<n;y++)for(let i=0;i<n;i++)if(Math.hypot(i+.5-cx,y+.5-cy)<r)m[y*n+i]=1;}
+for(let i=0;i<n*n;i++)x[i]=0.25+0.5*m[i]+0.3*gauss();
+const y=new Float32Array(196);for(let a=0;a<14;a++)for(let b=0;b<14;b++)y[a*14+b]=m[(a+1)*16+b+1];return{x,y};}
+const sig=z=>1/(1+Math.exp(-z));
+function fwd(x,w,b){const p=new Float32Array(196);for(let a=0;a<14;a++)for(let c=0;c<14;c++){let z=b;for(let i=0;i<3;i++)for(let j=0;j<3;j++)z+=w[i*3+j]*x[(a+i)*16+c+j];p[a*14+c]=sig(z);}return p;}
+function loss(p,y){let l=0;for(let i=0;i<196;i++)l-=y[i]*Math.log(p[i]+1e-9)+(1-y[i])*Math.log(1-p[i]+1e-9);return l/196;}
+function grad(x,p,y){const g=new Float32Array(9);let gb=0;for(let a=0;a<14;a++)for(let c=0;c<14;c++){const d=(p[a*14+c]-y[a*14+c])/196;gb+=d;for(let i=0;i<3;i++)for(let j=0;j<3;j++)g[i*3+j]+=d*x[(a+i)*16+c+j];}return{g,gb};}
+const W0=[0.3,-0.4,0.2,-0.5,0.1,0.4,-0.2,0.5,-0.1];
+let rnd,w,b,v,vb,losses,T,P,L,G,stage,dW,dB,TT=mk(RNG(999));
+let lr=1,mu=0;
+function reset(){rnd=RNG(11);w=W0.slice();b=0;v=new Array(9).fill(0);vb=0;losses=[];dW=new Array(9).fill(0);dB=0;T=mk(rnd);P=null;L=null;G=null;stage=0;}
+function doForward(){P=fwd(T.x,w,b);}
+function doLoss(){L=loss(P,T.y);}
+function doGrad(){G=grad(T.x,P,T.y);}
+function doUpdate(){for(let i=0;i<9;i++){v[i]=mu*v[i]-lr*G.g[i];dW[i]=v[i];w[i]+=v[i];}vb=mu*vb-lr*G.gb;dB=vb;b+=vb;losses.push(L);}
+function fullStep(){T=mk(rnd);doForward();doLoss();doGrad();doUpdate();stage=4;}
+const TXT=[
+'Фаза 1 из 5. Берём случайную плитку 16×16 из обучающих данных и настоящую маску для её центра 14×14 (свёртка без padding съела рамку по 1 пикселю). Новая плитка каждый раз: это и есть «стохастический» в названии.',
+'Фаза 2 из 5. Прямой проход: фильтр 3×3 с ТЕКУЩИМИ числами скользит по плитке, потом сигмоида превращает результат в вероятность «клетка» для каждого пикселя. Пока числа случайные, предсказание плохое.',
+'Фаза 3 из 5. Ошибка: сравниваем предсказание с настоящей маской. Яркие пиксели на третьей картинке: сеть там сильно ошибается. Число loss это средний штраф (cross-entropy) по всем пикселям.',
+'Фаза 4 из 5. Градиент: для каждого из 9 чисел фильтра и сдвига b считаем, как изменится ошибка, если его увеличить. Красное: ошибка растёт, значит число надо уменьшить. Синее: надо увеличить.',
+'Фаза 5 из 5. Обновление: каждое число меняется на минус η умноженное на градиент (плюс инерция, если включён momentum). Фильтр стал чуть лучше. Дальше новая плитка и всё повторяется.'];
+const chips=document.getElementById('chips');['1 плитка','2 прямой проход','3 ошибка','4 градиент','5 обновление'].forEach(t=>{const c=document.createElement('span');c.className='chip';c.textContent=t;chips.appendChild(c);});
+function cvCard(parent,id,cap,size){const d=document.createElement('div');d.innerHTML='<div class="ph" id="p-'+id+'"></div><div class="cp">'+cap+'</div>';if(size){d.firstChild.style.width=d.firstChild.style.height=size+'px';}parent.appendChild(d);return d;}
+const r1=document.getElementById('row1'),r3=document.getElementById('row3');
+const cards={};[['tile','вход: плитка 16×16'],['truth','настоящая маска 14×14'],['pred','предсказание'],['err','ошибка по пикселям']].forEach(a=>cards[a[0]]=cvCard(r1,a[0],a[1]));
+[['t_in','плитка'],['t_tr','маска'],['t_pr','предсказание']].forEach(a=>cards[a[0]]=cvCard(r3,a[0],a[1],90));
+const RAMP=[[20,24,40],[48,60,140],[190,70,110],[250,200,60]];
+function ramp(t){t=Math.min(1,Math.max(0,t))*3;const i=Math.min(2,Math.floor(t)),f=t-i,a=RAMP[i],c=RAMP[i+1];return[a[0]+(c[0]-a[0])*f,a[1]+(c[1]-a[1])*f,a[2]+(c[2]-a[2])*f];}
+function show(id,arr,n,fn,size){const d=cards[id],old=d.firstChild;if(!arr){if(old.tagName==='CANVAS'){const p=document.createElement('div');p.className='ph';if(size)p.style.width=p.style.height=size+'px';d.replaceChild(p,old);}return;}let c=old;if(old.tagName!=='CANVAS'){c=document.createElement('canvas');c.className='cv';if(size)c.style.width=c.style.height=size+'px';d.replaceChild(c,old);}
+c.width=n;c.height=n;const g=c.getContext('2d'),im=g.createImageData(n,n);for(let i=0;i<n*n;i++){const [r,gg,bl]=fn(arr[i]);im.data[i*4]=r;im.data[i*4+1]=gg;im.data[i*4+2]=bl;im.data[i*4+3]=255;}g.putImageData(im,0,0);}
+const gray=v=>{const q=Math.round(Math.min(1,Math.max(0,v))*255);return[q,q,q];};
+function col(v,m,inv){const t=Math.min(1,Math.abs(v)/(m||1));const pos=inv?v<0:v>0;return pos?'rgba(55,138,221,'+(0.15+0.7*t)+')':'rgba(226,75,74,'+(0.15+0.7*t)+')';}
+function grid(id,vals,fmt,m,inv,sub){const g=document.getElementById(id);g.innerHTML='';vals.forEach((v,i)=>{const c=document.createElement('div');c.className='gc';c.style.background=v==null?'transparent':col(v,m,inv);c.style.border=v==null?'1px dashed var(--border-strong)':'none';c.innerHTML=v==null?'':'<span style="font-weight:500">'+fmt(v)+'</span>'+(sub&&sub[i]!=null?'<span style="font-size:10px;color:var(--text-secondary)">'+sub[i]+'</span>':'');g.appendChild(c);});}
+function cs(n){const s=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return s||'#888';}
+function chart(){const c=document.getElementById('ch'),g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);const tc=cs('--text-secondary'),bc=cs('--border-strong');g.strokeStyle=bc;g.lineWidth=1;g.strokeRect(30.5,6.5,W-38,H-26);g.fillStyle=tc;g.font='10px sans-serif';
+const N=losses.length;if(!N){g.fillText('нет данных: сделай шаг',60,H/2);return;}
+const vis=losses.slice(-300),off=N-vis.length;let mx=0.8;vis.forEach(v=>{if(v>mx)mx=v;});
+const X=i=>30+(i/Math.max(vis.length-1,1))*(W-40),Y=v=>6+(1-v/mx)*(H-26);
+g.fillText('0',20,H-16);g.fillText(mx.toFixed(1),8,14);g.fillText('шаг '+(off+1)+' … '+N,W/2-30,H-4);
+g.fillStyle='rgba(136,135,128,0.55)';vis.forEach((v,i)=>{g.fillRect(X(i)-1,Y(v)-1,2.5,2.5);});
+g.strokeStyle='#378ADD';g.lineWidth=2;g.beginPath();vis.forEach((v,i)=>{const a=vis.slice(Math.max(0,i-19),i+1),m=a.reduce((s,x)=>s+x,0)/a.length;if(i)g.lineTo(X(i),Y(m));else g.moveTo(X(i),Y(m));});g.stroke();}
+function render(){
+document.getElementById('lrv').textContent=lr;document.getElementById('muv').textContent=mu;
+[...chips.children].forEach((c,i)=>c.classList.toggle('on',i===stage));
+document.getElementById('tx').textContent=TXT[stage];
+show('tile',T.x,16,gray);show('truth',T.y,14,v=>gray(v));
+show('pred',stage>=1&&P?P:null,14,gray);
+show('err',stage>=2&&P?Array.from(P,(p,i)=>Math.abs(p-T.y[i])):null,14,v=>ramp(v));
+const mw=Math.max(0.5,...w.map(Math.abs));
+grid('wg',w,x=>(Math.round(x*100)/100).toFixed(2),mw,false,dW.map((d,i)=>stage>=4||losses.length?(d>=0?'+':'')+(Math.round(d*100)/100).toFixed(2):null));
+document.getElementById('bb').textContent='сдвиг b = '+(Math.round(b*100)/100).toFixed(2)+(stage>=4||losses.length?'   (последнее изменение внизу ячеек)':'');
+if(stage>=3&&G){const mg=Math.max(1e-6,...Array.from(G.g,Math.abs));grid('gg',Array.from(G.g),x=>(Math.round(x*1000)/1000).toFixed(3),mg,true,null);}else grid('gg',new Array(9).fill(null),x=>'',1,false,null);
+chart();
+const rec=losses.slice(-20);document.getElementById('cst').textContent='шагов обучения: '+losses.length+(rec.length?'. Средняя ошибка за последние '+rec.length+': '+(rec.reduce((s,x)=>s+x,0)/rec.length).toFixed(3):'')+(stage>=2&&L!=null?'. Ошибка на этой плитке: '+L.toFixed(3):'');
+const tp=fwd(TT.x,w,b);show('t_in',TT.x,16,gray,90);show('t_tr',TT.y,14,gray,90);show('t_pr',tp,14,gray,90);
+}
+function next(){if(stage===4){T=mk(rnd);P=null;L=null;G=null;stage=0;}else{stage++;if(stage===1)doForward();else if(stage===2)doLoss();else if(stage===3)doGrad();else if(stage===4)doUpdate();}render();}
+document.getElementById('bn').onclick=next;
+document.getElementById('b1').onclick=()=>{fullStep();render();};
+document.getElementById('b10').onclick=()=>{for(let i=0;i<10;i++)fullStep();render();};
+document.getElementById('b100').onclick=()=>{for(let i=0;i<100;i++)fullStep();render();};
+document.getElementById('br').onclick=()=>{reset();render();};
+document.getElementById('lr').oninput=e=>{lr=+e.target.value;render();};
+document.getElementById('mu').oninput=e=>{mu=+e.target.value;render();};
+reset();render();
+</script>
+</body>
+</html>

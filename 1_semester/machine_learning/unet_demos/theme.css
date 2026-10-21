@@ -1,0 +1,35 @@
+:root{
+  --surface-0:#ffffff;--surface-1:#f5f4ef;--surface-2:#ffffff;
+  --text-primary:#1f1e1d;--text-secondary:#5f5e5a;--text-muted:#888780;
+  --border:rgba(0,0,0,.12);--border-strong:rgba(0,0,0,.28);--border-stronger:rgba(0,0,0,.45);
+  --bg-accent:#E6F1FB;--text-accent:#0C447C;--border-accent:#85B7EB;
+  --bg-warning:#FAEEDA;--text-warning:#633806;
+  --bg-danger:#FCEBEB;--text-danger:#791F1F;
+  --radius:8px;
+  --font-sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --surface-0:#1f1e1d;--surface-1:#2b2a28;--surface-2:#262523;
+    --text-primary:#f1efe8;--text-secondary:#b4b2a9;--text-muted:#888780;
+    --border:rgba(255,255,255,.14);--border-strong:rgba(255,255,255,.3);--border-stronger:rgba(255,255,255,.5);
+    --bg-accent:#0C447C;--text-accent:#B5D4F4;--border-accent:#378ADD;
+    --bg-warning:#633806;--text-warning:#FAC775;
+    --bg-danger:#791F1F;--text-danger:#F7C1C1;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0 auto;padding:16px;max-width:700px;background:var(--surface-0);color:var(--text-primary);font:16px/1.7 var(--font-sans)}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:18px;font-weight:500}
+p.lead{margin:0 0 16px;color:var(--text-secondary);font-size:15px}
+a{color:var(--text-accent)}
+.back{font-size:13px;display:inline-block;margin-bottom:10px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+button{font:inherit;font-size:14px;padding:6px 12px;border:0.5px solid var(--border-strong);border-radius:var(--radius);background:transparent;color:var(--text-primary);cursor:pointer}
+button:hover{background:var(--surface-1)}
+button:active{transform:scale(.98)}
+select{font:inherit;font-size:14px;height:34px;padding:0 8px;border:0.5px solid var(--border-strong);border-radius:var(--radius);background:var(--surface-2);color:var(--text-primary)}
+input[type=range]{accent-color:#378ADD}
+table{border-collapse:collapse}

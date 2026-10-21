@@ -1,0 +1,103 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[a4paper,top=0.8in,bottom=0.8in,left=0.75in,right=0.75in,columnsep=0.25in]{geometry}
+\usepackage{mathptmx}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage[small,compact]{titlesec}
+\usepackage[hidelinks]{hyperref}
+\usepackage[font=small,labelfont=bf,skip=3pt]{caption}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0pt}
+\title{\vspace{-1.2em}\textbf{Summary of ``U-Net: Convolutional Networks for\\Biomedical Image Segmentation''}\vspace{-0.4em}}
+\author{Ruslan Nechshadimov\\\small University of Tartu}
+\date{}
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+\begin{abstract}
+\noindent\small
+This text summarises the U-Net paper by Ronneberger et al.~\cite{unet}, which addresses segmentation of biomedical images, that is, assigning a class to every pixel, when only a few annotated images exist. The authors combine a symmetric encoder--decoder network with copied high-resolution features, heavy elastic-deformation augmentation, and a loss that gives extra weight to thin borders between touching cells. I describe the architecture, the training procedure and the reported results, and then discuss what the paper leaves open, in particular the absence of ablation studies.
+
+As a side note, I started reading this article before the deep learning lecture, and during the lecture, I got a candy for my answers. (:
+
+\end{abstract}
+
+\section{Introduction}
+Convolutional networks have long been used for image classification, where one label is predicted per image. Their success depended on large training sets and large models, for example the network of Krizhevsky et al.\ trained on a million images~\cite{alexnet}. Biomedical segmentation differs in two ways. The output must be a label for each pixel, and thousands of annotated images are rarely available because annotation requires experts.
+
+Ciresan et al.~\cite{ciresan} handled this with a sliding window: for every pixel, a patch around it is classified by a network. This localises well and produces many training patches from few images, but the authors of U-Net point out two drawbacks. It is slow, because the network runs separately on heavily overlapping patches. It also trades context against localisation: large patches need more max-pooling, which blurs position, while small patches see little context.
+
+U-Net builds on the fully convolutional network of Long et al.~\cite{fcn}, which replaces fully connected layers with convolutions and adds upsampling to return to the input resolution. The authors extend it so that it works with few images and gives precise borders.
+
+\section{Method}
+\paragraph{Architecture.} The network has a contracting path and a symmetric expanding path, which gives the U shape (Fig.~1 of the original paper). Each step of the contracting path applies two $3\times3$ convolutions without padding, each followed by a ReLU, and then $2\times2$ max-pooling with stride 2. The number of channels doubles at each pooling (64 to 1024). Each step of the expanding path upsamples the feature map, applies a $2\times2$ convolution that halves the channels, concatenates the cropped feature map from the same level of the contracting path, and applies two $3\times3$ convolutions with ReLU. A final $1\times1$ convolution maps the 64-channel features to the class scores. In total there are 23 convolutional layers and no fully connected layers.
+
+The copied feature maps are the key design element. Deep layers know \emph{what} is present but have lost exact positions through pooling, while early layers keep precise positions. Concatenation lets the later convolutions combine both. Because convolutions are unpadded, the output ($388\times388$) is smaller than the input tile ($572\times572$), and every output pixel is computed only from real image data. Large images are therefore processed with an overlap-tile strategy, and missing context at the image border is filled by mirroring. The tile size must make every pooling act on a map of even size.
+
+\paragraph{Training.} The network is trained with stochastic gradient descent in Caffe. To use GPU memory efficiently, the authors prefer large tiles over large batches and use a batch of one image with a high momentum of 0.99. The loss is a pixel-wise softmax over the output channels,
+\begin{equation}
+p_k(\mathbf{x}) = \frac{\exp(a_k(\mathbf{x}))}{\sum_{k'=1}^{K}\exp(a_{k'}(\mathbf{x}))},
+\end{equation}
+combined with a weighted cross-entropy,
+\begin{equation}
+E = -\sum_{\mathbf{x}} w(\mathbf{x})\,\log p_{\ell(\mathbf{x})}(\mathbf{x}),
+\end{equation}
+where $a_k$ is the activation of channel $k$, $\ell(\mathbf{x})$ the true label and $w$ a precomputed weight map. The weight map is
+\begin{equation}
+w(\mathbf{x}) = w_c(\mathbf{x}) + w_0\exp\!\Big(-\frac{(d_1(\mathbf{x})+d_2(\mathbf{x}))^2}{2\sigma^2}\Big),
+\end{equation}
+where $w_c$ balances class frequencies, $d_1$ and $d_2$ are distances to the borders of the nearest and second-nearest cell, $w_0=10$ and $\sigma\approx5$ pixels. A pixel in a narrow gap between two cells is close to both, so its weight is large, which forces the network to learn the separating borders. Initial weights are drawn from a Gaussian with standard deviation $\sqrt{2/N}$, with $N$ the number of inputs of a neuron~\cite{he}.
+
+\paragraph{Augmentation.} Besides shifts, rotations and grey-value changes, the authors consider random elastic deformations the key ingredient for training on few images. Displacement vectors are sampled on a coarse $3\times3$ grid from a Gaussian with $10$ pixel standard deviation and interpolated bicubically. Dropout at the end of the contracting path acts as further implicit augmentation.
+
+\section{Results}
+Three tasks are reported. On the ISBI 2012 electron-microscopy challenge (30 training images of $512\times512$) the test labels are hidden and predictions are evaluated by the organisers. Averaged over 7 rotated versions of the input and without post-processing, U-Net reached a warping error of 0.0003529 and a Rand error of 0.0382, better than the sliding-window network of Ciresan et al.\ (0.000420 and 0.0504). Table~\ref{tab:em} shows that the ranking is not uniform across metrics. On two light-microscopy datasets of the ISBI cell tracking challenge, U-Net reached an average intersection over union (IOU) of 0.9203 on PhC-U373 (35 training images) and 0.7756 on DIC-HeLa (20 images), compared with 0.83 and 0.46 for the second-best methods (Table~\ref{tab:iou}). Training takes about 10 hours on one NVidia Titan GPU, and segmenting a $512\times512$ image takes under a second.
+
+\begin{table}[t]
+\centering\small
+\caption{EM segmentation challenge (values from the original paper, lower is better). Only warping error ranks U-Net first.}
+\label{tab:em}
+\begin{tabular}{lccc}
+\toprule
+Method & Warping & Rand & Pixel\\
+\midrule
+U-Net & 0.000353 & 0.0382 & 0.0611\\
+DIVE-SCI & 0.000353 & 0.0305 & 0.0584\\
+IDSIA~\cite{ciresan} & 0.000355 & 0.0504 & 0.0613\\
+Human & 0.000005 & 0.0021 & 0.0010\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\caption{Cell tracking challenge 2015, mean IOU (higher is better).}
+\label{tab:iou}
+\begin{tabular}{lcc}
+\toprule
+Method & PhC-U373 & DIC-HeLa\\
+\midrule
+Second best 2015 & 0.83 & 0.46\\
+U-Net & 0.9203 & 0.7756\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion: importance and limitations}
+\textbf{Why it matters.} The paper shows that a relatively small, fast network can reach state-of-the-art segmentation from tens of annotated images, which matches the realities of biomedical work. The encoder--decoder structure with skip connections has since become a standard pattern for dense prediction. This part is my assessment rather than a claim of the authors.
+
+\textbf{Limitations.} First, the paper contains no ablation study, so the contribution of skip connections, elastic deformation and the weight map is argued from the overall results but never measured separately. Second, U-Net is not best on every metric: Rand and pixel error in Table~\ref{tab:em} are better for other entries, and the gap to human performance remains large. Third, the best EM result averages 7 rotated inputs, so the stated speed of under one second does not directly apply to it. Fourth, unpadded convolutions require overlapping tiles, which repeats computation near tile borders. Fifth, the weight map needs instance-level annotations to find cell borders, and $w_0$ and $\sigma$ are set by hand. Finally, evaluation covers three 2D datasets, so generality to other modalities is only suggested.
+
+\section{Conclusion}
+U-Net combines a contracting path for context, an expanding path with copied features for localisation, unpadded convolutions with overlap-tile inference, a border-weighted loss and elastic-deformation augmentation. Together they allow accurate segmentation from very few images with short training time, which is the paper's central contribution.
+
+\begin{thebibliography}{9}\small
+\setlength{\itemsep}{0pt}
+\bibitem{unet} O.~Ronneberger, P.~Fischer, T.~Brox. U-Net: Convolutional networks for biomedical image segmentation. arXiv:1505.04597, 2015.
+\bibitem{ciresan} D.~C.~Ciresan, L.~M.~Gambardella, A.~Giusti, J.~Schmidhuber. Deep neural networks segment neuronal membranes in electron microscopy images. NIPS, 2012.
+\bibitem{fcn} J.~Long, E.~Shelhamer, T.~Darrell. Fully convolutional networks for semantic segmentation. arXiv:1411.4038, 2014.
+\bibitem{alexnet} A.~Krizhevsky, I.~Sutskever, G.~E.~Hinton. ImageNet classification with deep convolutional neural networks. NIPS, 2012.
+\bibitem{he} K.~He, X.~Zhang, S.~Ren, J.~Sun. Delving deep into rectifiers: Surpassing human-level performance on ImageNet classification. arXiv:1502.01852, 2015.
+\end{thebibliography}
+\end{document}

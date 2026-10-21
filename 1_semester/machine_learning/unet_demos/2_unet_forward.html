@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2. Мини-U-Net по шагам</title>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<a class="back" href="index.html">← к списку</a>
+<h1>2. Мини-U-Net: прогон картинки по уровням</h1>
+<p class="lead">Сеть реально считает карты для картинки с двумя касающимися клетками. Жми «Шаг вперёд», кликай по картам, а потом сними галочку «серые стрелки» и сравни результат. Фильтры заданы вручную, а не обучены.</p>
+
+<style>
+.cd{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.cv{width:56px;height:56px;image-rendering:pixelated;border-radius:3px;display:block;background:var(--surface-1)}
+.ph{width:56px;height:56px;border:1px dashed var(--border-strong);border-radius:3px;box-sizing:border-box}
+.lb{font-size:11px;color:var(--text-secondary)}
+.rw{display:flex;justify-content:space-between;align-items:flex-start}
+.gp{display:flex;gap:6px}
+.md{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;align-self:stretch;padding:0 8px;font-size:11px;color:var(--text-secondary);text-align:center;gap:4px}
+.ln{width:100%;border-top:2px dashed #888780}
+.ar{display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);padding:3px 4px}
+</style>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+<button id="b-prev">← Шаг назад</button>
+<button id="b-next">Шаг вперёд →</button>
+<button id="b-all">Показать всё</button>
+<select id="s-img"><option value="two">Две клетки касаются</option><option value="one">Одна клетка</option></select>
+<label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="c-skip" checked> серые стрелки (skip)</label>
+</div>
+<div id="stp" style="font-size:14px;line-height:1.6;background:var(--bg-accent);color:var(--text-accent);border-radius:var(--radius);padding:8px 12px;margin-bottom:10px"></div>
+<div id="u"></div>
+<div id="insp" style="display:flex;gap:16px;margin-top:12px;background:var(--surface-1);border-radius:12px;padding:12px 16px;flex-wrap:wrap">
+<div><canvas id="big" width="32" height="32" style="width:192px;height:192px;image-rendering:pixelated;border-radius:4px;display:block"></canvas><div id="pv" style="font-size:12px;color:var(--text-secondary);margin-top:4px;min-height:18px;font-family:var(--font-mono)">наведи на картинку</div></div>
+<div id="itx" style="flex:1;min-width:240px;font-size:14px;line-height:1.6"></div>
+</div>
+<script>
+function mkimg(kind){const n=32,x=new Float32Array(n*n);let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+const cells=kind==='two'?[[9,15,7],[23,16,7]]:[[16,16,9]];
+for(let y=0;y<n;y++)for(let i=0;i<n;i++){let v=0.1;for(const[c0,c1,r]of cells){const d=Math.hypot(i-c0,y-c1);if(d<r-1.5)v=Math.max(v,0.9);else if(d<r)v=Math.max(v,0.45);}x[y*n+i]=Math.min(1,Math.max(0,v+(rnd()-0.5)*0.12));}return x;}
+const cl=(a,n,x,y)=>a[Math.min(n-1,Math.max(0,y))*n+Math.min(n-1,Math.max(0,x))];
+function conv(a,n,k){const o=new Float32Array(n*n);for(let y=0;y<n;y++)for(let x=0;x<n;x++){let s=0;for(let i=0;i<3;i++)for(let j=0;j<3;j++)s+=cl(a,n,x+j-1,y+i-1)*k[i*3+j];o[y*n+x]=s;}return o;}
+const BL=Array(9).fill(1/9),SX=[-1,0,1,-2,0,2,-1,0,1].map(v=>v/4),SY=[-1,-2,-1,0,0,0,1,2,1].map(v=>v/4),DK=[1,1,1,1,-8,1,1,1,1].map(v=>v/8);
+const relu=a=>a.map(v=>Math.max(0,v));
+function pool(a,n){const m=n/2,o=new Float32Array(m*m);for(let y=0;y<m;y++)for(let x=0;x<m;x++)o[y*m+x]=Math.max(a[2*y*n+2*x],a[2*y*n+2*x+1],a[(2*y+1)*n+2*x],a[(2*y+1)*n+2*x+1]);return o;}
+function up(a,n){const m=n*2,o=new Float32Array(m*m);for(let y=0;y<m;y++)for(let x=0;x<m;x++)o[y*m+x]=a[(y>>1)*n+(x>>1)];return o;}
+const lin=(...t)=>{const n=t[0][1].length,o=new Float32Array(n);for(const[w,a]of t)for(let i=0;i<n;i++)o[i]+=w*a[i];return o;};
+const add=(a,c)=>a.map(v=>v+c);
+function run(x,s){
+const A1=relu(conv(x,32,SX)),A2=relu(conv(x,32,SY)),A3=conv(x,32,BL),A4=relu(conv(x,32,DK));
+const P=[A1,A2,A3,A4].map(a=>pool(a,32));
+const B1=relu(conv(P[2],16,BL)),B2=relu(conv(lin([1,P[0]],[1,P[1]]),16,BL)),B3=relu(conv(P[3],16,BL));
+const Q=[B1,B2,B3].map(a=>pool(a,16));
+const C1=relu(add(lin([2.5,conv(Q[0],8,BL)]),-0.75)),C2=relu(lin([1,conv(Q[1],8,BL)],[1,conv(Q[2],8,BL)]));
+const U=[up(C1,8),up(C2,8)];
+const D1=relu(add(lin([1,conv(U[0],16,BL)],[s*0.9,B1]),s*-0.6)),D2=relu(lin([0.7,U[1]],[s*0.8,B2],[s*0.8,B3]));
+const V=[D1,D2].map(a=>up(a,16));
+const E1=relu(add(lin([1,V[0]],[s*1.5,A3]),s*-1.0)),E2=relu(lin([0.5,V[1]],[s*2,A4]));
+const out=lin([8,E1],[-6,E2]).map(v=>1/(1+Math.exp(-(v-5))));
+return{IN:x,A1,A2,A3,A4,B1,B2,B3,C1,C2,D1,D2,E1,E2,OUT:out};}
+const M={
+IN:{n:32,st:0,t:'Вход',src:[],d:'Картинка 32×32: светлые клетки на тёмном фоне, чуть шума. Между касающимися клетками тонкая серая полоска (мембрана). Задача сети: отметить каждый пиксель как «клетка» или «фон» и не слить две клетки в одну.',f:'исходные пиксели',fixed:1},
+A1:{n:32,st:1,t:'Края: светлее справа',src:['IN'],d:'Фильтр 3×3 как в демо с краями. Горит там, где слева темнее, а справа светлее. Видны только левые границы клеток: фильтр смотрит в одном направлении, и ReLU обрезал обратный знак.',f:'ReLU( Собель-x ∗ вход )'},
+A2:{n:32,st:1,t:'Края: светлее снизу',src:['IN'],d:'Тот же приём, но фильтр повёрнут: горит там, где сверху темнее, а снизу светлее. Видны верхние границы.',f:'ReLU( Собель-y ∗ вход )'},
+A3:{n:32,st:1,t:'Яркость (сглаженная)',src:['IN'],d:'Фильтр из девяти одинаковых весов просто усредняет окно. Шум сгладился, клетки остались светлыми. Это самая «точная по положению» карта: понадобится дальше через серую стрелку.',f:'среднее по окну 3×3'},
+A4:{n:32,st:1,t:'Тёмные тонкие линии',src:['IN'],d:'Горит там, где пиксель темнее соседей. Подсвечивает мембраны клеток и особенно полоску между касающимися клетками.',f:'ReLU( среднее соседей − центр )'},
+B1:{n:16,st:2,t:'Яркость, крупнее',src:['A3'],d:'Сначала max pool 2×2 (32→16: из каждого квадрата 2×2 остаётся максимум), потом свёртка. Карта вдвое меньше, каждая точка охватывает вдвое больший участок исходной картинки.',f:'ReLU( сглаживание( pool(A3) ) )'},
+B2:{n:16,st:2,t:'Где много краёв',src:['A1','A2'],d:'Pool от A1 и A2, сложение, свёртка. Горит там, где поблизости есть границы любого направления: получается грубый контур клеток.',f:'ReLU( сглаж( pool(A1) + pool(A2) ) )'},
+B3:{n:16,st:2,t:'Тёмные линии, крупнее',src:['A4'],d:'Pool от A4 и свёртка. Мембраны остаются заметными, но потеряли точное положение.',f:'ReLU( сглаж( pool(A4) ) )'},
+C1:{n:8,st:3,t:'Здесь большое светлое пятно',src:['B1'],d:'Дно U: 8×8, блоки по 4×4 исходных пикселя. Pool оставляет «светло где-то в этом квадрате», поэтому пятно раздулось, а щель между клетками закрылась. Сеть тут видит контекст («клетки где-то здесь»), но не границы. Типичный минус глубины.',f:'ReLU( 2.5 · сглаж( pool(B1) ) − 0.75 )'},
+C2:{n:8,st:3,t:'Здесь есть границы',src:['B2','B3'],d:'Грубая карта «в этом районе какие-то контуры и мембраны». Что именно и где, уже непонятно.',f:'ReLU( сглаж( pool(B2) ) + сглаж( pool(B3) ) )'},
+D1:{n:16,st:4,t:'Пятно, уточнённое',src:['C1','B1'],d:'Up-conv растягивает C1 в 16×16 (блоки 2×2), а серая стрелка приносит копию B1 с левой стороны. Копия знает положение точнее, и пятно лучше повторяет форму клеток. Попробуй выключить серые стрелки.',f:'ReLU( сглаж(↑C1) + s·(0.9·B1 − 0.6) )'},
+D2:{n:16,st:4,t:'Границы, уточнённые',src:['C2','B2','B3'],d:'Смесь растянутого контекста и копий B2, B3 с левой стороны. Контуры и мембраны стали заметно чётче, чем на дне.',f:'ReLU( 0.7·↑C2 + s·(0.8·B2 + 0.8·B3) )'},
+E1:{n:32,st:5,t:'Пятно, чёткое',src:['D1','A3'],d:'Последний уровень: растягиваем D1 до 32×32 и приклеиваем A3 (самая точная яркость). Теперь форма клетки повторяет оригинал, а между клетками зазор: грубое «пятно» умножилось на точную «яркость».',f:'ReLU( ↑D1 + s·(1.5·A3 − 1.0) )'},
+E2:{n:32,st:5,t:'Мембраны, чёткие',src:['D2','A4'],d:'Растянутые границы плюс точные тёмные линии из A4. Здесь ясно видна линия между двумя клетками.',f:'ReLU( 0.5·↑D2 + s·2·A4 )'},
+OUT:{n:32,st:6,t:'Выход: вероятность «клетка»',src:['E1','E2'],d:'Свёртка 1×1: в каждом пикселе берём числа E1 и E2, умножаем на веса и складываем: чем больше пятна и меньше мембраны, тем ближе к 1. Затем сигмоида приводит значение в диапазон 0…1. Это и есть карта сегментации.',f:'сигмоида( 8·E1 − 6·E2 − 5 )',fixed:1}};
+const STEPS=[
+'Шаг 0 из 6. Вход: 32×32 пикселя, две касающиеся клетки. Нужно для каждого пикселя сказать «клетка» или «фон», да ещё и не слить клетки.',
+'Шаг 1 из 6. Спуск, уровень 1. Четыре разных фильтра 3×3 прошли по картинке. Один ловит левые границы, другой верхние, третий усредняет, четвёртый ищет тёмные линии. Каждая карта показывает свою сторону одной картинки.',
+'Шаг 2 из 6. Pool 2×2 и новые свёртки. Карты стали 16×16. Положение стало грубее, зато каждая точка видит больший участок.',
+'Шаг 3 из 6. Дно U: 8×8. Две клетки сливаются в одно пятно, щель между ними пропала. Сеть знает «что», но уже не знает «где именно».',
+'Шаг 4 из 6. Подъём. Карты растянуты до 16×16 и склеены с копией карт B (серая стрелка). Пятно стало точнее.',
+'Шаг 5 из 6. Ещё подъём до 32×32 и склейка с картами A. Теперь есть и смысл (клетки), и точное положение (чёткие границы).',
+'Шаг 6 из 6. Свёртка 1×1 смешивает E1 и E2 в одно число на пиксель. Клетки отделены друг от друга. Выключи серые стрелки и сравни.'];
+let R,step=0,sel='IN',kind='two',skip=1,cv={};
+const U=document.getElementById('u');
+function card(id){const d=document.createElement('div');d.className='cd';d.innerHTML='<div class="ph"></div><div class="lb">'+(id==='IN'?'вход':id==='OUT'?'выход':id)+'</div>';d.onclick=()=>{if(M[id].st<=step){sel=id;paint();}};cv[id]=d;return d;}
+function grp(ids){const g=document.createElement('div');g.className='gp';ids.forEach(i=>g.appendChild(card(i)));return g;}
+function mid(a,b){const m=document.createElement('div');m.className='md';m.innerHTML='<div>'+a+'</div>'+(b?'<div class="ln"></div><div class="sk">'+b+'</div>':'');return m;}
+function row(l,m,r,pad){const d=document.createElement('div');d.className='rw';d.style.padding='0 '+pad+'px';d.appendChild(l);d.appendChild(m);d.appendChild(r);return d;}
+function arrows(a,b,pad){const d=document.createElement('div');d.className='ar';d.style.padding='3px '+(pad+10)+'px';d.innerHTML='<span>'+a+'</span><span>'+b+'</span>';return d;}
+U.appendChild(row(grp(['IN','A1','A2','A3','A4']),mid('уровень 1, 32×32','копия A → E'),grp(['E1','E2','OUT']),0));
+U.appendChild(arrows('↓ max pool 2×2','↑ up-conv 2×2',0));
+U.appendChild(row(grp(['B1','B2','B3']),mid('уровень 2, 16×16','копия B → D'),grp(['D1','D2']),56));
+U.appendChild(arrows('↓ max pool 2×2','↑ up-conv 2×2',56));
+const bt=document.createElement('div');bt.style.cssText='display:flex;justify-content:center;gap:6px;align-items:center;flex-direction:column';bt.appendChild(grp(['C1','C2']));const cap=document.createElement('div');cap.className='lb';cap.textContent='дно U, 8×8';bt.appendChild(cap);U.appendChild(bt);
+const RAMP=[[20,24,40],[48,60,140],[190,70,110],[250,200,60]];
+function ramp(t){t=Math.min(1,Math.max(0,t))*3;const i=Math.min(2,Math.floor(t)),f=t-i,a=RAMP[i],b=RAMP[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f];}
+function mx(id){const a=R[id];let m=0;for(let i=0;i<a.length;i++)if(a[i]>m)m=a[i];return M[id].fixed?1:Math.max(m,0.05);}
+function draw(c,id){const n=M[id].n,a=R[id],m=mx(id);c.width=n;c.height=n;const g=c.getContext('2d'),im=g.createImageData(n,n);for(let i=0;i<n*n;i++){const v=a[i]/m;let r,gg,b;if(id==='IN'){const q=Math.round(Math.min(1,v)*255);r=gg=b=q;}else[r,gg,b]=ramp(v);im.data[i*4]=r;im.data[i*4+1]=gg;im.data[i*4+2]=b;im.data[i*4+3]=255;}g.putImageData(im,0,0);}
+function paint(){
+for(const id in M){const d=cv[id],on=M[id].st<=step;let c=d.firstChild;if(on){if(c.tagName!=='CANVAS'){const k=document.createElement('canvas');k.className='cv';d.replaceChild(k,c);c=k;}draw(c,id);}else if(c.tagName==='CANVAS'){const p=document.createElement('div');p.className='ph';d.replaceChild(p,c);c=p;}
+c.style.outline='';d.style.opacity=on?1:0.55;}
+const S=M[sel];S.src.forEach(s=>{if(M[s].st<=step)cv[s].firstChild.style.outline='3px solid #EF9F27';});cv[sel].firstChild.style.outline='3px solid #378ADD';
+document.getElementById('stp').textContent=STEPS[step];
+document.querySelectorAll('.sk').forEach(e=>{e.style.textDecoration=skip?'none':'line-through';e.style.opacity=skip?1:0.5;});
+document.querySelectorAll('.ln').forEach(e=>{e.style.borderTopStyle=skip?'dashed':'dotted';e.style.opacity=skip?1:0.4;});
+draw(document.getElementById('big'),sel);
+const mxv=Math.round(Math.max(...R[sel])*100)/100;
+document.getElementById('itx').innerHTML='<div style="font-size:16px;font-weight:500">'+sel+' · '+S.t+'</div><div style="font-size:12px;color:var(--text-secondary);margin:2px 0 8px">размер '+S.n+'×'+S.n+', максимум '+mxv+(S.fixed?'':', яркость нормирована по максимуму')+'</div><p style="margin:0 0 8px">'+S.d+'</p><div style="font-size:13px;color:var(--text-secondary)"><span style="font-weight:500">Считается так:</span> <span style="font-family:var(--font-mono)">'+S.f+'</span>'+(S.src.length?'<br><span style="font-weight:500">Берёт из:</span> '+S.src.join(', ')+' (жёлтая рамка)':'')+'</div><div style="font-size:12px;color:var(--text-secondary);margin-top:8px">Фильтры здесь заданы вручную, а не обучены: цель показать путь данных. В настоящей U-Net их числа подбираются обучением.</div>';
+document.getElementById('b-prev').style.opacity=step?1:0.5;document.getElementById('b-next').style.opacity=step<6?1:0.5;
+}
+function recompute(){R=run(mkimg(kind),skip);}
+const big=document.getElementById('big');
+big.onmousemove=e=>{const r=big.getBoundingClientRect(),n=M[sel].n,x=Math.floor((e.clientX-r.left)/r.width*n),y=Math.floor((e.clientY-r.top)/r.height*n);if(x>=0&&y>=0&&x<n&&y<n)document.getElementById('pv').textContent='x='+x+' y='+y+' значение '+(Math.round(R[sel][y*n+x]*100)/100);};
+const stepSel=()=>{const ids=Object.keys(M).filter(i=>M[i].st===step);sel=ids[0];};
+document.getElementById('b-next').onclick=()=>{if(step<6){step++;stepSel();paint();}};
+document.getElementById('b-prev').onclick=()=>{if(step>0){step--;stepSel();paint();}};
+document.getElementById('b-all').onclick=()=>{step=6;sel='OUT';paint();};
+document.getElementById('s-img').onchange=e=>{kind=e.target.value;recompute();paint();};
+document.getElementById('c-skip').onchange=e=>{skip=e.target.checked?1:0;recompute();paint();};
+recompute();paint();
+</script>
+</body>
+</html>
