@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homework 7 Report - Parallel Computing</title>
+        <style>
+            table.t { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: center; }
+            table.t th { background: #2d2d2d; color: #fff; padding: 8px; border: 1px solid #444; }
+            table.t td { padding: 6px; border: 1px solid #ddd; }
+            table.t tr:nth-child(even) td { background: #f9f9f9; }
+            pre.term { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0; max-height: 520px; overflow-y: auto; }
+        </style>
+    </head>
+    <body>
+    <details>
+        <summary>Test environment and benchmark configuration (two machines)</summary>
+        <div class="details-content">
+            <p>All experiments were run on two machines: my laptop and the university course server. The same code, inputs and settings were used on both.</p>
+            <table class="t">
+                <thead><tr><th></th><th>Laptop</th><th>University server (parcomp2026)</th></tr></thead>
+                <tbody>
+                    <tr><td>CPU</td><td>Intel Core Ultra 7 265U, hybrid: 2 performance + 8 efficient + 2 low-power efficient cores (14 threads), 15 W class laptop chip</td><td>AMD EPYC 7742, virtual machine with 64 identical vCPUs (<code>lscpu</code>: 64 sockets x 1 core x 1 thread, 1 NUMA node)</td></tr>
+                    <tr><td>Cores used</td><td>$P = 1, 2, 4$ (WSL shows 7 cores x 2 threads; $P = 8$ would need oversubscription)</td><td>$P = 1, 2, 4, 8, 16, 32, 64$</td></tr>
+                    <tr><td>Memory</td><td>31 GiB (27 GiB available), 8 GiB swap</td><td>62 GiB (58 GiB available), no swap</td></tr>
+                    <tr><td>OS</td><td>Ubuntu under WSL 2 on Windows 11</td><td>Linux VM, idle during the runs (load average 0.07)</td></tr>
+                    <tr><td>MPI</td><td>Open MPI v5.0.10 (Debian)</td><td>Open MPI v4.1.2 (Debian), started with <code>--bind-to core</code></td></tr>
+                    <tr><td>Python / BLAS</td><td>Python 3.14.4, NumPy with OpenBLAS 0.3.34 (scipy-openblas, AVX2)</td><td>Python 3.10.12, NumPy with ILP64 OpenBLAS (<code>openblas64_</code>)</td></tr>
+                    <tr><td>Sizes, repetitions</td><td>$N = 512, 1024, 2048$, 10 timed runs</td><td>$N = 512, 1024, 2048, 4096$ with 5 runs, $N = 8192$ ($P = 1, 4, 16, 64$, two methods) with 3 runs</td></tr>
+                </tbody>
+            </table>
+            <ul style="font-size: 14px;">
+                <li><strong>Thread settings (both):</strong> <code>OMP_NUM_THREADS=1</code>, <code>OPENBLAS_NUM_THREADS=1</code>, <code>MKL_NUM_THREADS=1</code>, so each MPI rank uses exactly one BLAS thread. All data is <code>np.float64</code>.</li>
+                <li><strong>What is timed:</strong> only the ring multiplication including the final <code>Gather</code> of $C$ on rank 0. The one-time distribution of $A$ (row blocks) and $B$ (column blocks, scattered as rows of $B^T$) is measured separately as <em>setup</em> and is <strong>not</strong> included in the times, speedups or GFLOP/s.</li>
+                <li><strong>Timing method:</strong> <code>comm.Barrier()</code> and <code>MPI.Wtime()</code> at the start, every rank measures its own elapsed time, and the maximum over all ranks is taken with <code>comm.reduce(..., op=MPI.MAX, root=0)</code>. For every method and $N$ the first call is a warm-up (also checked against <code>A @ B</code>) and is not recorded. Tables report the median and the min..max range.</li>
+                <li><strong>T(1):</strong> the same method run with $P = 1$ on the same machine. With one rank the ring has a single step, so this is one local <code>A @ B</code> through the same code path.</li>
+                <li><strong>GFLOP/s:</strong> $2N^3$ divided by the median time, for the whole job (all ranks together).</li>
+                <li><strong>Discarded laptop data:</strong> one laptop $P = 4$ series overlapped with another benchmark started by mistake in the same terminal (5 processes competing for the cores). Its rows were removed from <code>results.csv</code> and the series was repeated; only the repeated one is used.</li>
+            </ul>
+            <p><strong>Run commands:</strong></p>
+            <pre class="term"><code>export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+mpiexec -n &lt;P&gt; python3 a7_test.py
+
+# laptop
+mpiexec -n &lt;P&gt; python3 task7_3.py --N 512 1024 2048 --runs 10 --methods blocking,nonblocking,circulate_A
+python3 -c "import task7_3_plot; task7_3_plot.main()"
+
+# server
+for P in 1 2 4 8 16 32 64; do mpiexec --bind-to core -n $P python3 task7_3.py --N 512 1024 2048 4096 --runs 5 --methods blocking,nonblocking,circulate_A --csv results_server.csv; done
+for P in 1 4 16 64; do mpiexec --bind-to core -n $P python3 task7_3.py --N 8192 --runs 3 --methods blocking,nonblocking --csv results_server.csv; done
+python3 -c "import sys, task7_3_plot as t; sys.argv=['x','--csv','results_server.csv','--out','plots_server']; t.main()"
+
+# comparison of both machines
+python3 -c "import task7_3_plot as t; t.compare_machines()"</code></pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exercise 7.1: Parallel matrix multiplication using ring communication</summary>
+        <div class="details-content">
+            <h3>Algorithm (<code>task7_1.py</code>, <code>ring_matrix_multiplication</code>)</h3>
+            <ul style="font-size: 14px;">
+                <li>Rank $p$ owns $A_p$ = rows $p n \ldots (p+1) n - 1$ of $A$ (shape $n \times N$, stationary) and initially $B_p$ = the matching column block of $B$ (shape $N \times n$), with $n = N/P$. Both are converted to contiguous <code>float64</code> buffers.</li>
+                <li>It allocates <code>C_local</code> of shape $n \times N$: the complete row block $p$ of $C$.</li>
+                <li>At step $s = 0, \ldots, P-1$ the rank holds the original block $B_q$ with $q = (p - s) \bmod P$ and computes $C_{p,q} = A_p B_q$ ($n \times n$), written directly into columns $q n \ldots (q+1) n - 1$ of <code>C_local</code>.</li>
+                <li>After every step except the last, the current block is passed to rank $(p+1) \bmod P$ and the next one is received from rank $(p-1) \bmod P$ with one <code>comm.Sendrecv</code>. Two buffers are used and swapped, so the caller's <code>B_colbl</code> is never overwritten.</li>
+                <li>After $P$ steps every block of the row is filled, and <code>comm.Gather</code> stacks the $P$ row blocks into the $N \times N$ matrix $C$ on rank 0 (row blocks are contiguous, so no reordering is needed). Other ranks return <code>None</code>.</li>
+                <li>The course test calls the function <code>ring_matrix_multiplier</code>, so this name is provided as an alias.</li>
+            </ul>
+            <p>The trace for $P = 5$ from the assignment follows directly from $q = (p - s) \bmod P$: in step 0 every rank computes its diagonal block $C_{p,p}$, in step 1 rank 0 computes $C_{0,4}$, rank 1 $C_{1,0}$ and so on, and after 5 steps every rank has visited all 5 column blocks exactly once.</p>
+
+            <h3>Correctness tests (<code>a7_test.py</code>)</h3>
+            <p>All ranks generate the same full matrices from a fixed seed and take their own blocks. Rank 0 compares the result with <code>A @ B</code> using <code>np.testing.assert_allclose(rtol=1e-10, atol=1e-12)</code>. Cases: $N = P$ (one row per rank), identity times random, random times identity, zero times random, a matrix of known integers times its transpose, the random $n = 3$ case of the course test, a dense $64P \times 64P$ case and, for $P = 1$, a $2 \times 2$ example checked by hand. Every test also checks that the input block was not modified. The same cases run for all square implementations; four non-square cases are added for Bonus B. The tests were run on the laptop ($P = 1, 2, 4$) and on the server ($P = 1, 2, 3, 4, 8, 16$; $P = 3$ checks a ring with an odd number of ranks).</p>
+            <p><strong>Raw Terminal Output, laptop (P = 4 in full):</strong></p>
+            <pre class="term"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw7$ mpiexec -n 1 python3 a7_test.py
+P = 1
+...
+passed 36, failed 0
+user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw7$ mpiexec -n 2 python3 a7_test.py
+P = 2
+...
+passed 32, failed 0
+user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw7$ mpiexec -n 4 python3 a7_test.py
+P = 4
+[PASS] blocking (7.1)           N=P random
+[PASS] nonblocking (7.2)        N=P random
+[PASS] circulate A (bonus A)    N=P random
+[PASS] rectangular (bonus B)    N=P random
+       7.2a blocking vs nonblocking: bitwise identical
+[PASS] blocking (7.1)           identity x random
+[PASS] nonblocking (7.2)        identity x random
+[PASS] circulate A (bonus A)    identity x random
+[PASS] rectangular (bonus B)    identity x random
+       7.2a blocking vs nonblocking: bitwise identical
+[PASS] blocking (7.1)           random x identity
+[PASS] nonblocking (7.2)        random x identity
+[PASS] circulate A (bonus A)    random x identity
+[PASS] rectangular (bonus B)    random x identity
+       7.2a blocking vs nonblocking: bitwise identical
+[PASS] blocking (7.1)           zero x random
+[PASS] nonblocking (7.2)        zero x random
+[PASS] circulate A (bonus A)    zero x random
+[PASS] rectangular (bonus B)    zero x random
+       7.2a blocking vs nonblocking: bitwise identical
+[PASS] blocking (7.1)           known integers
+[PASS] nonblocking (7.2)        known integers
+[PASS] circulate A (bonus A)    known integers
+[PASS] rectangular (bonus B)    known integers
+       7.2a blocking vs nonblocking: bitwise identical
+[PASS] blocking (7.1)           course test n=3
+[PASS] nonblocking (7.2)        course test n=3
+[PASS] circulate A (bonus A)    course test n=3
+[PASS] rectangular (bonus B)    course test n=3
+       7.2a blocking vs nonblocking: bitwise identical
+[PASS] blocking (7.1)           dense N=64*P
+[PASS] nonblocking (7.2)        dense N=64*P
+[PASS] circulate A (bonus A)    dense N=64*P
+[PASS] rectangular (bonus B)    dense N=64*P
+       7.2a blocking vs nonblocking: bitwise identical
+[PASS] rectangular (bonus B)    N=2P, K=3, M=3P
+[PASS] rectangular (bonus B)    N=P, K=7, M=2P
+[PASS] rectangular (bonus B)    N=3P, K=1, M=P
+[PASS] rectangular (bonus B)    N=5P, K=40, M=2P
+
+passed 32, failed 0</code></pre>
+            <p><strong>Raw Terminal Output, server:</strong></p>
+            <pre class="term"><code>nechshadimov@parcomp2026:~/sources/hw7$ for P in 1 2 3 4 8 16; do mpiexec -n $P python3 a7_test.py | tail -1; done
+passed 36, failed 0
+passed 32, failed 0
+passed 32, failed 0
+passed 32, failed 0
+passed 32, failed 0
+passed 32, failed 0</code></pre>
+
+            <h2>Question 7.1a: Why is one Gather at the end sufficient?</h2>
+            <p>
+                Every block $C_{p,q}$ is computed exactly once, by the rank that owns row block $p$, and it is final at that moment: no later step changes it, and no other rank needs it during the computation (the ring only moves blocks of $B$, never blocks of $C$). The result simply accumulates in <code>C_local</code>, which after $P$ steps holds the complete row block. Gathering after every step would send the same total amount of data, but as $P$ times more, smaller messages with $P$ times the latency, and it would add a collective synchronisation of all ranks to every step, so ranks could no longer proceed at their own pace between the neighbour exchanges.
+            </p>
+            <h2>Question 7.1b: Why does Sendrecv help avoid deadlocks?</h2>
+            <p>
+                In the ring every rank sends to its right neighbour and receives from its left neighbour at the same time. With a naive blocking <code>Send</code> followed by <code>Recv</code>, every rank first calls <code>Send</code>. A blocking send may only return when the data has been delivered or buffered; for large messages MPI uses a rendezvous protocol and waits until the receiver has posted the matching <code>Recv</code>. But every rank is still inside its own <code>Send</code>, nobody has reached <code>Recv</code>, and all ranks wait for each other forever. Such code often works for small blocks (they fit into the internal eager buffer) and then hangs once the matrices get larger, which makes the bug dangerous. <code>Sendrecv</code> hands both operations to MPI at once, so the library can progress the send and the receive together and no cyclic wait can occur. The alternatives would be ordering by rank parity (even ranks send first, odd ranks receive first) or nonblocking calls, as in Exercise 7.2.
+            </p>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exercise 7.2: Communication-calculation overlap</summary>
+        <div class="details-content">
+            <h3>Implementation (<code>task7_2.py</code>, <code>ring_matrix_multiplication_nb</code>)</h3>
+            <ul style="font-size: 14px;">
+                <li>Double buffering: <code>B_current = B_colbl.copy()</code> and <code>B_next = np.empty_like(B_current)</code>.</li>
+                <li>On every step except the last: post <code>Irecv</code> into <code>B_next</code> from the left neighbour, post <code>Isend</code> of <code>B_current</code> to the right neighbour, then compute $A_p \cdot$ <code>B_current</code> into the correct columns of <code>C_local</code>, then <code>MPI.Request.Waitall</code> on both requests and swap the buffers.</li>
+                <li>On the last step the final block is computed without posting another exchange.</li>
+                <li>Buffer safety: during the multiplication <code>B_current</code> is only <em>read</em>, which is allowed while it is the buffer of a pending <code>Isend</code>; it is not overwritten until the send has completed and the buffers are swapped. <code>B_next</code> is not read before its <code>Irecv</code> has completed. A single in-place buffer would not work here, because the incoming block would overwrite the block that is being multiplied and sent.</li>
+            </ul>
+
+            <h2>7.2a: Equivalence</h2>
+            <p>For every test case and every $P$ the test prints a direct comparison of the blocking and nonblocking results on rank 0: all of them were <strong>bitwise identical</strong> on both machines. This is expected, because both versions perform exactly the same multiplications in the same order; only the timing of the communication differs.</p>
+
+            <h2>7.2b: Does overlap help?</h2>
+            <p><strong>Server</strong> (change of the nonblocking median against the blocking one; negative = nonblocking faster):</p>
+            <table class="t">
+                <thead><tr><th>N \ P</th><th>1</th><th>2</th><th>4</th><th>8</th><th>16</th><th>32</th><th>64</th></tr></thead>
+                <tbody>
+                    <tr><td>512</td><td>-13%</td><td>-11%</td><td>-28%</td><td>-4%</td><td>+3%</td><td>-12%</td><td>-2%</td></tr>
+                    <tr><td>1024</td><td>-1%</td><td>-3%</td><td>-4%</td><td>-7%</td><td>-14%</td><td>-3%</td><td>-1%</td></tr>
+                    <tr><td>2048</td><td>0%</td><td>-1%</td><td>0%</td><td>-4%</td><td>-5%</td><td>-10%</td><td>-10%</td></tr>
+                    <tr><td>4096</td><td>0%</td><td>0%</td><td>0%</td><td>-1%</td><td>-4%</td><td><strong>-20%</strong></td><td>+9%</td></tr>
+                    <tr><td>8192</td><td>0%</td><td></td><td>-1%</td><td></td><td>-1%</td><td></td><td>+2%</td></tr>
+                </tbody>
+            </table>
+            <img src="plots_server/blocking_vs_nonblocking.png" alt="Server: blocking vs nonblocking">
+            <p><strong>Laptop:</strong></p>
+            <table class="t">
+                <thead><tr><th>N \ P</th><th>1</th><th>2</th><th>4</th></tr></thead>
+                <tbody>
+                    <tr><td>512</td><td>-16%</td><td>-8%</td><td>+8%</td></tr>
+                    <tr><td>1024</td><td>-10%</td><td>+17%</td><td>-16%</td></tr>
+                    <tr><td>2048</td><td>+19%</td><td>-10%</td><td>+9%</td></tr>
+                </tbody>
+            </table>
+            <img src="plots/blocking_vs_nonblocking.png" alt="Laptop: blocking vs nonblocking">
+
+            <p><strong>Answer.</strong> The $P = 1$ column is the control: with one rank there is no communication, both versions run the same single multiplication, so any difference there is pure measurement noise.</p>
+            <ul style="font-size: 14px;">
+                <li><strong>On the laptop overlap cannot be measured.</strong> Even at $P = 1$ the two versions differ by 10 to 19%, and all differences at $P = 2$ and $4$ go in both directions within this range.</li>
+                <li><strong>On the server the noise floor is about 1%</strong> for $N \ge 1024$, so small effects become visible. When computation dominates (large $N$, $P \le 8$) the two versions are equal within 0 to 4%: there is little communication to hide. When $P$ grows to 16 to 64 and the communication share rises, the nonblocking version is faster in most cases, by 1 to 14% and by 20% at $N = 4096$, $P = 32$. The exceptions are $N = 4096$ and $8192$ at $P = 64$, where it is 2 to 9% slower; with all 64 vCPUs busy there is no idle core left for the operating system and MPI progress, and the extra request handling no longer pays off. ($N = 512$ is too short, 2 to 8 ms per run, for the percentages to be reliable; even its $P = 1$ control differs by 13%.)</li>
+                <li><strong>Why the gain is small even where it exists:</strong> for large $N$ one step computes much longer than it communicates (for $N = 4096$, $P = 16$: about 0.27 GFLOP per step against a 2 MB block), so even perfect overlap can only save a few percent. In addition, starting a nonblocking operation does not guarantee asynchronous progress: blocks of several MB use the rendezvous protocol, and without a separate progress thread Open MPI advances them mainly inside MPI calls, so part of the transfer still happens in <code>Waitall</code>. In shared memory the transfer is also a CPU copy that competes with the multiplication for memory bandwidth.</li>
+            </ul>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exercise 7.3: Performance and strong scaling</summary>
+        <div class="details-content">
+            <h3>1. Server results</h3>
+            <p><strong>Raw Terminal Output (server):</strong></p>
+            <pre class="term"><code>nechshadimov@parcomp2026:~/sources/hw7$ for P in 1 2 4 8 16 32 64; do mpiexec --bind-to core -n $P python3 task7_3.py --N 512 1024 2048 4096 --runs 5 --methods blocking,nonblocking,circulate_A --csv results_server.csv; done 2>&1 | tee bench_server.txt
+blocking     P=  1 N=  512  median 0.0082s  (min 0.0070 / max 0.0085, 5 runs)   32.54 GFLOP/s  setup 0.0065s
+nonblocking  P=  1 N=  512  median 0.0071s  (min 0.0070 / max 0.0074, 5 runs)   37.75 GFLOP/s  setup 0.0065s
+circulate_A  P=  1 N=  512  median 0.0070s  (min 0.0069 / max 0.0072, 5 runs)   38.30 GFLOP/s  setup 0.0065s
+blocking     P=  1 N= 1024  median 0.0544s  (min 0.0537 / max 0.0555, 5 runs)   39.51 GFLOP/s  setup 0.0230s
+nonblocking  P=  1 N= 1024  median 0.0539s  (min 0.0522 / max 0.0550, 5 runs)   39.83 GFLOP/s  setup 0.0230s
+circulate_A  P=  1 N= 1024  median 0.0540s  (min 0.0537 / max 0.0548, 5 runs)   39.75 GFLOP/s  setup 0.0230s
+blocking     P=  1 N= 2048  median 0.4247s  (min 0.4205 / max 0.4286, 5 runs)   40.46 GFLOP/s  setup 0.4356s
+nonblocking  P=  1 N= 2048  median 0.4241s  (min 0.4222 / max 0.4556, 5 runs)   40.51 GFLOP/s  setup 0.4356s
+circulate_A  P=  1 N= 2048  median 0.4257s  (min 0.4223 / max 0.4347, 5 runs)   40.36 GFLOP/s  setup 0.4356s
+blocking     P=  1 N= 4096  median 3.2387s  (min 3.2235 / max 3.2693, 5 runs)   42.44 GFLOP/s  setup 3.5624s
+nonblocking  P=  1 N= 4096  median 3.2377s  (min 3.2260 / max 3.2694, 5 runs)   42.45 GFLOP/s  setup 3.5624s
+circulate_A  P=  1 N= 4096  median 3.2483s  (min 3.2238 / max 3.2889, 5 runs)   42.31 GFLOP/s  setup 3.5624s
+blocking     P=  2 N=  512  median 0.0055s  (min 0.0052 / max 0.0069, 5 runs)   48.41 GFLOP/s  setup 0.0057s
+nonblocking  P=  2 N=  512  median 0.0049s  (min 0.0047 / max 0.0053, 5 runs)   55.09 GFLOP/s  setup 0.0057s
+circulate_A  P=  2 N=  512  median 0.0049s  (min 0.0048 / max 0.0051, 5 runs)   54.70 GFLOP/s  setup 0.0057s
+blocking     P=  2 N= 1024  median 0.0323s  (min 0.0314 / max 0.0329, 5 runs)   66.57 GFLOP/s  setup 0.0201s
+nonblocking  P=  2 N= 1024  median 0.0313s  (min 0.0312 / max 0.0330, 5 runs)   68.56 GFLOP/s  setup 0.0201s
+circulate_A  P=  2 N= 1024  median 0.0326s  (min 0.0316 / max 0.0343, 5 runs)   65.92 GFLOP/s  setup 0.0201s
+blocking     P=  2 N= 2048  median 0.2266s  (min 0.2244 / max 0.2326, 5 runs)   75.81 GFLOP/s  setup 0.3437s
+nonblocking  P=  2 N= 2048  median 0.2252s  (min 0.2233 / max 0.2334, 5 runs)   76.30 GFLOP/s  setup 0.3437s
+circulate_A  P=  2 N= 2048  median 0.2307s  (min 0.2281 / max 0.2390, 5 runs)   74.47 GFLOP/s  setup 0.3437s
+blocking     P=  2 N= 4096  median 1.6764s  (min 1.6687 / max 1.7110, 5 runs)   81.98 GFLOP/s  setup 2.7140s
+nonblocking  P=  2 N= 4096  median 1.6740s  (min 1.6715 / max 1.7164, 5 runs)   82.10 GFLOP/s  setup 2.7140s
+circulate_A  P=  2 N= 4096  median 1.7248s  (min 1.7087 / max 1.7811, 5 runs)   79.69 GFLOP/s  setup 2.7140s
+blocking     P=  4 N=  512  median 0.0036s  (min 0.0026 / max 0.0040, 5 runs)   75.30 GFLOP/s  setup 0.0046s
+nonblocking  P=  4 N=  512  median 0.0026s  (min 0.0025 / max 0.0029, 5 runs)  102.81 GFLOP/s  setup 0.0046s
+circulate_A  P=  4 N=  512  median 0.0028s  (min 0.0027 / max 0.0032, 5 runs)   97.17 GFLOP/s  setup 0.0046s
+blocking     P=  4 N= 1024  median 0.0193s  (min 0.0192 / max 0.0206, 5 runs)  111.20 GFLOP/s  setup 0.0195s
+nonblocking  P=  4 N= 1024  median 0.0186s  (min 0.0182 / max 0.0208, 5 runs)  115.61 GFLOP/s  setup 0.0195s
+circulate_A  P=  4 N= 1024  median 0.0197s  (min 0.0192 / max 0.0202, 5 runs)  109.23 GFLOP/s  setup 0.0195s
+blocking     P=  4 N= 2048  median 0.1239s  (min 0.1236 / max 0.1256, 5 runs)  138.65 GFLOP/s  setup 0.2286s
+nonblocking  P=  4 N= 2048  median 0.1238s  (min 0.1215 / max 0.1261, 5 runs)  138.73 GFLOP/s  setup 0.2286s
+circulate_A  P=  4 N= 2048  median 0.1324s  (min 0.1300 / max 0.1340, 5 runs)  129.77 GFLOP/s  setup 0.2286s
+blocking     P=  4 N= 4096  median 0.8815s  (min 0.8714 / max 0.8923, 5 runs)  155.91 GFLOP/s  setup 2.5520s
+nonblocking  P=  4 N= 4096  median 0.8823s  (min 0.8785 / max 0.8927, 5 runs)  155.78 GFLOP/s  setup 2.5520s
+circulate_A  P=  4 N= 4096  median 0.9110s  (min 0.8993 / max 0.9236, 5 runs)  150.86 GFLOP/s  setup 2.5520s
+blocking     P=  8 N=  512  median 0.0025s  (min 0.0024 / max 0.0034, 5 runs)  106.20 GFLOP/s  setup 0.0038s
+nonblocking  P=  8 N=  512  median 0.0024s  (min 0.0023 / max 0.0029, 5 runs)  113.22 GFLOP/s  setup 0.0038s
+circulate_A  P=  8 N=  512  median 0.0027s  (min 0.0026 / max 0.0029, 5 runs)  100.99 GFLOP/s  setup 0.0038s
+blocking     P=  8 N= 1024  median 0.0130s  (min 0.0130 / max 0.0146, 5 runs)  164.99 GFLOP/s  setup 0.0170s
+nonblocking  P=  8 N= 1024  median 0.0121s  (min 0.0119 / max 0.0125, 5 runs)  177.71 GFLOP/s  setup 0.0170s
+circulate_A  P=  8 N= 1024  median 0.0134s  (min 0.0132 / max 0.0136, 5 runs)  160.24 GFLOP/s  setup 0.0170s
+blocking     P=  8 N= 2048  median 0.0818s  (min 0.0792 / max 0.0850, 5 runs)  210.06 GFLOP/s  setup 0.3175s
+nonblocking  P=  8 N= 2048  median 0.0785s  (min 0.0774 / max 0.0801, 5 runs)  218.82 GFLOP/s  setup 0.3175s
+circulate_A  P=  8 N= 2048  median 0.0846s  (min 0.0839 / max 0.0850, 5 runs)  203.08 GFLOP/s  setup 0.3175s
+blocking     P=  8 N= 4096  median 0.5171s  (min 0.5101 / max 0.5262, 5 runs)  265.79 GFLOP/s  setup 2.1318s
+nonblocking  P=  8 N= 4096  median 0.5137s  (min 0.5059 / max 0.5185, 5 runs)  267.54 GFLOP/s  setup 2.1318s
+circulate_A  P=  8 N= 4096  median 0.5407s  (min 0.5313 / max 0.5416, 5 runs)  254.19 GFLOP/s  setup 2.1318s
+blocking     P= 16 N=  512  median 0.0037s  (min 0.0036 / max 0.0046, 5 runs)   72.08 GFLOP/s  setup 0.0036s
+nonblocking  P= 16 N=  512  median 0.0038s  (min 0.0037 / max 0.0039, 5 runs)   70.99 GFLOP/s  setup 0.0036s
+circulate_A  P= 16 N=  512  median 0.0038s  (min 0.0038 / max 0.0043, 5 runs)   69.88 GFLOP/s  setup 0.0036s
+blocking     P= 16 N= 1024  median 0.0146s  (min 0.0132 / max 0.0158, 5 runs)  146.60 GFLOP/s  setup 0.0125s
+nonblocking  P= 16 N= 1024  median 0.0126s  (min 0.0123 / max 0.0140, 5 runs)  170.55 GFLOP/s  setup 0.0125s
+circulate_A  P= 16 N= 1024  median 0.0137s  (min 0.0135 / max 0.0155, 5 runs)  157.25 GFLOP/s  setup 0.0125s
+blocking     P= 16 N= 2048  median 0.0839s  (min 0.0823 / max 0.0848, 5 runs)  204.77 GFLOP/s  setup 0.2916s
+nonblocking  P= 16 N= 2048  median 0.0793s  (min 0.0790 / max 0.0800, 5 runs)  216.58 GFLOP/s  setup 0.2916s
+circulate_A  P= 16 N= 2048  median 0.0760s  (min 0.0748 / max 0.0821, 5 runs)  226.07 GFLOP/s  setup 0.2916s
+blocking     P= 16 N= 4096  median 0.3485s  (min 0.3339 / max 0.3587, 5 runs)  394.40 GFLOP/s  setup 1.8649s
+nonblocking  P= 16 N= 4096  median 0.3341s  (min 0.3298 / max 0.3367, 5 runs)  411.38 GFLOP/s  setup 1.8649s
+circulate_A  P= 16 N= 4096  median 0.3685s  (min 0.3621 / max 0.3689, 5 runs)  372.93 GFLOP/s  setup 1.8649s
+blocking     P= 32 N=  512  median 0.0043s  (min 0.0037 / max 0.0044, 5 runs)   62.33 GFLOP/s  setup 0.0034s
+nonblocking  P= 32 N=  512  median 0.0038s  (min 0.0036 / max 0.0039, 5 runs)   70.74 GFLOP/s  setup 0.0034s
+circulate_A  P= 32 N=  512  median 0.0041s  (min 0.0040 / max 0.0048, 5 runs)   64.83 GFLOP/s  setup 0.0034s
+blocking     P= 32 N= 1024  median 0.0162s  (min 0.0160 / max 0.0177, 5 runs)  132.55 GFLOP/s  setup 0.0116s
+nonblocking  P= 32 N= 1024  median 0.0157s  (min 0.0153 / max 0.0163, 5 runs)  136.50 GFLOP/s  setup 0.0116s
+circulate_A  P= 32 N= 1024  median 0.0175s  (min 0.0170 / max 0.0179, 5 runs)  122.38 GFLOP/s  setup 0.0116s
+blocking     P= 32 N= 2048  median 0.0804s  (min 0.0755 / max 0.0829, 5 runs)  213.59 GFLOP/s  setup 0.2820s
+nonblocking  P= 32 N= 2048  median 0.0722s  (min 0.0718 / max 0.0735, 5 runs)  238.08 GFLOP/s  setup 0.2820s
+circulate_A  P= 32 N= 2048  median 0.0846s  (min 0.0796 / max 0.0851, 5 runs)  203.13 GFLOP/s  setup 0.2820s
+blocking     P= 32 N= 4096  median 0.3784s  (min 0.3698 / max 0.3841, 5 runs)  363.19 GFLOP/s  setup 2.0684s
+nonblocking  P= 32 N= 4096  median 0.3034s  (min 0.2945 / max 0.3149, 5 runs)  453.02 GFLOP/s  setup 2.0684s
+circulate_A  P= 32 N= 4096  median 0.3308s  (min 0.3212 / max 0.3920, 5 runs)  415.49 GFLOP/s  setup 2.0684s
+blocking     P= 64 N=  512  median 0.0064s  (min 0.0061 / max 0.0080, 5 runs)   41.68 GFLOP/s  setup 0.0046s
+nonblocking  P= 64 N=  512  median 0.0063s  (min 0.0063 / max 0.0072, 5 runs)   42.77 GFLOP/s  setup 0.0046s
+circulate_A  P= 64 N=  512  median 0.0068s  (min 0.0067 / max 0.0075, 5 runs)   39.31 GFLOP/s  setup 0.0046s
+blocking     P= 64 N= 1024  median 0.0272s  (min 0.0262 / max 0.0279, 5 runs)   79.05 GFLOP/s  setup 0.0126s
+nonblocking  P= 64 N= 1024  median 0.0269s  (min 0.0267 / max 0.0281, 5 runs)   79.71 GFLOP/s  setup 0.0126s
+circulate_A  P= 64 N= 1024  median 0.0279s  (min 0.0274 / max 0.0282, 5 runs)   76.86 GFLOP/s  setup 0.0126s
+blocking     P= 64 N= 2048  median 0.1222s  (min 0.1180 / max 0.1232, 5 runs)  140.60 GFLOP/s  setup 0.2125s
+nonblocking  P= 64 N= 2048  median 0.1101s  (min 0.1065 / max 0.1122, 5 runs)  156.03 GFLOP/s  setup 0.2125s
+circulate_A  P= 64 N= 2048  median 0.1302s  (min 0.1272 / max 0.1311, 5 runs)  131.99 GFLOP/s  setup 0.2125s
+blocking     P= 64 N= 4096  median 0.4559s  (min 0.4508 / max 0.4604, 5 runs)  301.48 GFLOP/s  setup 1.0014s
+nonblocking  P= 64 N= 4096  median 0.4958s  (min 0.4783 / max 0.4997, 5 runs)  277.18 GFLOP/s  setup 1.0014s
+circulate_A  P= 64 N= 4096  median 0.5374s  (min 0.5003 / max 0.5401, 5 runs)  255.74 GFLOP/s  setup 1.0014s
+nechshadimov@parcomp2026:~/sources/hw7$ for P in 1 4 16 64; do mpiexec --bind-to core -n $P python3 task7_3.py --N 8192 --runs 3 --methods blocking,nonblocking --csv results_server.csv; done 2>&1 | tee -a bench_server.txt
+blocking     P=  1 N= 8192  median 35.5377s  (min 35.4863 / max 35.5486, 3 runs)   30.94 GFLOP/s  setup 21.5284s
+nonblocking  P=  1 N= 8192  median 35.5081s  (min 35.4151 / max 35.5464, 3 runs)   30.97 GFLOP/s  setup 21.5284s
+blocking     P=  4 N= 8192  median 6.7618s  (min 6.7459 / max 6.8019, 3 runs)  162.61 GFLOP/s  setup 14.5385s
+nonblocking  P=  4 N= 8192  median 6.7266s  (min 6.6820 / max 6.7390, 3 runs)  163.46 GFLOP/s  setup 14.5385s
+blocking     P= 16 N= 8192  median 2.2957s  (min 2.2929 / max 2.3033, 3 runs)  478.94 GFLOP/s  setup 14.9505s
+nonblocking  P= 16 N= 8192  median 2.2767s  (min 2.2629 / max 2.3004, 3 runs)  482.95 GFLOP/s  setup 14.9505s
+blocking     P= 64 N= 8192  median 1.9129s  (min 1.8770 / max 1.9161, 3 runs)  574.78 GFLOP/s  setup 13.7719s
+nonblocking  P= 64 N= 8192  median 1.9438s  (min 1.9277 / max 1.9664, 3 runs)  565.64 GFLOP/s  setup 13.7719s</code></pre>
+
+            <p><strong>Speedup $S(P) = T(1)/T(P)$ and efficiency $E(P)$ on the server</strong> (blocking / nonblocking; T(1) = same method at $P = 1$; setup excluded):</p>
+            <table class="t">
+                <thead><tr><th>N</th><th>T(1) (s)</th><th>P=2</th><th>P=4</th><th>P=8</th><th>P=16</th><th>P=32</th><th>P=64</th></tr></thead>
+                <tbody>
+                    <tr><td>512</td><td>0.0082 / 0.0071</td><td>1.49 / 1.46</td><td>2.31 / 2.72</td><td><strong>3.26 / 3.00</strong></td><td>2.22 / 1.88</td><td>1.92 / 1.87</td><td>1.28 / 1.13</td></tr>
+                    <tr><td>1024</td><td>0.0544 / 0.0539</td><td>1.69 / 1.72</td><td>2.81 / 2.90</td><td><strong>4.18 / 4.46</strong></td><td>3.71 / 4.28</td><td>3.36 / 3.43</td><td>2.00 / 2.00</td></tr>
+                    <tr><td>2048</td><td>0.4247 / 0.4241</td><td>1.87 / 1.88</td><td>3.43 / 3.42</td><td>5.19 / 5.40</td><td>5.06 / 5.35</td><td><strong>5.28 / 5.88</strong></td><td>3.48 / 3.85</td></tr>
+                    <tr><td>4096</td><td>3.239 / 3.238</td><td>1.93 / 1.93</td><td>3.67 / 3.67</td><td>6.26 / 6.30</td><td><strong>9.29</strong> / 9.69</td><td>8.56 / <strong>10.67</strong></td><td>7.10 / 6.53</td></tr>
+                    <tr><td>8192</td><td>35.54 / 35.51</td><td></td><td>5.26 / 5.28</td><td></td><td>15.48 / 15.60</td><td></td><td><strong>18.58 / 18.27</strong></td></tr>
+                </tbody>
+            </table>
+            <table class="t">
+                <thead><tr><th>N</th><th>E(2)</th><th>E(4)</th><th>E(8)</th><th>E(16)</th><th>E(32)</th><th>E(64)</th><th>best GFLOP/s (P)</th></tr></thead>
+                <tbody>
+                    <tr><td>512</td><td>74%</td><td>58%</td><td>41%</td><td>14%</td><td>6%</td><td>2%</td><td>113 (8)</td></tr>
+                    <tr><td>1024</td><td>84%</td><td>70%</td><td>52%</td><td>23%</td><td>10%</td><td>3%</td><td>178 (8)</td></tr>
+                    <tr><td>2048</td><td>94%</td><td>86%</td><td>65%</td><td>32%</td><td>16%</td><td>5%</td><td>238 (32)</td></tr>
+                    <tr><td>4096</td><td>97%</td><td>92%</td><td>78%</td><td>58%</td><td>27%</td><td>11%</td><td>453 (32)</td></tr>
+                    <tr><td>8192</td><td></td><td>131%</td><td></td><td>97%</td><td></td><td>29%</td><td>575 (64)</td></tr>
+                </tbody>
+            </table>
+            <p>Efficiencies are for the blocking version; full tables for all three methods are in <code>plots_server/summary.csv</code>.</p>
+            <img src="plots_server/scaling_N512.png" alt="Server scaling N=512">
+            <img src="plots_server/scaling_N1024.png" alt="Server scaling N=1024">
+            <img src="plots_server/scaling_N2048.png" alt="Server scaling N=2048">
+            <img src="plots_server/scaling_N4096.png" alt="Server scaling N=4096">
+            <img src="plots_server/scaling_N8192.png" alt="Server scaling N=8192">
+            <p>Left: execution time versus $P$ (median, bars = min..max). Right: speedup with the ideal $S(P) = P$ line.</p>
+
+            <h3>2. Laptop results</h3>
+            <p><strong>Raw Terminal Output (laptop):</strong></p>
+            <pre class="term"><code>user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw7$ mpiexec -n 1 python3 task7_3.py --N 512 1024 2048 --runs 10 --methods blocking,nonblocking,circulate_A
+blocking     P=  1 N=  512  median 0.0074s  (min 0.0063 / max 0.0101, 10 runs)   36.32 GFLOP/s  setup 0.0054s
+nonblocking  P=  1 N=  512  median 0.0062s  (min 0.0058 / max 0.0072, 10 runs)   43.44 GFLOP/s  setup 0.0054s
+circulate_A  P=  1 N=  512  median 0.0064s  (min 0.0057 / max 0.0085, 10 runs)   42.11 GFLOP/s  setup 0.0054s
+blocking     P=  1 N= 1024  median 0.0543s  (min 0.0448 / max 0.0749, 10 runs)   39.52 GFLOP/s  setup 0.0321s
+nonblocking  P=  1 N= 1024  median 0.0487s  (min 0.0449 / max 0.0529, 10 runs)   44.12 GFLOP/s  setup 0.0321s
+circulate_A  P=  1 N= 1024  median 0.0489s  (min 0.0464 / max 0.0633, 10 runs)   43.87 GFLOP/s  setup 0.0321s
+blocking     P=  1 N= 2048  median 0.5390s  (min 0.4606 / max 0.5911, 10 runs)   31.88 GFLOP/s  setup 0.1929s
+nonblocking  P=  1 N= 2048  median 0.6404s  (min 0.5962 / max 0.6825, 10 runs)   26.83 GFLOP/s  setup 0.1929s
+circulate_A  P=  1 N= 2048  median 0.6177s  (min 0.5767 / max 0.6939, 10 runs)   27.81 GFLOP/s  setup 0.1929s
+user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw7$ mpiexec -n 2 python3 task7_3.py --N 512 1024 2048 --runs 10 --methods blocking,nonblocking,circulate_A
+blocking     P=  2 N=  512  median 0.0075s  (min 0.0058 / max 0.0093, 10 runs)   35.65 GFLOP/s  setup 0.0069s
+nonblocking  P=  2 N=  512  median 0.0069s  (min 0.0058 / max 0.0108, 10 runs)   38.76 GFLOP/s  setup 0.0069s
+circulate_A  P=  2 N=  512  median 0.0072s  (min 0.0060 / max 0.0112, 10 runs)   37.07 GFLOP/s  setup 0.0069s
+blocking     P=  2 N= 1024  median 0.0627s  (min 0.0517 / max 0.0750, 10 runs)   34.26 GFLOP/s  setup 0.0343s
+nonblocking  P=  2 N= 1024  median 0.0734s  (min 0.0610 / max 0.0885, 10 runs)   29.24 GFLOP/s  setup 0.0343s
+circulate_A  P=  2 N= 1024  median 0.0618s  (min 0.0559 / max 0.0715, 10 runs)   34.74 GFLOP/s  setup 0.0343s
+blocking     P=  2 N= 2048  median 0.3275s  (min 0.2964 / max 0.3916, 10 runs)   52.46 GFLOP/s  setup 0.1693s
+nonblocking  P=  2 N= 2048  median 0.2935s  (min 0.2572 / max 0.3702, 10 runs)   58.53 GFLOP/s  setup 0.1693s
+circulate_A  P=  2 N= 2048  median 0.3320s  (min 0.2877 / max 0.3762, 10 runs)   51.75 GFLOP/s  setup 0.1693s
+user@DESKTOP-AJAG7QD:/mnt/c/учёба/study/1_semester/parallel/hw7$ mpiexec -n 4 python3 task7_3.py --N 512 1024 2048 --runs 10 --methods blocking,nonblocking,circulate_A
+blocking     P=  4 N=  512  median 0.0050s  (min 0.0048 / max 0.0062, 10 runs)   53.83 GFLOP/s  setup 0.0047s
+nonblocking  P=  4 N=  512  median 0.0054s  (min 0.0049 / max 0.0107, 10 runs)   50.03 GFLOP/s  setup 0.0047s
+circulate_A  P=  4 N=  512  median 0.0056s  (min 0.0054 / max 0.0102, 10 runs)   47.79 GFLOP/s  setup 0.0047s
+blocking     P=  4 N= 1024  median 0.0724s  (min 0.0525 / max 0.1144, 10 runs)   29.66 GFLOP/s  setup 0.0303s
+nonblocking  P=  4 N= 1024  median 0.0608s  (min 0.0554 / max 0.1527, 10 runs)   35.34 GFLOP/s  setup 0.0303s
+circulate_A  P=  4 N= 1024  median 0.0650s  (min 0.0576 / max 0.0892, 10 runs)   33.04 GFLOP/s  setup 0.0303s
+blocking     P=  4 N= 2048  median 0.3957s  (min 0.3244 / max 0.5190, 10 runs)   43.41 GFLOP/s  setup 0.1447s
+nonblocking  P=  4 N= 2048  median 0.4299s  (min 0.3670 / max 0.6408, 10 runs)   39.96 GFLOP/s  setup 0.1447s
+circulate_A  P=  4 N= 2048  median 0.3003s  (min 0.2767 / max 0.3731, 10 runs)   57.21 GFLOP/s  setup 0.1447s</code></pre>
+            <table class="t">
+                <thead><tr><th>N</th><th>T(1) (s), blocking / nonblocking</th><th>S(2)</th><th>S(4)</th><th>E(4)</th></tr></thead>
+                <tbody>
+                    <tr><td>512</td><td>0.0074 / 0.0062</td><td>0.98 / 0.89</td><td>1.48 / 1.15</td><td>37% / 29%</td></tr>
+                    <tr><td>1024</td><td>0.0543 / 0.0487</td><td>0.87 / 0.66</td><td>0.75 / 0.80</td><td>19% / 20%</td></tr>
+                    <tr><td>2048</td><td>0.5390 / 0.6404</td><td>1.65 / 2.18*</td><td>1.36 / 1.49</td><td>34% / 37%</td></tr>
+                </tbody>
+            </table>
+            <p>* Superlinear only because of an unlucky $T(1)$: the nonblocking $P = 1$ median is 19% slower than the blocking one for the identical single multiplication. Against the blocking $T(1)$ it would be 1.84x.</p>
+            <img src="plots/scaling_N512.png" alt="Laptop scaling N=512">
+            <img src="plots/scaling_N1024.png" alt="Laptop scaling N=1024">
+            <img src="plots/scaling_N2048.png" alt="Laptop scaling N=2048">
+
+            <h3>3. Laptop vs server</h3>
+            <img src="plots_compare/laptop_vs_server_speedup.png" alt="Laptop vs server speedup">
+            <p>Speedup on both machines for the common sizes (log-log scale; red = laptop, blue = server, solid = blocking, dashed = nonblocking, dotted = ideal).</p>
+            <table class="t">
+                <thead><tr><th>N</th><th>Machine</th><th>T(1) blocking (s)</th><th>GFLOP/s, 1 rank</th><th>Best P</th><th>Best time (s)</th><th>Best speedup</th><th>Best GFLOP/s</th></tr></thead>
+                <tbody>
+                    <tr><td>512</td><td>laptop</td><td>0.0074</td><td>36</td><td>4</td><td>0.0050</td><td>1.48</td><td>54</td></tr>
+                    <tr><td>512</td><td>server</td><td>0.0082</td><td>33</td><td>8</td><td>0.0025</td><td>3.26</td><td>106</td></tr>
+                    <tr><td>1024</td><td>laptop</td><td>0.0543</td><td>40</td><td>1</td><td>0.0543</td><td>1.00</td><td>40</td></tr>
+                    <tr><td>1024</td><td>server</td><td>0.0544</td><td>40</td><td>8</td><td>0.0130</td><td>4.18</td><td>165</td></tr>
+                    <tr><td>2048</td><td>laptop</td><td>0.5390</td><td>32</td><td>2</td><td>0.3275</td><td>1.65</td><td>52</td></tr>
+                    <tr><td>2048</td><td>server</td><td>0.4247</td><td>40</td><td>32</td><td>0.0804</td><td>5.28</td><td>214</td></tr>
+                </tbody>
+            </table>
+            <p>(Blocking version; the same table for both methods is in <code>plots_compare/laptop_vs_server.csv</code>.)</p>
+            <ul style="font-size: 14px;">
+                <li><strong>One rank is equally fast on both machines.</strong> A single laptop core and a single server vCPU reach 32 to 44 GFLOP/s and give the same $T(1)$ for $N = 512$ and $1024$. The large difference in parallel performance is therefore not caused by faster cores.</li>
+                <li><strong>The server scales, the laptop hardly does.</strong> With the same $P = 4$ and $N = 2048$ the server reaches 3.43x (86% efficiency), the laptop only 1.36 to 1.49x. At $N = 1024$ the laptop is never faster than one process, the server reaches 4.2x with 8 ranks. At the best configuration the server is 2 to 7 times faster than the laptop's best.</li>
+                <li><strong>Why:</strong> the ring is lock-step, every step ends with an exchange, so the job runs at the pace of the slowest rank. On the laptop only 2 of the cores are performance cores, so with $P = 4$ at least two ranks run on slower efficient cores, and a 15 W chip also lowers its clock when several cores are busy, while one rank can use the full single-core turbo. The server has identical cores, every rank was pinned to its own core (<code>--bind-to core</code>), and the machine was otherwise idle.</li>
+                <li><strong>Measurement quality:</strong> on the server the min..max range is usually within 1 to 3% of the median and the three methods agree within 1% at $P = 1$; on the laptop ranges of 20 to 50% are common and identical single-rank runs differ by up to 19%. Only the server data allows conclusions about effects of a few percent, such as the overlap in 7.2b.</li>
+                <li><strong>Setup behaves differently:</strong> on the laptop distributing the matrices costs 0.14 to 0.19 s for $N = 2048$; on the server 0.21 to 0.44 s. The setup is done serially by rank 0 (generating the matrices, transposing $B$, two <code>Scatter</code> calls), so it does not benefit from more cores on either machine.</li>
+            </ul>
+
+            <h3>4. Interpretation of the scaling</h3>
+            <ul style="font-size: 14px;">
+                <li><strong>Near-ideal for small $P$:</strong> on the server, efficiency at $P = 2$ and $4$ is 86 to 97% for $N \ge 2048$, i.e. for large enough matrices the ring algorithm itself adds almost no cost.</li>
+                <li><strong>Every $N$ has an optimal $P$, and it grows with $N$:</strong> $P = 8$ for $N = 512$ and $1024$, $P = 8$ to $32$ for $N = 2048$, $P = 16$ to $32$ for $N = 4096$ and $P = 64$ (or more) for $N = 8192$. Beyond the optimum the time increases again: for $N = 512$, 64 ranks are barely faster than one (1.13 to 1.28x).</li>
+                <li><strong>Why more ranks eventually hurt:</strong> (1) the work per step shrinks with $P^2$: at $N = 512$, $P = 64$ every step multiplies an $8 \times 512$ block by a $512 \times 8$ block, which is far too small for BLAS to run efficiently; (2) the number of steps, exchanges and Python loop iterations grows with $P$, each with a fixed latency; (3) every rank must still receive the whole matrix $B$ over the ring (about $N^2$ elements per rank, independent of $P$), so the total traffic $P \cdot N^2$ grows with $P$ and competes for the shared memory system; (4) at $P = 64$ every vCPU of the virtual machine is busy, so the operating system and MPI have no spare core.</li>
+                <li><strong>Superlinear speedup at $N = 8192$, $P = 4$ (5.26x, 131%):</strong> a single rank reaches only 31 GFLOP/s at $N = 8192$ against 42 GFLOP/s at $N = 4096$, while with 4 ranks each rank runs at about 41 GFLOP/s. Multiplying with two 512 MB matrices on one core is evidently less cache- and TLB-friendly than working on 4 times smaller blocks, so $T(1)$ is slower than "one quarter of the work" would suggest. The highest absolute performance measured was 575 GFLOP/s at $N = 8192$, $P = 64$ (18.6x).</li>
+                <li><strong>Setup is significant:</strong> on the server distributing the matrices takes 1.0 to 3.6 s for $N = 4096$ and 14 to 22 s for $N = 8192$, more than the parallel multiplication itself. If it were included, a single multiplication would not benefit from parallelism at all; the distributed algorithm pays off when the data is already distributed or reused.</li>
+            </ul>
+
+            <h3>5. Analytical questions</h3>
+            <p><strong>How does the ratio of computation to ring communication change with increasing $N$?</strong> Each process performs about $2N^3/P$ floating-point operations and sends about $(P-1)N^2/P$ elements, so the ratio is
+            $$\frac{2N^3/P}{(P-1)N^2/P} = \frac{2N}{P-1}$$
+            operations per transferred element. It grows <strong>linearly with $N$</strong> and shrinks as $P$ grows. For $N = 512$, $P = 64$ it is only 16 operations per element, which matches the collapse of the speedup there; for $N = 8192$, $P = 64$ it is 260, and the speedup keeps growing up to 64 ranks. This is exactly the pattern of the optimal $P$ described above: doubling $N$ allows roughly doubling $P$ at the same ratio.</p>
+            <p><strong>What is the approximate smallest $N$ for which the parallel version is faster? Does the answer change with $P$?</strong> On the server the parallel version was already faster at the smallest tested size, <strong>$N = 512$</strong>, for every $P$ (1.13 to 3.26x), so the break-even point lies below 512 there; the benefit at $N = 512$ is large only for $P = 4$ to $8$. On the laptop it was reliably faster only from <strong>$N = 2048$</strong>; at $N = 512$ only $P = 4$ helped and at $N = 1024$ nothing did. The answer clearly depends on $P$: for a given $N$ adding ranks helps only up to an optimum, and because the ratio $2N/(P-1)$ falls with $P$, a larger $P$ needs a larger $N$ to be worthwhile.</p>
+            <p><strong>How do the results compare with the matrix-vector multiplication of Assignment 6?</strong></p>
+            <ul style="font-size: 14px;">
+                <li><strong>Arithmetic intensity:</strong> matrix-vector performs 2 operations per 8-byte matrix element read once, so it is memory-bound; in Assignment 6 one process reached only about 5.6 GFLOP/s ($N = 4096$, 50 products in 0.30 s on the laptop). Matrix-matrix reuses each element $O(N)$ times and reaches 31 to 44 GFLOP/s on one core of either machine, so it is compute-bound.</li>
+                <li><strong>Communication:</strong> in Assignment 6 every iteration communicated $O(N)$ values against $O(N^2/P)$ work; here $O(N^2)$ values per process are sent against $O(N^3/P)$ work, so the communication share falls with $N$ instead of staying constant.</li>
+                <li><strong>Scaling:</strong> in Assignment 6 the laptop speedup was capped by the shared memory bandwidth (multiplication phase 1.72x at $P = 4$). The matrix-matrix product is not bandwidth-bound: on the server it reaches 3.4 to 3.7x at $P = 4$ and up to 18.6x with 64 ranks. On the laptop it stays at a similar 1.4 to 2x, but for a different reason (heterogeneous, power-limited cores instead of memory bandwidth).</li>
+            </ul>
+        </div>
+    </details>
+
+    <details>
+        <summary>Bonus A: Circulate A instead of B</summary>
+        <div class="details-content">
+            <p><strong>Design (<code>task7_bonus_a.py</code>, <code>ring_matrix_multiplication_circulate_A</code>):</strong> rank $p$ keeps its column block $B_p$ ($N \times n$) stationary and passes row blocks of $A$ around the same ring. At step $s$ it holds the row block that originally belonged to rank $owner = (p - s) \bmod P$, because every step moves blocks one rank to the right; the owner index is therefore computed from $p$ and $s$ exactly as $q$ in Exercise 7.1, and no extra metadata has to be sent. The product $A_{owner} B_p$ is the block $C_{owner,p}$, so each rank fills one <strong>column block</strong> of $C$ (shape $N \times n$), writing rows $owner \cdot n \ldots (owner+1) n - 1$.</p>
+            <p><strong>Assembly:</strong> column blocks of $C$ are not contiguous in a C-order matrix, so a direct <code>Gather</code> into $C$ is impossible. Rank 0 gathers the $P$ contiguous $N \times n$ blocks into a $(P, N, n)$ array and rebuilds $C$ with <code>blocks.transpose(1, 0, 2).reshape(N, N)</code>, i.e. element $(i, p n + j)$ of $C$ comes from block $p$, row $i$, column $j$.</p>
+            <p><strong>Communication:</strong> identical in volume: an $n \times N$ block of $A$ has as many elements as an $N \times n$ block of $B$, the number of exchanges is $P - 1$, and the final gather moves the same $N^2$ elements. The only extra work is the reordering copy of the whole result on rank 0.</p>
+            <p><strong>Performance:</strong> on the laptop it was within the noise of the other versions. On the server, where small differences can be measured, it is in most configurations 2 to 10% slower than the blocking version and up to 18% at $N = 4096$, $P = 64$ (0.537 s vs 0.456 s). This is consistent with the extra reordering copy of $N^2$ elements on rank 0 (128 MB for $N = 4096$), which is serial and therefore weighs more when the parallel part gets shorter. The exceptions are $N = 2048$, $P = 16$ (0.076 s vs 0.084 s) and $N = 4096$, $P = 32$ (0.331 s vs 0.378 s), where the blocking version itself had a slow point. Correctness: all tests passed on both machines.</p>
+        </div>
+    </details>
+
+    <details>
+        <summary>Bonus B: Rectangular matrices</summary>
+        <div class="details-content">
+            <p><strong>Design (<code>task7_bonus_b.py</code>, <code>ring_matrix_multiplication_rect</code>):</strong> $A$ is $N \times K$, $B$ is $K \times M$, $C$ is $N \times M$.</p>
+            <ul style="font-size: 14px;">
+                <li><strong>Divisibility:</strong> $N \bmod P = 0$ and $M \bmod P = 0$. $K$ can be any positive number, because the inner dimension is never split: every block of $A$ keeps all $K$ columns and every block of $B$ keeps all $K$ rows.</li>
+                <li><strong>Blocks:</strong> rank $p$ owns the row block $A_p$ of shape $(N/P) \times K$ and the column block $B_p$ of shape $K \times (M/P)$. The ring rule is unchanged: at step $s$ it computes $C_{p,q} = A_p B_q$ with $q = (p - s) \bmod P$, an $(N/P) \times (M/P)$ block, written into columns $q M/P \ldots (q+1) M/P - 1$ of the local $(N/P) \times M$ result.</li>
+                <li><strong>Communication:</strong> the circulating blocks have $K M / P$ elements; the final <code>Gather</code> of row blocks builds the $N \times M$ result on rank 0.</li>
+                <li>The function infers $N$, $K$ and $M$ from the local block shapes and checks that the inner dimensions agree.</li>
+            </ul>
+            <p><strong>Correctness:</strong> non-square cases $N = 2P, K = 3, M = 3P$; $N = P, K = 7, M = 2P$; $N = 3P, K = 1, M = P$ (an outer product); $N = 5P, K = 40, M = 2P$, plus all square cases. All passed on the laptop ($P = 1, 2, 4$) and on the server ($P = 1, 2, 3, 4, 8, 16$).</p>
+        </div>
+    </details>
+
+    <details>
+        <summary>Bonus C: Two-dimensional algorithms (Cannon, SUMMA)</summary>
+        <div class="details-content">
+            <p>Not implemented; this is a sketch of the two classical 2D algorithms. The $P$ processes form a $\sqrt{P} \times \sqrt{P}$ grid and process $(i, j)$ owns the blocks $A_{ij}$, $B_{ij}$ and computes $C_{ij}$, each of size $(N/\sqrt{P}) \times (N/\sqrt{P})$.</p>
+            <ul style="font-size: 14px;">
+                <li><strong>Cannon's algorithm:</strong> first an initial skew: row $i$ of $A$ is shifted $i$ positions to the left and column $j$ of $B$ is shifted $j$ positions up, so that process $(i, j)$ holds $A_{i,k}$ and $B_{k,j}$ with matching $k$. Then $\sqrt{P}$ steps follow: multiply-accumulate $C_{ij} \mathrel{+}= A \cdot B$, shift $A$ one position left within the process row and $B$ one position up within the process column. These are two rings, one per row and one per column, instead of one global ring.</li>
+                <li><strong>SUMMA:</strong> in step $k$ the owner of panel $A_{ik}$ broadcasts it along process row $i$ and the owner of $B_{kj}$ broadcasts it along process column $j$; every process then adds $A_{ik} B_{kj}$ to its $C_{ij}$. It uses row and column broadcasts instead of point-to-point shifts, needs no initial skew, works for rectangular matrices and non-square grids, and is the basis of ScaLAPACK's PDGEMM.</li>
+            </ul>
+            <p><strong>Difference in communication:</strong> in the 1D ring every process eventually receives the whole matrix $B$: about $(P-1)N^2/P \approx N^2$ elements, independent of $P$. In Cannon's algorithm each process receives $\sqrt{P}$ blocks of $A$ and $\sqrt{P}$ blocks of $B$ of size $N^2/P$, i.e. about $2N^2/\sqrt{P}$ elements, which <strong>falls with $P$</strong>, and each message only travels between direct neighbours in the grid. The server measurements show why this matters: the 1D ring stops scaling at 8 to 32 ranks for $N \le 4096$, partly because every rank still has to receive all of $B$. With $P = 64$ Cannon would reduce the data each rank receives from about $N^2$ to $N^2/4$, and the steps from 63 to 8. For $P = 4$, as on the laptop, $2N^2/\sqrt{P} = N^2$ gives no saving, and the extra skew and two sets of exchanges would only add overhead.</p>
+        </div>
+    </details>
+
+    <details>
+        <summary>Limitations</summary>
+        <div class="details-content">
+            <ul style="font-size: 14px;">
+                <li>The laptop could only run $P = 1, 2, 4$ without oversubscription, and its heterogeneous, power-managed cores make differences below about 20% unreliable there.</li>
+                <li>The server is a virtual machine: its 64 vCPUs may share physical cores or hardware threads of the host, which can affect the $P = 32$ and $P = 64$ points.</li>
+                <li>Both machines communicate through shared memory within one node; conclusions about overlap and communication cost do not transfer directly to a cluster with a network.</li>
+                <li>The server used 5 repetitions (3 for $N = 8192$) instead of 10, which was enough because its spread was small.</li>
+                <li>A laptop run with $N = 4096$ was started but stopped because a single configuration took 3 to 12 s per run with a very wide spread; $N = 4096$ and $8192$ were measured on the server instead.</li>
+                <li>The timed region includes the Python loop overhead and the final <code>Gather</code>, as required, but not the initial distribution.</li>
+            </ul>
+        </div>
+    </details>
+    </body>
+    <script>
+        function loadKaTeXAndRender() {
+            const katexCSS = document.createElement("link");
+            katexCSS.rel = "stylesheet";
+            katexCSS.href =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(katexCSS);
+
+            const katexScript = document.createElement("script");
+            katexScript.src =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+            katexScript.defer = true;
+
+            katexScript.onload = () => {
+                const autoRenderScript = document.createElement("script");
+                autoRenderScript.src =
+                    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                autoRenderScript.defer = true;
+
+                autoRenderScript.onload = () => {
+                    if (window.renderMathInElement) {
+                        window.renderMathInElement(document.body, {
+                            delimiters: [
+                                { left: "$$", right: "$$", display: true },
+                                { left: "$", right: "$", display: false },
+                            ],
+                            throwOnError: false,
+                        });
+                    }
+                };
+                document.head.appendChild(autoRenderScript);
+            };
+
+            document.head.appendChild(katexScript);
+        }
+        loadKaTeXAndRender();
+    </script>
+</html>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.6;
+        color: #111;
+        background-color: #fff;
+        max-width: 1280px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 8px 0;
+    }
+
+    .math {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 17px;
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+
+    ul {
+        margin: 8px 0 16px 20px;
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    .report-header {
+        margin-bottom: 28px;
+    }
+
+    .report-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #111;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table th {
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        width: 15%;
+        padding: 3px 6px 3px 0;
+        white-space: nowrap;
+    }
+
+    .report-meta-table td {
+        color: #111;
+        width: 35%;
+        padding: 3px 12px 3px 0;
+    }
+
+    .report-meta-table a {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .report-meta-table a:hover {
+        text-decoration: underline;
+    }
+
+    .report-divider {
+        border: 0;
+        border-top: 1px solid #d1d5db;
+        margin-top: 8px;
+    }
+
+    .math-left .katex-display {
+        text-align: left !important;
+    }
+
+    .math-left .katex-display > .katex {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    /* Сноски в тексте */
+    a.ref-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0 1px;
+    }
+
+    a.ref-link:hover {
+        text-decoration: underline;
+    }
+
+    .report-references {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .report-references h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .report-references ol {
+        padding-left: 20px;
+    }
+
+    .report-references li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
+
+    .report-references .ref-title {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .report-references a {
+        color: #1a73e8 !important;
+        text-decoration: underline !important;
+        word-break: break-all;
+        cursor: pointer;
+    }
+
+    details {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin: 16px 0;
+        background-color: #fff;
+        transition: all 0.2s ease;
+    }
+
+    details[open] {
+        border-color: #cbd5e1;
+    }
+
+    details > :not(summary) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    summary {
+        cursor: pointer;
+        padding: 10px 14px;
+        user-select: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    summary:hover {
+        background-color: #f8fafc;
+    }
+
+    summary h2 {
+        display: inline;
+        font-size: 16px;
+        margin: 0 0 0 6px;
+    }
+
+    .details-content {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 16px auto;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    img + p {
+        text-align: center;
+        font-size: 13px;
+        color: #57606a;
+        margin-top: -8px;
+        margin-bottom: 20px;
+    }
+</style>
