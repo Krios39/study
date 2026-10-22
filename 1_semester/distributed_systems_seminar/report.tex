@@ -97,7 +97,9 @@ it~\cite{bakhtina2026pqc}. This leads to the following research questions:
 The contribution is a measurement rather than a new method: a testbed that can be redeployed on one
 or several hosts, the cost of each mechanism in milliseconds and bytes from three environments, a
 per-stage breakdown taken from X-Road's own operational monitoring, the sensitivity of the costs to
-added delay together with a prediction made before that measurement, and the raw data.
+added delay together with a prediction made before that measurement, and the raw data. The study
+measures X-Road as it runs today, with its default keys: post-quantum schemes are not yet available
+in X-Road~\cite{bakhtina2026pqc,snetkov2023}, so their effect is discussed rather than measured.
 
 \section{Background: what is paid per message}
 
@@ -132,194 +134,204 @@ The split is a documented design decision: caching status responses and deferrin
 introduced to keep a per-message PKI operation from becoming both a single point of failure and a
 latency source~\cite{ansper2013}. It carries a security price as well, since a cached, nonce-less
 OCSP response leaves a window during which a revoked certificate is still
-accepted~\cite{bakhtina2023ares}. The performance side of that trade-off is what we measure.
+accepted~\cite{bakhtina2023ares}. The performance side of that trade-off is the subject of this study.
 
 \section{Methodology}
 
 \subsection{Testbed}
 
-The testbed consists of one Central Server, a test CA providing certificate status and time-stamping
-services, four Security Servers (a management server, one service consumer and two service
-providers) and two information systems. Four Security Servers rather than the usual two give a
-genuinely distributed deployment in which the consumer's traffic is directed at two independent
-providers, so that queueing at a single node is not mistaken for protocol cost.
+The testbed runs X-Road~7.8.3 in containers built from the official images: one Central Server, a
+test CA that also provides the OCSP and time-stamping services, and four Security Servers --- a
+management server, one consumer (\emph{ss1}) and two providers (\emph{ss2}, \emph{ss3}). The measured
+path is \emph{load generator $\rightarrow$ ss1 $\rightarrow$ ss2 $\rightarrow$ echo service}; the second
+provider is used only to check what limits the consumer under load. The echo service answers a REST
+request with a body of the requested size, filled with random bytes so that the message log cannot
+compress it, and its own processing time is negligible. The load generator is k6, sending REST
+\texttt{GET} requests in a closed loop with a given number of concurrent clients, so the message size
+below is the size of the response body.
 
-The provider-side information system is an echo service returning a response of configurable size
-with negligible processing time. This is deliberate: in the closest existing study database time
-dominated and the effect of interest was not separable from it~\cite{taklai2020}. The trade-off is
-that our figures overstate the \emph{relative} share of the trust mechanisms compared with a
-realistic service, so one calibration point uses an echo service that delays its response by 50\,ms.
-
-All components run as containers pinned by image digest, from a single composition used in every
-environment, with identical CPU and memory limits per container, so that environments differ in
-topology and network rather than in how much hardware each component receives.
+Every Security Server is limited to 2 CPU cores and 4\,GB of memory and the Central Server to 2\,GB,
+in all environments, so that the environments differ in where the containers run rather than in how
+much hardware each of them receives. The whole testbed, including member and service registration,
+is set up by scripts from a single composition file and can be redeployed from scratch.
 
 \subsection{Environments}
 
-The original intention was simpler: develop and debug the stack on a laptop, and collect the actual
-data on a server. Working through the plan showed that the choice of environment is not a detail of
-execution but part of RQ3, and that there are four variants worth considering, with different costs
-and different lead times. They are complementary rather than alternatives, and they can be dropped
-from the bottom of the list if the scope turns out to be too large.
+\paragraph{Three machines.} Three identical laptops (Intel Core i5-8250U, 4 cores and 8 threads,
+16\,GB of memory) connected by a dedicated wired switch. The first runs the Central Server, the test
+CA, the management server and the second provider, the second runs the consumer and the load
+generator, and the third runs the provider and the echo service. The containers have their own
+addresses on the switch network (Docker \texttt{ipvlan}), so the traffic between the Security
+Servers is not translated by the host and leaves the machine. Clocks are synchronised with chrony to
+within half a millisecond, which matters when timestamps from two machines are compared.
 
-\paragraph{A. Single host (laptop).}
-All components on one machine (64\,GB RAM available; per-container limits of 2 cores and 4\,GB are
-applied so that results remain comparable with the other environments). There is no network between
-the Security Servers. This reproduces the conditions of the published
-measurements~\cite{bakhtina2026ijis} and makes our numbers directly comparable with them.
-\emph{Pitfalls:} the Windows/WSL2 stack adds overhead of its own, and the memory given to WSL2 has to
-be fixed in configuration, otherwise it varies between runs; the load generator competes with the
-containers for cores at higher concurrency and must be constrained and checked not to be the
-bottleneck.
+\paragraph{One machine.} The same stack on one of these laptops alone. With the same CPU and the
+same container limits, the difference to the three-machine environment is the network between the
+Security Servers and the sharing of one CPU by all components.
 
-\paragraph{B. Two or three laptops on a local network.}
-Consumer and provider Security Servers on physically separate machines, the supporting components on
-a third machine or alongside the consumer. Requirements: machines of broadly comparable class, a
-wired switch rather than Wi-Fi, Docker on each, and about 50\,GB of free disk on the machines hosting
-a Security Server. \emph{Pitfalls:} hardware is heterogeneous, so part of any asymmetry between nodes
-is explained by the machines rather than by the network; measurements are hard for anyone else to
-reproduce; the network delay obtained here (a fraction of a millisecond) is of the same order as
-inside a data centre, so this variant adds a real network but not a different class of latency. Its
-main value is availability --- it needs no approvals and can be used immediately to debug the stack
-while access to the cloud is being arranged.
+\paragraph{Development laptop.} The same stack on a newer laptop (Intel Core Ultra~7 265U) under
+Windows~11, with the containers running in WSL~2. It shows how the absolute numbers depend on the CPU.
 
-\paragraph{C. Cloud virtual machines (University of Tartu High Performance Computing centre).}
-The primary environment for the reported results, because the hardware is uniform, described, and
-free of foreground activity, which makes the runs reproducible by others.
+\paragraph{Emulated network.} In all of the environments above the Security Servers are at most
+one switch apart, with a round-trip time below a millisecond, whereas the Security Servers of two
+organisations usually communicate over a longer and less predictable path. From local measurements
+alone it is not possible to tell whether the results would hold there. The network is therefore
+emulated between the consumer and the provider on the three machines with netem, the network
+emulator of the Linux kernel~\cite{hemminger2005}, which adds a chosen delay to the packets of a
+given flow. The same approach is used to study TLS under different network conditions without
+Internet-scale infrastructure~\cite{paquin2020}, and the accuracy of the delay netem produces has
+been examined in~\cite{nussbaum2009,jurgelionis2011}. How the delay is applied and verified is
+described in Section~\ref{sec:delay}.
 
-\begin{itemize}[leftmargin=1.4em]
-  \item \emph{C1, two or three virtual machines.} Consumer and providers on different machines, so
-  the measured link exists. Indicative sizing: a core machine (Central Server, test CA, management
-  Security Server) with 4 vCPU, 8\,GB RAM and 40\,GB disk; a consumer machine with 4 vCPU, 8\,GB and
-  60\,GB; a provider machine with 6 vCPU, 12\,GB and 60\,GB. Software: Ubuntu 24.04 LTS and Docker;
-  TCP 5500, 5577, 80, 443 and 4001 reachable between the machines; the default Docker bridge network
-  moved off 172.17.0.0/16, as the operator's documentation requires.
-  \item \emph{C2, a single virtual machine (fallback).} Everything on one instance of 8 vCPU, 32\,GB
-  RAM and 60\,GB disk, no externally opened ports. There is no network between the Security Servers,
-  so RQ3 is addressed only through emulated latency (\texttt{tc netem}~\cite{hemminger2005}, 1--50\,ms),
-  as in TLS benchmarking where emulation isolates the effect of latency and does not need
-  Internet-scale infrastructure~\cite{paquin2020}. It is a weaker answer than a real wide-area link
-  and is reported as such.
-\end{itemize}
-
-\emph{Pitfalls:} lead time for the virtual machines and for opening the ports is outside our
-control, which is why the request is sent on day one and why variant B exists.
-
-\paragraph{D. Hybrid: consumer on a laptop, the rest in the cloud (optional).}
-The only variant with a wide-area link and therefore with a round-trip time an order of magnitude
-above the others. It requires no inbound access to the laptop, since the consumer always initiates
-the connection; it does require TCP 5500 and 5577 to be reachable on the cloud side, with a
-WireGuard tunnel as a fallback if that is not granted --- in which case a control run with and
-without the tunnel is needed to separate the tunnel's own cost. \emph{Pitfalls:} a home uplink is
-variable, and the variance may well be comparable to the effects we measure, as happened
-in~\cite{taklai2020}. This variant is therefore treated as an external-validity check rather than a
-source of primary results.
-
-If the scope has to be reduced, D is dropped first and B second; A together with C is the minimal
-meaningful set.
+On all machines the CPU runs in its performance power mode, which is checked before every grid and
+recorded with each run, since the power mode affects the latency.
 
 \subsection{Isolating the cost of a mechanism}
 
-Signing cannot be switched off in X-Road, so the decomposition is obtained by differencing a ladder
-of configurations:
+The trust mechanisms of RQ1 cannot all be switched off one at a time, so each of them is observed
+in the way that changes as little else as possible (Table~\ref{tab:mech}).
 
-\begin{enumerate}[leftmargin=1.6em]
-  \item \textbf{Direct HTTP} from the client to the echo service, without X-Road. Lower bound.
-  \item \textbf{Plain mutual TLS} between two simple proxies using the same certificates. Separates
-  the cost of the channel from the cost of X-Road.
-  \item \textbf{X-Road, default configuration.} The reference point for normal operation.
-  \item \textbf{X-Road without time-stamping}, with \texttt{acceptable-timestamp-failure-period} set
-  to zero and the time-stamping service disabled, a configuration in which the Security Server has
-  been observed to keep processing requests independently of the TSA~\cite{mironova2017}.
-  \item \textbf{X-Road with immediate time-stamping} (\texttt{timestamp-immediately}), which removes
-  batching and exposes the full per-message cost.
-  \item \textbf{X-Road with a short OCSP freshness interval}, so that status checking is forced into
-  the request path.
-  \item \textbf{X-Road with elliptic-curve keys} (secp256r1) instead of the default RSA-2048.
-\end{enumerate}
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Mechanism & Observed through \\
+\midrule
+The whole X-Road path & \emph{direct} compared with \emph{full} \\
+Connection setup (TCP and TLS) & \emph{reuse} compared with \emph{full} \\
+Logging of message bodies & \emph{nobody} compared with \emph{full} \\
+Signing and verification & per-stage breakdown (Section~\ref{sec:measured}) \\
+Time-stamping & requests to the time-stamping service; \emph{synctsa} as another policy \\
+Certificate status checking & requests to the OCSP responder \\
+\bottomrule
+\end{tabular}
+\caption{How the cost of each trust mechanism is observed.}
+\label{tab:mech}
+\end{table}
 
-Differences (3)$-$(2) and (2)$-$(1) give the cost of X-Road above plain mutual TLS and the cost of the
-channel itself; (5)$-$(3), (6)$-$(3) and (3)$-$(4) give time-stamping and status checking explicitly.
-Configurations 4 to 6 are deliberately set away from their defaults in order to make a mechanism
-observable, and the figures obtained from them describe an upper bound on its cost; configuration 3
-is what a deployment actually runs, and production deployments may use even longer
-intervals~\cite{mironova2017}.
+Where a setting removes or changes a mechanism, a configuration is compared with the default one
+(\emph{full}) and differs from it in that setting only:
 
-In parallel, X-Road's own operational monitoring records per-request timestamps and message sizes
-inside the Security Server, which we intend to use as an independent, non-differential
-decomposition. The exact fields and the query interface are to be confirmed against the protocol
-specification before the first run.
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{direct} --- plain HTTP from the load generator to the echo service, without X-Road.
+  Its difference to \emph{full} is the whole X-Road path, not any single mechanism.
+  \item \textbf{reuse} --- connections between the Security Servers are kept open
+  (\texttt{pool-enable-connection-reuse}, \texttt{server-support-clients-pooled-connections} and
+  \texttt{server-connector-max-idle-time}). By default each message opens a new
+  connection~\cite{xroadsyspar}, so the difference is the cost of setting up a connection, TCP and
+  TLS together~\cite{naylor2014}.
+  \item \textbf{nobody} --- message bodies are not written to the message log
+  (\texttt{message-body-logging=false}), so the difference is the cost of logging the body.
+  \item \textbf{synctsa} --- every message is time-stamped synchronously
+  (\texttt{timestamp-immediately=true}). This is a different policy rather than the cost of the
+  default batched time-stamping, and is reported as such.
+\end{itemize}
 
-\subsection{How deep to go into signature schemes}
+Signing and verification cannot be switched off, so their cost is taken from the per-stage breakdown
+rather than from a difference between configurations.
 
-A deliberate scoping decision, and one where the supervisor's opinion is wanted. We do not intend to
-study the internals of signature schemes, prove anything about them, or implement one. A signature
-is treated as a component with a measurable cost profile: time to sign, time to verify, bytes added
-to the message, behaviour under concurrency.
+The two background mechanisms cannot be moved into the request path without changing what is
+measured. Postponing time stamps by a long interval would violate a documented constraint between the
+time-stamping interval and the OCSP freshness~\cite{xroadsyspar}. Making the OCSP freshness shorter
+than the interval at which the signer refreshes its cached responses makes every request fail,
+because the Security Server takes certificate status only from that cache and does not query the
+responder while it processes a message. For these two mechanisms the cost is therefore observed as the number of requests
+sent to the time-stamping service and to the OCSP responder during each run and while its messages
+are being time-stamped.
 
-Inside X-Road two schemes can be exercised today, since both are supported for signing and
-authentication keys: RSA-2048 and the Elliptic Curve Digital Signature Algorithm (ECDSA) over
-secp256r1~\cite{bakhtina2026pqc,bakhtina2026ijis}. Comparing them costs one configuration change and
-yields a second data point for the signing and verification share, which is what makes any
-extrapolation credible: a single measured scheme gives a number but not a slope.
+\subsection{What is measured}\label{sec:measured}
 
-Post-quantum schemes cannot be exercised inside X-Road at present; no implementation exists and both
-available reports treat the migration as future work~\cite{bakhtina2026pqc,snetkov2023}. We therefore
-propose two layers. The system layer measures RSA-2048 and ECDSA in the real exchange. The primitive
-layer measures signing and verification of the Module-Lattice Digital Signature Algorithm (ML-DSA,
-formerly Dilithium) and Falcon --- together with the corresponding RSA and ECDSA operations for
-calibration --- on the same hardware, using an off-the-shelf library, so that the ratios we use are
-ours rather than borrowed from a benchmark on different hardware. The prediction for a post-quantum
-X-Road is then the measured per-message signing share scaled by the measured primitive ratio, plus
-the measured effect of message size on latency applied to the known growth in signature size (4595
-bytes for Dilithium5 against 256 bytes for RSA-2048~\cite{snetkov2023}). Such a prediction is an
-extrapolation and will be labelled as one; its value is that each factor in it is measured rather
-than assumed. If a narrower scope is preferred, the primitive layer is the part to drop: the study
-remains sound with RSA and ECDSA alone and loses only the forward-looking section.
+For each request the load generator records the latency and whether a correct response of the
+expected size arrived. For each run the bytes exchanged between consumer and provider,
+counted by \texttt{iptables} inside the network namespace of the consumer on the X-Road port, the
+growth of the message log, and the number of OCSP and time-stamping requests from the CA log are
+recorded.
 
-\subsection{Factors, metrics and procedure}
+X-Road also records four timestamps per request on each Security Server in its operational
+monitoring database: when the request arrived, when it was forwarded, when the response arrived and
+when it was returned. Joining the records of the consumer and the provider by the request identifier
+splits the latency into six consecutive stages: the consumer before sending, the way to the provider
+(which includes signing and logging on the consumer and setting up the connection), the provider
+before forwarding (verification and logging), the echo service, the provider returning the response,
+and the consumer finishing it. The stages add up to the end-to-end time. These are timestamps of the
+measured system itself with a resolution of 1\,ms, and between machines they include the residual
+clock offset.
 
-Payload sizes of 1\,KB, 10\,KB, 100\,KB and 1\,MB; concurrency of 1, 2, 4, 8, 16 and 32 clients; the
-seven configurations above; two key types; Representational State Transfer (REST) as the primary
-protocol. The grid is not fully crossed: sizes are crossed with configurations at a single client to
-obtain clean latency figures, and concurrency is crossed with configurations at 10\,KB to obtain
-behaviour under load.
+\subsection{Procedure}
 
-Metrics: median, 90th and 99th percentile latency (means are reported only for comparability with
-prior work); throughput at saturation; bytes on the wire per exchange; the number of status and
-time-stamping requests per thousand messages; message-log growth per message; and container-level
-CPU and memory use.
+Two message sizes are used with one client. Post-quantum signatures and certificates would add a few
+kilobytes to every message~\cite{snetkov2023}, which matters most for small messages, so 10\,KB
+represents a small message; 1\,MB represents a large one, whose body the message log stores in full
+by default~\cite{xroadsyspar}. One client with no other load gives the baseline latency without
+queueing, and the load is then increased until one of the components runs out of
+resources~\cite{taklai2020}: the number of clients grows beyond the two CPU cores available to each
+Security Server, to 4, 16 and 32, which covers the 10 to 30 concurrent clients used
+in~\cite{taklai2020} and reaches the throughput ceiling of the Security Servers. The main grid therefore crosses the five configurations with 10\,KB and 1\,MB at one
+client and 10\,KB at 4, 16 and 32 clients, plus the two-provider case at 4, 16 and 32 clients.
 
-Each configuration is preceded by 50 warm-up requests and measured over 1000 requests, following
-\cite{bakhtina2026ijis}. Warm-up, independent repetitions and reporting the spread between them follow
-the practice for Java performance evaluation in~\cite{georges2007}, since the Security Server runs
-on the Java virtual machine. Measurements are repeated three times at different times of day, with the order of
-configurations randomised rather than run in blocks. At 1\,MB payloads the count is reduced to 200
-requests, which is sufficient at that size and keeps the message log from growing without need.
-Before the campaign a control run measures the same configuration twice in succession; if the
-difference between repetitions is comparable to the effect we expect, the testbed is not ready and
-the load or the node count is reduced. Raw per-request data, image digests and configuration files
-are published alongside the aggregates.
+The Security Server runs on the Java virtual machine, whose first requests after a start are slower
+until the code is compiled, so only the steady state is measured~\cite{georges2007}. After every
+configuration change the Security Servers are restarted and warmed up by a discarded run at four
+clients, followed by warm-up requests before every measured run. The amount of warm-up is set from a
+pilot run as the point after which the median latency over consecutive windows of requests stops
+decreasing. Each run measures 1000 requests, as in~\cite{bakhtina2026ijis}, and 200 at 1\,MB, where
+every message adds about a megabyte to the message log of each Security Server.
 
-Storage deserves a note, because message bodies are logged in full by default on both Security
-Servers~\cite{xroadsyspar}. One exchange costs roughly twice the payload plus a few kilobytes of
-signature and metadata per server, so a thousand exchanges at 10\,KB produce on the order of 60\,MB
-in total and at 1\,MB several gigabytes. The message log is therefore truncated between
-configurations and \texttt{keep-records-for} is set to one day, which keeps the peak requirement at a
-few gigabytes rather than letting it accumulate across the campaign.
+Following~\cite{georges2007}, every point is measured in several independent runs rather than once.
+A grid repeats every point five times in random order, and a control run with the default
+configuration at the start of each repetition and at the end shows the drift of the testbed during
+the grid. Grids are repeated over several nights and combined. Before the message log is cleaned, the
+runner waits until every logged message has its time stamp, so that deferred work is not lost
+between runs.
+
+Results are reported as the median over repetitions of each run's median, with the interquartile
+range between repetitions and the number of successful requests.
+
+\subsection{Added delay between the Security Servers}\label{sec:delay}
+
+Wide-area deployment is approximated by adding delay between the consumer and the provider with
+netem~\cite{hemminger2005}, as done for TLS benchmarking in~\cite{paquin2020}. Half of the
+round-trip time is added on each side, in the network namespaces of the two Security Servers and only
+for packets to the other server, so that all traffic between them is delayed, including the OCSP
+exchange between Security Servers, while the client, the Central Server and the CA stay on the local
+network. The delay is fixed, without jitter, since netem reproduces jitter less
+accurately~\cite{jurgelionis2011,nussbaum2009}. The results are reported as the sensitivity of the
+costs to added delay between the Security Servers, not as a measurement of a real wide-area link.
+
+The added round-trip time (0, 5, 20 and 50\,ms) is verified on the measured flow itself: during every
+run the round-trip time of the consumer's connections to the provider is read from the kernel. Before
+the grid, a pilot with traffic captures of 20 sequential requests per setting identified whether
+each request used a new connection with a resumed TLS session or a reused one, and how many times one
+side waited for the other. From these exchanges a prediction was made of how latency should grow with the
+round-trip time, and the prediction was then compared with the measured slope.
+
+The delay grid crosses \emph{full} and \emph{reuse} with 10\,KB and 1\,MB at one client and 0, 5, 20
+and 50\,ms (20 repetitions), and an extended grid adds 100\,KB and 4 and 16 clients at 0, 20 and
+50\,ms (15 repetitions).
 
 \subsection{Threats to validity}
 
-The test CA, status responder and TSA run next to the Security Servers, whereas in production they
-are external services with their own latency; our figures for those two mechanisms are therefore
-optimistic. The echo service raises the relative share of the trust mechanisms, which the 50\,ms
-calibration point mitigates but does not remove. The weakened configurations are upper bounds rather
-than descriptions of normal operation. All intervals of the background mechanisms are left at their
-defaults, while a production deployment may use longer ones: for the Estonian instance of 2017 a
-master's thesis documents a global configuration validity of six hours and an OCSP freshness of eight
-hours~\cite{mironova2017}. Background costs per message are therefore even lower in such a deployment
-than in ours. Containerisation, and on the laptop the Windows/WSL2 stack,
-add overhead of their own, which is one of the reasons for running environments B and C at all.
+Several properties of the testbed shift the absolute values. The machines are laptops rather than
+servers, and the development laptop adds the overhead of WSL~2 on Windows. The test CA, OCSP
+responder and time-stamping service run next to the Security Servers, whereas in production they are
+external services with their own latency, so the figures for status checking and synchronous
+time-stamping are optimistic. All intervals of the background mechanisms are left at their defaults,
+while a production deployment may use longer ones: for the Estonian instance of 2017 a master's
+thesis documents a global configuration validity of six hours and an OCSP freshness of eight
+hours~\cite{mironova2017}, so background costs per message would be even lower there than in the
+testbed.
+
+Other properties change the shares and the spread rather than the absolute values. The echo service
+has no processing time of its own, which raises the relative share of the trust mechanisms compared
+with a real service. Under load the spread between repetitions is larger, so for concurrency only
+throughput ceilings are reported, not differences between configurations. Added delay is emulated:
+it has no cross traffic and no losses.
+
+Because of these factors the absolute latencies describe this testbed rather than a production
+deployment. The comparisons are therefore made between configurations on the same machines and
+under the same conditions, and the results are read primarily as differences between configurations
+and as their change with message size, load and added delay; absolute values are reported for
+reference only.
 
 \section{Expected outcome}
 
@@ -348,6 +360,30 @@ does today.
 
 Steps 2 and 3 are the schedule risk; the waiting time in step 1 is the reason environment B is on the
 list at all.
+
+\section*{TODO: to add in Results and Discussion}
+
+\emph{Working list for the draft, to be removed before submission.}
+
+\begin{itemize}[leftmargin=1.4em]
+  \item CPU power mode: 80\,ms in the energy-saving mode against 29\,ms in the performance mode, and
+  the per-stage timestamps showing that computation slowed down, not the network.
+  \item Pilot numbers behind the grid: latency at 1, 10, 100\,KB and 1\,MB (29--33\,ms up to 100\,KB,
+  doubled at 1\,MB), throughput ceiling at about eight clients, warm-up curve (114\,$\rightarrow$\,45\,ms,
+  plateau after 2500--3000 requests) and the 20\,\% spread between repeated runs.
+  \item The warm-up and other figures differ from the sources: \cite{bakhtina2026ijis} reports means
+  over 1000 requests without describing a warm-up, while thousands of warm-up requests were needed
+  here.
+  \item How many times each grid was repeated in each environment (30 on three machines, 15 on one
+  machine, 20 on the development laptop; delay grids 20 and 15).
+  \item TLS session resumption from a session ticket and the count of round trips per message
+  (3 with a new connection, 1 with reuse, plus the waits found in the captures).
+  \item Short OCSP freshness made every request fail --- as an observation supporting that status
+  checking is not in the request path.
+  \item Spread between repetitions under load (25--45\,\%), the reason only ceilings are reported.
+  \item Absolute values depend on the CPU while the differences between configurations hold across
+  machines (one machine against the development laptop) --- for the Discussion.
+\end{itemize}
 
 \begin{thebibliography}{99}
 
@@ -460,6 +496,16 @@ T.~Grandison, M.~Sloman.
 R.~Anderson.
 \newblock \emph{Security Engineering: A Guide to Building Dependable Distributed Systems}, 3rd ed.
 \newblock Wiley, 2020.
+
+\bibitem{nussbaum2009}
+L.~Nussbaum, O.~Richard.
+\newblock A Comparative Study of Network Link Emulators.
+\newblock In \emph{Communications and Networking Simulation Symposium (CNS '09)}, 2009.
+
+\bibitem{jurgelionis2011}
+A.~Jurgelionis, J.-P.~Laulajainen, M.~Hirvonen, A.~I.~Wang.
+\newblock An Empirical Study of NetEm Network Emulation Functionalities.
+\newblock In \emph{ICCCN 2011}, IEEE, 2011.
 
 \end{thebibliography}
 
