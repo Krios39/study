@@ -117,15 +117,15 @@ For this study the mechanisms divide by their position relative to the request p
   connections are reused~\cite{naylor2014}. By default they are not: the client-side pool reuse
   (\texttt{pool-enable-connection-reuse}) and the provider-side support for pooled connections
   (\texttt{server-support-clients-pooled-connections}) are both off, so each message opens a new
-  TCP connection and performs a TLS handshake~\cite{xroadsyspar}. In our traffic captures this is a
-  TLS~1.2 handshake resumed from a session ticket, without a certificate exchange, which costs one
-  round trip on top of the TCP one.
+  TCP connection and performs a TLS handshake~\cite{xroadsyspar}.
   \item \textbf{Asynchronous}, amortised or deferred: certificate status checking, which uses cached
   OCSP responses refreshed on a fixed interval (20 minutes by default) rather than one query per
   message; time-stamping, applied in batches over a hash chain of log records (once per minute by
   default, with a tolerated time-stamping outage of four hours, the parameter
   \texttt{acceptable-timestamp-failure-period} being 14400 seconds); and the periodic refresh of the
-  global configuration~\cite{kivimaki2020,xroadsyspar,ansper2013}.
+  global configuration~\cite{kivimaki2020,xroadsyspar,ansper2013}. Because one time stamp covers a
+  whole batch, its cost per message is divided by the size of the batch and falls as the load
+  grows~\cite{xroadarcss,ansper2013}.
 \end{itemize}
 
 The split is a documented design decision: caching status responses and deferring time stamps were
@@ -133,13 +133,6 @@ introduced to keep a per-message PKI operation from becoming both a single point
 latency source~\cite{ansper2013}. It carries a security price as well, since a cached, nonce-less
 OCSP response leaves a window during which a revoked certificate is still
 accepted~\cite{bakhtina2023ares}. The performance side of that trade-off is what we measure.
-
-Two further properties shape the experiment. First, messages are signed individually while
-time-stamping is batched over hash chains~\cite{xroadarcss,ansper2013}, so the per-message cost of
-time-stamping depends on load and has to be observed across concurrency levels rather than at a
-single point. Second, the intervals above are defaults, and a production deployment may use longer
-ones: for the Estonian instance of 2017 a master's thesis documents a global configuration validity
-of six hours and an OCSP freshness of eight hours~\cite{mironova2017}.
 
 \section{Methodology}
 
@@ -321,7 +314,11 @@ The test CA, status responder and TSA run next to the Security Servers, whereas 
 are external services with their own latency; our figures for those two mechanisms are therefore
 optimistic. The echo service raises the relative share of the trust mechanisms, which the 50\,ms
 calibration point mitigates but does not remove. The weakened configurations are upper bounds rather
-than descriptions of normal operation. Containerisation, and on the laptop the Windows/WSL2 stack,
+than descriptions of normal operation. All intervals of the background mechanisms are left at their
+defaults, while a production deployment may use longer ones: for the Estonian instance of 2017 a
+master's thesis documents a global configuration validity of six hours and an OCSP freshness of eight
+hours~\cite{mironova2017}. Background costs per message are therefore even lower in such a deployment
+than in ours. Containerisation, and on the laptop the Windows/WSL2 stack,
 add overhead of their own, which is one of the reasons for running environments B and C at all.
 
 \section{Expected outcome}
