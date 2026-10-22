@@ -53,7 +53,8 @@ for (const r of runs) {
   // два провайдера (target xroad2) — отдельной строкой: full+ss3 рядом с full при той же нагрузке
   const config = r.config + (r.meta.target === 'xroad2' ? '+ss3' : '');
   // WAN-сетка (bench/matrix-wan.json): задержка ss1 <-> ss2 — ещё одно измерение точки
-  const rtt = r.meta.rtt_ms ?? null;
+  // '0q' — контроль с установленным netem и нулевой задержкой (meta.netem_qdisc при rtt_ms 0)
+  const rtt = r.meta.rtt_ms === 0 && r.meta.netem_qdisc ? '0q' : r.meta.rtt_ms ?? null;
   const key = `${config}|${r.size}|${r.vus}|${rtt}`;
   if (!groups.has(key)) groups.set(key, { config, size: r.size, vus: r.vus, rtt, runs: [] });
   groups.get(key).runs.push(r);
@@ -98,7 +99,7 @@ for (const g of groups.values()) {
     iqr_rps: iqr(g.runs.map((r) => r.rps_measured)),
   });
 }
-rows.sort((a, b) => a.size - b.size || a.vus - b.vus || (a.rtt ?? 0) - (b.rtt ?? 0) || a.config.localeCompare(b.config));
+rows.sort((a, b) => a.size - b.size || a.vus - b.vus || parseFloat(a.rtt ?? 0) - parseFloat(b.rtt ?? 0) || a.config.localeCompare(b.config));
 
 // разности с full при тех же size/vus
 const full = new Map(rows.filter((r) => r.config === 'full').map((r) => [`${r.size}|${r.vus}|${r.rtt}`, r]));

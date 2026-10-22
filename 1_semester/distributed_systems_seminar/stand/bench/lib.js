@@ -257,22 +257,26 @@ function netcountTc(c) {
   if (shCode('docker', [...ctx(c), 'run', '--rm', '--entrypoint', 'sh', 'stand-netcount', '-c', 'command -v tc && command -v tshark']) !== 0)
     composeOn(hostOf(c) || THIS_HOST, '--profile', 'tools', 'build', 'netcount');
 }
-function netemScript(peerIp, rttMs) {
+// rtt 'q0' — контроль: те же правила tc (prio + netem + фильтр), но задержка 0 мс (проверка, что сама очередь netem
+// ничего не меняет); 0 — правил нет совсем
+function netemScript(peerIp, rttMs, keepQdisc = false) {
   const dev = `DEV=$(ip -o route get ${peerIp} | sed -n 's/.* dev \\([^ ]*\\).*/\\1/p')`;
-  const add = rttMs > 0
+  const add = rttMs > 0 || keepQdisc
     ? `tc qdisc add dev $DEV root handle 1: prio bands 4 priomap 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 && `
       + `tc qdisc add dev $DEV parent 1:4 handle 40: netem delay ${rttMs / 2}ms limit 100000 && `
       + `tc filter add dev $DEV parent 1: protocol ip prio 1 u32 match ip dst ${peerIp}/32 flowid 1:4; `
     : '';
-  return `${dev}; tc qdisc del dev $DEV root 2>/dev/null; ${add}tc qdisc show dev $DEV | grep -o 'netem.*delay [0-9.]*ms' || true`;
+  return `${dev}; tc qdisc del dev $DEV root 2>/dev/null; ${add}tc qdisc show dev $DEV | grep -o 'netem.*' || true`;
 }
-function netem(rttMs, a = 'ss1', b = 'ss2') {
+function netem(rtt, a = 'ss1', b = 'ss2') {
+  const keep = rtt === 'q0';
+  const rttMs = keep ? 0 : Number(rtt) || 0;
   const state = {};
   for (const [c, peer] of [[a, b], [b, a]]) {
     netcountTc(c);
     const ip = dexec(c, 'getent', 'hosts', peer).split(/\s+/)[0];
-    const out = sh('docker', [...ctx(c), 'run', '--rm', '--net', `container:${c}`, '--cap-add', 'NET_ADMIN', 'stand-netcount', 'sh', '-c', netemScript(ip, rttMs)]);
-    state[c] = (out.match(/delay [0-9.]+ms/) || [null])[0];
+    const out = sh('docker', [...ctx(c), 'run', '--rm', '--net', `container:${c}`, '--cap-add', 'NET_ADMIN', 'stand-netcount', 'sh', '-c', netemScript(ip, rttMs, keep)]);
+    state[c] = (out.match(/netem.*/) || [null])[0];
   }
   return state;
 }
@@ -298,7 +302,7 @@ function netemState(a = 'ss1', b = 'ss2') {
   for (const c of [a, b]) {
     netcountTc(c);
     const out = sh('docker', [...ctx(c), 'run', '--rm', '--net', `container:${c}`, 'stand-netcount', 'sh', '-c', 'tc qdisc show 2>/dev/null || true'], { ok: true });
-    state[c] = (out.match(/netem.*?delay [0-9.]+ms/) || [null])[0];
+    state[c] = (out.match(/netem.*/) || [null])[0];
   }
   return state;
 }

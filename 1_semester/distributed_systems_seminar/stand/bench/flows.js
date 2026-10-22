@@ -17,7 +17,7 @@ const { apply: applyConfig } = require('./config');
 
 const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
-const RTTS = opt('--rtt', '0,20').split(',').map(Number);
+const RTTS = opt('--rtt', '0,20').split(',').map((x) => (x === 'q0' ? 'q0' : Number(x)));   // q0 — netem стоит, задержка 0
 const CONFIGS = opt('--configs', 'full,reuse').split(',');
 const N = Number(opt('--n', '20'));
 const SIZE = Number(opt('--size', '10240'));
@@ -70,7 +70,7 @@ function analyse(req, rtt) {
   const synP = pk.find((p) => p.syn && !p.ack && p.dir === 'C'), synAck = pk.find((p) => p.syn && p.ack && p.dir === 'S');
   const hs = new Set(pk.flatMap((p) => p.hs));
   const conn = synP ? (hs.has(11) ? 'new TCP + full TLS' : hs.has(1) ? 'new TCP + resumed TLS' : 'new TCP, no TLS') : 'reused connection';
-  const thr = Math.max(0.4 * rtt, 1);
+  const thr = Math.max(0.4 * (Number(rtt) || 0), 1);
   const gaps = [];
   for (let i = 1; i < pk.length && pk[i - 1] !== last; i++) {
     const g = pk[i].t - pk[i - 1].t;

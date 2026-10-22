@@ -102,14 +102,14 @@ function summarize(dirs) {
       if (d.startsWith('_') || !fs.existsSync(f) || !fs.existsSync(m)) continue;
       const meta = L.readJson(m), o = L.readJson(f);
       if (/^control/.test(meta.tag || '') || !o.joined) continue;
-      const rtt = meta.rtt_ms ?? null;                                // WAN-сетка: задержка ss1 <-> ss2
+      const rtt = meta.rtt_ms === 0 && meta.netem_qdisc ? '0q' : meta.rtt_ms ?? null;                                // WAN-сетка: задержка ss1 <-> ss2
       const k = `${label(meta)}|${meta.size}|${meta.vus}|${rtt}`;
       if (!groups.has(k)) groups.set(k, { config: label(meta), size: meta.size, vus: meta.vus, rtt, runs: [] });
       groups.get(k).runs.push(o);
     }
   }
   const order = ['full', 'nobody', 'reuse', 'synctsa', 'full+ss3'];
-  const rowsOut = [...groups.values()].sort((a, b) => a.size - b.size || a.vus - b.vus || (a.rtt ?? 0) - (b.rtt ?? 0) || order.indexOf(a.config) - order.indexOf(b.config));
+  const rowsOut = [...groups.values()].sort((a, b) => a.size - b.size || a.vus - b.vus || parseFloat(a.rtt ?? 0) - parseFloat(b.rtt ?? 0) || order.indexOf(a.config) - order.indexOf(b.config));
   for (const g of rowsOut) {
     g.reps = g.runs.length;
     g.joined = g.runs.reduce((s, o) => s + o.joined, 0);

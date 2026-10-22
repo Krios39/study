@@ -1,0 +1,31 @@
+{
+  "reps": 5,
+  "warmup_first": 1000,
+  "warmup_next": 200,
+  "n": 1000,
+  "n_large": 200,
+  "large_from": 1048576,
+  "configs": [
+    "full",
+    "reuse"
+  ],
+  "points": [
+    [10240, 1],
+    [1048576, 1]
+  ],
+  "rtts": [0, "q0"],
+  "direct": false,
+  "control": {
+    "config": "full",
+    "size": 10240,
+    "vus": 1,
+    "per_rep": true
+  },
+  "stamping_timeout_s": 300,
+  "burnin": {
+    "size": 10240,
+    "vus": 4,
+    "n": 2000,
+    "warmup": 1000
+  }
+}
