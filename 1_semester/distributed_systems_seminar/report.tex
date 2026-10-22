@@ -84,20 +84,20 @@ over a network, and the NIIS report expects post-quantum handshakes to add round
 it~\cite{bakhtina2026pqc}. This leads to the following research questions:
 
 \begin{description}[leftmargin=2.2em,style=nextline]
-  \item[RQ1] How much does each trust mechanism --- TLS between the Security Servers, message signing,
-  signature verification, certificate status checking, time-stamping and message logging ---
-  contribute to the latency of an exchange and to the bytes on the wire, and which of these costs is
-  paid on every message rather than deferred?
+  \item[RQ1] How much do the trust mechanisms of an exchange --- the connection between the Security
+  Servers, signing and verification, message logging, time-stamping and certificate status checking
+  --- contribute to its latency and to the bytes on the wire, and which of these costs are paid on
+  every message rather than deferred?
   \item[RQ2] How do those contributions change with message size and with the number of concurrent
   clients?
   \item[RQ3] Does the answer change when the Security Servers run on separate machines instead of one
-  host, and how sensitive is it to added delay between them?
+  host, and how does it change with a round-trip time added between them?
 \end{description}
 
 The contribution is a measurement rather than a new method: a testbed that can be redeployed on one
 or several hosts, the cost of each mechanism in milliseconds and bytes from three environments, a
-per-stage breakdown taken from X-Road's own operational monitoring, the sensitivity of the costs to
-added delay together with a prediction made before that measurement, and the raw data. The study
+per-stage breakdown taken from X-Road's own operational monitoring, the effect of a
+controlled added round-trip time together with a prediction made before that measurement, and the raw data. The study
 measures X-Road as it runs today, with its default keys: post-quantum schemes are not yet available
 in X-Road~\cite{bakhtina2026pqc,snetkov2023}, so their effect is discussed rather than measured.
 
@@ -175,10 +175,10 @@ Windows~11, with the containers running in WSL~2. It shows how the absolute numb
 \paragraph{Emulated network.} In all of the environments above the Security Servers are at most
 one switch apart, with a round-trip time below a millisecond, whereas the Security Servers of two
 organisations usually communicate over a longer and less predictable path. From local measurements
-alone it is not possible to tell whether the results would hold there. The network is therefore
-emulated between the consumer and the provider on the three machines with netem, the network
-emulator of the Linux kernel~\cite{hemminger2005}, which adds a chosen delay to the packets of a
-given flow. The same approach is used to study TLS under different network conditions without
+alone it is not possible to tell whether the results would hold there. A controlled round-trip time
+is therefore added between the consumer and the provider on the three machines with netem, the
+network emulator of the Linux kernel~\cite{hemminger2005}, which adds a chosen delay to the packets of
+a given flow. This is not a model of a real wide-area deployment, only of the added round-trip time. The same approach is used to study TLS under different network conditions without
 Internet-scale infrastructure~\cite{paquin2020}, and the accuracy of the delay netem produces has
 been examined in~\cite{nussbaum2009,jurgelionis2011}. How the delay is applied and verified is
 described in Section~\ref{sec:delay}.
@@ -198,9 +198,9 @@ in the way that changes as little else as possible (Table~\ref{tab:mech}).
 Mechanism & Observed through \\
 \midrule
 The whole X-Road path & \emph{direct} compared with \emph{full} \\
-Connection setup (TCP and TLS) & \emph{reuse} compared with \emph{full} \\
+Inter-server connection policy & \emph{reuse} compared with \emph{full} \\
 Logging of message bodies & \emph{nobody} compared with \emph{full} \\
-Signing and verification & per-stage breakdown (Section~\ref{sec:measured}) \\
+Signing and verification & stages of the breakdown (Section~\ref{sec:measured}) \\
 Time-stamping & requests to the time-stamping service; \emph{synctsa} as another policy \\
 Certificate status checking & requests to the OCSP responder \\
 \bottomrule
@@ -218,8 +218,9 @@ Where a setting removes or changes a mechanism, a configuration is compared with
   \item \textbf{reuse} --- connections between the Security Servers are kept open
   (\texttt{pool-enable-connection-reuse}, \texttt{server-support-clients-pooled-connections} and
   \texttt{server-connector-max-idle-time}). By default each message opens a new
-  connection~\cite{xroadsyspar}, so the difference is the cost of setting up a connection, TCP and
-  TLS together~\cite{naylor2014}.
+  connection~\cite{xroadsyspar}, so the difference is the effect of the connection policy between
+  the Security Servers: setting up the TCP connection and the TLS session and starting every
+  transfer on a new TCP connection~\cite{naylor2014}. It does not isolate the TLS handshake.
   \item \textbf{nobody} --- message bodies are not written to the message log
   (\texttt{message-body-logging=false}), so the difference is the cost of logging the body.
   \item \textbf{synctsa} --- every message is time-stamped synchronously
@@ -227,8 +228,9 @@ Where a setting removes or changes a mechanism, a configuration is compared with
   default batched time-stamping, and is reported as such.
 \end{itemize}
 
-Signing and verification cannot be switched off, so their cost is taken from the per-stage breakdown
-rather than from a difference between configurations.
+Signing and verification cannot be switched off, so they are observed only in the stages of the
+breakdown in which they happen, together with the other work done in the same stages, rather than as
+a difference between configurations.
 
 The two background mechanisms cannot be moved into the request path without changing what is
 measured. Postponing time stamps by a long interval would violate a documented constraint between the
@@ -253,21 +255,24 @@ when it was returned. Joining the records of the consumer and the provider by th
 splits the latency into six consecutive stages: the consumer before sending, the way to the provider
 (which includes signing and logging on the consumer and setting up the connection), the provider
 before forwarding (verification and logging), the echo service, the provider returning the response,
-and the consumer finishing it. The stages add up to the end-to-end time. These are timestamps of the
-measured system itself with a resolution of 1\,ms, and between machines they include the residual
-clock offset.
+and the consumer finishing it. The stages add up to the end-to-end time. The breakdown is descriptive:
+these are timestamps of the measured system itself with a resolution of 1\,ms, and the share of
+requests whose records could be matched on both servers is reported with it. Stages measured within
+one host are more reliable than the two stages that span hosts, where the residual clock offset enters
+the result; explanations that involve the network are checked against packet captures
+(Section~\ref{sec:delay}).
 
 \subsection{Procedure}
 
 Two message sizes are used with one client. Post-quantum signatures and certificates would add a few
-kilobytes to every message~\cite{snetkov2023}, which matters most for small messages, so 10\,KB
-represents a small message; 1\,MB represents a large one, whose body the message log stores in full
+kilobytes to every message~\cite{snetkov2023}, which matters most for small messages, so a 10\,KB
+response represents a small message; a 1\,MB response represents a large one, whose body the message log stores in full
 by default~\cite{xroadsyspar}. One client with no other load gives the baseline latency without
 queueing, and the load is then increased until one of the components runs out of
 resources~\cite{taklai2020}: the number of clients grows beyond the two CPU cores available to each
 Security Server, to 4, 16 and 32, which covers the 10 to 30 concurrent clients used
-in~\cite{taklai2020} and reaches the throughput ceiling of the Security Servers. The main grid therefore crosses the five configurations with 10\,KB and 1\,MB at one
-client and 10\,KB at 4, 16 and 32 clients, plus the two-provider case at 4, 16 and 32 clients.
+in~\cite{taklai2020} and reaches the throughput ceiling of the Security Servers. The main grid therefore crosses the five configurations with 10\,KB and 1\,MB
+responses at one client and 10\,KB at 4, 16 and 32 clients, plus the two-provider case at 4, 16 and 32 clients.
 
 The Security Server runs on the Java virtual machine, whose first requests after a start are slower
 until the code is compiled, so only the steady state is measured~\cite{georges2007}. After every
@@ -287,27 +292,31 @@ between runs.
 Results are reported as the median over repetitions of each run's median, with the interquartile
 range between repetitions and the number of successful requests.
 
-\subsection{Added delay between the Security Servers}\label{sec:delay}
+\subsection{Added round-trip time between the Security Servers}\label{sec:delay}
 
-Wide-area deployment is approximated by adding delay between the consumer and the provider with
+A controlled round-trip time is added between the consumer and the provider with
 netem~\cite{hemminger2005}, as done for TLS benchmarking in~\cite{paquin2020}. Half of the
 round-trip time is added on each side, in the network namespaces of the two Security Servers and only
 for packets to the other server, so that all traffic between them is delayed, including the OCSP
 exchange between Security Servers, while the client, the Central Server and the CA stay on the local
 network. The delay is fixed, without jitter, since netem reproduces jitter less
-accurately~\cite{jurgelionis2011,nussbaum2009}. The results are reported as the sensitivity of the
-costs to added delay between the Security Servers, not as a measurement of a real wide-area link.
+accurately~\cite{jurgelionis2011,nussbaum2009}. The results are reported as the effect of a
+controlled added round-trip time between the Security Servers, not as a measurement of a real
+wide-area deployment. A control at zero delay with the same netem rules installed checks that the
+rules themselves do not change the result.
 
 The added round-trip time (0, 5, 20 and 50\,ms) is verified on the measured flow itself: during every
 run the round-trip time of the consumer's connections to the provider is read from the kernel. Before
-the grid, a pilot with traffic captures of 20 sequential requests per setting identified whether
-each request used a new connection with a resumed TLS session or a reused one, and how many times one
-side waited for the other. From these exchanges a prediction was made of how latency should grow with the
-round-trip time, and the prediction was then compared with the measured slope.
+the grid, a pilot with traffic captures of sequential requests identifies for every setting whether
+a request opens a new connection, with a full or a resumed TLS handshake, or uses an existing one, and
+how many times one side waits for the other. From these exchanges a prediction is made of how latency
+should grow with the round-trip time, and it is compared with the measured slope. Captures of a 1\,MB
+response with and without connection reuse check how the transfer of a large response depends on the
+state of the TCP connection.
 
-The delay grid crosses \emph{full} and \emph{reuse} with 10\,KB and 1\,MB at one client and 0, 5, 20
-and 50\,ms (20 repetitions), and an extended grid adds 100\,KB and 4 and 16 clients at 0, 20 and
-50\,ms (15 repetitions).
+The delay grid crosses \emph{full} and \emph{reuse} with 10\,KB and 1\,MB responses at one client
+and 0, 5, 20 and 50\,ms, and an extended grid adds 100\,KB responses and 4 and 16 clients at 0, 20
+and 50\,ms.
 
 \subsection{Threats to validity}
 
@@ -324,13 +333,13 @@ testbed.
 Other properties change the shares and the spread rather than the absolute values. The echo service
 has no processing time of its own, which raises the relative share of the trust mechanisms compared
 with a real service. Under load the spread between repetitions is larger, so for concurrency only
-throughput ceilings are reported, not differences between configurations. Added delay is emulated:
+throughput ceilings are reported, not differences between configurations. The added round-trip time is emulated:
 it has no cross traffic and no losses.
 
 Because of these factors the absolute latencies describe this testbed rather than a production
 deployment. The comparisons are therefore made between configurations on the same machines and
 under the same conditions, and the results are read primarily as differences between configurations
-and as their change with message size, load and added delay; absolute values are reported for
+and as their change with message size, load and added round-trip time; absolute values are reported for
 reference only.
 
 \section{Expected outcome}
