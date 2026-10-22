@@ -9,109 +9,95 @@
 
 \title{Measuring the Overhead of Trust Mechanisms\\in the X-Road Data Exchange Layer}
 \author{Ruslan Nechshadimov\\\small University of Tartu\\\small Supervisor: Artjom Lind}
-\date{Draft v0.1, September 17, 2026}
+\date{Draft v0.2, Oktober 14, 2026}
 
 \begin{document}
 \maketitle
 
-\begin{center}\small\itshape
-Rude draft compiled with AI help (thoughts and idea is mine, AI just compile). I really hate how this is written, especially the second and
-third paragraphs of the introduction, but I think it is enough to understand the idea.
-\end{center}
-
 \begin{abstract}
-A doctor opening a patient's prescription history, a notary checking who owns a property and a tax
-official pulling a company's filings all need the same thing: an answer that is not only correct
-but provable. The recipient has to know which organisation produced the record, that it was not
-altered on the way, and that the sender cannot later deny having sent it. In Estonia and in a
-growing number of national ecosystems these guarantees are provided by X-Road, the data exchange
-layer between the information systems of the participating organisations. They are produced by
-concrete mechanisms --- a digital signature on every message, verification on the receiving side,
-a message log, time stamps issued by an external authority, a mutually authenticated channel and
-certificate status checking --- and each of them consumes time and bytes on every exchange. This
-report proposes a measurement study that decomposes the end-to-end cost of an X-Road exchange into
-the contributions of these individual mechanisms. We build a testbed of one Central Server, a test
-certification authority providing certificate status and time-stamping services, four Security
-Servers and two information systems; we compare a ladder of deliberately varied trust
-configurations against a baseline that does not use X-Road at all; and we repeat the experiment in
-several environments, from a single laptop to physically separated machines connected by a real
-network. The expected result is a per-mechanism cost table in milliseconds and bytes, with raw data
-and a redeployable testbed, which can serve as the reference point that current proposals for
-post-quantum, decentralised public-key-infrastructure and threshold-signature variants of X-Road
-currently lack.
+WIP
 \end{abstract}
 
 \section{Introduction}
 
-When a hospital queries a registry over X-Road, a sequence of protective steps runs before any data
-is returned. The request is signed with the member organisation's signing key and verified on the
-other side; both Security Servers write the message into their message logs; the log records are
-time-stamped by an external Time-Stamping Authority (TSA); the channel between the two servers is a
-mutually authenticated Transport Layer Security (TLS) connection; and the certificates involved are
-checked against responses obtained through the Online Certificate Status Protocol
-(OCSP)~\cite{xroadarcss,bakhtina2026pqc}. Together these mechanisms give integrity, authenticity and
-non-repudiation, which is what allows an exchange to be treated as evidence. They are also what the
-system pays for that property, on every single message.
+When one organisation acts on data received from another, it depends on something it did not
+produce and cannot check by itself. Trust is the name for that dependence. In organisational
+research it is defined as the willingness of a party to be vulnerable to the
+actions of another party, based on the expectation that the other will perform an action important
+to the trustor, without being able to monitor or control it~\cite{mayer1995}. In computing the same
+idea is phrased as a belief in the competence of an entity to act dependably, securely and reliably
+within a specified context~\cite{grandison2000}. In security engineering a \emph{trusted} component
+is distinguished from a \emph{trustworthy} one: the first is a component whose failure can break the
+security policy, the second one that will not fail~\cite{anderson2020}. A well-designed system therefore
+tries to need as little trust as possible, and to place the rest in a few components that are named
+explicitly and protected accordingly.
 
-What is that price? Measurements of X-Road do exist, but they were designed to answer other
-questions and therefore do not decompose it. The most recent figures come from a study of
-distributed key management, which reports round-trip times for a complete exchange on X-Road 7.7.0
---- about 32\,ms with the built-in software token, rising to 3081\,ms for an 11-of-15 threshold
-group~\cite{bakhtina2026ijis}. For that study an aggregate number is exactly the right instrument,
-since the question was whether threshold signatures are competitive with single-party tokens; the
-authors also note that all components ran in containers on one laptop and present their results as a
-lower bound rather than production performance. A second study compares calls routed through a
-Security Server with calls sent directly to a service adapter and reports differences of 56 to
-319\,ms at ten concurrent clients~\cite{taklai2020}. Its goal was capacity planning for a particular
-registry service, so database time dominates by construction; at twenty and thirty concurrent
-clients the path through the Security Server is reported as faster than the direct one, which
-indicates that at those load levels the variation of the environment was comparable to the
-difference between the two paths. Finally, the architectural decisions that determine much of the
-cost --- caching OCSP responses rather than querying per signature, moving time-stamping to the
-receiver and batching it over a hash tree --- were introduced together with an analytical estimate
-of 11.84\,MB/s for batch signing, and that paper explicitly leaves benchmarking of the implementation
-to future work~\cite{ansper2013}. We have not found a published follow-up. In short, the
-decomposition we are after has not been anyone's research question so far.
+X-Road, the data exchange layer, is built on this principle. Its member organisations do not have to trust each other's
+systems directly. Their trust rests on a root of trust, a point that is accepted as trusted
+axiomatically~\cite{bakhtina2023sac}. In X-Road this root is centralised: it is formed by the
+certification authorities that vouch for the members' keys~\cite{bakhtina2023sac}, together with the
+Central Server, which publishes who the members are and which authorities to trust, and the
+time-stamping authority~\cite{xroadarcss}. Every message then carries evidence that can be checked
+against this root. It is signed by the sender's Security Server and verified by the receiver's,
+written into the message logs on both sides and time-stamped, and it travels over a mutually
+authenticated Transport Layer Security (TLS) channel, while the status of the certificates is checked
+through the Online Certificate Status Protocol (OCSP)~\cite{xroadarcss,ansper2013}. Trust in the other
+party is replaced by verification against the root of trust, and an exchange can later be used as
+evidence of who sent what and when. The other side of a centralised root is that it becomes a single
+point of failure~\cite{bakhtina2023sac}, which is why alternatives to it are being studied.
 
-Two developments make the question more pressing. The first is volume. The design reasoning above
-was calibrated against a load of roughly 240 million queries per year~\cite{ansper2013}; the
-operator's public factsheet reports 3.74 billion queries in the last year, about 1000 member
-organisations and 2083 connected information systems~\cite{xteefactsheet}. Whatever is paid per
-message is now multiplied by a substantially larger base. The second is the planned migration to
-post-quantum cryptography. A recent report by the Nordic Institute for Interoperability Solutions
-(NIIS) inventories 27 cryptographic assets in X-Road 7.6.2 and expects hybrid and post-quantum
-signatures to enlarge certificates, signatures and handshakes, to cause message fragmentation and
-additional round trips, and to require replacing Hardware Security Modules (HSMs) that cannot hold
-post-quantum keys; it contains no measurements of its own~\cite{bakhtina2026pqc}. An earlier
-Cybernetica report on the commercial Unified eXchange Platform reaches a similar conclusion from the
-primitive side, listing, for example, a 4595-byte Dilithium5 signature against the 256 bytes of
-RSA-2048, and recommends testing hybrid modes in the Security Servers~\cite{snetkov2023}. Both
-describe what will become more expensive; neither can express by how much, because there is no
-measured baseline for the present system. The same applies to decentralised Public Key
-Infrastructure (PKI) built on verifiable credentials, whose proof-of-concept adds a credential
-presentation to every request and whose performance was explicitly left
-unevaluated~\cite{bakhtina2023ares}.
+Verification is not free. Signing, verification, logging and setting up the channel take
+computation and bytes, some of them on every message and some in the background. X-Road has been
+measured before, but end to end, for questions other than the cost of these mechanisms: a
+study of threshold signatures reports end-to-end round trips of about 32\,ms with all components on
+one laptop and presents them as a lower bound~\cite{bakhtina2026ijis}; a capacity study measures the
+overhead of a Security Server in front of one registry service, where database time
+dominates~\cite{taklai2020}; and the paper that introduced batch time-stamping gives an analytical
+estimate and leaves benchmarking of the implementation to future work~\cite{ansper2013}. The Nordic
+Institute for Interoperability Solutions (NIIS), which develops X-Road, does not publish performance
+data. None of these sources splits the cost of an exchange by mechanism.
 
-This project produces that baseline. The research questions are:
+Two developments make that missing split more relevant. The first is volume: the design of batch
+time-stamping was calibrated against about 240 million queries per year~\cite{ansper2013}, while the
+Estonian instance now reports 3.74 billion~\cite{xteefactsheet}, so whatever is paid per message is
+multiplied by a much larger base. The second is a set of proposals that would make the trust
+mechanisms themselves more expensive. Post-quantum signatures are expected to enlarge certificates,
+signatures and handshakes~\cite{bakhtina2026pqc,snetkov2023}; a Dilithium5 signature, for example,
+takes 4595 bytes against the 256 bytes of RSA-2048~\cite{snetkov2023}. Decentralised Public Key
+Infrastructure (PKI) built on verifiable credentials adds a presentation to every
+request~\cite{bakhtina2023ares}, and threshold signatures replace a local key with a distributed
+protocol~\cite{bakhtina2026ijis}. These works describe what will become more expensive, but without a
+measured baseline for the present system they cannot say by how much.
+
+The proposals above do not change X-Road as a whole but individual mechanisms. Post-quantum
+algorithms affect signing, verification and the TLS handshake~\cite{bakhtina2026pqc}, a
+decentralised PKI changes how certificates are checked~\cite{bakhtina2023ares}, and threshold
+signatures change how messages are signed~\cite{bakhtina2026ijis}. The cost of each change can only
+be judged against the cost of the mechanism it replaces, and since X-Road keeps certificate status
+checking and time-stamping out of the request path by design~\cite{ansper2013}, it also matters
+which of these costs are paid on every message. Larger post-quantum signatures and certificates make
+messages bigger, and the growth in volume means more messages processed at the same time, so the
+costs have to be known as a function of message size and load. Finally, the most recent figures were
+obtained with all components on one machine, which their authors present as a lower
+bound~\cite{bakhtina2026ijis}, whereas the Security Servers of two organisations normally communicate
+over a network, and the NIIS report expects post-quantum handshakes to add round trips on
+it~\cite{bakhtina2026pqc}. This leads to the following research questions:
 
 \begin{description}[leftmargin=2.2em,style=nextline]
-  \item[RQ1] How much does each trust mechanism --- TLS between Security Servers, message signing,
+  \item[RQ1] How much does each trust mechanism --- TLS between the Security Servers, message signing,
   signature verification, certificate status checking, time-stamping and message logging ---
-  contribute to end-to-end latency and to the number of bytes on the wire?
-  \item[RQ2] How do those contributions change with message size and with concurrency?
-  \item[RQ3] How much do the answers depend on the environment: all components on a single host,
-  separate machines connected by a local network, or nodes separated by a wide-area link?
+  contribute to the latency of an exchange and to the bytes on the wire, and which of these costs is
+  paid on every message rather than deferred?
+  \item[RQ2] How do those contributions change with message size and with the number of concurrent
+  clients?
+  \item[RQ3] Does the answer change when the Security Servers run on separate machines instead of one
+  host, and how sensitive is it to added delay between them?
 \end{description}
 
-RQ3 is included because the published measurements were taken with all components on one machine, a
-limitation their authors state themselves. If the relative weight of cryptography turns out to be an
-artefact of the absence of a network, that is worth knowing before such numbers are used to reason
-about migration.
-
-The intended contribution is useful rather than novel in method: a redeployable multi-node testbed,
-a per-mechanism cost table in milliseconds and bytes obtained in several environments, the raw
-per-request data, and a clearly labelled extrapolation of what a post-quantum signature scheme would
-do to the measured signing and verification share.
+The contribution is a measurement rather than a new method: a testbed that can be redeployed on one
+or several hosts, the cost of each mechanism in milliseconds and bytes from three environments, a
+per-stage breakdown taken from X-Road's own operational monitoring, the sensitivity of the costs to
+added delay together with a prediction made before that measurement, and the raw data.
 
 \section{Background: what is paid per message}
 
@@ -153,8 +139,7 @@ time-stamping is batched over hash chains~\cite{xroadarcss,ansper2013}, so the p
 time-stamping depends on load and has to be observed across concurrency levels rather than at a
 single point. Second, the intervals above are defaults, and a production deployment may use longer
 ones: for the Estonian instance of 2017 a master's thesis documents a global configuration validity
-of six hours and an OCSP freshness of eight hours~\cite{mironova2017}. Whether to cite those
-production values alongside the documented defaults is one of the questions in Section~6.
+of six hours and an OCSP freshness of eight hours~\cite{mironova2017}.
 
 \section{Methodology}
 
@@ -367,48 +352,6 @@ does today.
 Steps 2 and 3 are the schedule risk; the waiting time in step 1 is the reason environment B is on the
 list at all.
 
-\section{Questions for the supervisor}
-
-\begin{enumerate}[leftmargin=1.6em]
-  \item Signatures (Section~3.4): we can measure only what X-Road runs today, that is RSA-2048 and
-  ECDSA, which is a configuration change and nothing more. The alternative is to also benchmark
-  post-quantum primitives separately, on the same hardware, and use the ratio to predict what
-  migration would do to the measured signing share. Is that second layer worth the extra work, or
-  too speculative for a project of this size?
-  \item Proposal: run the main grid over REST and add a single SOAP (Simple Object Access Protocol)
-  control point at 10\,KB, so that the results remain comparable with older measurements made on
-  SOAP services. Is that worth roughly one extra day, or should REST alone be used?
-  \item Environment B would need two or three machines of roughly comparable specification on a
-  wired local network, with Docker, for about a week --- I noticed a stack of laptops in your
-  office. Would it be possible to borrow a few? To be clear about what this buys: it does not
-  replace the cloud environment, where the hardware is uniform and the runs are reproducible by
-  others, and it does not give the wide-area case either. It covers the middle level of RQ3, that
-  is whether the single-host results are an artefact of traffic never leaving one machine, and it
-  lets the testbed be built and debugged while access to the cloud is still being arranged.
-  \item How quickly does the computing centre usually provide virtual machines and open non-default
-  ports? The plan treats this as the longest lead time; if it is in fact short, environment B is
-  needed only as a second physical environment rather than as insurance.
-  \item Which interval values should the report quote? The documentation gives defaults --- a
-  20-minute OCSP cache and a 10-minute validity of the global configuration --- while a 2017
-  master's thesis reports six and eight hours for the Estonian production
-  instance~\cite{mironova2017}. The difference matters for interpretation: if real deployments keep
-  these windows an order of magnitude wider, the mechanisms we deliberately weaken in order to
-  measure them are even less visible in production than our upper bounds suggest. Mentioning the
-  production values makes that point, but they come from a single secondary source that is nine
-  years old.
-  \item Would it be appropriate to show the results to someone at NIIS or at the Estonian Information
-  System Authority, and are there contacts for that? With a local test CA our figures are
-  necessarily optimistic, and an informed opinion on whether the profile resembles production
-  behaviour would strengthen the work considerably.
-  \item About the size of this. I looked at the seminar projects from previous years and they are
-  all 4 to 6 pages, while this draft is already 8 pages without the actual work in it. Part of it
-  may be formatting, but I have the feeling that I am simply doing more than the format expects.
-  Doing less is not something I want, because then what is the point. This is not really a direct
-  question, more thinking out loud --- but if you have an opinion on it, I would like to hear it:
-  is this scope fine as it is, or should it be cut, and if it should, how do I cut it without
-  losing the meaning of the work?
-\end{enumerate}
-
 \begin{thebibliography}{99}
 
 \bibitem{ansper2013}
@@ -421,6 +364,12 @@ M.~Bakhtina, K.~L.~Leung, R.~Matulevi\v{c}ius, A.~Awad, P.~\v{S}venda.
 \newblock A Decentralised Public Key Infrastructure for X-Road.
 \newblock In \emph{ARES 2023}, ACM.
 \newblock DOI: 10.1145/3600160.3605092.
+
+\bibitem{bakhtina2023sac}
+M.~Bakhtina, R.~Matulevi\v{c}ius, A.~Awad, P.~Kivim\"{a}ki.
+\newblock On the Shift to Decentralised Identity Management in Distributed Data Exchange Systems.
+\newblock In \emph{SAC '23}, pp.~864--873, ACM, 2023.
+\newblock DOI: 10.1145/3555776.3577678.
 
 \bibitem{bakhtina2026ijis}
 M.~Bakhtina, J.~Kvapil, P.~\v{S}venda, R.~Matulevi\v{c}ius.
@@ -499,6 +448,21 @@ C.~Paquin, D.~Stebila, G.~Tamvada.
 S.~Hemminger.
 \newblock Network Emulation with NetEm.
 \newblock In \emph{linux.conf.au 2005}, Canberra, 2005.
+
+\bibitem{mayer1995}
+R.~C.~Mayer, J.~H.~Davis, F.~D.~Schoorman.
+\newblock An Integrative Model of Organizational Trust.
+\newblock \emph{Academy of Management Review}, 20(3):709--734, 1995.
+
+\bibitem{grandison2000}
+T.~Grandison, M.~Sloman.
+\newblock A Survey of Trust in Internet Applications.
+\newblock \emph{IEEE Communications Surveys \& Tutorials}, 3(4):2--16, 2000.
+
+\bibitem{anderson2020}
+R.~Anderson.
+\newblock \emph{Security Engineering: A Guide to Building Dependable Distributed Systems}, 3rd ed.
+\newblock Wiley, 2020.
 
 \end{thebibliography}
 
