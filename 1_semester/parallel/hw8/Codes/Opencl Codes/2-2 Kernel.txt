@@ -1,0 +1,8 @@
+__kernel void vector_add_kernel(int alpha,
+                           __global int *A,
+                           __global int *B,
+                           __global int *C)
+{
+    int index = get_global_id(0);
+    C[index] = alpha * A[index] + B[index];
+}

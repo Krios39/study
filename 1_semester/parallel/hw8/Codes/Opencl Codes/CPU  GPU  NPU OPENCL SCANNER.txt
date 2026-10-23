@@ -1,0 +1,150 @@
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <iomanip>
+#include <CL/cl.h>
+
+using namespace std;
+
+string platformInfo(cl_platform_id p, cl_platform_info field)
+{
+    size_t n = 0;
+    if (clGetPlatformInfo(p, field, 0, nullptr, &n) != CL_SUCCESS || n == 0)
+        return "Unknown";
+
+    vector<char> s(n);
+    if (clGetPlatformInfo(p, field, n, s.data(), nullptr) != CL_SUCCESS)
+        return "Unknown";
+
+    return s.data();
+}
+
+string deviceInfo(cl_device_id d, cl_device_info field)
+{
+    size_t n = 0;
+    if (clGetDeviceInfo(d, field, 0, nullptr, &n) != CL_SUCCESS || n == 0)
+        return "Not available";
+
+    vector<char> s(n);
+    if (clGetDeviceInfo(d, field, n, s.data(), nullptr) != CL_SUCCESS)
+        return "Not available";
+
+    return s.data();
+}
+
+void showDevice(cl_device_id d, int number)
+{
+    cl_device_type type = 0;
+    cl_uint units = 0, clock = 0, addressBits = 0;
+    cl_ulong memory = 0, localMemory = 0, maxAllocation = 0;
+    size_t maxGroup = 0;
+
+    clGetDeviceInfo(d, CL_DEVICE_TYPE, sizeof(type), &type, nullptr);
+    clGetDeviceInfo(d, CL_DEVICE_MAX_COMPUTE_UNITS,
+        sizeof(units), &units, nullptr);
+    clGetDeviceInfo(d, CL_DEVICE_MAX_CLOCK_FREQUENCY,
+        sizeof(clock), &clock, nullptr);
+    clGetDeviceInfo(d, CL_DEVICE_ADDRESS_BITS,
+        sizeof(addressBits), &addressBits, nullptr);
+    clGetDeviceInfo(d, CL_DEVICE_GLOBAL_MEM_SIZE,
+        sizeof(memory), &memory, nullptr);
+    clGetDeviceInfo(d, CL_DEVICE_LOCAL_MEM_SIZE,
+        sizeof(localMemory), &localMemory, nullptr);
+    clGetDeviceInfo(d, CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+        sizeof(maxAllocation), &maxAllocation, nullptr);
+    clGetDeviceInfo(d, CL_DEVICE_MAX_WORK_GROUP_SIZE,
+        sizeof(maxGroup), &maxGroup, nullptr);
+
+    string name = deviceInfo(d, CL_DEVICE_NAME);
+    string vendor = deviceInfo(d, CL_DEVICE_VENDOR);
+
+    cout << "\n========== DEVICE " << number << " ==========\n";
+    cout << "Name:             " << name << '\n';
+    cout << "Vendor:           " << vendor << '\n';
+    cout << "Device version:   " << deviceInfo(d, CL_DEVICE_VERSION) << '\n';
+    cout << "OpenCL C version: " << deviceInfo(d, CL_DEVICE_OPENCL_C_VERSION) << '\n';
+    cout << "Driver version:   " << deviceInfo(d, CL_DRIVER_VERSION) << '\n';
+
+    cout << "Type: ";
+    if (type & CL_DEVICE_TYPE_CPU) cout << "CPU ";
+    if (type & CL_DEVICE_TYPE_GPU) cout << "GPU ";
+    if (type & CL_DEVICE_TYPE_ACCELERATOR) cout << "Accelerator ";
+    if (type == CL_DEVICE_TYPE_DEFAULT) cout << "Default ";
+    cout << '\n';
+
+    // A name match is only a clue, not proof that this is an NPU.
+    if (name.find("NPU") != string::npos ||
+        name.find("Neural") != string::npos ||
+        vendor.find("NPU") != string::npos)
+        cout << "Note: Device name suggests a possible NPU.\n";
+
+    cout << "Compute units:    " << units << '\n';
+    cout << "Clock frequency:  " << clock << " MHz\n";
+    cout << "Address width:    " << addressBits << " bits\n";
+
+    cout << fixed << setprecision(2);
+    cout << "Global memory:    "
+        << (double)memory / (1024.0 * 1024.0) << " MB\n";
+    cout << "Max allocation:   "
+        << (double)maxAllocation / (1024.0 * 1024.0) << " MB\n";
+    cout << "Local memory:     "
+        << (double)localMemory / 1024.0 << " KB\n";
+    cout << "Max work-group:   " << maxGroup << '\n';
+}
+
+int main()
+{
+    cl_uint platformCount = 0;
+    cl_int err = clGetPlatformIDs(0, nullptr, &platformCount);
+
+    cout << "===== CPU / GPU / NPU OPENCL SCANNER =====\n";
+
+    if (err != CL_SUCCESS || platformCount == 0) {
+        cout << "No OpenCL platforms found. Error code: " << err << '\n';
+        return 1;
+    }
+
+    vector<cl_platform_id> platforms(platformCount);
+    err = clGetPlatformIDs(platformCount, platforms.data(), nullptr);
+
+    if (err != CL_SUCCESS) {
+        cout << "Could not retrieve platforms. Error: " << err << '\n';
+        return 1;
+    }
+
+    int deviceNumber = 0;
+
+    for (cl_uint p = 0; p < platformCount; ++p) {
+        cout << "\n========================================\n";
+        cout << "PLATFORM " << p + 1 << '\n';
+        cout << "Name:    " << platformInfo(platforms[p], CL_PLATFORM_NAME) << '\n';
+        cout << "Vendor:  " << platformInfo(platforms[p], CL_PLATFORM_VENDOR) << '\n';
+        cout << "Version: " << platformInfo(platforms[p], CL_PLATFORM_VERSION) << '\n';
+
+        cl_uint count = 0;
+        err = clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL,
+            0, nullptr, &count);
+
+        if (err != CL_SUCCESS || count == 0) {
+            cout << "No devices exposed by this platform.\n";
+            continue;
+        }
+
+        vector<cl_device_id> devices(count);
+        err = clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL,
+            count, devices.data(), nullptr);
+
+        if (err != CL_SUCCESS) {
+            cout << "Could not retrieve devices. Error: " << err << '\n';
+            continue;
+        }
+
+        for (cl_uint d = 0; d < count; ++d)
+            showDevice(devices[d], ++deviceNumber);
+    }
+
+    cout << "\nScan complete. Devices found: " << deviceNumber << '\n';
+    cout << "Note: an NPU may not be exposed through OpenCL.\n";
+    return 0;
+}

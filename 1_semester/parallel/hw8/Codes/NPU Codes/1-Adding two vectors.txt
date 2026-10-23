@@ -1,0 +1,60 @@
+#include <iostream>
+#include <openvino/openvino.hpp>
+#include <openvino/op/parameter.hpp>
+#include <openvino/op/add.hpp>
+
+int main() {
+    try {
+        ov::Core core;
+
+        // 1. Define input parameters (two vectors of size 1024)
+        auto param1 = std::make_shared<ov::op::v0::Parameter>(ov::element::f32, ov::Shape{ 1024 });
+        auto param2 = std::make_shared<ov::op::v0::Parameter>(ov::element::f32, ov::Shape{ 1024 });
+
+        // 2. Create an Addition operation graph
+        auto add_node = std::make_shared<ov::op::v1::Add>(param1, param2);
+
+        // 3. Wrap it into an OpenVINO Model (Added model name string for modern OpenVINO)
+        auto model = std::make_shared<ov::Model>(ov::OutputVector{ add_node }, ov::ParameterVector{ param1, param2 }, "vector_add_model");
+
+        // 4. Compile the model specifically for the NPU
+        std::cout << "Compiling vector addition model for NPU...\n";
+        auto compiled_model = core.compile_model(model, "NPU");
+
+        // 5. Create an inference request
+        auto infer_request = compiled_model.create_infer_request();
+
+        // 6. Fill input data
+        ov::Tensor input_tensor1(ov::element::f32, ov::Shape{ 1024 });
+        ov::Tensor input_tensor2(ov::element::f32, ov::Shape{ 1024 });
+
+        float* data1 = input_tensor1.data<float>();
+        float* data2 = input_tensor2.data<float>();
+        for (size_t i = 0; i < 1024; i++) {
+            data1[i] = (float)i;
+            data2[i] = 100.0f;
+        }
+
+        infer_request.set_input_tensor(0, input_tensor1);
+        infer_request.set_input_tensor(1, input_tensor2);
+
+        // 7. Run computation on the NPU
+        infer_request.infer();
+
+        // 8. Get results
+        auto output_tensor = infer_request.get_output_tensor();
+        const float* output_data = output_tensor.data<float>();
+
+        // Print first 5 results
+        std::cout << "Success! First 5 results from NPU:\n";
+        for (int i = 0; i < 1024; i++) {
+            std::cout << data1[i] << " + " << data2[i] << " = " << output_data[i] << "\n";
+        }
+
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
