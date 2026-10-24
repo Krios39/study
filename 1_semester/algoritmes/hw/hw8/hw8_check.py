@@ -5,7 +5,7 @@ import time
 import networkx as nx
 import numpy as np
 
-from HW8_graph_helpers import check_closure, check_distribution, graph_arrays, homework_graphs
+from HW8_graph_helpers import check_closure, check_distribution, check_pagerank, graph_arrays, homework_graphs
 
 
 def matrix(rows):
@@ -107,7 +107,44 @@ def t2():
     print("T2: both P matrices, p0 P^t for t = 0..10, all frequency vectors and L1 values agree; check_distribution passed")
 
 
+def t3():
+    res = json.load(open("HW8_T3_results.json"))
+    graphs = homework_graphs()
+    web = graphs["web_base"]
+    nodes = list(web)
+    for r in res["results"]:
+        check_distribution(r["vector"], len(nodes))
+        if r["rho"] > 0:
+            assert r["converged"]
+            check_pagerank(web, dict(zip(nodes, r["vector"])), rho=r["rho"])
+    check_distribution(res["walk"]["frequencies"], len(nodes))
+    big = graphs["clusters_256"]
+    check_distribution(res["clusters"]["vector"], len(big))
+    check_pagerank(big, dict(zip(list(big), res["clusters"]["vector"])), rho=res["clusters"]["rho"])
+    print("T3: check_pagerank passed for rho = 0.05, 0.10, 0.20 on web_base and rho = 0.10 on clusters_256")
+
+
+def t4():
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from HW8_graph_helpers import check_flow, draw_flow, draw_residual
+    res = json.load(open("HW8_T4_results.json"))
+    small = homework_graphs()["allocation_small"]
+    cert = check_flow(small, res["flow"], res["source_side"])
+    assert cert["flow_value"] == res["value"] == res["cut_capacity"]
+    value, reference = nx.maximum_flow(small, "s", "t", capacity="capacity")
+    assert value == res["value"]
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5), constrained_layout=True)
+    draw_flow(small, res["flow"], cut=res["source_side"], ax=axes[0], title="Final flow / capacity, cut {s}")
+    draw_residual(small, res["flow"], ax=axes[1], title="Final residual capacities")
+    fig.savefig("HW8_T4_helpers.svg", bbox_inches="tight")
+    print(f"T4: check_flow {cert}; NetworkX maximum_flow value {value}, its flow {reference}")
+
+
 if __name__ == "__main__":
     t1()
     t2()
+    t3()
+    t4()
     sys.exit(0)

@@ -41,14 +41,14 @@ fn graph_size(g: &Graph) -> (u32, u32) {
 }
 
 pub fn graph_on<DB: DrawingBackend>(root: &DrawingArea<DB, plotters::coord::Shift>, g: &Graph, title: &str,
-                                    highlight: &[(usize, usize)], values: Option<(&[f64], f64)>, weights: bool) {
+                                    highlight: &[(usize, usize)], values: Option<(&[f64], f64)>, edge_text: Option<&[String]>) {
     let xmin = g.pos.iter().map(|p| p.0).fold(f64::MAX, f64::min);
     let ymax = g.pos.iter().map(|p| p.1).fold(f64::MIN, f64::max);
     let px = |i: usize| (PAD + (g.pos[i].0 - xmin) * SCALE, TOP + PAD + (ymax - g.pos[i].1) * SCALE);
     root.draw(&Text::new(title.to_string(), (PAD as i32 - 50, 16), (FONT, 24).into_font())).unwrap();
     let radius = 27.0;
     let has = |u: usize, v: usize| g.edges.iter().any(|&(a, b, _)| a == u && b == v);
-    for &(u, v, w) in &g.edges {
+    for (e, &(u, v, _)) in g.edges.iter().enumerate() {
         let ((x0, y0), (x1, y1)) = (px(u), px(v));
         let (dx, dy) = (x1 - x0, y1 - y0);
         let len = (dx * dx + dy * dy).sqrt();
@@ -67,9 +67,10 @@ pub fn graph_on<DB: DrawingBackend>(root: &DrawingArea<DB, plotters::coord::Shif
             ((tip.0 + uy * 6.0) as i32, (tip.1 - ux * 6.0) as i32),
         ];
         root.draw(&Polygon::new(head, color.filled())).unwrap();
-        if weights {
-            let m = ((a.0 + b.0) / 2.0 + ox * 1.6, (a.1 + b.1) / 2.0 + oy * 1.6);
-            let text = format!("{w}");
+        if let Some(texts) = edge_text {
+            let f = if g.n() <= 6 { 0.36 } else { 0.5 };
+            let m = (a.0 + (b.0 - a.0) * f + ox * 1.6, a.1 + (b.1 - a.1) * f + oy * 1.6);
+            let text = texts[e].clone();
             let (bw, bh) = (8 * text.len() as i32 + 6, 18);
             let (mx, my) = (m.0 as i32 - bw / 2, m.1 as i32 - bh / 2);
             root.draw(&Rectangle::new([(mx, my), (mx + bw, my + bh)], WHITE.filled())).unwrap();
@@ -85,8 +86,12 @@ pub fn graph_on<DB: DrawingBackend>(root: &DrawingArea<DB, plotters::coord::Shif
         };
         root.draw(&Circle::new((x as i32, y as i32), radius as i32, fill.filled())).unwrap();
         root.draw(&Circle::new((x as i32, y as i32), radius as i32, stroke(BLACK, 2))).unwrap();
-        let id = i.to_string();
+        let short = g.labels[i].len() <= 2;
+        let id = if short { g.labels[i].clone() } else { i.to_string() };
         root.draw(&Text::new(id.clone(), (x as i32 - 5 * id.len() as i32, y as i32 - 10), (FONT, 20).into_font().color(&ink(fill)))).unwrap();
+        if short && values.is_none() {
+            continue;
+        }
         let label = match values {
             Some((v, _)) => format!("{} {:.3}", g.labels[i], v[i]),
             None => g.labels[i].clone(),
@@ -109,24 +114,26 @@ pub fn graph_on<DB: DrawingBackend>(root: &DrawingArea<DB, plotters::coord::Shif
 }
 
 pub fn graph_figure(path: &str, g: &Graph, title: &str, highlight: &[(usize, usize)]) {
-    let root = BitMapBackend::new(path, graph_size(g)).into_drawing_area();
+    let root = SVGBackend::new(path, graph_size(g)).into_drawing_area();
     root.fill(&WHITE).unwrap();
-    graph_on(&root, g, title, highlight, None, true);
+    let texts: Vec<String> = g.edges.iter().map(|e| format!("{}", e.2)).collect();
+    graph_on(&root, g, title, highlight, None, Some(&texts));
     root.present().unwrap();
 }
 
 pub fn graph_values_row(path: &str, g: &Graph, panels: &[(&str, Vec<f64>)], max: f64, weights: bool) {
     let (w, h) = graph_size(g);
-    let root = BitMapBackend::new(path, (w * panels.len() as u32, h)).into_drawing_area();
+    let root = SVGBackend::new(path, (w * panels.len() as u32, h)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     for (area, (title, v)) in root.split_evenly((1, panels.len())).iter().zip(panels) {
-        graph_on(area, g, title, &[], Some((v, max)), weights);
+        let texts: Vec<String> = g.edges.iter().map(|e| format!("{}", e.2)).collect();
+        graph_on(area, g, title, &[], Some((v, max)), if weights { Some(&texts) } else { None });
     }
     root.present().unwrap();
 }
 
 pub fn bar_panels(path: &str, labels: &[String], panels: &[(&str, Vec<(String, Vec<f64>, RGBColor)>)], ymax: f64) {
-    let root = BitMapBackend::new(path, (1300, 420 * panels.len() as u32)).into_drawing_area();
+    let root = SVGBackend::new(path, (1300, 420 * panels.len() as u32)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let n = labels.len();
     for (area, (title, series)) in root.split_evenly((panels.len(), 1)).iter().zip(panels) {
@@ -161,7 +168,7 @@ pub fn bar_panels(path: &str, labels: &[String], panels: &[(&str, Vec<(String, V
 }
 
 pub fn error_chart(path: &str, title: &str, series: &[(String, Vec<(f64, f64)>, RGBColor, bool)], x: (f64, f64), y: (f64, f64)) {
-    let root = BitMapBackend::new(path, (1100, 620)).into_drawing_area();
+    let root = SVGBackend::new(path, (1100, 620)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let mut chart = ChartBuilder::on(&root)
         .caption(title, (FONT, 22))
@@ -206,10 +213,18 @@ pub fn heatmap<DB: DrawingBackend>(area: &DrawingArea<DB, plotters::coord::Shift
         RGBColor((219.0 - 189.0 * t) as u8, (234.0 - 176.0 * t) as u8, (254.0 - 116.0 * t) as u8)
     };
     for i in 0..n {
+        let mut j = 0;
+        while j < n {
+            let mut k = j + 1;
+            while k < n && m[i][k] == m[i][j] {
+                k += 1;
+            }
+            let (x, y) = (left + j as i32 * cell, top + i as i32 * cell);
+            area.draw(&Rectangle::new([(x, y), (left + k as i32 * cell, y + cell)], color(m[i][j]).filled())).unwrap();
+            j = k;
+        }
         for j in 0..n {
             let (x, y) = (left + j as i32 * cell, top + i as i32 * cell);
-            let fill = color(m[i][j]);
-            area.draw(&Rectangle::new([(x, y), (x + cell, y + cell)], fill.filled())).unwrap();
             if numbers && m[i][j] != 0.0 {
                 let text = format!("{}", m[i][j]);
                 let ink = if m[i][j] / max > 0.45 { WHITE } else { BLACK };
@@ -244,7 +259,7 @@ pub fn heatmap<DB: DrawingBackend>(area: &DrawingArea<DB, plotters::coord::Shift
 }
 
 pub fn heatmap_row(path: &str, panels: &[(&str, Vec<Vec<f64>>, Option<(usize, usize)>)], labels: Option<&[String]>, numbers: bool, panel: (u32, u32)) {
-    let root = BitMapBackend::new(path, (panel.0 * panels.len() as u32, panel.1)).into_drawing_area();
+    let root = SVGBackend::new(path, (panel.0 * panels.len() as u32, panel.1)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let areas = root.split_evenly((1, panels.len()));
     for (area, (title, m, mark)) in areas.iter().zip(panels) {
@@ -254,7 +269,7 @@ pub fn heatmap_row(path: &str, panels: &[(&str, Vec<Vec<f64>>, Option<(usize, us
 }
 
 pub fn timing_chart(path: &str, series: &[(String, Vec<(f64, f64)>, RGBColor)], limit: f64) {
-    let root = BitMapBackend::new(path, (1100, 620)).into_drawing_area();
+    let root = SVGBackend::new(path, (1100, 620)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let ymin = series.iter().flat_map(|s| s.1.iter().map(|p| p.1)).fold(f64::MAX, f64::min) / 2.0;
     let mut chart = ChartBuilder::on(&root)
@@ -280,5 +295,41 @@ pub fn timing_chart(path: &str, series: &[(String, Vec<(f64, f64)>, RGBColor)], 
     }
     chart.configure_series_labels().position(SeriesLabelPosition::UpperLeft)
         .background_style(WHITE.mix(0.9)).border_style(BLACK).label_font((FONT, 15)).draw().unwrap();
+    root.present().unwrap();
+}
+
+pub fn line_chart(path: &str, title: &str, series: &[(String, Vec<(f64, f64)>, RGBColor)], x: (f64, f64), y: (f64, f64), desc: (&str, &str)) {
+    let root = SVGBackend::new(path, (1100, 560)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    let mut chart = ChartBuilder::on(&root)
+        .caption(title, (FONT, 22))
+        .margin(14)
+        .x_label_area_size(46)
+        .y_label_area_size(80)
+        .build_cartesian_2d(x.0..x.1, (y.0..y.1).log_scale())
+        .unwrap();
+    chart.configure_mesh()
+        .x_desc(desc.0).y_desc(desc.1)
+        .x_label_formatter(&|v| format!("{v:.0}")).y_label_formatter(&|v| format!("{v:.0e}"))
+        .label_style((FONT, 15)).axis_desc_style((FONT, 16)).draw().unwrap();
+    for (name, pts, color) in series {
+        let c = *color;
+        let pts: Vec<(f64, f64)> = pts.iter().map(|&(a, b)| (a, b.max(y.0))).collect();
+        chart.draw_series(LineSeries::new(pts, stroke(c, 3))).unwrap()
+            .label(name.clone()).legend(move |(x, y)| PathElement::new(vec![(x, y), (x + 24, y)], stroke(c, 3)));
+    }
+    chart.configure_series_labels().position(SeriesLabelPosition::UpperRight)
+        .background_style(WHITE.mix(0.9)).border_style(BLACK).label_font((FONT, 15)).draw().unwrap();
+    root.present().unwrap();
+}
+
+pub fn graph_grid(path: &str, panels: &[(String, Graph, Vec<(usize, usize)>, Vec<String>)], cols: usize) {
+    let (w, h) = graph_size(&panels[0].1);
+    let rows = panels.len().div_ceil(cols);
+    let root = SVGBackend::new(path, (w * cols as u32, h * rows as u32)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    for (area, (title, g, hot, texts)) in root.split_evenly((rows, cols)).iter().zip(panels) {
+        graph_on(area, g, title, hot, None, Some(texts));
+    }
     root.present().unwrap();
 }

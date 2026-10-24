@@ -5,6 +5,7 @@ use std::fs;
 
 use serde_json::Value;
 
+#[derive(Clone)]
 pub struct Graph {
     pub name: String,
     pub labels: Vec<String>,
@@ -351,4 +352,129 @@ impl Sampler {
 
 pub fn l1(a: &[f64], b: &[f64]) -> f64 {
     a.iter().zip(b).map(|(x, y)| (x - y).abs()).sum()
+}
+
+pub struct PageRank {
+    pub vector: Vec<f64>,
+    pub iterations: usize,
+    pub converged: bool,
+    pub diffs: Vec<f64>,
+    pub history: Vec<Vec<f64>>,
+}
+
+pub fn teleport_step(p: &[f64], m: &[Vec<f64>], rho: f64) -> Vec<f64> {
+    let n = p.len() as f64;
+    vector_step(p, m).iter().map(|&x| (1.0 - rho) * x + rho / n).collect()
+}
+
+pub fn pagerank(m: &[Vec<f64>], rho: f64, start: &[f64], tol: f64, max_iter: usize, keep: usize) -> PageRank {
+    let mut p = start.to_vec();
+    let mut diffs = Vec::new();
+    let mut history = vec![p.clone()];
+    for k in 1..=max_iter {
+        let q = teleport_step(&p, m, rho);
+        let d = l1(&p, &q);
+        diffs.push(d);
+        p = q;
+        if history.len() < keep {
+            history.push(p.clone());
+        }
+        if d < tol {
+            return PageRank { vector: p, iterations: k, converged: true, diffs, history };
+        }
+    }
+    PageRank { vector: p, iterations: max_iter, converged: false, diffs, history }
+}
+
+pub fn long_walk(sampler: &Sampler, n: usize, rho: f64, start: usize, burn: usize, count: usize, rng: &mut SplitMix64) -> Vec<usize> {
+    let mut visits = vec![0; n];
+    let mut u = start;
+    for k in 0..burn + count {
+        u = if rng.uniform() < rho { ((rng.uniform() * n as f64) as usize).min(n - 1) } else { sampler.next(u, rng) };
+        if k >= burn {
+            visits[u] += 1;
+        }
+    }
+    visits
+}
+
+pub fn top_k(v: &[f64], k: usize) -> Vec<usize> {
+    let mut idx: Vec<usize> = (0..v.len()).collect();
+    idx.sort_by(|&a, &b| v[b].total_cmp(&v[a]).then(a.cmp(&b)));
+    idx.truncate(k);
+    idx
+}
+
+pub struct Arc {
+    pub to: usize,
+    pub residual: f64,
+    pub rev: usize,
+    pub original: bool,
+}
+
+pub struct FlowNet {
+    pub adj: Vec<Vec<Arc>>,
+    pub edges: Vec<(usize, usize, f64, usize)>,
+}
+
+impl FlowNet {
+    pub fn new(g: &Graph) -> FlowNet {
+        let mut adj: Vec<Vec<Arc>> = (0..g.n()).map(|_| Vec::new()).collect();
+        let mut edges = Vec::new();
+        for &(u, v, c) in &g.edges {
+            let (iu, iv) = (adj[u].len(), adj[v].len());
+            adj[u].push(Arc { to: v, residual: c, rev: iv, original: true });
+            adj[v].push(Arc { to: u, residual: 0.0, rev: iu, original: false });
+            edges.push((u, v, c, iu));
+        }
+        FlowNet { adj, edges }
+    }
+
+    pub fn flow(&self, e: usize) -> f64 {
+        let (u, _, _, i) = self.edges[e];
+        let a = &self.adj[u][i];
+        self.adj[a.to][a.rev].residual
+    }
+
+    pub fn residual_edges(&self) -> Vec<(usize, usize, f64, bool)> {
+        let mut out = Vec::new();
+        for (u, arcs) in self.adj.iter().enumerate() {
+            for a in arcs {
+                if a.residual > 0.0 {
+                    out.push((u, a.to, a.residual, a.original));
+                }
+            }
+        }
+        out
+    }
+
+    pub fn augment_path(&mut self, path: &[usize]) -> f64 {
+        let mut picks = Vec::new();
+        for w in path.windows(2) {
+            let i = self.adj[w[0]].iter().position(|a| a.to == w[1] && a.residual > 0.0).expect("no residual arc on path");
+            picks.push((w[0], i));
+        }
+        let bottleneck = picks.iter().map(|&(u, i)| self.adj[u][i].residual).fold(f64::INFINITY, f64::min);
+        for (u, i) in picks {
+            self.adj[u][i].residual -= bottleneck;
+            let (to, rev) = (self.adj[u][i].to, self.adj[u][i].rev);
+            self.adj[to][rev].residual += bottleneck;
+        }
+        bottleneck
+    }
+
+    pub fn reachable(&self, s: usize) -> Vec<bool> {
+        let mut seen = vec![false; self.adj.len()];
+        seen[s] = true;
+        let mut queue = VecDeque::from([s]);
+        while let Some(u) = queue.pop_front() {
+            for a in &self.adj[u] {
+                if a.residual > 0.0 && !seen[a.to] {
+                    seen[a.to] = true;
+                    queue.push_back(a.to);
+                }
+            }
+        }
+        seen
+    }
 }

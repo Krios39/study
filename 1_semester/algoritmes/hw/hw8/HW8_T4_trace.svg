@@ -1,0 +1,495 @@
+<svg width="1830" height="1020" viewBox="0 0 1830 1020" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="0" width="1830" height="1020" opacity="1" fill="#FFFFFF" stroke="none"/>
+<text x="30" y="16" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="19.35483870967742" opacity="1" fill="#000000">
+1. Capacities (flow/capacity); first path s-A-X-t
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="99,260 199,160 "/>
+<polygon opacity="1" fill="#DC2626" points="209,150 203,164 195,156 "/>
+<rect x="123" y="212" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="123" y="212" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="127" y="213" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="99,299 199,399 "/>
+<polygon opacity="1" fill="#475569" points="209,409 195,403 203,395 "/>
+<rect x="123" y="329" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="123" y="329" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="127" y="330" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="257,130 337,130 "/>
+<polygon opacity="1" fill="#DC2626" points="351,130 337,136 337,124 "/>
+<rect x="275" y="121" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="275" y="121" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="279" y="122" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="242,154 360,391 "/>
+<polygon opacity="1" fill="#475569" points="367,404 355,394 366,388 "/>
+<rect x="272" y="235" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="272" y="235" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="276" y="236" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="242,405 360,168 "/>
+<polygon opacity="1" fill="#475569" points="367,155 366,171 355,165 "/>
+<rect x="272" y="306" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="272" y="306" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="276" y="307" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="399,149 499,249 "/>
+<polygon opacity="1" fill="#DC2626" points="509,259 495,253 503,245 "/>
+<rect x="423" y="179" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="423" y="179" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="427" y="180" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="399,410 499,310 "/>
+<polygon opacity="1" fill="#475569" points="509,300 503,314 495,306 "/>
+<rect x="423" y="362" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="423" y="362" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="427" y="363" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/1
+</text>
+<circle cx="80" cy="280" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="80" cy="280" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="75" y="270" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+s
+</text>
+<circle cx="230" cy="130" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="230" cy="130" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="225" y="120" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+A
+</text>
+<circle cx="230" cy="430" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="230" cy="430" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="225" y="420" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+B
+</text>
+<circle cx="380" cy="130" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="380" cy="130" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="375" y="120" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+X
+</text>
+<circle cx="380" cy="430" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="380" cy="430" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="375" y="420" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+Y
+</text>
+<circle cx="530" cy="280" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="530" cy="280" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="525" y="270" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+t
+</text>
+<text x="640" y="16" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="19.35483870967742" opacity="1" fill="#000000">
+2. After augmentation 1 (+1): A takes X
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="709,260 809,160 "/>
+<polygon opacity="1" fill="#DC2626" points="819,150 813,164 805,156 "/>
+<rect x="733" y="212" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="733" y="212" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="737" y="213" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="709,299 809,399 "/>
+<polygon opacity="1" fill="#475569" points="819,409 805,403 813,395 "/>
+<rect x="733" y="329" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="733" y="329" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="737" y="330" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="867,130 947,130 "/>
+<polygon opacity="1" fill="#DC2626" points="961,130 947,136 947,124 "/>
+<rect x="885" y="121" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="885" y="121" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="889" y="122" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="852,154 970,391 "/>
+<polygon opacity="1" fill="#475569" points="977,404 965,394 976,388 "/>
+<rect x="882" y="235" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="882" y="235" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="886" y="236" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="852,405 970,168 "/>
+<polygon opacity="1" fill="#475569" points="977,155 976,171 965,165 "/>
+<rect x="882" y="306" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="882" y="306" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="886" y="307" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="1009,149 1109,249 "/>
+<polygon opacity="1" fill="#DC2626" points="1119,259 1105,253 1113,245 "/>
+<rect x="1033" y="179" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1033" y="179" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="1037" y="180" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="1009,410 1109,310 "/>
+<polygon opacity="1" fill="#475569" points="1119,300 1113,314 1105,306 "/>
+<rect x="1033" y="362" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1033" y="362" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="1037" y="363" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/1
+</text>
+<circle cx="690" cy="280" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="690" cy="280" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="685" y="270" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+s
+</text>
+<circle cx="840" cy="130" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="840" cy="130" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="835" y="120" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+A
+</text>
+<circle cx="840" cy="430" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="840" cy="430" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="835" y="420" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+B
+</text>
+<circle cx="990" cy="130" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="990" cy="130" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="985" y="120" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+X
+</text>
+<circle cx="990" cy="430" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="990" cy="430" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="985" y="420" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+Y
+</text>
+<circle cx="1140" cy="280" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="1140" cy="280" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1135" y="270" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+t
+</text>
+<text x="1250" y="16" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="19.35483870967742" opacity="1" fill="#000000">
+3. Residual after 1; path 2 uses X-A backwards
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="1319,299 1419,399 "/>
+<polygon opacity="1" fill="#DC2626" points="1429,409 1415,403 1423,395 "/>
+<rect x="1351" y="329" width="14" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1351" y="329" width="14" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="1355" y="330" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="1430,149 1330,249 "/>
+<polygon opacity="1" fill="#475569" points="1320,259 1326,245 1334,253 "/>
+<rect x="1368" y="179" width="46" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1368" y="179" width="46" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="1372" y="180" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1 rev
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="1462,154 1580,391 "/>
+<polygon opacity="1" fill="#DC2626" points="1587,404 1575,394 1586,388 "/>
+<rect x="1500" y="235" width="14" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1500" y="235" width="14" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="1504" y="236" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="1462,405 1580,168 "/>
+<polygon opacity="1" fill="#DC2626" points="1587,155 1586,171 1575,165 "/>
+<rect x="1500" y="306" width="14" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1500" y="306" width="14" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="1504" y="307" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="1573,130 1493,130 "/>
+<polygon opacity="1" fill="#DC2626" points="1479,130 1493,124 1493,136 "/>
+<rect x="1516" y="121" width="46" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1516" y="121" width="46" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="1520" y="122" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1 rev
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="1619,410 1719,310 "/>
+<polygon opacity="1" fill="#DC2626" points="1729,300 1723,314 1715,306 "/>
+<rect x="1651" y="362" width="14" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1651" y="362" width="14" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="1655" y="363" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="1730,260 1630,160 "/>
+<polygon opacity="1" fill="#475569" points="1620,150 1634,156 1626,164 "/>
+<rect x="1668" y="212" width="46" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1668" y="212" width="46" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="1672" y="213" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1 rev
+</text>
+<circle cx="1300" cy="280" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="1300" cy="280" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1295" y="270" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+s
+</text>
+<circle cx="1450" cy="130" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="1450" cy="130" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1445" y="120" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+A
+</text>
+<circle cx="1450" cy="430" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="1450" cy="430" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1445" y="420" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+B
+</text>
+<circle cx="1600" cy="130" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="1600" cy="130" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1595" y="120" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+X
+</text>
+<circle cx="1600" cy="430" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="1600" cy="430" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1595" y="420" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+Y
+</text>
+<circle cx="1750" cy="280" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="1750" cy="280" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1745" y="270" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+t
+</text>
+<text x="30" y="526" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="19.35483870967742" opacity="1" fill="#000000">
+4. After augmentation 2 (+1): A moves to Y, B takes X
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="99,770 199,670 "/>
+<polygon opacity="1" fill="#DC2626" points="209,660 203,674 195,666 "/>
+<rect x="123" y="722" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="123" y="722" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="127" y="723" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="99,809 199,909 "/>
+<polygon opacity="1" fill="#DC2626" points="209,919 195,913 203,905 "/>
+<rect x="123" y="839" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="123" y="839" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="127" y="840" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="257,640 337,640 "/>
+<polygon opacity="1" fill="#475569" points="351,640 337,646 337,634 "/>
+<rect x="275" y="631" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="275" y="631" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="279" y="632" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="242,664 360,901 "/>
+<polygon opacity="1" fill="#DC2626" points="367,914 355,904 366,898 "/>
+<rect x="272" y="745" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="272" y="745" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="276" y="746" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="242,915 360,678 "/>
+<polygon opacity="1" fill="#DC2626" points="367,665 366,681 355,675 "/>
+<rect x="272" y="816" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="272" y="816" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="276" y="817" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="399,659 499,759 "/>
+<polygon opacity="1" fill="#DC2626" points="509,769 495,763 503,755 "/>
+<rect x="423" y="689" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="423" y="689" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="427" y="690" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="399,920 499,820 "/>
+<polygon opacity="1" fill="#DC2626" points="509,810 503,824 495,816 "/>
+<rect x="423" y="872" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="423" y="872" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="427" y="873" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<circle cx="80" cy="790" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="80" cy="790" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="75" y="780" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+s
+</text>
+<circle cx="230" cy="640" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="230" cy="640" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="225" y="630" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+A
+</text>
+<circle cx="230" cy="940" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="230" cy="940" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="225" y="930" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+B
+</text>
+<circle cx="380" cy="640" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="380" cy="640" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="375" y="630" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+X
+</text>
+<circle cx="380" cy="940" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="380" cy="940" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="375" y="930" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+Y
+</text>
+<circle cx="530" cy="790" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="530" cy="790" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="525" y="780" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+t
+</text>
+<text x="640" y="526" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="19.35483870967742" opacity="1" fill="#000000">
+5. Final residual: no path from s to t
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="820,659 720,759 "/>
+<polygon opacity="1" fill="#475569" points="710,769 716,755 724,763 "/>
+<rect x="758" y="689" width="46" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="758" y="689" width="46" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="762" y="690" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1 rev
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="867,640 947,640 "/>
+<polygon opacity="1" fill="#475569" points="961,640 947,646 947,634 "/>
+<rect x="893" y="631" width="14" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="893" y="631" width="14" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="897" y="632" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="820,920 720,820 "/>
+<polygon opacity="1" fill="#475569" points="710,810 724,816 716,824 "/>
+<rect x="758" y="872" width="46" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="758" y="872" width="46" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="762" y="873" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1 rev
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="977,664 859,901 "/>
+<polygon opacity="1" fill="#475569" points="852,914 853,898 864,904 "/>
+<rect x="909" y="745" width="46" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="909" y="745" width="46" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="913" y="746" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1 rev
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="977,915 859,678 "/>
+<polygon opacity="1" fill="#475569" points="852,665 864,675 853,681 "/>
+<rect x="909" y="816" width="46" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="909" y="816" width="46" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="913" y="817" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1 rev
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="1120,770 1020,670 "/>
+<polygon opacity="1" fill="#475569" points="1010,660 1024,666 1016,674 "/>
+<rect x="1058" y="722" width="46" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1058" y="722" width="46" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="1062" y="723" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1 rev
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="1120,809 1020,909 "/>
+<polygon opacity="1" fill="#475569" points="1010,919 1016,905 1024,913 "/>
+<rect x="1058" y="839" width="46" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1058" y="839" width="46" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="1062" y="840" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1 rev
+</text>
+<circle cx="690" cy="790" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="690" cy="790" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="685" y="780" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+s
+</text>
+<circle cx="840" cy="640" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="840" cy="640" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="835" y="630" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+A
+</text>
+<circle cx="840" cy="940" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="840" cy="940" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="835" y="930" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+B
+</text>
+<circle cx="990" cy="640" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="990" cy="640" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="985" y="630" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+X
+</text>
+<circle cx="990" cy="940" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="990" cy="940" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="985" y="930" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+Y
+</text>
+<circle cx="1140" cy="790" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="1140" cy="790" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1135" y="780" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+t
+</text>
+<text x="1250" y="526" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="19.35483870967742" opacity="1" fill="#000000">
+6. Cut S = {s} (yellow): capacity 2
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="1319,770 1419,670 "/>
+<polygon opacity="1" fill="#DC2626" points="1429,660 1423,674 1415,666 "/>
+<rect x="1343" y="722" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1343" y="722" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="1347" y="723" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="1319,809 1419,909 "/>
+<polygon opacity="1" fill="#DC2626" points="1429,919 1415,913 1423,905 "/>
+<rect x="1343" y="839" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1343" y="839" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="1347" y="840" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="1477,640 1557,640 "/>
+<polygon opacity="1" fill="#475569" points="1571,640 1557,646 1557,634 "/>
+<rect x="1495" y="631" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1495" y="631" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="1499" y="632" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="1462,664 1580,901 "/>
+<polygon opacity="1" fill="#475569" points="1587,914 1575,904 1586,898 "/>
+<rect x="1492" y="745" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1492" y="745" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="1496" y="746" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="1462,915 1580,678 "/>
+<polygon opacity="1" fill="#475569" points="1587,665 1586,681 1575,675 "/>
+<rect x="1492" y="816" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1492" y="816" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="1496" y="817" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="1619,659 1719,759 "/>
+<polygon opacity="1" fill="#475569" points="1729,769 1715,763 1723,755 "/>
+<rect x="1643" y="689" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1643" y="689" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="1647" y="690" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1/1
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="1619,920 1719,820 "/>
+<polygon opacity="1" fill="#475569" points="1729,810 1723,824 1715,816 "/>
+<rect x="1643" y="872" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1643" y="872" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="1647" y="873" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1/1
+</text>
+<circle cx="1300" cy="790" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="1300" cy="790" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1295" y="780" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+s
+</text>
+<circle cx="1450" cy="640" r="27" opacity="1" fill="#BFDBFE" stroke="none" stroke-width="1"/>
+<circle cx="1450" cy="640" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1445" y="630" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+A
+</text>
+<circle cx="1450" cy="940" r="27" opacity="1" fill="#BFDBFE" stroke="none" stroke-width="1"/>
+<circle cx="1450" cy="940" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1445" y="930" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+B
+</text>
+<circle cx="1600" cy="640" r="27" opacity="1" fill="#BFDBFE" stroke="none" stroke-width="1"/>
+<circle cx="1600" cy="640" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1595" y="630" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+X
+</text>
+<circle cx="1600" cy="940" r="27" opacity="1" fill="#BFDBFE" stroke="none" stroke-width="1"/>
+<circle cx="1600" cy="940" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1595" y="930" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+Y
+</text>
+<circle cx="1750" cy="790" r="27" opacity="1" fill="#BFDBFE" stroke="none" stroke-width="1"/>
+<circle cx="1750" cy="790" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1745" y="780" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+t
+</text>
+</svg>

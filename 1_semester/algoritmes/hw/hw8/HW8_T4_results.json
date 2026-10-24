@@ -1,0 +1,69 @@
+{
+  "bottleneck1": 1.0,
+  "bottleneck2": 1.0,
+  "cut_capacity": 2.0,
+  "cut_edges": [
+    "s -> A",
+    "s -> B"
+  ],
+  "flow": {
+    "A": {
+      "X": 0.0,
+      "Y": 1.0
+    },
+    "B": {
+      "X": 1.0
+    },
+    "X": {
+      "t": 1.0
+    },
+    "Y": {
+      "t": 1.0
+    },
+    "s": {
+      "A": 1.0,
+      "B": 1.0
+    }
+  },
+  "minimum_cuts": [
+    [
+      "s"
+    ],
+    [
+      "s",
+      "B"
+    ],
+    [
+      "s",
+      "B",
+      "X"
+    ],
+    [
+      "s",
+      "A",
+      "B",
+      "X"
+    ],
+    [
+      "s",
+      "A",
+      "B",
+      "X",
+      "Y"
+    ]
+  ],
+  "path1": "s -> A -> X -> t",
+  "path2": "s -> B -> X -> A -> Y -> t",
+  "paths_initially": [
+    "s -> A -> X -> t",
+    "s -> A -> Y -> t",
+    "s -> B -> X -> t"
+  ],
+  "residual_paths_after_1": [
+    "s -> B -> X -> A -> Y -> t"
+  ],
+  "source_side": [
+    "s"
+  ],
+  "value": 2.0
+}

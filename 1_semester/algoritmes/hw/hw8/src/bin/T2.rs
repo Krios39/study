@@ -95,14 +95,14 @@ fn main() {
         series.push((format!("t = {t}: one run per seed"), pts, colors[ci], false));
         series.push((format!("t = {t}: mean of {reps} seeds"), means, colors[ci], true));
     }
-    error_chart("HW8_T2_error.jpg", "L1 error of endpoint frequencies vs M (weighted walk, 40 seeds per point)", &series, (80.0, 40000.0), (0.001, 0.6));
+    error_chart("HW8_T2_error.svg", "L1 error of endpoint frequencies vs M (weighted walk, 40 seeds per point)", &series, (80.0, 40000.0), (0.001, 0.6));
 
     let fw1 = &empirical["weighted_10_1000"];
     let fw = &empirical["weighted_10_10000"];
     let fu = &empirical["uniform_10_10000"];
     let vec = |v: &serde_json::Value| v.as_array().unwrap().iter().map(|x| x.as_f64().unwrap()).collect::<Vec<f64>>();
     let ymax = pred_w[10].iter().chain(&pred_u[10]).chain(&vec(fw)).chain(&vec(fu)).cloned().fold(0.0, f64::max) * 1.15;
-    bar_panels("HW8_T2_bars.jpg", &web.labels, &[
+    bar_panels("HW8_T2_bars.svg", &web.labels, &[
         ("Weighted transitions, t = 10: p0 P^10 vs endpoint frequencies", vec![
             ("predicted p0 P^10".to_string(), pred_w[10].clone(), RGBColor(30, 58, 138)),
             ("M = 1,000 walkers".to_string(), vec(fw1), RGBColor(147, 197, 253)),
@@ -112,7 +112,7 @@ fn main() {
             ("M = 10,000 walkers".to_string(), vec(fu), RGBColor(251, 146, 60))]),
     ], ymax);
     let vmax = pred_w[10].iter().chain(&pred_u[10]).cloned().fold(0.0, f64::max);
-    graph_values_row("HW8_T2_graphs.jpg", &web, &[("Weighted: p0 P^10", pred_w[10].clone()), ("Uniform among neighbours: p0 P^10", pred_u[10].clone())], vmax, false);
+    graph_values_row("HW8_T2_graphs.svg", &web, &[("Weighted: p0 P^10", pred_w[10].clone()), ("Uniform among neighbours: p0 P^10", pred_u[10].clone())], vmax, false);
 
     let gain: Vec<f64> = (0..n).map(|i| pred_w[10][i] - pred_u[10][i]).collect();
     let out = json!({

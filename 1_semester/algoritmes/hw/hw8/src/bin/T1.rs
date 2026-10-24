@@ -157,15 +157,15 @@ fn main() {
     }
 
     let walk_edges: Vec<(usize, usize)> = walks.iter().flat_map(|w| w.windows(2).map(|p| (p[0], p[1])).collect::<Vec<_>>()).collect();
-    graph_figure("HW8_T1_web.jpg", &web, "Base mini-web: edge weights (red: edges of the length-3 walks 0 -> 4)", &walk_edges);
-    heatmap_row("HW8_T1_powers.jpg", &[("A", as_f64(&a), None), ("A^2 (walks of length 2)", as_f64(&a2), None), ("A^3 (walks of length 3), red: [0][4]", as_f64(&a3), Some((0, 4)))],
+    graph_figure("HW8_T1_web.svg", &web, "Base mini-web: edge weights (red: edges of the length-3 walks 0 -> 4)", &walk_edges);
+    heatmap_row("HW8_T1_powers.svg", &[("A", as_f64(&a), None), ("A^2 (walks of length 2)", as_f64(&a2), None), ("A^3 (walks of length 3), red: [0][4]", as_f64(&a3), Some((0, 4)))],
                 Some(&web.labels), true, (680, 590));
-    heatmap_row("HW8_T1_closure.jpg", &[("A (edge exists)", as_f64(&a), None), ("R = reflexive transitive closure", bool_f64(&closure), None)],
+    heatmap_row("HW8_T1_closure.svg", &[("A (edge exists)", as_f64(&a), None), ("R = reflexive transitive closure", bool_f64(&closure), None)],
                 Some(&web.labels), false, (680, 590));
     let big = Graph::load(DATA, "clusters_256");
     let big_r = warshall_bits(&big).to_vec();
-    heatmap_row("HW8_T1_clusters256.jpg", &[("clusters_256: A", as_f64(&big.adjacency()), None), ("clusters_256: closure R", bool_f64(&big_r), None)], None, false, (660, 660));
-    timing_chart("HW8_T1_timing.jpg", &series, LIMIT);
+    heatmap_row("HW8_T1_clusters256.svg", &[("clusters_256: A", as_f64(&big.adjacency()), None), ("clusters_256: closure R", bool_f64(&big_r), None)], None, false, (660, 660));
+    timing_chart("HW8_T1_timing.svg", &series, LIMIT);
 
     let out = json!({
         "nodes": (0..n).collect::<Vec<_>>(), "labels": web.labels,
