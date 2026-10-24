@@ -19,7 +19,7 @@
 \noindent\small
 This text summarises the U-Net paper by Ronneberger et al.~\cite{unet}, which addresses segmentation of biomedical images, that is, assigning a class to every pixel, when only a few annotated images exist. The authors combine a symmetric encoder--decoder network with copied high-resolution features, heavy elastic-deformation augmentation, and a loss that gives extra weight to thin borders between touching cells. I describe the architecture, the training procedure and the reported results, and then discuss what the paper leaves open, in particular the absence of ablation studies.
 
-As a side note, I started reading this article before the deep learning lecture, and during the lecture, I got a candy for my answers. (:
+As a side note, I started reading this article before the deep learning lecture, and during the lecture, I got a extra candy for my answers. (:
 
 \end{abstract}
 
@@ -85,7 +85,7 @@ U-Net & 0.9203 & 0.7756\\
 \end{table}
 
 \section{Discussion: importance and limitations}
-\textbf{Why it matters.} The paper shows that a relatively small, fast network can reach state-of-the-art segmentation from tens of annotated images, which matches the realities of biomedical work. The encoder--decoder structure with skip connections has since become a standard pattern for dense prediction. This part is my assessment rather than a claim of the authors.
+\textbf{Why it matters.} The paper shows that a relatively small, fast network can reach state-of-the-art segmentation from tens of annotated images, which matches the realities of biomedical work. The same group later extended the architecture to 3D volumes (\c{C}i\c{c}ek et al.~\cite{cicek}). In the KiTS 2019 challenge, all top 15 entries were derived from the 3D U-Net, and nnU-Net (Isensee et al.~\cite{nnunet}), which relies on a plain U-Net template, set a new state of the art on 33 of 53 target structures across 23 datasets.
 
 \textbf{Limitations.} First, the paper contains no ablation study, so the contribution of skip connections, elastic deformation and the weight map is argued from the overall results but never measured separately. Second, U-Net is not best on every metric: Rand and pixel error in Table~\ref{tab:em} are better for other entries, and the gap to human performance remains large. Third, the best EM result averages 7 rotated inputs, so the stated speed of under one second does not directly apply to it. Fourth, unpadded convolutions require overlapping tiles, which repeats computation near tile borders. Fifth, the weight map needs instance-level annotations to find cell borders, and $w_0$ and $\sigma$ are set by hand. Finally, evaluation covers three 2D datasets, so generality to other modalities is only suggested.
 
@@ -99,5 +99,7 @@ U-Net combines a contracting path for context, an expanding path with copied fea
 \bibitem{fcn} J.~Long, E.~Shelhamer, T.~Darrell. Fully convolutional networks for semantic segmentation. arXiv:1411.4038, 2014.
 \bibitem{alexnet} A.~Krizhevsky, I.~Sutskever, G.~E.~Hinton. ImageNet classification with deep convolutional neural networks. NIPS, 2012.
 \bibitem{he} K.~He, X.~Zhang, S.~Ren, J.~Sun. Delving deep into rectifiers: Surpassing human-level performance on ImageNet classification. arXiv:1502.01852, 2015.
+\bibitem{cicek} \"{O}.~\c{C}i\c{c}ek, A.~Abdulkadir, S.~S.~Lienkamp, T.~Brox, O.~Ronneberger. 3D U-Net: Learning dense volumetric segmentation from sparse annotation. MICCAI, 2016.
+\bibitem{nnunet} F.~Isensee, P.~F.~Jaeger, S.~A.~A.~Kohl, J.~Petersen, K.~H.~Maier-Hein. nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nature Methods, 18:203--211, 2021.
 \end{thebibliography}
 \end{document}
