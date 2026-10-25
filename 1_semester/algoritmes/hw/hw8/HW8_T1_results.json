@@ -1637,193 +1637,193 @@
   "squarings": 4,
   "timing": [
     {
-      "median": 0.0000451,
+      "median": 0.0000239,
       "method": "Warshall, bit rows",
       "n": 64,
       "runs": [
-        0.0000636,
-        0.0000451,
-        0.0000428
+        0.0000309,
+        0.0000239,
+        0.0000233
       ],
       "squarings": null,
       "status": "3 runs"
     },
     {
-      "median": 0.000497,
+      "median": 0.0002498,
       "method": "Warshall, scalar bool",
       "n": 64,
       "runs": [
-        0.000457,
-        0.000497,
-        0.0006086
+        0.0002551,
+        0.0002498,
+        0.0002351
       ],
       "squarings": null,
       "status": "3 runs"
     },
     {
-      "median": 0.0001769,
+      "median": 0.0001002,
       "method": "Squaring, bit rows",
       "n": 64,
       "runs": [
-        0.0001883,
-        0.0001769,
-        0.0001701
+        0.0001066,
+        0.0001002,
+        0.0000959
       ],
       "squarings": 5,
       "status": "3 runs"
     },
     {
-      "median": 0.0072417,
+      "median": 0.0020451,
       "method": "Squaring, scalar bool",
       "n": 64,
       "runs": [
-        0.0030814,
-        0.010858,
-        0.0072417
+        0.0019253,
+        0.0022735,
+        0.0020451
       ],
       "squarings": 5,
       "status": "3 runs"
     },
     {
-      "median": 0.0000864,
+      "median": 0.0000867,
       "method": "Warshall, bit rows",
       "n": 128,
       "runs": [
-        0.0001108,
-        0.0000864,
-        0.0000834
+        0.0000867,
+        0.0000886,
+        0.0000787
       ],
       "squarings": null,
       "status": "3 runs"
     },
     {
-      "median": 0.0021145,
+      "median": 0.0019565,
       "method": "Warshall, scalar bool",
       "n": 128,
       "runs": [
-        0.0019767,
-        0.0021145,
-        0.0028557
+        0.0019565,
+        0.0018451,
+        0.0021358
       ],
       "squarings": null,
       "status": "3 runs"
     },
     {
-      "median": 0.0007376,
+      "median": 0.0004037,
       "method": "Squaring, bit rows",
       "n": 128,
       "runs": [
-        0.000776,
-        0.0007376,
-        0.0004321
+        0.0004037,
+        0.0003911,
+        0.0005619
       ],
       "squarings": 5,
       "status": "3 runs"
     },
     {
-      "median": 0.0173236,
+      "median": 0.0158084,
       "method": "Squaring, scalar bool",
       "n": 128,
       "runs": [
-        0.0159389,
-        0.0173236,
-        0.0187554
+        0.0147858,
+        0.0158084,
+        0.0172068
       ],
       "squarings": 5,
       "status": "3 runs"
     },
     {
-      "median": 0.0002447,
+      "median": 0.0003166,
       "method": "Warshall, bit rows",
       "n": 256,
       "runs": [
-        0.0002442,
-        0.0002447,
-        0.0002627
+        0.0005884,
+        0.0003166,
+        0.0002235
       ],
       "squarings": null,
       "status": "3 runs"
     },
     {
-      "median": 0.0200824,
+      "median": 0.0159422,
       "method": "Warshall, scalar bool",
       "n": 256,
       "runs": [
-        0.0200824,
-        0.0188408,
-        0.0209854
+        0.0157303,
+        0.0159422,
+        0.0336362
       ],
       "squarings": null,
       "status": "3 runs"
     },
     {
-      "median": 0.0016646,
+      "median": 0.0017874,
       "method": "Squaring, bit rows",
       "n": 256,
       "runs": [
-        0.0016646,
-        0.0017301,
-        0.0011298
+        0.0017874,
+        0.0012985,
+        0.0045042
       ],
       "squarings": 5,
       "status": "3 runs"
     },
     {
-      "median": 0.1214464,
+      "median": 0.1190402,
       "method": "Squaring, scalar bool",
       "n": 256,
       "runs": [
-        0.1337724,
-        0.1214464,
-        0.1202006
+        0.1074981,
+        0.1291218,
+        0.1190402
       ],
       "squarings": 5,
       "status": "3 runs"
     },
     {
-      "median": 0.0019265,
+      "median": 0.0012049,
       "method": "Warshall, bit rows",
       "n": 512,
       "runs": [
-        0.0020385,
-        0.0019265,
-        0.0013775
+        0.0046663,
+        0.0011851,
+        0.0012049
       ],
       "squarings": null,
       "status": "3 runs"
     },
     {
-      "median": 0.1008566,
+      "median": 0.135131,
       "method": "Warshall, scalar bool",
       "n": 512,
       "runs": [
-        0.0994005,
-        0.1275074,
-        0.1008566
+        0.135131,
+        0.1089907,
+        0.1354124
       ],
       "squarings": null,
       "status": "3 runs"
     },
     {
-      "median": 0.0050667,
+      "median": 0.005134,
       "method": "Squaring, bit rows",
       "n": 512,
       "runs": [
-        0.0050195,
-        0.0059289,
-        0.0050667
+        0.0044733,
+        0.005134,
+        0.0064438
       ],
       "squarings": 5,
       "status": "3 runs"
     },
     {
-      "median": 0.8926402,
+      "median": 2.5459882,
       "method": "Squaring, scalar bool",
       "n": 512,
       "runs": [
-        1.0351574,
-        0.880231,
-        0.8926402
+        3.217664,
+        2.5459882,
+        2.2698728
       ],
       "squarings": 5,
       "status": "3 runs"

@@ -1,0 +1,1072 @@
+{
+  "agree": 25,
+  "capacity_range": [
+    1,
+    10
+  ],
+  "contracted_below_original": 0,
+  "example": {
+    "contracted": {
+      "cut": [
+        "abc -> t (8)",
+        "d -> t (2)"
+      ],
+      "flow": [
+        [
+          "s",
+          "abc",
+          8.0,
+          8.0
+        ],
+        [
+          "s",
+          "d",
+          3.0,
+          2.0
+        ],
+        [
+          "abc",
+          "t",
+          8.0,
+          8.0
+        ],
+        [
+          "d",
+          "abc",
+          4.0,
+          0.0
+        ],
+        [
+          "d",
+          "t",
+          2.0,
+          2.0
+        ]
+      ],
+      "nodes": [
+        "s",
+        "abc",
+        "d",
+        "t"
+      ],
+      "source_side": [
+        "s",
+        "abc",
+        "d"
+      ],
+      "value": 10.0
+    },
+    "edges": [
+      [
+        "s",
+        "a",
+        8.0
+      ],
+      [
+        "s",
+        "d",
+        3.0
+      ],
+      [
+        "a",
+        "b",
+        2.0
+      ],
+      [
+        "b",
+        "c",
+        8.0
+      ],
+      [
+        "c",
+        "a",
+        8.0
+      ],
+      [
+        "c",
+        "t",
+        8.0
+      ],
+      [
+        "d",
+        "b",
+        4.0
+      ],
+      [
+        "d",
+        "t",
+        2.0
+      ]
+    ],
+    "nodes": [
+      "s",
+      "a",
+      "b",
+      "c",
+      "d",
+      "t"
+    ],
+    "original": {
+      "cut": [
+        "s -> d (3)",
+        "a -> b (2)"
+      ],
+      "flow": [
+        [
+          "s",
+          "a",
+          8.0,
+          2.0
+        ],
+        [
+          "s",
+          "d",
+          3.0,
+          3.0
+        ],
+        [
+          "a",
+          "b",
+          2.0,
+          2.0
+        ],
+        [
+          "b",
+          "c",
+          8.0,
+          3.0
+        ],
+        [
+          "c",
+          "a",
+          8.0,
+          0.0
+        ],
+        [
+          "c",
+          "t",
+          8.0,
+          3.0
+        ],
+        [
+          "d",
+          "b",
+          4.0,
+          1.0
+        ],
+        [
+          "d",
+          "t",
+          2.0,
+          2.0
+        ]
+      ],
+      "source_side": [
+        "s",
+        "a"
+      ],
+      "value": 5.0
+    },
+    "sccs": [
+      [
+        "s"
+      ],
+      [
+        "a",
+        "b",
+        "c"
+      ],
+      [
+        "d"
+      ],
+      [
+        "t"
+      ]
+    ]
+  },
+  "largest_gap": 9.0,
+  "minimal": {
+    "contracted": {
+      "cut": [
+        "sx -> t (2)"
+      ],
+      "flow": [
+        [
+          "sx",
+          "t",
+          2.0,
+          2.0
+        ]
+      ],
+      "nodes": [
+        "sx",
+        "t"
+      ],
+      "source_side": [
+        "sx"
+      ],
+      "value": 2.0
+    },
+    "edges": [
+      [
+        "s",
+        "x",
+        1.0
+      ],
+      [
+        "x",
+        "s",
+        1.0
+      ],
+      [
+        "x",
+        "t",
+        2.0
+      ]
+    ],
+    "nodes": [
+      "s",
+      "x",
+      "t"
+    ],
+    "original": {
+      "cut": [
+        "s -> x (1)"
+      ],
+      "flow": [
+        [
+          "s",
+          "x",
+          1.0,
+          1.0
+        ],
+        [
+          "x",
+          "s",
+          1.0,
+          0.0
+        ],
+        [
+          "x",
+          "t",
+          2.0,
+          1.0
+        ]
+      ],
+      "source_side": [
+        "s"
+      ],
+      "value": 1.0
+    },
+    "sccs": [
+      [
+        "s",
+        "x"
+      ],
+      [
+        "t"
+      ]
+    ]
+  },
+  "searches": [
+    {
+      "checked": 9,
+      "counterexamples": 0,
+      "max_capacity": 4,
+      "minimal": [],
+      "minimum_edges": null,
+      "minimum_total_capacity": null,
+      "skipped_same_scc": 16,
+      "vertices": 2
+    },
+    {
+      "checked": 847,
+      "counterexamples": 72,
+      "max_capacity": 3,
+      "minimal": [
+        {
+          "contracted": 2.0,
+          "edges": [
+            "s -> x (1)",
+            "x -> s (1)",
+            "x -> t (2)"
+          ],
+          "original": 1.0
+        },
+        {
+          "contracted": 2.0,
+          "edges": [
+            "s -> x (2)",
+            "x -> t (1)",
+            "t -> x (1)"
+          ],
+          "original": 1.0
+        }
+      ],
+      "minimum_edges": 3,
+      "minimum_total_capacity": 4,
+      "skipped_same_scc": 3249,
+      "vertices": 3
+    },
+    {
+      "checked": 82477,
+      "counterexamples": 11148,
+      "max_capacity": 2,
+      "minimal": [
+        {
+          "contracted": 2.0,
+          "edges": [
+            "s -> x (1)",
+            "x -> s (1)",
+            "x -> t (2)"
+          ],
+          "original": 1.0
+        },
+        {
+          "contracted": 2.0,
+          "edges": [
+            "s -> y (1)",
+            "y -> s (1)",
+            "y -> t (2)"
+          ],
+          "original": 1.0
+        },
+        {
+          "contracted": 2.0,
+          "edges": [
+            "s -> x (2)",
+            "x -> t (1)",
+            "t -> x (1)"
+          ],
+          "original": 1.0
+        },
+        {
+          "contracted": 2.0,
+          "edges": [
+            "s -> y (2)",
+            "y -> t (1)",
+            "t -> y (1)"
+          ],
+          "original": 1.0
+        }
+      ],
+      "minimum_edges": 3,
+      "minimum_total_capacity": 4,
+      "skipped_same_scc": 448964,
+      "vertices": 4
+    }
+  ],
+  "seed": 20261026,
+  "topology": [
+    "s -> a",
+    "s -> d",
+    "a -> b",
+    "b -> c",
+    "c -> a",
+    "c -> t",
+    "d -> b",
+    "d -> t"
+  ],
+  "variants": [
+    {
+      "capacities": [
+        5.0,
+        10.0,
+        3.0,
+        3.0,
+        10.0,
+        10.0,
+        1.0,
+        2.0
+      ],
+      "contracted": 8.0,
+      "original": 5.0
+    },
+    {
+      "capacities": [
+        2.0,
+        1.0,
+        5.0,
+        7.0,
+        2.0,
+        2.0,
+        7.0,
+        6.0
+      ],
+      "contracted": 3.0,
+      "original": 3.0
+    },
+    {
+      "capacities": [
+        5.0,
+        7.0,
+        9.0,
+        1.0,
+        6.0,
+        1.0,
+        8.0,
+        7.0
+      ],
+      "contracted": 8.0,
+      "original": 8.0
+    },
+    {
+      "capacities": [
+        3.0,
+        1.0,
+        8.0,
+        6.0,
+        9.0,
+        3.0,
+        4.0,
+        8.0
+      ],
+      "contracted": 4.0,
+      "original": 4.0
+    },
+    {
+      "capacities": [
+        9.0,
+        1.0,
+        7.0,
+        10.0,
+        6.0,
+        9.0,
+        7.0,
+        7.0
+      ],
+      "contracted": 10.0,
+      "original": 8.0
+    },
+    {
+      "capacities": [
+        10.0,
+        6.0,
+        3.0,
+        2.0,
+        10.0,
+        8.0,
+        1.0,
+        6.0
+      ],
+      "contracted": 14.0,
+      "original": 8.0
+    },
+    {
+      "capacities": [
+        7.0,
+        5.0,
+        1.0,
+        4.0,
+        4.0,
+        4.0,
+        8.0,
+        2.0
+      ],
+      "contracted": 6.0,
+      "original": 6.0
+    },
+    {
+      "capacities": [
+        8.0,
+        2.0,
+        8.0,
+        9.0,
+        8.0,
+        9.0,
+        6.0,
+        3.0
+      ],
+      "contracted": 10.0,
+      "original": 10.0
+    },
+    {
+      "capacities": [
+        3.0,
+        7.0,
+        8.0,
+        8.0,
+        7.0,
+        9.0,
+        2.0,
+        4.0
+      ],
+      "contracted": 9.0,
+      "original": 9.0
+    },
+    {
+      "capacities": [
+        8.0,
+        3.0,
+        2.0,
+        4.0,
+        9.0,
+        7.0,
+        6.0,
+        5.0
+      ],
+      "contracted": 10.0,
+      "original": 5.0
+    },
+    {
+      "capacities": [
+        4.0,
+        8.0,
+        5.0,
+        4.0,
+        8.0,
+        9.0,
+        1.0,
+        4.0
+      ],
+      "contracted": 9.0,
+      "original": 8.0
+    },
+    {
+      "capacities": [
+        10.0,
+        2.0,
+        4.0,
+        4.0,
+        1.0,
+        1.0,
+        5.0,
+        7.0
+      ],
+      "contracted": 3.0,
+      "original": 3.0
+    },
+    {
+      "capacities": [
+        7.0,
+        1.0,
+        6.0,
+        6.0,
+        2.0,
+        6.0,
+        8.0,
+        5.0
+      ],
+      "contracted": 7.0,
+      "original": 7.0
+    },
+    {
+      "capacities": [
+        8.0,
+        2.0,
+        10.0,
+        4.0,
+        6.0,
+        4.0,
+        8.0,
+        5.0
+      ],
+      "contracted": 6.0,
+      "original": 6.0
+    },
+    {
+      "capacities": [
+        6.0,
+        5.0,
+        9.0,
+        3.0,
+        3.0,
+        1.0,
+        1.0,
+        6.0
+      ],
+      "contracted": 6.0,
+      "original": 6.0
+    },
+    {
+      "capacities": [
+        1.0,
+        2.0,
+        4.0,
+        2.0,
+        8.0,
+        7.0,
+        7.0,
+        4.0
+      ],
+      "contracted": 3.0,
+      "original": 3.0
+    },
+    {
+      "capacities": [
+        9.0,
+        8.0,
+        2.0,
+        10.0,
+        7.0,
+        5.0,
+        1.0,
+        5.0
+      ],
+      "contracted": 10.0,
+      "original": 8.0
+    },
+    {
+      "capacities": [
+        4.0,
+        10.0,
+        4.0,
+        8.0,
+        4.0,
+        7.0,
+        7.0,
+        7.0
+      ],
+      "contracted": 14.0,
+      "original": 14.0
+    },
+    {
+      "capacities": [
+        9.0,
+        9.0,
+        3.0,
+        2.0,
+        5.0,
+        8.0,
+        1.0,
+        2.0
+      ],
+      "contracted": 10.0,
+      "original": 4.0
+    },
+    {
+      "capacities": [
+        8.0,
+        7.0,
+        7.0,
+        9.0,
+        9.0,
+        3.0,
+        1.0,
+        8.0
+      ],
+      "contracted": 10.0,
+      "original": 10.0
+    },
+    {
+      "capacities": [
+        7.0,
+        3.0,
+        7.0,
+        7.0,
+        9.0,
+        7.0,
+        10.0,
+        6.0
+      ],
+      "contracted": 10.0,
+      "original": 10.0
+    },
+    {
+      "capacities": [
+        6.0,
+        1.0,
+        4.0,
+        6.0,
+        6.0,
+        10.0,
+        6.0,
+        4.0
+      ],
+      "contracted": 7.0,
+      "original": 5.0
+    },
+    {
+      "capacities": [
+        7.0,
+        4.0,
+        5.0,
+        9.0,
+        7.0,
+        9.0,
+        3.0,
+        2.0
+      ],
+      "contracted": 11.0,
+      "original": 9.0
+    },
+    {
+      "capacities": [
+        3.0,
+        6.0,
+        5.0,
+        6.0,
+        9.0,
+        5.0,
+        4.0,
+        4.0
+      ],
+      "contracted": 9.0,
+      "original": 9.0
+    },
+    {
+      "capacities": [
+        9.0,
+        9.0,
+        8.0,
+        1.0,
+        7.0,
+        7.0,
+        4.0,
+        1.0
+      ],
+      "contracted": 8.0,
+      "original": 2.0
+    },
+    {
+      "capacities": [
+        3.0,
+        7.0,
+        3.0,
+        9.0,
+        7.0,
+        9.0,
+        6.0,
+        2.0
+      ],
+      "contracted": 10.0,
+      "original": 10.0
+    },
+    {
+      "capacities": [
+        9.0,
+        7.0,
+        9.0,
+        1.0,
+        2.0,
+        10.0,
+        8.0,
+        3.0
+      ],
+      "contracted": 13.0,
+      "original": 4.0
+    },
+    {
+      "capacities": [
+        10.0,
+        8.0,
+        7.0,
+        4.0,
+        5.0,
+        8.0,
+        6.0,
+        3.0
+      ],
+      "contracted": 11.0,
+      "original": 7.0
+    },
+    {
+      "capacities": [
+        1.0,
+        8.0,
+        3.0,
+        1.0,
+        10.0,
+        2.0,
+        1.0,
+        9.0
+      ],
+      "contracted": 9.0,
+      "original": 9.0
+    },
+    {
+      "capacities": [
+        4.0,
+        7.0,
+        7.0,
+        8.0,
+        10.0,
+        7.0,
+        6.0,
+        4.0
+      ],
+      "contracted": 11.0,
+      "original": 11.0
+    },
+    {
+      "capacities": [
+        5.0,
+        6.0,
+        2.0,
+        3.0,
+        9.0,
+        2.0,
+        7.0,
+        2.0
+      ],
+      "contracted": 4.0,
+      "original": 4.0
+    },
+    {
+      "capacities": [
+        4.0,
+        4.0,
+        8.0,
+        2.0,
+        5.0,
+        1.0,
+        3.0,
+        8.0
+      ],
+      "contracted": 5.0,
+      "original": 5.0
+    },
+    {
+      "capacities": [
+        2.0,
+        10.0,
+        2.0,
+        3.0,
+        7.0,
+        8.0,
+        5.0,
+        3.0
+      ],
+      "contracted": 10.0,
+      "original": 6.0
+    },
+    {
+      "capacities": [
+        8.0,
+        4.0,
+        2.0,
+        8.0,
+        9.0,
+        3.0,
+        4.0,
+        9.0
+      ],
+      "contracted": 7.0,
+      "original": 6.0
+    },
+    {
+      "capacities": [
+        2.0,
+        4.0,
+        3.0,
+        9.0,
+        10.0,
+        2.0,
+        5.0,
+        6.0
+      ],
+      "contracted": 6.0,
+      "original": 6.0
+    },
+    {
+      "capacities": [
+        9.0,
+        8.0,
+        6.0,
+        2.0,
+        1.0,
+        5.0,
+        10.0,
+        8.0
+      ],
+      "contracted": 13.0,
+      "original": 10.0
+    },
+    {
+      "capacities": [
+        1.0,
+        3.0,
+        7.0,
+        5.0,
+        4.0,
+        8.0,
+        6.0,
+        7.0
+      ],
+      "contracted": 4.0,
+      "original": 4.0
+    },
+    {
+      "capacities": [
+        5.0,
+        2.0,
+        6.0,
+        1.0,
+        10.0,
+        3.0,
+        7.0,
+        1.0
+      ],
+      "contracted": 4.0,
+      "original": 2.0
+    },
+    {
+      "capacities": [
+        8.0,
+        6.0,
+        5.0,
+        3.0,
+        1.0,
+        5.0,
+        3.0,
+        9.0
+      ],
+      "contracted": 11.0,
+      "original": 9.0
+    },
+    {
+      "capacities": [
+        10.0,
+        8.0,
+        2.0,
+        1.0,
+        2.0,
+        2.0,
+        1.0,
+        9.0
+      ],
+      "contracted": 10.0,
+      "original": 9.0
+    },
+    {
+      "capacities": [
+        1.0,
+        8.0,
+        10.0,
+        4.0,
+        4.0,
+        2.0,
+        9.0,
+        7.0
+      ],
+      "contracted": 9.0,
+      "original": 9.0
+    },
+    {
+      "capacities": [
+        6.0,
+        2.0,
+        6.0,
+        1.0,
+        9.0,
+        5.0,
+        7.0,
+        1.0
+      ],
+      "contracted": 6.0,
+      "original": 2.0
+    },
+    {
+      "capacities": [
+        6.0,
+        7.0,
+        9.0,
+        3.0,
+        9.0,
+        10.0,
+        7.0,
+        6.0
+      ],
+      "contracted": 13.0,
+      "original": 9.0
+    },
+    {
+      "capacities": [
+        8.0,
+        1.0,
+        7.0,
+        3.0,
+        5.0,
+        4.0,
+        7.0,
+        2.0
+      ],
+      "contracted": 5.0,
+      "original": 4.0
+    },
+    {
+      "capacities": [
+        7.0,
+        9.0,
+        1.0,
+        10.0,
+        9.0,
+        4.0,
+        4.0,
+        10.0
+      ],
+      "contracted": 13.0,
+      "original": 10.0
+    },
+    {
+      "capacities": [
+        7.0,
+        6.0,
+        10.0,
+        3.0,
+        10.0,
+        5.0,
+        5.0,
+        9.0
+      ],
+      "contracted": 11.0,
+      "original": 9.0
+    },
+    {
+      "capacities": [
+        1.0,
+        5.0,
+        4.0,
+        5.0,
+        6.0,
+        3.0,
+        3.0,
+        1.0
+      ],
+      "contracted": 4.0,
+      "original": 4.0
+    },
+    {
+      "capacities": [
+        8.0,
+        6.0,
+        4.0,
+        1.0,
+        8.0,
+        7.0,
+        7.0,
+        7.0
+      ],
+      "contracted": 13.0,
+      "original": 7.0
+    },
+    {
+      "capacities": [
+        8.0,
+        1.0,
+        5.0,
+        7.0,
+        3.0,
+        3.0,
+        9.0,
+        4.0
+      ],
+      "contracted": 4.0,
+      "original": 4.0
+    },
+    {
+      "capacities": [
+        9.0,
+        5.0,
+        2.0,
+        5.0,
+        9.0,
+        9.0,
+        5.0,
+        4.0
+      ],
+      "contracted": 13.0,
+      "original": 7.0
+    }
+  ]
+}

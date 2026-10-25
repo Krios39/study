@@ -1,0 +1,150 @@
+<svg width="1340" height="600" viewBox="0 0 1340 600" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="0" width="1340" height="600" opacity="1" fill="#FFFFFF" stroke="none"/>
+<text x="30" y="16" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="19.35483870967742" opacity="1" fill="#000000">
+example: original, max flow 5
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="99,350 199,250 "/>
+<polygon opacity="1" fill="#475569" points="209,240 203,254 195,246 "/>
+<rect x="123" y="302" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="123" y="302" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="127" y="303" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+2/8
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="101,385 255,495 "/>
+<polygon opacity="1" fill="#DC2626" points="266,503 251,499 258,490 "/>
+<rect x="146" y="418" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="146" y="418" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="150" y="419" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+3/3
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="253,206 343,152 "/>
+<polygon opacity="1" fill="#DC2626" points="355,144 346,157 340,146 "/>
+<rect x="274" y="175" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="274" y="175" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="278" y="176" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+2/2
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="389,155 425,254 "/>
+<polygon opacity="1" fill="#475569" points="430,267 419,256 430,252 "/>
+<rect x="388" y="186" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="388" y="186" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="392" y="187" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+3/8
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="414,285 270,234 "/>
+<polygon opacity="1" fill="#475569" points="257,229 272,228 268,240 "/>
+<rect x="342" y="256" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="342" y="256" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="346" y="257" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/8
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="464,307 551,350 "/>
+<polygon opacity="1" fill="#475569" points="564,357 548,356 554,345 "/>
+<rect x="485" y="316" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="485" y="316" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="489" y="317" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+3/8
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="296,493 370,171 "/>
+<polygon opacity="1" fill="#475569" points="373,158 376,173 364,170 "/>
+<rect x="308" y="363" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="308" y="363" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="312" y="364" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+1/4
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="314,507 551,389 "/>
+<polygon opacity="1" fill="#475569" points="564,382 554,394 548,383 "/>
+<rect x="389" y="453" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="389" y="453" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="393" y="454" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+2/2
+</text>
+<circle cx="80" cy="370" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="80" cy="370" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="75" y="360" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+s
+</text>
+<circle cx="230" cy="220" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="230" cy="220" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="225" y="210" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+a
+</text>
+<circle cx="380" cy="130" r="27" opacity="1" fill="#BFDBFE" stroke="none" stroke-width="1"/>
+<circle cx="380" cy="130" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="375" y="120" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+b
+</text>
+<circle cx="440" cy="295" r="27" opacity="1" fill="#BFDBFE" stroke="none" stroke-width="1"/>
+<circle cx="440" cy="295" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="435" y="285" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+c
+</text>
+<circle cx="290" cy="520" r="27" opacity="1" fill="#BFDBFE" stroke="none" stroke-width="1"/>
+<circle cx="290" cy="520" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="285" y="510" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+d
+</text>
+<circle cx="590" cy="370" r="27" opacity="1" fill="#BFDBFE" stroke="none" stroke-width="1"/>
+<circle cx="590" cy="370" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="585" y="360" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+t
+</text>
+<text x="700" y="16" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="19.35483870967742" opacity="1" fill="#000000">
+example: SCCs contracted, max flow 10
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="773,271 982,151 "/>
+<polygon opacity="1" fill="#475569" points="994,144 985,156 979,146 "/>
+<rect x="838" y="216" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="838" y="216" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="842" y="217" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+8/8
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="771,300 925,410 "/>
+<polygon opacity="1" fill="#475569" points="936,418 921,414 928,405 "/>
+<rect x="816" y="333" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="816" y="333" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="820" y="334" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+2/3
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="1042,144 1223,261 "/>
+<polygon opacity="1" fill="#DC2626" points="1235,269 1220,266 1227,256 "/>
+<rect x="1097" y="180" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1097" y="180" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="1101" y="181" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+8/8
+</text>
+<polyline fill="none" opacity="1" stroke="#475569" stroke-width="2" points="965,408 1011,172 "/>
+<polygon opacity="1" fill="#475569" points="1014,158 1017,173 1005,171 "/>
+<rect x="967" y="309" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="967" y="309" width="30" height="18" opacity="1" fill="none" stroke="#475569"/>
+<text x="971" y="310" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#475569">
+0/4
+</text>
+<polyline fill="none" opacity="1" stroke="#DC2626" stroke-width="4" points="984,422 1221,304 "/>
+<polygon opacity="1" fill="#DC2626" points="1234,297 1224,309 1218,298 "/>
+<rect x="1059" y="368" width="30" height="18" opacity="1" fill="#FFFFFF" stroke="none"/>
+<rect x="1059" y="368" width="30" height="18" opacity="1" fill="none" stroke="#DC2626"/>
+<text x="1063" y="369" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="12.096774193548388" opacity="1" fill="#DC2626">
+2/2
+</text>
+<circle cx="750" cy="285" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="750" cy="285" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="745" y="275" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+s
+</text>
+<circle cx="1020" cy="130" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="1020" cy="130" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1005" y="120" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+abc
+</text>
+<circle cx="960" cy="435" r="27" opacity="1" fill="#FDE68A" stroke="none" stroke-width="1"/>
+<circle cx="960" cy="435" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="955" y="425" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+d
+</text>
+<circle cx="1260" cy="285" r="27" opacity="1" fill="#BFDBFE" stroke="none" stroke-width="1"/>
+<circle cx="1260" cy="285" r="27" opacity="1" fill="none" stroke="#000000" stroke-width="2"/>
+<text x="1255" y="275" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="16.129032258064516" opacity="1" fill="#000000">
+t
+</text>
+</svg>

@@ -142,9 +142,138 @@ def t4():
     print(f"T4: check_flow {cert}; NetworkX maximum_flow value {value}, its flow {reference}")
 
 
+def t5():
+    from HW8_graph_helpers import check_flow
+    res = json.load(open("HW8_T5_results.json"))
+    graphs = homework_graphs()
+    small = graphs["allocation_small"]
+    cert = check_flow(small, res["small"]["flow"], res["small"]["source_side"])
+    assert cert["flow_value"] == res["small"]["value"] == 2
+    large = graphs["allocation_large"]
+    for run in res["runs"]:
+        g = large.copy()
+        for name, cap, base in zip(run["sessions"], run["capacity"], [large[j]["t"]["capacity"] for j in run["sessions"]]):
+            if cap != base:
+                g[name]["t"]["capacity"] = cap
+        ids = {"source": "s", "sink": "t"}
+        flow = {ids.get(u, u): {ids.get(v, v): x for v, x in d.items()} for u, d in run["flow"].items()}
+        cert = check_flow(g, flow, [ids.get(u, u) for u in run["source_side"]])
+        students = [u for u, d in g.nodes(data=True) if d.get("kind") == "student"]
+        for u in students:
+            chosen = [v for v, x in flow.get(u, {}).items() if x > 0]
+            assert len(chosen) <= 1 and all(g.has_edge(u, v) for v in chosen)
+        assert sum(1 for u in students if not flow.get(u)) == run["unassigned"]
+        value = nx.maximum_flow_value(g, "s", "t", capacity="capacity")
+        assert value == cert["flow_value"] == cert["cut_capacity"] == run["value"]
+        print(f"T5 {run['name']}: check_flow {cert}, NetworkX value {value}, one compatible session per assigned student")
+
+
+def b1():
+    res = json.load(open("HW8_B1_results.json"))
+    web = homework_graphs()["web_base"]
+    nodes = list(web)
+    for run in res["runs"]:
+        v = dict(zip(nodes, run["preference"]))
+        ref = nx.pagerank(web, alpha=1 - res["rho"], personalization=v, dangling=v, weight="weight", tol=1e-14 / len(web), max_iter=10000)
+        check_distribution(run["vector"], len(nodes))
+        np.testing.assert_allclose(run["vector"], [ref[u] for u in nodes], rtol=0, atol=1e-9)
+        print(f"B1 {run['key']}: NetworkX personalised PageRank agrees within 1e-9")
+    esc = json.load(open("HW8_B1_escape.json"))
+    prefs = [run["preference"] for run in res["runs"]]
+    for c in esc["candidates"]:
+        g = web.copy()
+        g.add_edge(c["from"], c["to"], weight=esc["weight_of_new_link"])
+        for k, pref in enumerate(prefs):
+            v = dict(zip(nodes, pref))
+            ref = nx.pagerank(g, alpha=1 - res["rho"], personalization=v, dangling=v, weight="weight", tol=1e-14 / len(g), max_iter=10000)
+            np.testing.assert_allclose(c["vectors"][k], [ref[u] for u in nodes], rtol=0, atol=1e-9)
+    escape = homework_graphs()["web_escape"]
+    ref = nx.pagerank(escape, alpha=1 - res["rho"], weight="weight", tol=1e-14 / len(escape), max_iter=10000)
+    course = [c for c in esc["candidates"] if c["from"] == 10 and c["to"] == 0][0]
+    np.testing.assert_allclose(course["vectors"][0], [ref[u] for u in nodes], rtol=0, atol=1e-9)
+    print(f"B1 escape: all {len(esc['candidates'])} x 3 vectors agree with NetworkX; Partner B -> Home equals the course's web_escape")
+
+
+def contracted(g, s, t):
+    comps = list(nx.strongly_connected_components(g))
+    of = {v: i for i, c in enumerate(comps) for v in c}
+    h = nx.DiGraph(source=of[s], sink=of[t])
+    h.add_nodes_from(range(len(comps)))
+    for u, v, d in g.edges(data=True):
+        if of[u] != of[v]:
+            h.add_edge(of[u], of[v], capacity=h.get_edge_data(of[u], of[v], {}).get("capacity", 0) + d["capacity"])
+    return h, of
+
+
+def b2():
+    from HW8_graph_helpers import check_flow
+    res = json.load(open("HW8_B2_results.json"))
+    for key in ("example", "minimal"):
+        ex = res[key]
+        g = nx.DiGraph(source="s", sink="t")
+        g.add_weighted_edges_from(ex["edges"], weight="capacity")
+        assert sorted(sorted(c) for c in nx.strongly_connected_components(g)) == sorted(sorted(c) for c in ex["sccs"])
+        flow = {}
+        for u, v, c, f in ex["original"]["flow"]:
+            flow.setdefault(u, {})[v] = f
+        cert = check_flow(g, flow, ex["original"]["source_side"])
+        h, of = contracted(g, "s", "t")
+        names = ex["contracted"]["nodes"]
+        idx = {}
+        for i, name in enumerate(names):
+            members = list(name)
+            idx[name] = of[members[0]]
+        hf = {}
+        for u, v, c, f in ex["contracted"]["flow"]:
+            hf.setdefault(idx[u], {})[idx[v]] = f
+        hcert = check_flow(h, hf, [idx[x] for x in ex["contracted"]["source_side"]])
+        assert cert["flow_value"] == nx.maximum_flow_value(g, "s", "t", capacity="capacity") == ex["original"]["value"]
+        assert hcert["flow_value"] == nx.maximum_flow_value(h, h.graph["source"], h.graph["sink"], capacity="capacity") == ex["contracted"]["value"]
+        print(f"B2 {key}: original {cert}, contracted {hcert}")
+    agree, gap = 0, 0
+    for var in res["variants"]:
+        g = nx.DiGraph()
+        for edge, c in zip(res["topology"], var["capacities"]):
+            u, v = edge.split(" -> ")
+            g.add_edge(u, v, capacity=c)
+        h, of = contracted(g, "s", "t")
+        fo = nx.maximum_flow_value(g, "s", "t", capacity="capacity")
+        fc = nx.maximum_flow_value(h, of["s"], of["t"], capacity="capacity")
+        assert fo == var["original"] and fc == var["contracted"] and fc >= fo
+        agree += fo == fc
+        gap = max(gap, fc - fo)
+    assert agree == res["agree"] and gap == res["largest_gap"]
+    import itertools
+    names = ["s", "x", "t"]
+    pairs = [(u, v) for u in names for v in names if u != v]
+    checked = found = 0
+    best = None
+    for mask in range(1 << len(pairs)):
+        chosen = [pairs[k] for k in range(len(pairs)) if mask >> k & 1]
+        for caps in itertools.product(range(1, 4), repeat=len(chosen)):
+            g = nx.DiGraph()
+            g.add_nodes_from(names)
+            for (u, v), c in zip(chosen, caps):
+                g.add_edge(u, v, capacity=c)
+            h, of = contracted(g, "s", "t")
+            if of["s"] == of["t"]:
+                continue
+            checked += 1
+            if nx.maximum_flow_value(h, of["s"], of["t"], capacity="capacity") > nx.maximum_flow_value(g, "s", "t", capacity="capacity"):
+                found += 1
+                best = min(best or (99, 99), (len(chosen), sum(caps)))
+    s3 = [x for x in res["searches"] if x["vertices"] == 3][0]
+    assert (checked, found, best) == (s3["checked"], s3["counterexamples"], (s3["minimum_edges"], s3["minimum_total_capacity"]))
+    print(f"B2 search: NetworkX repeats the 3-vertex enumeration: {checked} graphs, {found} counterexamples, minimum {best}")
+    print(f"B2 variants: NetworkX confirms {agree}/{len(res['variants'])} agree, largest gap {gap}, never contracted < original")
+
+
 if __name__ == "__main__":
     t1()
     t2()
     t3()
     t4()
+    t5()
+    b1()
+    b2()
     sys.exit(0)

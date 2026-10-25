@@ -478,3 +478,63 @@ impl FlowNet {
         seen
     }
 }
+
+pub struct MaxFlow {
+    pub value: f64,
+    pub augmentations: usize,
+    pub examinations: usize,
+    pub path_lengths: Vec<usize>,
+    pub first_paths: Vec<Vec<usize>>,
+}
+
+impl FlowNet {
+    pub fn bfs_path(&self, s: usize, t: usize, examinations: &mut usize) -> Option<Vec<(usize, usize)>> {
+        let n = self.adj.len();
+        let mut parent: Vec<Option<(usize, usize)>> = vec![None; n];
+        let mut seen = vec![false; n];
+        seen[s] = true;
+        let mut queue = VecDeque::from([s]);
+        while let Some(u) = queue.pop_front() {
+            for (i, a) in self.adj[u].iter().enumerate() {
+                *examinations += 1;
+                if a.residual > 0.0 && !seen[a.to] {
+                    seen[a.to] = true;
+                    parent[a.to] = Some((u, i));
+                    if a.to == t {
+                        let mut path = Vec::new();
+                        let mut v = t;
+                        while let Some((p, i)) = parent[v] {
+                            path.push((p, i));
+                            v = p;
+                        }
+                        path.reverse();
+                        return Some(path);
+                    }
+                    queue.push_back(a.to);
+                }
+            }
+        }
+        None
+    }
+
+    pub fn edmonds_karp(&mut self, s: usize, t: usize, keep: usize) -> MaxFlow {
+        let mut result = MaxFlow { value: 0.0, augmentations: 0, examinations: 0, path_lengths: Vec::new(), first_paths: Vec::new() };
+        while let Some(path) = self.bfs_path(s, t, &mut result.examinations) {
+            let bottleneck = path.iter().map(|&(u, i)| self.adj[u][i].residual).fold(f64::INFINITY, f64::min);
+            for &(u, i) in &path {
+                self.adj[u][i].residual -= bottleneck;
+                let (to, rev) = (self.adj[u][i].to, self.adj[u][i].rev);
+                self.adj[to][rev].residual += bottleneck;
+            }
+            result.value += bottleneck;
+            result.augmentations += 1;
+            result.path_lengths.push(path.len());
+            if result.first_paths.len() < keep {
+                let mut nodes = vec![s];
+                nodes.extend(path.iter().map(|&(u, i)| self.adj[u][i].to));
+                result.first_paths.push(nodes);
+            }
+        }
+        result
+    }
+}

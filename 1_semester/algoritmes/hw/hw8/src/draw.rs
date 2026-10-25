@@ -46,7 +46,10 @@ pub fn graph_on<DB: DrawingBackend>(root: &DrawingArea<DB, plotters::coord::Shif
     let ymax = g.pos.iter().map(|p| p.1).fold(f64::MIN, f64::max);
     let px = |i: usize| (PAD + (g.pos[i].0 - xmin) * SCALE, TOP + PAD + (ymax - g.pos[i].1) * SCALE);
     root.draw(&Text::new(title.to_string(), (PAD as i32 - 50, 16), (FONT, 24).into_font())).unwrap();
-    let radius = 27.0;
+    let rad = |i: usize| match values {
+        Some((v, max)) => 9.0 + 40.0 * (v[i] / max).max(0.0).sqrt(),
+        None => 27.0,
+    };
     let has = |u: usize, v: usize| g.edges.iter().any(|&(a, b, _)| a == u && b == v);
     for (e, &(u, v, _)) in g.edges.iter().enumerate() {
         let ((x0, y0), (x1, y1)) = (px(u), px(v));
@@ -55,8 +58,8 @@ pub fn graph_on<DB: DrawingBackend>(root: &DrawingArea<DB, plotters::coord::Shif
         let (ux, uy) = (dx / len, dy / len);
         let shift = if has(v, u) { 7.0 } else { 0.0 };
         let (ox, oy) = (-uy * shift, ux * shift);
-        let a = (x0 + ux * radius + ox, y0 + uy * radius + oy);
-        let b = (x1 - ux * (radius + 2.0) + ox, y1 - uy * (radius + 2.0) + oy);
+        let a = (x0 + ux * rad(u) + ox, y0 + uy * rad(u) + oy);
+        let b = (x1 - ux * (rad(v) + 2.0) + ox, y1 - uy * (rad(v) + 2.0) + oy);
         let hot = highlight.contains(&(u, v));
         let color = if hot { RGBColor(220, 38, 38) } else { RGBColor(71, 85, 105) };
         let tip = (b.0 - ux * 14.0, b.1 - uy * 14.0);
@@ -84,11 +87,13 @@ pub fn graph_on<DB: DrawingBackend>(root: &DrawingArea<DB, plotters::coord::Shif
             Some((v, max)) => viridis(v[i] / max),
             None => GROUP_COLORS[g.group[i].clamp(0, 4) as usize],
         };
+        let radius = rad(i);
         root.draw(&Circle::new((x as i32, y as i32), radius as i32, fill.filled())).unwrap();
         root.draw(&Circle::new((x as i32, y as i32), radius as i32, stroke(BLACK, 2))).unwrap();
-        let short = g.labels[i].len() <= 2;
+        let short = g.labels[i].len() <= 3;
         let id = if short { g.labels[i].clone() } else { i.to_string() };
-        root.draw(&Text::new(id.clone(), (x as i32 - 5 * id.len() as i32, y as i32 - 10), (FONT, 20).into_font().color(&ink(fill)))).unwrap();
+        let fs = (radius * 0.75).clamp(10.0, 20.0);
+        root.draw(&Text::new(id.clone(), (x as i32 - (fs * 0.27) as i32 * id.len() as i32, y as i32 - (fs * 0.5) as i32), (FONT, fs).into_font().color(&ink(fill)))).unwrap();
         if short && values.is_none() {
             continue;
         }
@@ -110,6 +115,7 @@ pub fn graph_on<DB: DrawingBackend>(root: &DrawingArea<DB, plotters::coord::Shif
         root.draw(&Text::new("0".to_string(), (x0 - 4, y0 + bh + 3), (FONT, 14).into_font())).unwrap();
         root.draw(&Text::new(format!("{max:.2}"), (x0 + bw - 20, y0 + bh + 3), (FONT, 14).into_font())).unwrap();
         root.draw(&Text::new("probability".to_string(), (x0 + 60, y0 - 18), (FONT, 14).into_font())).unwrap();
+        root.draw(&Text::new("circle area is proportional to probability".to_string(), (x0 - 70, y0 + bh + 22), (FONT, 14).into_font().color(&RGBColor(100, 116, 139)))).unwrap();
     }
 }
 
@@ -330,6 +336,44 @@ pub fn graph_grid(path: &str, panels: &[(String, Graph, Vec<(usize, usize)>, Vec
     root.fill(&WHITE).unwrap();
     for (area, (title, g, hot, texts)) in root.split_evenly((rows, cols)).iter().zip(panels) {
         graph_on(area, g, title, hot, None, Some(texts));
+    }
+    root.present().unwrap();
+}
+
+pub fn allocation_bars(path: &str, labels: &[String], panels: &[(String, Vec<f64>, Vec<f64>, Vec<bool>)], ymax: f64) {
+    let root = SVGBackend::new(path, (1200, 330 * panels.len() as u32)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    let n = labels.len();
+    for (area, (title, caps, assigned, marked)) in root.split_evenly((panels.len(), 1)).iter().zip(panels) {
+        let mut chart = ChartBuilder::on(area)
+            .caption(title.as_str(), (FONT, 20))
+            .margin(12)
+            .x_label_area_size(34)
+            .y_label_area_size(60)
+            .build_cartesian_2d(-0.5f64..n as f64 - 0.5, 0f64..ymax)
+            .unwrap();
+        let lab = labels.to_vec();
+        let fmt = move |v: &f64| {
+            let i = v.round();
+            if (v - i).abs() < 1e-6 && i >= 0.0 && (i as usize) < lab.len() { lab[i as usize].clone() } else { String::new() }
+        };
+        chart.configure_mesh().disable_x_mesh().x_labels(n + 1).x_label_formatter(&fmt)
+            .y_desc("students").label_style((FONT, 14)).axis_desc_style((FONT, 15)).draw().unwrap();
+        let grey = RGBColor(226, 232, 240);
+        chart.draw_series((0..n).map(|i| Rectangle::new([(i as f64 - 0.4, 0.0), (i as f64 + 0.4, caps[i])], grey.filled())))
+            .unwrap().label("seats (capacity)").legend(move |(x, y)| Rectangle::new([(x, y - 6), (x + 14, y + 6)], grey.filled()));
+        chart.draw_series((0..n).map(|i| Rectangle::new([(i as f64 - 0.4, 0.0), (i as f64 + 0.4, caps[i])], stroke(RGBColor(148, 163, 184), 1)))).unwrap();
+        let teal = RGBColor(36, 125, 131);
+        let red = RGBColor(220, 38, 38);
+        chart.draw_series((0..n).map(|i| {
+            let c = if marked[i] { red } else { teal };
+            Rectangle::new([(i as f64 - 0.25, 0.0), (i as f64 + 0.25, assigned[i])], c.filled())
+        })).unwrap().label("assigned").legend(move |(x, y)| Rectangle::new([(x, y - 6), (x + 14, y + 6)], teal.filled()));
+        chart.draw_series(std::iter::once(Rectangle::new([(0.0, 0.0), (0.0, 0.0)], red.filled())))
+            .unwrap().label("assigned, session on the source side of the minimum cut (full)").legend(move |(x, y)| Rectangle::new([(x, y - 6), (x + 14, y + 6)], red.filled()));
+        chart.draw_series((0..n).map(|i| Text::new(format!("{}/{}", assigned[i], caps[i]), (i as f64 - 0.3, caps[i] + ymax * 0.1), (FONT, 14).into_font()))).unwrap();
+        chart.configure_series_labels().position(SeriesLabelPosition::UpperRight)
+            .background_style(WHITE.mix(0.9)).border_style(BLACK).label_font((FONT, 14)).draw().unwrap();
     }
     root.present().unwrap();
 }
