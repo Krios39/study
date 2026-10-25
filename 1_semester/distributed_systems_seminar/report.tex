@@ -8,12 +8,11 @@
 \usepackage{enumitem}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
-% configuration parameter names: typewriter, may break after "-" or "=" (url package, loaded by hyperref)
 \DeclareUrlCommand\param{\urlstyle{tt}\def\UrlBreaks{\do\-\do\=}}
 
 \title{Measuring the Overhead of Trust Mechanisms\\in the X-Road Data Exchange Layer}
 \author{Ruslan Nechshadimov\\\small University of Tartu\\\small Supervisor: Artjom Lind}
-\date{Draft v0.2, Oktober 14, 2026}
+\date{Draft v0.2, October 25, 2026}
 
 \begin{document}
 \maketitle
@@ -697,101 +696,6 @@ time-stamping services and over a real wide-area link, and use server hardware.
 
 \begin{thebibliography}{99}
 
-\bibitem{ansper2013}
-A.~Ansper, A.~Buldas, M.~Freudenthal, J.~Willemson.
-\newblock High-Performance Qualified Digital Signatures for X-Road.
-\newblock In \emph{NordSec 2013}, LNCS 8208, pp.~123--138, Springer, 2013.
-
-\bibitem{bakhtina2023ares}
-M.~Bakhtina, K.~L.~Leung, R.~Matulevi\v{c}ius, A.~Awad, P.~\v{S}venda.
-\newblock A Decentralised Public Key Infrastructure for X-Road.
-\newblock In \emph{ARES 2023}, ACM.
-\newblock DOI: 10.1145/3600160.3605092.
-
-\bibitem{bakhtina2023sac}
-M.~Bakhtina, R.~Matulevi\v{c}ius, A.~Awad, P.~Kivim\"{a}ki.
-\newblock On the Shift to Decentralised Identity Management in Distributed Data Exchange Systems.
-\newblock In \emph{SAC '23}, pp.~864--873, ACM, 2023.
-\newblock DOI: 10.1145/3555776.3577678.
-
-\bibitem{bakhtina2026ijis}
-M.~Bakhtina, J.~Kvapil, P.~\v{S}venda, R.~Matulevi\v{c}ius.
-\newblock Securing Organisational Digital Identity: A Full-Lifecycle Approach to Distributed Key
-Management.
-\newblock \emph{International Journal of Information Security}, 25:131, 2026.
-\newblock DOI: 10.1007/s10207-026-01291-5.
-
-\bibitem{bakhtina2026pqc}
-M.~Bakhtina.
-\newblock Migration of X-Road to Post-Quantum Cryptography.
-\newblock NIIS Publication series, Nordic Institute for Interoperability Solutions, 2026.
-\newblock ISBN 978-9916-9853-4-2.
-
-\bibitem{snetkov2023}
-N.~Snetkov, J.~Vakarjuk.
-\newblock Integrating Post-Quantum Cryptography to UXP.
-\newblock Cybernetica Research Report D-2-499, 2023.
-
-\bibitem{taklai2020}
-E.~Taklai.
-\newblock X-tee teenuste j\~{o}udlustestimine Eesti \"{a}riregistri n\"{a}itel
-(Performance testing of X-Road services on the example of the Estonian Business Register).
-\newblock Diploma thesis, Tallinn University of Technology, 2020.
-
-\bibitem{mironova2017}
-L.~Mironova.
-\newblock X-tee platvormi kriitiliste kesksete teenuste testimine
-(Testing of the critical central services of the X-Road platform).
-\newblock Master's thesis, Tallinn University of Technology, 2017.
-
-\bibitem{kivimaki2020}
-P.~Kivim\"{a}ki.
-\newblock Resisting Failure.
-\newblock NIIS blog, 20 November 2020.
-\newblock \url{https://www.niis.org/blog/2020/11/20/resisting-failure}.
-
-\bibitem{xteefactsheet}
-Estonian Information System Authority (RIA).
-\newblock X-tee Factsheet, Estonia.
-\newblock \url{https://www.x-tee.ee/factsheets/EE/}.
-\newblock Figures based on data of 1 September 2026; accessed 17 September 2026.
-
-\bibitem{xroadarcss}
-Nordic Institute for Interoperability Solutions.
-\newblock X-Road: Security Server Architecture.
-\newblock \url{https://docs.x-road.global/Architecture/arc-ss_x-road_security_server_architecture.html}.
-\newblock Accessed 17 September 2026.
-
-\bibitem{xroadsyspar}
-Nordic Institute for Interoperability Solutions.
-\newblock X-Road: System Parameters (UG-SYSPAR).
-\newblock \url{https://docs.x-road.global/Manuals/ug-syspar_x-road_v6_system_parameters.html}.
-\newblock Accessed 17 September 2026.
-
-\bibitem{naylor2014}
-D.~Naylor, A.~Finamore, I.~Leontiadis, Y.~Grunenberger, M.~Mellia, M.~Munaf\`{o},
-K.~Papagiannaki, P.~Steenkiste.
-\newblock The Cost of the ``S'' in HTTPS.
-\newblock In \emph{CoNEXT '14}, pp.~133--140, ACM, 2014.
-\newblock DOI: 10.1145/2674005.2674991.
-
-\bibitem{georges2007}
-A.~Georges, D.~Buytaert, L.~Eeckhout.
-\newblock Statistically Rigorous Java Performance Evaluation.
-\newblock In \emph{OOPSLA '07}, pp.~57--76, ACM, 2007.
-\newblock DOI: 10.1145/1297027.1297033.
-
-\bibitem{paquin2020}
-C.~Paquin, D.~Stebila, G.~Tamvada.
-\newblock Benchmarking Post-quantum Cryptography in TLS.
-\newblock In \emph{PQCrypto 2020}, LNCS vol.~12100, pp.~72--91, Springer, 2020.
-\newblock Cryptology ePrint Archive 2019/1447.
-
-\bibitem{hemminger2005}
-S.~Hemminger.
-\newblock Network Emulation with NetEm.
-\newblock In \emph{linux.conf.au 2005}, Canberra, 2005.
-
 \bibitem{mayer1995}
 R.~C.~Mayer, J.~H.~Davis, F.~D.~Schoorman.
 \newblock An Integrative Model of Organizational Trust.
@@ -807,6 +711,89 @@ R.~Anderson.
 \newblock \emph{Security Engineering: A Guide to Building Dependable Distributed Systems}, 3rd ed.
 \newblock Wiley, 2020.
 
+\bibitem{bakhtina2023sac}
+M.~Bakhtina, R.~Matulevi\v{c}ius, A.~Awad, P.~Kivim\"{a}ki.
+\newblock On the Shift to Decentralised Identity Management in Distributed Data Exchange Systems.
+\newblock In \emph{SAC '23}, pp.~864--873, ACM, 2023.
+\newblock DOI: 10.1145/3555776.3577678.
+
+\bibitem{xroadarcss}
+Nordic Institute for Interoperability Solutions.
+\newblock X-Road: Security Server Architecture.
+\newblock \url{https://docs.x-road.global/Architecture/arc-ss_x-road_security_server_architecture.html}.
+\newblock Accessed 17 September 2026.
+
+\bibitem{ansper2013}
+A.~Ansper, A.~Buldas, M.~Freudenthal, J.~Willemson.
+\newblock High-Performance Qualified Digital Signatures for X-Road.
+\newblock In \emph{NordSec 2013}, LNCS 8208, pp.~123--138, Springer, 2013.
+
+\bibitem{bakhtina2026ijis}
+M.~Bakhtina, J.~Kvapil, P.~\v{S}venda, R.~Matulevi\v{c}ius.
+\newblock Securing Organisational Digital Identity: A Full-Lifecycle Approach to Distributed Key
+Management.
+\newblock \emph{International Journal of Information Security}, 25:131, 2026.
+\newblock DOI: 10.1007/s10207-026-01291-5.
+
+\bibitem{taklai2020}
+E.~Taklai.
+\newblock X-tee teenuste j\~{o}udlustestimine Eesti \"{a}riregistri n\"{a}itel
+(Performance testing of X-Road services on the example of the Estonian Business Register).
+\newblock Diploma thesis, Tallinn University of Technology, 2020.
+
+\bibitem{xteefactsheet}
+Estonian Information System Authority (RIA).
+\newblock X-tee Factsheet, Estonia.
+\newblock \url{https://www.x-tee.ee/factsheets/EE/}.
+\newblock Figures based on data of 1 September 2026; accessed 17 September 2026.
+
+\bibitem{bakhtina2026pqc}
+M.~Bakhtina.
+\newblock Migration of X-Road to Post-Quantum Cryptography.
+\newblock NIIS Publication series, Nordic Institute for Interoperability Solutions, 2026.
+\newblock ISBN 978-9916-9853-4-2.
+
+\bibitem{snetkov2023}
+N.~Snetkov, J.~Vakarjuk.
+\newblock Integrating Post-Quantum Cryptography to UXP.
+\newblock Cybernetica Research Report D-2-499, 2023.
+
+\bibitem{bakhtina2023ares}
+M.~Bakhtina, K.~L.~Leung, R.~Matulevi\v{c}ius, A.~Awad, P.~\v{S}venda.
+\newblock A Decentralised Public Key Infrastructure for X-Road.
+\newblock In \emph{ARES 2023}, ACM.
+\newblock DOI: 10.1145/3600160.3605092.
+
+\bibitem{xroadsyspar}
+Nordic Institute for Interoperability Solutions.
+\newblock X-Road: System Parameters (UG-SYSPAR).
+\newblock \url{https://docs.x-road.global/Manuals/ug-syspar_x-road_v6_system_parameters.html}.
+\newblock Accessed 17 September 2026.
+
+\bibitem{naylor2014}
+D.~Naylor, A.~Finamore, I.~Leontiadis, Y.~Grunenberger, M.~Mellia, M.~Munaf\`{o},
+K.~Papagiannaki, P.~Steenkiste.
+\newblock The Cost of the ``S'' in HTTPS.
+\newblock In \emph{CoNEXT '14}, pp.~133--140, ACM, 2014.
+\newblock DOI: 10.1145/2674005.2674991.
+
+\bibitem{kivimaki2020}
+P.~Kivim\"{a}ki.
+\newblock Resisting Failure.
+\newblock NIIS blog, 20 November 2020.
+\newblock \url{https://www.niis.org/blog/2020/11/20/resisting-failure}.
+
+\bibitem{hemminger2005}
+S.~Hemminger.
+\newblock Network Emulation with NetEm.
+\newblock In \emph{linux.conf.au 2005}, Canberra, 2005.
+
+\bibitem{paquin2020}
+C.~Paquin, D.~Stebila, G.~Tamvada.
+\newblock Benchmarking Post-quantum Cryptography in TLS.
+\newblock In \emph{PQCrypto 2020}, LNCS vol.~12100, pp.~72--91, Springer, 2020.
+\newblock Cryptology ePrint Archive 2019/1447.
+
 \bibitem{nussbaum2009}
 L.~Nussbaum, O.~Richard.
 \newblock A Comparative Study of Network Link Emulators.
@@ -816,6 +803,18 @@ L.~Nussbaum, O.~Richard.
 A.~Jurgelionis, J.-P.~Laulajainen, M.~Hirvonen, A.~I.~Wang.
 \newblock An Empirical Study of NetEm Network Emulation Functionalities.
 \newblock In \emph{ICCCN 2011}, IEEE, 2011.
+
+\bibitem{georges2007}
+A.~Georges, D.~Buytaert, L.~Eeckhout.
+\newblock Statistically Rigorous Java Performance Evaluation.
+\newblock In \emph{OOPSLA '07}, pp.~57--76, ACM, 2007.
+\newblock DOI: 10.1145/1297027.1297033.
+
+\bibitem{mironova2017}
+L.~Mironova.
+\newblock X-tee platvormi kriitiliste kesksete teenuste testimine
+(Testing of the critical central services of the X-Road platform).
+\newblock Master's thesis, Tallinn University of Technology, 2017.
 
 \end{thebibliography}
 
