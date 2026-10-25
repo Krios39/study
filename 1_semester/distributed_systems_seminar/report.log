@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.9.17)  25 OCT 2026 15:22
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.9.17)  25 OCT 2026 15:45
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -849,31 +849,31 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[9] [10]
-Underfull \hbox (badness 1024) in paragraph at lines 656--660
+[9] [10] [11] [12]
+Underfull \hbox (badness 1024) in paragraph at lines 760--764
 []\T1/cmr/m/n/10.95 Nordic In-sti-tute for In-ter-op-er-abil-ity So-lu-tions.  
 X-Road: Se-cu-rity Server Ar-chi-tec-
  []
 
 
-Underfull \hbox (badness 5985) in paragraph at lines 662--666
+Underfull \hbox (badness 5985) in paragraph at lines 766--770
 []\T1/cmr/m/n/10.95 Nordic In-sti-tute for In-ter-op-er-abil-ity So-lu-tions.  
 X-Road: Sys-tem Pa-ram-e-ters
  []
 
-[11] [12] (report.aux)
+[13] [14] (report.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
  ***********
 Package rerunfilecheck Info: File `report.out' has not changed.
-(rerunfilecheck)             Checksum: 16ECECEAD75451A2BCD18ADC466AC03D;2606.
+(rerunfilecheck)             Checksum: 46A46E789B1B63CDBB9C82771B1DB315;3741.
  ) 
 Here is how much of TeX's memory you used:
- 31590 strings out of 467871
- 750245 string characters out of 5418860
+ 31603 strings out of 467871
+ 750409 string characters out of 5418860
  1301418 words of memory out of 5000000
- 59950 multiletter control sequences out of 15000+600000
+ 59956 multiletter control sequences out of 15000+600000
  640345 words of font info for 65 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,19n,118p,729b,2271s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -894,9 +894,9 @@ pData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users
 /User/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C
 :/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy1
 0.pfb>
-Output written on report.pdf (12 pages, 250426 bytes).
+Output written on report.pdf (14 pages, 263178 bytes).
 PDF statistics:
- 735 PDF objects out of 1000 (max. 8388607)
- 61 named destinations out of 1000 (max. 500000)
- 133 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 779 PDF objects out of 1000 (max. 8388607)
+ 68 named destinations out of 1000 (max. 500000)
+ 181 words of extra memory for PDF output out of 10000 (max. 10000000)
 

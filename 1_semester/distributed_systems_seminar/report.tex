@@ -580,16 +580,120 @@ limit (103--127 requests per second) and the added round-trip time disappears in
 against 140\,ms for \emph{full}); at 50\,ms \emph{full} falls to 57 requests per second while
 \emph{reuse} keeps 104.
 
-\section*{TODO: to add in Discussion}
+\section{Discussion}
 
-\emph{Working list for the draft, to be removed before submission.}
+\subsection{What the results mean for the proposed changes}
 
-\begin{itemize}[leftmargin=1.4em]
-  \item Absolute values depend on the CPU while the differences between configurations hold across
-  machines.
-  \item What the measured costs mean for post-quantum signatures, a decentralised PKI and threshold
-  signatures; the connection policy as the main cost once there is distance between the servers.
-\end{itemize}
+The proposals discussed in the introduction affect different mechanisms, and the measurements put
+them in different positions.
+
+Post-quantum signatures change signing and verification, which are paid on every message and run on
+the CPU of the Security Servers. In the measurements this work is part of the stages on the way to
+the provider and of the provider's stages, a few milliseconds each on these laptops, and like all
+CPU-bound costs it was smaller on the faster CPU of the development laptop. Larger signatures would
+also make every message bigger: replacing an RSA-2048 signature of 256 bytes with a Dilithium5
+signature of 4595 bytes~\cite{snetkov2023} on both the request and the response adds about 8.7\,KB to
+an exchange that now carries about 40\,KB in both directions. On the local network this is small. With
+distance between the Security Servers it matters more than the computation, because with the default
+connection policy a larger response needs more flights on a new connection (Section~4.4): the slope
+grew from 5 to 7 between a 10\,KB and a 100\,KB response. The TLS handshake between the Security
+Servers, which post-quantum algorithms would also enlarge~\cite{bakhtina2026pqc}, was resumed from a
+session ticket without exchanging certificates in every captured message, so larger certificates would
+mainly affect new sessions rather than every message.
+
+A decentralised PKI changes how certificates are checked~\cite{bakhtina2023ares}. In the present
+system status checking did not add a single request to the measured path: no run sent a request to
+the OCSP responder, and the Security Server took the status only from its cache. Any per-request
+presentation of credentials would therefore be a new cost in the request path rather than a
+replacement of an existing one.
+
+Threshold signatures change signing~\cite{bakhtina2026ijis}. Their reported round trips of 191 to
+272\,ms for small threshold groups, against 32\,ms with a single software token, are several times the
+whole cost of X-Road measured here with one client on the local network, and of the same order as the
+effect of the connection policy with an added round-trip time of 50\,ms.
+
+\subsection{The connection policy}
+
+The largest effect in the measurements is not a cryptographic mechanism but the decision to open a
+new connection for every message. On the local network it costs about 2\,ms and 3\,KB per message,
+which is why it is easy to overlook. With an added round-trip time every message waits for several
+additional round trips, and at 50\,ms reusing connections saves 54\,\% of the latency for a 10\,KB
+response and 72\,\% for a 1\,MB response, and almost doubles the throughput with 16 clients. This
+agrees with the observation that the cost of TLS depends mostly on whether connections are
+reused~\cite{naylor2014}. Connection reuse is off by default~\cite{xroadsyspar}, so its benefit grows
+with the distance between the Security Servers of the communicating organisations. It is not free of
+side effects either: in the measurements, single requests over reused connections failed when a pooled
+connection had already been closed by the other side.
+
+The connection policy also decides how much larger post-quantum messages would cost. With reused
+connections a few additional kilobytes leave in the same flight, while with a new connection for
+every message and distance between the Security Servers they can cost additional round trips on every
+message (Section~5.1).
+
+\subsection{Comparison with earlier measurements}
+
+The end-to-end latency with one client, 25 to 30\,ms on the three machines used here, is of the same
+order as the 32\,ms reported for X-Road~7.7.0 with all components on one laptop~\cite{bakhtina2026ijis}.
+That figure was presented as a lower bound because there was no network between the
+servers~\cite{bakhtina2026ijis}. For one client on a local network, the comparison of one machine with
+three machines shows that such a single-host figure is representative, since the network cost is
+offset by the provider having a CPU of its own. It is not representative of throughput, which was
+1.4 to 1.8 times higher on three machines, nor of Security Servers that are farther apart, where the
+connection policy dominates. In the earlier measurement of a Security Server in front of a registry
+service, the path through the Security Server was reported as faster than the direct one at 20 and 30
+concurrent clients~\cite{taklai2020}, which suggests that the variation of the environment was
+comparable to the effect being measured; here, too, the spread under load was too large to compare
+configurations, while with one
+client and with an added round-trip time it stayed within a few per cent.
+
+The warm-up needed was much longer than the earlier work suggests. The closest measurement reports
+means over 1000 requests without describing a warm-up~\cite{bakhtina2026ijis}, while here the latency settled only
+after 2500 to 3000 requests and the first run after a restart stayed slower beyond that, in line with
+the advice to measure Java systems only in the steady state~\cite{georges2007}. Short measurements of
+X-Road may therefore overestimate its latency and vary more between runs.
+
+\subsection{Absolute values and differences}
+
+The absolute values depend on the hardware: the same grid gave 24.8\,ms on the development laptop and
+28.3\,ms on the three machines for a 10\,KB response, and the CPU-bound costs, logging a large body
+and synchronous time-stamping, differed by up to a factor of two. The differences between
+configurations kept their sign and order in every environment, and the costs that depend on the
+network, the connection policy and the round trips, were the same. The power mode of the CPU had an
+even larger effect than the choice of machine. Measurements of X-Road on general-purpose hardware
+should therefore report the CPU and its power mode together with the results.
+
+\section{Conclusion}
+
+This study measured how much the trust mechanisms of X-Road cost per message, on three laptops
+connected by a switch, on one of them alone, on a faster laptop, and with a controlled round-trip time
+added between the Security Servers.
+
+For RQ1, the X-Road path added about 28\,ms to a 10\,KB exchange with one client on these machines.
+Logging the message body made no measurable difference for small messages and accounted for almost
+half of the latency of a 1\,MB exchange. Opening a new connection for every message cost about 2\,ms
+and 3\,KB per message on the local network. Certificate status checking and batched time-stamping
+were not in the request path: no OCSP requests and about two time-stamping requests per 1200 messages,
+while synchronous time-stamping added about 90\,ms. Signing and verification cannot be switched off,
+and the per-stage breakdown places them in stages of 4 to 11\,ms each.
+
+For RQ2, most of the growth from a 10\,KB to a 1\,MB response came from writing the body to the
+message log. Under load the Security Servers reached about 100 requests per second on three machines,
+synchronous time-stamping halved that, and the spread between repetitions was too large to compare
+the other configurations.
+
+For RQ3, one machine and three machines gave the same latency and the same differences with one
+client, while three machines reached a higher throughput. With an added round-trip time the default
+connection policy made every message wait for about five round trips at 10\,KB and ten at 1\,MB,
+against two with reused connections; a prediction from the handshakes alone gave three and one and
+missed two waits inside TCP.
+
+The results give a baseline for the present system against which post-quantum signatures, a
+decentralised PKI and threshold signatures can be compared. They also show that the cost of larger
+post-quantum messages will depend on the connection policy: small with reused connections, but
+possibly additional round trips on every message when each message opens a new connection and the
+Security Servers are far apart. Further work could measure post-quantum
+signatures once they are available in X-Road, repeat the measurements with external certification and
+time-stamping services and over a real wide-area link, and use server hardware.
 
 \begin{thebibliography}{99}
 
