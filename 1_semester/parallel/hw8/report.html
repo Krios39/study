@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homework 8 Report - Parallel Computing</title>
+        <style>
+            table.t { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: center; }
+            table.t th { background: #2d2d2d; color: #fff; padding: 8px; border: 1px solid #444; }
+            table.t td { padding: 6px; border: 1px solid #ddd; }
+            table.t tr:nth-child(even) td { background: #f9f9f9; }
+            pre.term { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0; }
+            @media print { details { break-inside: auto; } details > summary { list-style: none; } pre.term { white-space: pre-wrap; word-break: break-all; overflow: visible; font-size: 10.5px; } table.t, img { break-inside: avoid; } }
+        </style>
+    </head>
+    <body>
+    <details open>
+        <summary>Test environment, build and design choices</summary>
+        <div class="details-content">
+            <ul style="font-size: 14px;">
+                <li><strong>Machine:</strong> laptop with Intel Core Ultra 7 265U (hybrid CPU: 2 performance, 8 efficient and 2 low-power efficient cores, 14 threads), Windows 11, about 32 GB RAM shared by CPU and GPU.</li>
+                <li><strong>GPU:</strong> integrated Intel Graphics, OpenCL 3.0 (Intel NEO driver 32.0.101.8826): 64 compute units, maximum work-group size 1024, 64 KB local memory, about 34 GB of (shared) global memory.</li>
+                <li><strong>NPU:</strong> Intel AI Boost, used through OpenVINO 2026.4.1 (bonus).</li>
+                <li><strong>Compiler for 8.1 and 8.2:</strong> g++ 16.1.0 (MSYS2 UCRT64) with <code>-O3 -march=native -fopenmp -std=c++17</code>, linked statically except for <code>OpenCL.dll</code>, so the executables only need the OpenCL runtime that comes with the graphics driver. OpenCL headers and import library: Khronos packages from MSYS2 (<code>opencl-headers</code>, <code>opencl-icd</code>).</li>
+                <li><strong>Compiler for the bonus:</strong> MSVC 14.51 (Visual Studio 2026 Build Tools), because the OpenVINO binaries are built with MSVC and cannot be linked with g++.</li>
+                <li><strong>OpenMP:</strong> 14 threads (the default, one per hardware thread).</li>
+                <li><strong>Data:</strong> single-precision <code>float</code> matrices (as in the reference loop of the assignment), row-major, filled with uniform random values in $[0, 1)$ from a fixed seed; the same inputs for all versions.</li>
+                <li><strong>Timing:</strong> <code>std::chrono::steady_clock</code> on the host. For OpenCL two times are reported: <em>total</em> = buffer allocation, writing A and B, kernel, reading C (what a user of the function waits for), and <em>kernel only</em> = the kernel execution measured on the device with OpenCL profiling events. Every OpenCL configuration is run once as a warm-up (not recorded) and then 3 times; CPU versions 3 times, except the sequential version for $N \ge 2048$ (1 run, it takes 5 to 45 s). Tables show the median.</li>
+            </ul>
+            <p><strong>Why g++ and not Visual Studio for 8.1/8.2?</strong> The assignment suggests Visual Studio, and the bonus is built with it. For the main exercises I used g++ because the OpenMP version from Task 2.3.2 uses <code>#pragma omp task</code>, which needs OpenMP 3.0; MSVC's standard <code>/openmp</code> only implements OpenMP 2.0 without tasks. g++ supports both versions of my OpenMP code with the same compiler and flags as the sequential and OpenCL host code, which keeps the comparison fair. The OpenCL code itself is plain OpenCL/C and compiles unchanged with MSVC.</p>
+            <p><strong>Files:</strong> <code>matmul_kernels.cl</code> (all OpenCL kernels), <code>ocl_util.h</code> (host helpers: device selection, program build with build log, profiling, transfers), <code>task8_1.cpp</code>, <code>task8_2.cpp</code>, <code>task8_bonus.cpp</code>, <code>build_bonus.bat</code>, <code>run_bonus.bat</code>, <code>task8_plot.py</code>, raw results <code>results_8_1.csv</code>, <code>results_8_2.csv</code>, plots in <code>plots/</code>.</p>
+            <p><strong>Build and run commands:</strong></p>
+            <pre class="term"><code>g++ -O3 -march=native -fopenmp -std=c++17 task8_1.cpp -o task8_1.exe -static /c/msys64/ucrt64/lib/libOpenCL.dll.a
+g++ -O3 -march=native -fopenmp -std=c++17 task8_2.cpp -o task8_2.exe -static /c/msys64/ucrt64/lib/libOpenCL.dll.a
+build_bonus.bat
+
+task8_1.exe
+task8_2.exe
+run_bonus.bat 2048 20
+python3 -c "import task8_plot; task8_plot.main()"</code></pre>
+        </div>
+    </details>
+
+    <details open>
+        <summary>Exercise 8.1: Sequential vs OpenMP vs OpenCL</summary>
+        <div class="details-content">
+            <h3>Implementations (<code>task8_1.cpp</code>, <code>matmul_kernels.cl</code>)</h3>
+            <ul style="font-size: 14px;">
+                <li><strong>Sequential C++:</strong> the triple loop in <code>i-k-j</code> order: for every row $i$ and every $k$, the scalar $A_{ik}$ is multiplied with row $k$ of $B$ and added to row $i$ of $C$. The innermost loop runs over contiguous memory, so the compiler vectorises it with AVX2 (checked with <code>-fopt-info-vec</code>; <code>__restrict</code> pointers were needed to remove the aliasing check). It performs exactly the computation of the reference loop in the assignment, only in a cache-friendlier order for row-major storage.</li>
+                <li><strong>OpenMP <code>parallel for</code>:</strong> the same loop with the rows of $C$ distributed statically over the threads. Each thread writes only its own rows, so no synchronisation is needed.</li>
+                <li><strong>OpenMP tasks (my solution of Task 2.3.2):</strong> the recursive divide-and-conquer algorithm from homework 2, rewritten for <code>float</code> and flat arrays: the three dimensions are halved, the four independent sub-products are created as tasks, <code>taskwait</code>, then the second four; blocks below 32768 multiply-adds are computed directly.</li>
+                <li><strong>OpenCL kernel <code>matmul_tiled</code>:</strong> 2D NDRange with one work-item per element of $C$ and 16 x 16 work-groups. The group loads a 16 x 16 tile of $A$ and of $B$ into <code>__local</code> memory, synchronises with <code>barrier</code>, and every work-item accumulates 16 products from local memory; then the next pair of tiles. Each element of $A$ and $B$ is thus read from global memory $N/16$ times instead of $N$ times.</li>
+                <li><strong>Host code:</strong> selects the first GPU of all OpenCL platforms (not blindly platform 0), builds the kernel file with the tile size as a compile-time define (<code>-DTS=16</code>, 8 if a device allowed less than 256 work-items per group) and prints the build log if compilation fails. A profiling-enabled command queue gives the kernel time.</li>
+                <li><strong>Correctness:</strong> every version is compared with the sequential result (maximum difference divided by the maximum value of $C$). All differences were exactly 0: every version adds the products for one element in the same order of $k$, so even the GPU reproduces the CPU result bit for bit. Exercise 8.2 additionally checks against a double-precision reference.</li>
+            </ul>
+
+            <p><strong>Raw Terminal Output:</strong></p>
+            <pre class="term"><code>C:\учёба\study\1_semester\parallel\hw8&gt;.\task8_1.exe
+OpenCL device : Intel(R) Graphics
+Version       : OpenCL 3.0 NEO , driver 32.0.101.8826
+Compute units : 64, max work-group size 1024, local memory 64 KB, global memory 34350 MB
+OpenMP threads: 14
+
+sequential N=  512  median    0.0244 s  (min 0.0149, max 0.0292, 3 runs)    10.98 GFLOP/s  reference
+omp_for    N=  512  median    0.0616 s  (min 0.0292, max 0.3886, 3 runs)     4.36 GFLOP/s  max rel. error vs sequential 0.000000
+omp_tasks  N=  512  median    0.5693 s  (min 0.3633, max 0.6559, 3 runs)     0.47 GFLOP/s  max rel. error vs sequential 0.000000
+opencl     N=  512  median    0.0035 s  (kernel only 0.0025 s, 3 runs)    75.95 GFLOP/s (kernel 107.28)  max rel. error vs sequential 0
+
+sequential N= 1024  median    0.5123 s  (min 0.3891, max 0.5277, 3 runs)     4.19 GFLOP/s  reference
+omp_for    N= 1024  median    0.2573 s  (min 0.2561, max 0.2941, 3 runs)     8.35 GFLOP/s  max rel. error vs sequential 0.000000
+omp_tasks  N= 1024  median    1.1115 s  (min 1.0816, max 1.1210, 3 runs)     1.93 GFLOP/s  max rel. error vs sequential 0.000000
+opencl     N= 1024  median    0.1140 s  (kernel only 0.0314 s, 3 runs)    18.83 GFLOP/s (kernel 68.40)  max rel. error vs sequential 0
+
+sequential N= 2048  median    5.3319 s  (min 5.3319, max 5.3319, 1 runs)     3.22 GFLOP/s  reference
+omp_for    N= 2048  median    2.9591 s  (min 2.7970, max 2.9630, 3 runs)     5.81 GFLOP/s  max rel. error vs sequential 0.000000
+omp_tasks  N= 2048  median    5.4433 s  (min 5.0372, max 5.5568, 3 runs)     3.16 GFLOP/s  max rel. error vs sequential 0.000000
+opencl     N= 2048  median    0.3210 s  (kernel only 0.2583 s, 3 runs)    53.51 GFLOP/s (kernel 66.50)  max rel. error vs sequential 0
+
+sequential N= 4096  median   44.8049 s  (min 44.8049, max 44.8049, 1 runs)     3.07 GFLOP/s  reference
+omp_for    N= 4096  median   20.6186 s  (min 15.4300, max 22.3154, 3 runs)     6.67 GFLOP/s  max rel. error vs sequential 0.000000
+omp_tasks  N= 4096  median   40.2171 s  (min 39.8730, max 41.0416, 3 runs)     3.42 GFLOP/s  max rel. error vs sequential 0.000000
+opencl     N= 4096  median    2.3531 s  (kernel only 2.0012 s, 3 runs)    58.41 GFLOP/s (kernel 68.68)  max rel. error vs sequential 0</code></pre>
+
+            <h3>Results</h3>
+            <table class="t">
+                <thead><tr><th>N</th><th>Sequential (s)</th><th>OpenMP for (s)</th><th>OpenMP tasks (s)</th><th>OpenCL total (s)</th><th>OpenCL kernel (s)</th></tr></thead>
+                <tbody>
+                    <tr><td>512</td><td>0.0244</td><td>0.0616</td><td>0.5693</td><td>0.0035</td><td>0.0025</td></tr>
+                    <tr><td>1024</td><td>0.5123</td><td>0.2573</td><td>1.1115</td><td>0.1140</td><td>0.0314</td></tr>
+                    <tr><td>2048</td><td>5.3319</td><td>2.9591</td><td>5.4433</td><td>0.3210</td><td>0.2583</td></tr>
+                    <tr><td>4096</td><td>44.8049</td><td>20.6186</td><td>40.2171</td><td>2.3531</td><td>2.0012</td></tr>
+                </tbody>
+            </table>
+            <table class="t">
+                <thead><tr><th>N</th><th>Speedup OpenMP for</th><th>Speedup OpenMP tasks</th><th>Speedup OpenCL total</th><th>Speedup OpenCL kernel</th><th>GFLOP/s: sequential / OpenMP for / OpenCL kernel</th></tr></thead>
+                <tbody>
+                    <tr><td>512</td><td>0.40x</td><td>0.04x</td><td>6.9x</td><td>9.8x</td><td>11.0 / 4.4 / 107</td></tr>
+                    <tr><td>1024</td><td>1.99x</td><td>0.46x</td><td>4.5x</td><td>16.3x</td><td>4.2 / 8.4 / 68</td></tr>
+                    <tr><td>2048</td><td>1.80x</td><td>0.98x</td><td>16.6x</td><td>20.6x</td><td>3.2 / 5.8 / 67</td></tr>
+                    <tr><td>4096</td><td>2.17x</td><td>1.11x</td><td>19.0x</td><td>22.4x</td><td>3.1 / 6.7 / 69</td></tr>
+                </tbody>
+            </table>
+            <p>Speedups are relative to the sequential version of the same size.</p>
+            <img src="plots/ex8_1_times.png" alt="Exercise 8.1 execution times">
+
+            <h3>Discussion</h3>
+            <ul style="font-size: 14px;">
+                <li><strong>OpenCL is by far the fastest:</strong> 17 to 19x faster than the sequential code and about 9x faster than the best OpenMP version for $N \ge 2048$ (4096: 2.35 s against 20.6 s). The kernel itself runs at a steady 67 to 69 GFLOP/s from $N = 1024$ upward (107 GFLOP/s at $N = 512$, where everything fits into the GPU caches).</li>
+                <li><strong>Transfers matter for small sizes:</strong> at $N = 512$ the copies are only 1 ms, but at $N = 1024$ the total (0.114 s) was 3.6 times the kernel time (0.031 s); allocating buffers and copying 12 MB should take much less, so this one value probably contains a one-off delay of the driver. From $N = 2048$ on, the transfers grow with $N^2$ while the work grows with $N^3$, and they cost only 15 to 20% of the total.</li>
+                <li><strong>The CPU versions are memory-bound:</strong> the sequential code reaches 11 GFLOP/s at $N = 512$ (the 1 MB matrix $B$ still fits in the caches), but only 3 to 4 GFLOP/s for larger $N$: for every row of $C$ the whole matrix $B$ is streamed from main memory again. OpenMP <code>parallel for</code> multiplies the arithmetic power but all threads stream $B$ through the same memory interface, so it only reaches 1.8 to 2.2x with 14 threads. At $N = 512$ it is even slower than one thread (and very noisy: 0.029 to 0.389 s), because 0.02 s of work is too little to amortise starting and synchronising 14 threads on a laptop with performance and efficiency cores.</li>
+                <li><strong>The task-based OpenMP version from 2.3.2</strong> is the slowest for small $N$ and only reaches the sequential speed at $N = 2048$ to $4096$ (1.1x). Its leaves are tiny (about 32 x 32 x 32), so the vectorised inner loop is only 32 floats long and the cost of creating and scheduling tens of thousands of tasks dominates; in addition, each <code>taskwait</code> between the two halves of the $k$ range halves the available parallelism. Its recursive blocking would help cache reuse, but with this grain size the overhead wins.</li>
+                <li><strong>Why the GPU wins:</strong> 64 compute units execute thousands of work-items at once, and the tiled kernel reuses every loaded element 16 times from fast local memory, which turns a memory-bound problem into a mostly compute-bound one. The GPU shares the same main memory with the CPU, so the advantage comes from the parallel hardware and the data reuse, not from faster memory.</li>
+                <li><strong>How far from the hardware limit?</strong> The OpenVINO measurement in the bonus reaches 721 GFLOP/s in <code>float</code> on the same GPU, i.e. my simple tiled kernel uses only about a tenth of what the device can do. The missing steps would be register blocking (each work-item computing several elements of $C$), vector loads and the use of sub-groups.</li>
+            </ul>
+        </div>
+    </details>
+
+    <details open>
+        <summary>Exercise 8.2: Two kernels with different efficiency</summary>
+        <div class="details-content">
+            <h3>Design (<code>task8_2.cpp</code>, <code>kernel_A</code> and <code>kernel_B</code> in <code>matmul_kernels.cl</code>)</h3>
+            <p>Both kernels compute $C = A \cdot B$ with a 1D NDRange of $N^2$ work-items, one per element of $C$ (work-item <code>gid</code> computes row <code>gid / N</code>, column <code>gid % N</code>). <code>local_item_size</code> is the work-group size of this 1D range, exactly as in the vector-add example of the course.</p>
+            <ul style="font-size: 14px;">
+                <li><strong><code>kernel_A</code> (simple):</strong> every work-item reads its whole row of $A$ and column of $B$ directly from global memory. Run with <code>local_item_size = 2</code> for all sizes.</li>
+                <li><strong><code>kernel_B</code> (local memory):</strong> the $L$ work-items of a group are $L$ neighbouring elements of the same row of $C$, so they all need the same row of $A$. The group loads the row of $A$ in chunks of $L$ values into <code>__local</code> memory (one value per work-item), synchronises, and every work-item uses the whole chunk; the reads of $B$ go to $L$ consecutive columns, so they are coalesced. Each value of $A$ is read from global memory once per group instead of $L$ times. Run with $L = 8, 32, 64$ for $N = 1024, 2048, 4096$; the local buffer size is passed at run time with <code>clSetKernelArg(kernel, 4, L * sizeof(float), NULL)</code>.</li>
+                <li><strong>Host flow:</strong> for every size: write A and B, run <code>kernel_A</code>, read C back to the host; then write A and B again, run <code>kernel_B</code>, read C. So kernel A returns its output before kernel B starts, and the host communicates synchronously with each kernel (blocking writes and reads).</li>
+                <li><strong>Checks:</strong> the host verifies that $L$ does not exceed the device limit (1024) and divides $N$. Every result is checked against 256 random elements recomputed on the CPU in double precision (relative error about $10^{-6}$, the expected float rounding) and the two kernels are compared with each other (identical).</li>
+            </ul>
+
+            <p><strong>Raw Terminal Output:</strong></p>
+            <pre class="term"><code>C:\учёба\study\1_semester\parallel\hw8&gt;.\task8_2.exe
+OpenCL device : Intel(R) Graphics
+Version       : OpenCL 3.0 NEO , driver 32.0.101.8826
+Compute units : 64, max work-group size 1024, local memory 64 KB, global memory 34350 MB
+
+kernel_A  N= 1024  local_item_size=  2  total median   0.2392 s (min 0.2251, max 0.3217)  kernel   0.2195 s     9.79 GFLOP/s  sampled rel. error 1.24e-06
+kernel_B  N= 1024  local_item_size=  8  total median   0.1978 s (min 0.1816, max 0.2738)  kernel   0.1352 s    15.89 GFLOP/s  sampled rel. error 1.24e-06
+N=1024: kernel_A vs kernel_B max rel. difference 0.00e+00
+
+kernel_A  N= 2048  local_item_size=  2  total median   3.4245 s (min 3.3070, max 3.5554)  kernel   3.3054 s     5.20 GFLOP/s  sampled rel. error 1.39e-06
+kernel_B  N= 2048  local_item_size= 32  total median   0.7692 s (min 0.7648, max 1.0044)  kernel   0.6484 s    26.50 GFLOP/s  sampled rel. error 1.39e-06
+N=2048: kernel_A vs kernel_B max rel. difference 0.00e+00
+
+kernel_A  N= 4096  local_item_size=  2  total median  31.9249 s (min 29.9104, max 32.5049)  kernel  31.2585 s     4.40 GFLOP/s  sampled rel. error 2.34e-06
+kernel_B  N= 4096  local_item_size= 64  total median   4.3064 s (min 4.0722, max 5.4868)  kernel   3.5530 s    38.68 GFLOP/s  sampled rel. error 2.34e-06
+N=4096: kernel_A vs kernel_B max rel. difference 0.00e+00</code></pre>
+
+            <table class="t">
+                <thead><tr><th>N</th><th>kernel_A: L</th><th>total (s)</th><th>kernel (s)</th><th>GFLOP/s</th><th>kernel_B: L</th><th>total (s)</th><th>kernel (s)</th><th>GFLOP/s</th><th>kernel A / kernel B</th></tr></thead>
+                <tbody>
+                    <tr><td>1024</td><td>2</td><td>0.2392</td><td>0.2195</td><td>9.8</td><td>8</td><td>0.1978</td><td>0.1352</td><td>15.9</td><td>1.6x</td></tr>
+                    <tr><td>2048</td><td>2</td><td>3.4245</td><td>3.3054</td><td>5.2</td><td>32</td><td>0.7692</td><td>0.6484</td><td>26.5</td><td>5.1x</td></tr>
+                    <tr><td>4096</td><td>2</td><td>31.9249</td><td>31.2585</td><td>4.4</td><td>64</td><td>4.3064</td><td>3.5530</td><td>38.7</td><td>8.8x</td></tr>
+                </tbody>
+            </table>
+            <p>The last column compares the kernel times.</p>
+            <img src="plots/ex8_2_kernels.png" alt="Exercise 8.2 kernel times">
+
+            <h3>Discussion</h3>
+            <ul style="font-size: 14px;">
+                <li><strong>kernel_B is faster everywhere, and the gap grows with $N$:</strong> 1.6x at 1024, 5.1x at 2048, 8.8x at 4096. kernel_A even gets slower per operation as $N$ grows (9.8 to 4.4 GFLOP/s), while kernel_B gets faster (15.9 to 38.7 GFLOP/s).</li>
+                <li><strong>Why kernel_A is slow:</strong> Intel GPUs execute work-items in SIMD groups of 8 to 32 lanes. A work-group of only 2 work-items occupies a whole hardware thread with just 2 active lanes, so most of the vector units stay idle. In addition, every work-item streams a whole row of $A$ and column of $B$ from global memory without any sharing, so for larger $N$ the data no longer fits in the GPU caches and memory traffic dominates.</li>
+                <li><strong>Why kernel_B is faster:</strong> larger groups fill the SIMD lanes, the $L$ work-items share one load of $A$ through local memory, and neighbouring work-items read neighbouring addresses of $B$ (coalesced access). The larger $L$, the more reuse of $A$, which is why its efficiency grows from $L = 8$ to $L = 64$.</li>
+                <li><strong>Two effects are mixed:</strong> as specified, kernel_B differs from kernel_A both in the code (local memory) and in the work-group size, so the measured ratio is the sum of both. The work-group size alone already explains a large part (idle SIMD lanes at $L = 2$), the local memory adds the reuse of $A$.</li>
+                <li><strong>Both are slower than the 2D tiled kernel of 8.1</strong> (67 to 69 GFLOP/s): kernel_B only reuses $A$, while the tiled kernel reuses both $A$ and $B$ in a 16 x 16 tile.</li>
+                <li><strong>Transfers:</strong> the difference between total and kernel time is the synchronous host communication (allocating buffers, writing 2 matrices, reading 1). It is 0.02 to 0.75 s here and becomes negligible compared with the slow kernel_A at larger $N$, but is up to 30% of kernel_B's total at $N = 1024$.</li>
+            </ul>
+        </div>
+    </details>
+
+    <details open>
+        <summary>Bonus 8: Matrix multiplication on CPU, GPU and NPU with OpenVINO</summary>
+        <div class="details-content">
+            <p><strong>Implementation (<code>task8_bonus.cpp</code>):</strong> an OpenVINO model with two <code>f32</code> parameters of shape 2048 x 2048 and one <code>MatMul</code> node is compiled for every available device. The same input tensors (uniform random values, fixed seed) are used for all devices. After one warm-up inference, 20 inferences are timed and the median is reported. The CPU result (f32) is the reference for the error of the other devices. The GPU is measured twice: with its default settings and with <code>ov::hint::inference_precision = f32</code>, because by default the OpenVINO GPU plugin silently computes in f16. The NPU only supports f16 inference. OpenVINO 2026.4.1 found all three devices.</p>
+            <p><strong>Raw Terminal Output:</strong></p>
+            <pre class="term"><code>C:\учёба\study\1_semester\parallel\hw8&gt;.\run_bonus.bat 2048 20
+OpenVINO 2026.4.1-22982-e213a147257-releases/2026/4
+Available devices:
+  CPU    Intel(R) Core(TM) Ultra 7 265U
+  GPU    Intel(R) Graphics (iGPU)
+  NPU    Intel(R) AI Boost
+
+CPU  N=2048  compile 0.033 s  infer median 0.0783 s (min 0.0478, max 0.1302, 20 runs)  219.5 GFLOP/s  precision f32  reference
+GPU  N=2048  compile 1.420 s  infer median 0.0181 s (min 0.0174, max 0.0209, 20 runs)  947.0 GFLOP/s  precision f16  max rel. error vs CPU 6.08e-03
+GPU_f32  N=2048  compile 1.394 s  infer median 0.0238 s (min 0.0222, max 0.0252, 20 runs)  721.2 GFLOP/s  precision f32  max rel. error vs CPU 1.51e-06
+NPU  N=2048  compile 1.238 s  infer median 0.0165 s (min 0.0141, max 0.0279, 20 runs)  1040.8 GFLOP/s  precision f16  max rel. error vs CPU 4.70e-04</code></pre>
+
+            <table class="t">
+                <thead><tr><th>Implementation (N = 2048)</th><th>Precision</th><th>Time (s)</th><th>GFLOP/s</th><th>Rel. error (OpenVINO rows: vs OpenVINO CPU f32)</th></tr></thead>
+                <tbody>
+                    <tr><td>Sequential C++ (8.1)</td><td>f32</td><td>5.3319</td><td>3.2</td><td>(reference of 8.1)</td></tr>
+                    <tr><td>OpenMP parallel for, 14 threads (8.1)</td><td>f32</td><td>2.9591</td><td>5.8</td><td>0 (vs sequential)</td></tr>
+                    <tr><td>My OpenCL tiled kernel, GPU, kernel only (8.1)</td><td>f32</td><td>0.2583</td><td>66.5</td><td>0 (vs sequential)</td></tr>
+                    <tr><td>OpenVINO CPU (all cores)</td><td>f32</td><td>0.0783</td><td>219.5</td><td>reference</td></tr>
+                    <tr><td>OpenVINO GPU, forced f32</td><td>f32</td><td>0.0238</td><td>721.2</td><td>1.5e-6</td></tr>
+                    <tr><td>OpenVINO GPU, default</td><td>f16</td><td>0.0181</td><td>947.0</td><td>6.1e-3</td></tr>
+                    <tr><td>OpenVINO NPU</td><td>f16</td><td>0.0165</td><td>1040.8</td><td>4.7e-4</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Discussion</h3>
+            <ul style="font-size: 14px;">
+                <li><strong>NPU and GPU are the fastest devices:</strong> the NPU (16.5 ms) and the GPU in f16 (18.1 ms) are about 4.5x faster than the CPU running OpenVINO on all cores (78 ms). Between NPU and GPU f16 the difference is within the spread of the NPU runs (14 to 28 ms; in an earlier test run with only 5 repetitions the NPU median was even 34 to 64 ms), so they should be considered roughly equal for this size.</li>
+                <li><strong>Precision is part of the comparison:</strong> the NPU and the default GPU compute with half-precision inputs. With the same f32 precision as the CPU, the GPU needs 23.8 ms, 1.3x more than in f16, and is still 3.3x faster than the CPU. The NPU error (4.7e-4) is much smaller than the GPU f16 error (6.1e-3), which suggests that the NPU accumulates the products at higher precision; both are acceptable for neural-network inference, the main use of the NPU, but not for exact numerical work.</li>
+                <li><strong>Libraries vs my own code:</strong> on the CPU, OpenVINO (oneDNN with cache blocking, AVX2 micro-kernels and all cores) is 68x faster than my sequential loop and 38x faster than my OpenMP version. On the GPU, the optimised OpenVINO kernel in f32 is about 11x faster than my tiled OpenCL kernel. This shows how much performance depends on blocking for caches and registers, not only on parallelism.</li>
+                <li><strong>Compile time:</strong> compiling the model for GPU and NPU takes about 1.2 to 1.4 s (several seconds on the very first run before the driver cache was filled), against 0.03 s on the CPU. For a single multiplication this setup would cost far more than the computation; the accelerators pay off when the compiled model is reused many times, which is exactly the inference scenario they are designed for.</li>
+                <li><strong>Energy:</strong> not measured, but the NPU is designed to run such workloads at a fraction of the power of the GPU, so reaching the GPU's speed is a good result for it.</li>
+            </ul>
+        </div>
+    </details>
+
+    <details open>
+        <summary>Summary and limitations</summary>
+        <div class="details-content">
+            <ul style="font-size: 14px;">
+                <li>For $N = 4096$ the OpenCL version needs 2.35 s including all transfers, the best OpenMP version 20.6 s and the sequential version 44.8 s: the GPU is 19x faster than sequential and about 9x faster than OpenMP on this laptop.</li>
+                <li>Good GPU performance requires the right work-group size and data reuse in local memory: the same multiplication was 8.8x faster with kernel_B than with kernel_A, and the tiled kernel was faster still.</li>
+                <li>The CPU and the integrated GPU share main memory, the CPU has heterogeneous cores and the laptop adjusts its clock to temperature and power, so individual runs vary (for example OpenMP at $N = 512$: 0.029 to 0.389 s); medians of only 3 runs (1 for the long sequential runs) were used to keep the total run time reasonable.</li>
+                <li>Only one GPU and one machine were available; a discrete GPU with its own memory would have much higher transfer costs over PCIe but also much higher compute and memory bandwidth.</li>
+            </ul>
+        </div>
+    </details>
+    </body>
+    <script>
+        function loadKaTeXAndRender() {
+            const katexCSS = document.createElement("link");
+            katexCSS.rel = "stylesheet";
+            katexCSS.href =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(katexCSS);
+
+            const katexScript = document.createElement("script");
+            katexScript.src =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+            katexScript.defer = true;
+
+            katexScript.onload = () => {
+                const autoRenderScript = document.createElement("script");
+                autoRenderScript.src =
+                    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                autoRenderScript.defer = true;
+
+                autoRenderScript.onload = () => {
+                    if (window.renderMathInElement) {
+                        window.renderMathInElement(document.body, {
+                            delimiters: [
+                                { left: "$$", right: "$$", display: true },
+                                { left: "$", right: "$", display: false },
+                            ],
+                            throwOnError: false,
+                        });
+                    }
+                };
+                document.head.appendChild(autoRenderScript);
+            };
+
+            document.head.appendChild(katexScript);
+        }
+        loadKaTeXAndRender();
+    </script>
+</html>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.6;
+        color: #111;
+        background-color: #fff;
+        max-width: 1280px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 8px 0;
+    }
+
+    .math {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 17px;
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+
+    ul {
+        margin: 8px 0 16px 20px;
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    .report-header {
+        margin-bottom: 28px;
+    }
+
+    .report-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #111;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table th {
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        width: 15%;
+        padding: 3px 6px 3px 0;
+        white-space: nowrap;
+    }
+
+    .report-meta-table td {
+        color: #111;
+        width: 35%;
+        padding: 3px 12px 3px 0;
+    }
+
+    .report-meta-table a {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .report-meta-table a:hover {
+        text-decoration: underline;
+    }
+
+    .report-divider {
+        border: 0;
+        border-top: 1px solid #d1d5db;
+        margin-top: 8px;
+    }
+
+    .math-left .katex-display {
+        text-align: left !important;
+    }
+
+    .math-left .katex-display > .katex {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    /* Сноски в тексте */
+    a.ref-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0 1px;
+    }
+
+    a.ref-link:hover {
+        text-decoration: underline;
+    }
+
+    .report-references {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .report-references h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .report-references ol {
+        padding-left: 20px;
+    }
+
+    .report-references li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
+
+    .report-references .ref-title {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .report-references a {
+        color: #1a73e8 !important;
+        text-decoration: underline !important;
+        word-break: break-all;
+        cursor: pointer;
+    }
+
+    details {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin: 16px 0;
+        background-color: #fff;
+        transition: all 0.2s ease;
+    }
+
+    details[open] {
+        border-color: #cbd5e1;
+    }
+
+    details > :not(summary) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    summary {
+        cursor: pointer;
+        padding: 10px 14px;
+        user-select: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    summary:hover {
+        background-color: #f8fafc;
+    }
+
+    summary h2 {
+        display: inline;
+        font-size: 16px;
+        margin: 0 0 0 6px;
+    }
+
+    .details-content {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 16px auto;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    img + p {
+        text-align: center;
+        font-size: 13px;
+        color: #57606a;
+        margin-top: -8px;
+        margin-bottom: 20px;
+    }
+</style>

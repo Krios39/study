@@ -1,0 +1,7 @@
+kernel,N,local_item_size,seconds,kernel_seconds
+kernel_A,1024,2,0.239166,0.219451
+kernel_A,2048,2,3.424526,3.305391
+kernel_A,4096,2,31.924902,31.258469
+kernel_B,1024,8,0.197761,0.135153
+kernel_B,2048,32,0.76918,0.648394
+kernel_B,4096,64,4.306366,3.552985
