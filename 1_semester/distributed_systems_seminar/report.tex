@@ -1,6 +1,8 @@
 \documentclass[11pt,a4paper]{article}
 
 \usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\setlength{\emergencystretch}{2em}
 \usepackage[english]{babel}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{booktabs}
@@ -56,9 +58,9 @@ study of threshold signatures reports end-to-end round trips of about 32\,ms wit
 one laptop and presents them as a lower bound~\cite{bakhtina2026ijis}; a capacity study measures the
 overhead of a Security Server in front of one registry service, where database time
 dominates~\cite{taklai2020}; and the paper that introduced batch time-stamping gives an analytical
-estimate and leaves benchmarking of the implementation to future work~\cite{ansper2013}. The Nordic
-Institute for Interoperability Solutions (NIIS), which develops X-Road, does not publish performance
-data. None of these sources splits the cost of an exchange by mechanism.
+estimate and leaves benchmarking of the implementation to future work~\cite{ansper2013}. No performance
+data published by the Nordic Institute for Interoperability Solutions (NIIS), which develops X-Road,
+was found. None of these sources splits the cost of an exchange by mechanism.
 
 Two developments make that missing split more relevant. The first is volume: the design of batch
 time-stamping was calibrated against about 240 million queries per year~\cite{ansper2013}, while the
@@ -87,10 +89,9 @@ over a network, and the NIIS report expects post-quantum handshakes to add round
 it~\cite{bakhtina2026pqc}. This leads to the following research questions:
 
 \begin{description}[leftmargin=2.2em,style=nextline]
-  \item[RQ1] How much do the trust mechanisms of an exchange --- the connection between the Security
-  Servers, signing and verification, message logging, time-stamping and certificate status checking
-  --- contribute to its latency and to the bytes on the wire, and which of these costs are paid on
-  every message rather than deferred?
+  \item[RQ1] How much do the trust mechanisms of an exchange contribute to its latency and to the
+  bytes between the Security Servers, as far as they can be separated from each other, and which of
+  them are paid on every message rather than deferred?
   \item[RQ2] How do those contributions change with message size, and how does the throughput of each
   configuration change with the number of concurrent clients?
   \item[RQ3] Does the answer change when the Security Servers run on separate machines instead of one
@@ -101,7 +102,8 @@ The contribution is a measurement rather than a new method: a testbed that can b
 or several hosts, the differences
 between configurations in milliseconds and bytes and the number of background requests from three
 environments, a descriptive per-stage breakdown taken from X-Road's own operational monitoring, the effect of a
-controlled added round-trip time together with a prediction made before that measurement, and the raw data. The study
+controlled added round-trip time together with a prediction made before that measurement and
+refined with packet captures, and the per-run data with their summaries. The study
 measures X-Road as it runs today, with its default keys: post-quantum schemes are not yet available
 in X-Road~\cite{bakhtina2026pqc,snetkov2023}, so their effect is discussed rather than measured.
 
@@ -144,7 +146,7 @@ accepted~\cite{bakhtina2023ares}. The performance side of that trade-off is the 
 
 \subsection{Testbed}
 
-The testbed runs X-Road~7.8.3 in containers built from the official images: one Central Server, a
+The testbed runs X-Road~7.8.3 in containers built from the official X-Road images: one Central Server, a
 test CA that also provides the OCSP and time-stamping services, and four Security Servers --- a
 management server, one consumer (\emph{ss1}) and two providers (\emph{ss2}, \emph{ss3}). The measured
 path is \emph{load generator $\rightarrow$ ss1 $\rightarrow$ ss2 $\rightarrow$ echo service}; the second
@@ -152,7 +154,9 @@ provider is used only to check what limits the consumer under load. The echo ser
 request with a body of the requested size, filled with random bytes so that the message log cannot
 compress it, and its own processing time is negligible. The load generator is k6, sending REST
 \texttt{GET} requests in a closed loop with a given number of concurrent clients, so the message size
-below is the size of the response body.
+below is the size of the response body. The time-stamping service of the test CA was replaced by a
+multi-threaded implementation, because the original one handles one request at a time and stalled
+under synchronous time-stamping.
 
 Every Security Server is limited to 2 CPU cores and 4\,GB of memory and the Central Server to 2\,GB,
 in all environments, so that the environments differ in where the containers run rather than in how
@@ -188,7 +192,7 @@ been examined in~\cite{nussbaum2009,jurgelionis2011}. How the delay is applied a
 described in Section~\ref{sec:delay}.
 
 On all machines the CPU runs in its performance power mode, which is checked before every grid and
-recorded with each run, since the power mode affects the latency.
+recorded with it, since the power mode affects the latency.
 
 \subsection{Isolating the cost of a mechanism}
 
@@ -219,12 +223,12 @@ Where a setting removes or changes a mechanism, a configuration is compared with
 \begin{itemize}[leftmargin=1.4em]
   \item \textbf{direct} --- plain HTTP from the load generator to the echo service, without X-Road.
   Its difference to \emph{full} is the whole X-Road path, not any single mechanism.
-  \item \textbf{reuse} --- connections between the Security Servers are kept open
+  \item {\sloppy \textbf{reuse} --- connections between the Security Servers are kept open
   (\param{pool-enable-connection-reuse}, \param{server-support-clients-pooled-connections} and
   \param{server-connector-max-idle-time}). By default each message opens a new
   connection~\cite{xroadsyspar}, so the difference is the effect of the connection policy between
   the Security Servers: setting up the TCP connection and the TLS session and starting every
-  transfer on a new TCP connection~\cite{naylor2014}. It does not isolate the TLS handshake.
+  transfer on a new TCP connection~\cite{naylor2014}. It does not isolate the TLS handshake.\par}
   \item \textbf{nobody} --- message bodies are not written to the message log
   (\param{message-body-logging=false}), so the difference is the cost of logging the body.
   \item \textbf{synctsa} --- every message is time-stamped synchronously
@@ -261,7 +265,9 @@ splits the latency into six consecutive stages: the consumer before sending, the
 stage in which signing and logging on the consumer and setting up the connection take place), the
 provider before forwarding (the stage in which verification and
 logging take place), the echo service, the provider returning the response,
-and the consumer finishing it. The stages add up to the end-to-end time. The breakdown is descriptive:
+and the consumer finishing it. The stages add up to the time between the request arriving at the
+consumer and the response leaving it, which excludes the short way between the load generator and
+the consumer. The breakdown is descriptive:
 these are timestamps of the measured system itself with a resolution of 1\,ms, and the share of
 requests whose records could be matched on both servers is reported with it. Stages measured within
 one host are more reliable than the two stages that span hosts, where the residual clock offset enters
@@ -282,14 +288,15 @@ responses at one client and 10\,KB at 4, 16 and 32 clients, plus the two-provide
 
 The Security Server runs on the Java virtual machine, whose first requests after a start are slower
 until the code is compiled, so only the steady state is measured~\cite{georges2007}. After every
-configuration change the Security Servers are restarted and warmed up by a discarded run at four
+configuration change the proxy of the Security Servers is restarted and warmed up by a discarded run at four
 clients, followed by warm-up requests before every measured run. The amount of warm-up is set from a
 pilot run as the point after which the median latency over consecutive windows of requests stops
 decreasing. Each run measures 1000 requests, as in~\cite{bakhtina2026ijis}, and 200 at 1\,MB, where
 every message adds about a megabyte to the message log of each Security Server.
 
 Following~\cite{georges2007}, every point is measured in several independent runs rather than once.
-A grid repeats every point five times in random order, and a control run with the default
+A grid repeats every point five times; within each repetition plain HTTP runs first, then the
+configurations in random order, each with its points in random order, and a control run with the default
 configuration at the start of each repetition and at the end shows the drift of the testbed during
 the grid. Several grids are run and combined. During the measurements the machines run nothing else. Before the message log is cleaned, the
 runner waits until every logged message has its time stamp, so that deferred work is not lost
@@ -311,12 +318,14 @@ controlled added round-trip time between the Security Servers, not as a measurem
 wide-area deployment. A control at zero delay with the same netem rules installed checks that the
 rules themselves do not change the result.
 
-The added round-trip time (0, 5, 20 and 50\,ms) is verified on the measured flow itself: during every
-run the round-trip time of the consumer's connections to the provider is read from the kernel. Before
-the grid, a pilot with traffic captures of sequential requests identifies for every setting whether
-a request opens a new connection, with a full or a resumed TLS handshake, or uses an existing one, and
-how many times one side waits for the other. From these exchanges a prediction is made of how latency
-should grow with the round-trip time, and it is compared with the measured slope. Captures of a 1\,MB
+The added round-trip time (0, 5, 20 and 50\,ms) is verified on the measured flow itself: from the
+second delay grid on, the round-trip time of the consumer's connections to the provider is read from
+the kernel during every run, and a calibration with sequential requests reads it for new connections.
+Before the first delay grid, traffic captures of sequential requests on the local network show
+whether a request opens a new connection, with a full or a resumed TLS handshake, or uses an existing
+one, and how many times one side waits for the other. From these exchanges a prediction is made of how
+latency should grow with the round-trip time, and it is compared with the measured slope; where they
+disagree, captures under delay are used to find the waits the prediction missed. Captures of a 1\,MB
 response with and without connection reuse check how the transfer of a large response depends on the
 state of the TCP connection.
 
@@ -327,7 +336,9 @@ and 50\,ms.
 \subsection{Threats to validity}
 
 Several properties of the testbed shift the absolute values. The machines are laptops rather than
-servers, and the development laptop adds the overhead of WSL~2 on Windows. The test CA, OCSP
+servers, and the development laptop adds the overhead of WSL~2 on Windows. The time-stamping service
+of the test CA is a replacement, and the images of the test CA and the load generator were not pinned
+to a version. The test CA, OCSP
 responder and time-stamping service run next to the Security Servers, whereas in production they are
 external services with their own latency, so the figures for status checking and synchronous
 time-stamping are optimistic. All intervals of the background mechanisms are left at their defaults,
@@ -356,10 +367,11 @@ reference only.
 
 The warm-up needed turned out much longer than expected. The closest measurement of X-Road reports
 means over 1000 requests without describing a warm-up~\cite{bakhtina2026ijis}, and a first short
-check on the testbed suggested that about 700 requests would be enough. A longer pilot showed
-otherwise: the median latency over windows of 200 requests after a restart of the Security Servers
-fell from 114 to 45\,ms and reached a plateau only after 2500 to 3000 requests, and the first run
-after a restart remained slower even after 4000 requests at one client. Repeated runs at the same
+check on the testbed suggested that about 700 requests would be enough. A longer pilot on the
+development laptop, with a 1\,KB response and before the power mode was fixed (see below), showed
+otherwise: the latency did not settle within the first thousand requests after a restart of the
+Security Servers, and the first run after a restart remained slower even after 4000 requests at one
+client. Repeated runs at the same
 point differed by up to 20\,\%. These observations set the warm-up and the number of repetitions
 described in Section~3.5.
 The effect of the power mode of the CPU was found in the first measurements on three machines. The default
@@ -368,7 +380,7 @@ difference looked like a cost of the network. Changing how the Security Servers 
 segments and how the load generator reuses its connection did not change it. The per-stage timestamps
 then showed all stages, including purely computational ones, 2 to 2.5 times slower than on the
 development laptop (for example, signing the response on the provider took 22 instead of 10\,ms), so
-the computation had slowed down, not the network. The laptops were in an energy-saving mode, in
+the computation had slowed down and the difference was not only a cost of the network. The laptops were in an energy-saving mode, in
 which an almost idle CPU does not raise its frequency for short bursts of work; on one of them the
 control run took 79.7\,ms in that mode and 28.7\,ms in the performance mode. All results below were
 obtained in the performance mode; the earlier runs in the energy-saving mode are not used.
@@ -389,7 +401,9 @@ Table~\ref{tab:onecl} shows the latency with one client. The difference between 
 a 1\,MB response. Logging the message body makes no difference beyond the spread at 10\,KB, but at
 1\,MB not logging it saves 34.9\,ms, 47\,\% of the latency. Keeping connections open between the
 Security Servers saves 2.0\,ms at 10\,KB and 4.3\,ms at 1\,MB. Synchronous time-stamping adds
-89--92\,ms. The interquartile range between repetitions is 0.7--4.8\,\% of the median.
+89--92\,ms. The interquartile range between repetitions is 0.7--4.8\,\% of the median on three machines, up
+to 9.4\,\% on the development laptop, and up to 5.1\,\% on one machine except for \emph{synctsa}
+(18--31\,\%).
 
 \begin{table}[h]
 \centering\small
@@ -418,18 +432,21 @@ with \emph{reuse} 11.5 and 22.8\,KB, so the connection policy costs 3.3 and 2.9\
 two directions. The message log of the consumer grows by 33.7\,KB per exchange with bodies and
 19.3\,KB without them, and at 1\,MB by 1.42\,MB and 19.5\,KB.
 
-The two background mechanisms did not appear in the request path. No run sent a single request to
-the OCSP responder, and a configuration with an OCSP freshness shorter than the refresh of the cached
-responses made every request fail, as described in Section~3.3. Batched time-stamping sent no requests
-to the time-stamping service during the runs and about two per run, of about 1200 messages, while the
-runner waited for the time stamps; \emph{synctsa} sent 4802 per run, four for each exchange, one for
+The two background mechanisms did not appear in the request path. The median number of requests to
+the OCSP responder per run was zero; in about 5\,\% of the runs (35 of 741 on three machines) a
+background refresh of 2 to 8 requests fell into the run. A configuration with an OCSP freshness
+shorter than the refresh of the cached responses made every request fail, as described in
+Section~3.3; this was observed in an early run on the development laptop, but it does not depend on
+the power mode. Batched time-stamping sent a median of zero requests to the time-stamping service
+during a run (at most two) and about two per run, of about 1200 messages, while the runner waited for
+the time stamps; \emph{synctsa} sent 4802 per run, four for each exchange, one for
 every record written to the message log.
 
 Table~\ref{tab:stages} shows the per-stage breakdown on three machines. All requests of these runs
 were matched between consumer and provider. The stage before the consumer sends the request takes
 0.1--0.2\,ms, so the consumer records the request as forwarded when it starts sending, and signing and
 logging of the request fall into the stage on the way to the provider. The configurations change the
-stages in which their mechanism works: \emph{reuse} changes only the way to the provider ($-2.4$\,ms);
+stages in which their mechanism works: at 10\,KB \emph{reuse} changes only the way to the provider ($-2.4$\,ms);
 not logging a 1\,MB body shortens the provider's response by 16.9\,ms and the consumer's finishing
 stage by 17.0\,ms, that is, logging the body costs about 17\,ms on each side; and synchronous
 time-stamping adds 20--25\,ms to each of the four stages in which a record is logged. The two stages
@@ -454,7 +471,9 @@ that span machines include the residual clock offset of below half a millisecond
 \bottomrule
 \end{tabular}
 \caption{Per-stage breakdown from operational monitoring on three machines, one client (mean of
-each run, median over 15 repetitions, ms; resolution 1\,ms). ``To provider'' and ``Consumer
+each run, median over the 15 repetitions of the second series of grids, for which the records of both
+servers were kept; ms; resolution 1\,ms). Each column is a median of its own, so the columns
+do not add up exactly to the total. ``To provider'' and ``Consumer
 finishing'' span two machines.}
 \label{tab:stages}
 \end{table}
@@ -467,8 +486,10 @@ to 39.1\,ms, so most of the additional time at 1\,MB is writing the body to the 
 effect of the connection policy grows from 2.0 to 4.3\,ms, and the cost of synchronous time-stamping
 stays at about 90\,ms.
 
-Under load the spread between repetitions grows to 15--41\,\% of the throughput for \emph{full},
-\emph{nobody}, \emph{reuse} and the two-provider case, compared with 7--10\,\% for \emph{synctsa}.
+Under load the spread between repetitions grows to 9--41\,\% of the throughput for \emph{full},
+\emph{nobody}, \emph{reuse} and the two-provider case across the environments (15--41\,\% on three
+machines), while for \emph{synctsa} it stays at 4--10\,\% except at four clients on one machine
+(20\,\%).
 Table~\ref{tab:load} therefore lists the highest throughput each configuration reached. The
 differences between \emph{full}, \emph{nobody}, \emph{reuse} and two providers are within the spread
 and are not assigned to individual mechanisms. Synchronous time-stamping halves the ceiling on three
@@ -495,23 +516,24 @@ second).}
 \subsection{Environment and added round-trip time (RQ3)}
 
 With one client, three machines and one machine give the same picture (Table~\ref{tab:onecl}): the
-end-to-end latency differs by 0.7--1.5\,ms and the differences between configurations by at most
+latency of \emph{full} differs by 0.7--1.5\,ms and the differences between configurations by at most
 6.4\,ms.
 \emph{direct} shows that the switch adds 0.6\,ms at 10\,KB and 9.3\,ms at 1\,MB, but through X-Road
 this is offset by the provider having a CPU of its own: on three machines the provider's stages are
 shorter (4.2 against 5.7\,ms and 6.9 against 9.0\,ms), while the way to the provider is 0.6\,ms longer.
 Under load three machines reach 1.4 to 1.8 times higher throughput (Table~\ref{tab:load}), because the
-work is spread over three CPUs. On the development laptop all absolute values are lower and the
+work is spread over three CPUs. With one client, all absolute values on the development laptop are lower and the
 CPU-bound costs smaller (logging a 1\,MB body 17 instead of 35\,ms, synchronous time-stamping 62
 instead of 89\,ms), while the differences keep their sign and order.
 
-\paragraph{Added round-trip time.} The round-trip time measured on the connections between the
-Security Servers was 0.5, 6.1, 21.4 and 51.5\,ms for an added 0, 5, 20 and 50\,ms (smoothed by the
-kernel, which includes delayed acknowledgements); for new connections the minimum was 0.53, 5.54,
-20.78 and 51.11\,ms. With the netem rules installed and no delay, the latency did not change at
+\paragraph{Added round-trip time.} In the three delay grids in which it was recorded,
+the round-trip time of the connections between the Security Servers, as smoothed by the kernel (which
+includes delayed acknowledgements), was 0.5, 6.1, 21.4 and 51.5\,ms for \emph{full} and 2.7, 8.1,
+23.5 and 54.2\,ms for \emph{reuse} at an added 0, 5, 20 and 50\,ms; in a calibration with sequential
+requests the minimum for new connections was 0.53, 5.54, 20.78 and 51.11\,ms. With the netem rules installed and no delay, the latency did not change at
 10\,KB (31.0 against 30.6\,ms for \emph{full}, 27.7 against 28.9\,ms for \emph{reuse}); at 1\,MB it
-was 3--4\,ms higher (about 5\,\%, with overlapping ranges), two orders of magnitude below the effect
-of the added round-trip time.
+was 3--4\,ms higher (about 5\,\%, with overlapping ranges), one to two orders of magnitude below the
+effect of the added round-trip time (47\,ms for \emph{full} at 1\,MB already at 5\,ms).
 
 Before the first grid with added delay, traffic captures on the local network showed that every
 message of \emph{full} opens a new TCP connection and resumes the TLS~1.2 session from a session
@@ -519,7 +541,8 @@ ticket, without exchanging certificates. Counting the TCP handshake, the TLS han
 request itself, a message of \emph{full} waits for three round trips between the Security Servers
 and a message of \emph{reuse} for one. The growth of latency is therefore described by its slope
 against the added round-trip time: a slope of 3 means that the latency grows by three times the added
-round-trip time, that is, every message waits for three round trips. The prediction was a slope of 3
+round-trip time, that is, every message waits for three round trips. It is computed from the medians at 0 and
+50\,ms. The prediction was a slope of 3
 for \emph{full} and 1 for \emph{reuse}. Figure~\ref{fig:rtt} shows the measurement: at 10\,KB the
 slope is 5.1 for \emph{full} and 2.1 for \emph{reuse}, so the prediction underestimated both.
 Captures under delay showed two waits it did not include: the last part of the request (842 bytes
@@ -556,7 +579,7 @@ forwarding stage is 1 in both.
 \end{axis}
 \end{tikzpicture}
 \caption{Latency with one client against the round-trip time added between the Security Servers,
-three machines, 20 repetitions (interquartile range 0.3--1.4\,\% at 20\,ms and more); lines without
+three machines, 20 repetitions (interquartile range 0.2--3.6\,\% at 20\,ms and more); lines without
 marks show the prediction made before the measurement.}
 \label{fig:rtt}
 \end{figure}
@@ -565,19 +588,23 @@ At 1\,MB the slope is 10.7 for \emph{full} and 2.0 for \emph{reuse}.
 Captures of a 1\,MB response at 50\,ms show the reason: on a new connection the body leaves in about
 six flights, one per round trip, each about twice as large as the previous one (28, 57, 113, 226 and
 453\,KB), as the TCP window grows from its initial size; with \emph{reuse} the window is kept between
-messages, and after the first request the whole response leaves in one flight. The effect of the
+messages and keeps growing, so the response leaves in fewer flights, and from the fifth request on
+in one flight. The effect of the
 connection policy thus grows from 2\,ms on the local network to 153\,ms (54\,\%) at 10\,KB and
 436\,ms (72\,\%) at 1\,MB with an added 50\,ms.
 
 The extended grid confirms the pattern. With a 100\,KB response the slope is 7.0 for \emph{full} and
 2.1 for \emph{reuse}, so with a new connection for every message the cost of distance grows with the
 size of the response (slopes of 5.0, 7.0 and 9.7 for 10\,KB, 100\,KB and 1\,MB in this grid), while
-with reused connections it does not. With an added round-trip time the
+with reused connections it does not. The slope at 1\,MB is lower here than in the first delay grid
+(9.7 against 10.7) because the medians of the two series differ by 8\,ms at 0\,ms and by 45\,ms at
+50\,ms; at 10\,KB the two grids agree (5.0 and 5.1). With an added round-trip time the
 latency with four clients is the same as with one, and at 50\,ms throughput is limited by the round trips: 14 requests per second for
 \emph{full} against 30 for \emph{reuse}. With 16 clients at 0 and 20\,ms the Security Servers are the
 limit (103--127 requests per second) and the added round-trip time disappears in the queue (142
 against 140\,ms for \emph{full}); at 50\,ms \emph{full} falls to 57 requests per second while
-\emph{reuse} keeps 104.
+\emph{reuse} keeps 104. Errors again occurred only with \emph{reuse} under load: 17 of 90\,000
+requests at 4 and 16 clients.
 
 \section{Discussion}
 
@@ -601,8 +628,9 @@ session ticket without exchanging certificates in every captured message, so lar
 mainly affect new sessions rather than every message.
 
 A decentralised PKI changes how certificates are checked~\cite{bakhtina2023ares}. In the present
-system status checking did not add a single request to the measured path: no run sent a request to
-the OCSP responder, and the Security Server took the status only from its cache. Any per-request
+system status checking was not part of the request path: the Security Server took the status from
+its cache, and requests to the OCSP responder appeared only when a background refresh fell into a
+run. Any per-request
 presentation of credentials would therefore be a new cost in the request path rather than a
 replacement of an existing one.
 
@@ -621,8 +649,8 @@ response and 72\,\% for a 1\,MB response, and almost doubles the throughput with
 agrees with the observation that the cost of TLS depends mostly on whether connections are
 reused~\cite{naylor2014}. Connection reuse is off by default~\cite{xroadsyspar}, so its benefit grows
 with the distance between the Security Servers of the communicating organisations. It is not free of
-side effects either: in the measurements, single requests over reused connections failed when a pooled
-connection had already been closed by the other side.
+side effects either: in the measurements, single requests over reused connections failed, consistent
+with a pooled connection that had already been closed by the other side.
 
 The connection policy also decides how much larger post-quantum messages would cost. With reused
 connections a few additional kilobytes leave in the same flight, while with a new connection for
@@ -631,7 +659,7 @@ message (Section~5.1).
 
 \subsection{Comparison with earlier measurements}
 
-The end-to-end latency with one client, 25 to 30\,ms on the three machines used here, is of the same
+The end-to-end latency with one client, 25 to 30\,ms in the three environments used here, is of the same
 order as the 32\,ms reported for X-Road~7.7.0 with all components on one laptop~\cite{bakhtina2026ijis}.
 That figure was presented as a lower bound because there was no network between the
 servers~\cite{bakhtina2026ijis}. For one client on a local network, the comparison of one machine with
@@ -643,11 +671,11 @@ service, the path through the Security Server was reported as faster than the di
 concurrent clients~\cite{taklai2020}, which suggests that the variation of the environment was
 comparable to the effect being measured; here, too, the spread under load was too large to compare
 configurations, while with one
-client and with an added round-trip time it stayed within a few per cent.
+client and with an added round-trip time it mostly stayed within a few per cent.
 
 The warm-up needed was much longer than the earlier work suggests. The closest measurement reports
-means over 1000 requests without describing a warm-up~\cite{bakhtina2026ijis}, while here the latency settled only
-after 2500 to 3000 requests and the first run after a restart stayed slower beyond that, in line with
+means over 1000 requests without describing a warm-up~\cite{bakhtina2026ijis}, while here the latency did not settle
+within the first thousand requests and the first run after a restart stayed slower even after 4000, in line with
 the advice to measure Java systems only in the steady state~\cite{georges2007}. Short measurements of
 X-Road may therefore overestimate its latency and vary more between runs.
 
@@ -656,8 +684,8 @@ X-Road may therefore overestimate its latency and vary more between runs.
 The absolute values depend on the hardware: the same grid gave 24.8\,ms on the development laptop and
 28.3\,ms on the three machines for a 10\,KB response, and the CPU-bound costs, logging a large body
 and synchronous time-stamping, differed by up to a factor of two. The differences between
-configurations kept their sign and order in every environment, and the costs that depend on the
-network, the connection policy and the round trips, were the same. The power mode of the CPU had an
+configurations kept their sign and order in every environment, and the effect of the connection
+policy on the local network was about the same (1.6--2.0\,ms at 10\,KB). The power mode of the CPU had an
 even larger effect than the choice of machine. Measurements of X-Road on general-purpose hardware
 should therefore report the CPU and its power mode together with the results.
 
@@ -671,7 +699,8 @@ For RQ1, the X-Road path added about 28\,ms to a 10\,KB exchange with one client
 Logging the message body made no measurable difference for small messages and accounted for almost
 half of the latency of a 1\,MB exchange. Opening a new connection for every message cost about 2\,ms
 and 3\,KB per message on the local network. Certificate status checking and batched time-stamping
-were not in the request path: no OCSP requests and about two time-stamping requests per 1200 messages,
+were not in the request path: requests to the OCSP responder only from background refreshes and about two time-stamping
+requests per 1200 messages,
 while synchronous time-stamping added about 90\,ms. Signing and verification cannot be switched off,
 and the per-stage breakdown places them in stages of 4 to 11\,ms each.
 
@@ -680,7 +709,7 @@ message log. Under load the Security Servers reached about 100 requests per seco
 synchronous time-stamping halved that, and the spread between repetitions was too large to compare
 the other configurations.
 
-For RQ3, one machine and three machines gave the same latency and the same differences with one
+For RQ3, one machine and three machines gave nearly the same latency and differences with one
 client, while three machines reached a higher throughput. With an added round-trip time the default
 connection policy made every message wait for about five round trips at 10\,KB and ten at 1\,MB,
 against two with reused connections; a prediction from the handshakes alone gave three and one and
