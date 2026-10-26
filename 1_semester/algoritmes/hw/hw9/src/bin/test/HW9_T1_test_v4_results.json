@@ -1,0 +1,76 @@
+{
+  "best_cost": 44227871,
+  "best_start": 512,
+  "correct_order_cost": 43641126,
+  "distance": "sum of absolute RGB differences",
+  "height": 1024,
+  "image": "HW9_rows_test_shuffled.png",
+  "matrix_seconds": 4.1266106,
+  "method": "one-directional greedy nearest neighbour; split at the largest jump of first + last pixel; big pile on top, small pile below it, reversed when its seam row is closer (first pixel) to the top of the big pile",
+  "trials": [
+    {
+      "cost": 44293162,
+      "piles": {
+        "big_pile": 930,
+        "cut_after_position": 929,
+        "diff_to_big_bottom": 153,
+        "diff_to_big_top": 347,
+        "first_and_last_pixel_gap": 526,
+        "seam_row": 600,
+        "small_pile": 94,
+        "small_pile_reversed": false,
+        "small_pile_was_above": false
+      },
+      "recovered": {
+        "fraction": 0.9970674486803519,
+        "of": 1023,
+        "pairs": 1020
+      },
+      "seconds": 0.005449,
+      "start": 0
+    },
+    {
+      "cost": 44227871,
+      "piles": {
+        "big_pile": 733,
+        "cut_after_position": 290,
+        "diff_to_big_bottom": 119,
+        "diff_to_big_top": 157,
+        "first_and_last_pixel_gap": 464,
+        "seam_row": 781,
+        "small_pile": 291,
+        "small_pile_reversed": false,
+        "small_pile_was_above": true
+      },
+      "recovered": {
+        "fraction": 0.9970674486803519,
+        "of": 1023,
+        "pairs": 1020
+      },
+      "seconds": 0.0044695,
+      "start": 512
+    },
+    {
+      "cost": 44481781,
+      "piles": {
+        "big_pile": 665,
+        "cut_after_position": 358,
+        "diff_to_big_bottom": 203,
+        "diff_to_big_top": 181,
+        "first_and_last_pixel_gap": 551,
+        "seam_row": 924,
+        "small_pile": 359,
+        "small_pile_reversed": true,
+        "small_pile_was_above": true
+      },
+      "recovered": {
+        "fraction": 0.9951124144672532,
+        "of": 1023,
+        "pairs": 1018
+      },
+      "seconds": 0.0051936,
+      "start": 1023
+    }
+  ],
+  "width": 1536
+}

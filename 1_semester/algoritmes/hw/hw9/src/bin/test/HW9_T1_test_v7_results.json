@@ -1,0 +1,76 @@
+{
+  "best_cost": 43690958,
+  "best_start": 512,
+  "correct_order_cost": 43641126,
+  "distance": "sum of absolute RGB differences",
+  "height": 1024,
+  "image": "HW9_rows_test_shuffled.png",
+  "matrix_seconds": 5.0498717,
+  "method": "one-directional greedy nearest neighbour; split at the largest full-row jump; the small pile stays in place and is reversed when its far end is closer (full row) to the big-pile row at the seam",
+  "trials": [
+    {
+      "cost": 44293162,
+      "piles": {
+        "big_pile": 930,
+        "big_row_at_seam": 924,
+        "cut_after_position": 929,
+        "full_row_gap": 328849,
+        "small_bottom_to_big": 338123,
+        "small_pile": 94,
+        "small_pile_reversed": false,
+        "small_pile_was_above": false,
+        "small_top_to_big": 328849
+      },
+      "recovered": {
+        "fraction": 0.9970674486803519,
+        "of": 1023,
+        "pairs": 1020
+      },
+      "seconds": 0.010559,
+      "start": 0
+    },
+    {
+      "cost": 43690958,
+      "piles": {
+        "big_pile": 890,
+        "big_row_at_seam": 80,
+        "cut_after_position": 133,
+        "full_row_gap": 220273,
+        "small_bottom_to_big": 220273,
+        "small_pile": 134,
+        "small_pile_reversed": true,
+        "small_pile_was_above": true,
+        "small_top_to_big": 80920
+      },
+      "recovered": {
+        "fraction": 0.9980449657869013,
+        "of": 1023,
+        "pairs": 1021
+      },
+      "seconds": 0.0096468,
+      "start": 512
+    },
+    {
+      "cost": 44418026,
+      "piles": {
+        "big_pile": 752,
+        "big_row_at_seam": 394,
+        "cut_after_position": 751,
+        "full_row_gap": 327076,
+        "small_bottom_to_big": 416991,
+        "small_pile": 272,
+        "small_pile_reversed": false,
+        "small_pile_was_above": false,
+        "small_top_to_big": 327076
+      },
+      "recovered": {
+        "fraction": 0.9951124144672532,
+        "of": 1023,
+        "pairs": 1018
+      },
+      "seconds": 0.028194,
+      "start": 1023
+    }
+  ],
+  "width": 1536
+}

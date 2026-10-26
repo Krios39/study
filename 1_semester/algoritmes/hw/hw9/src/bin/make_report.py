@@ -514,5 +514,57 @@ head = '''<!DOCTYPE html>
 </head>
 <body>
 '''
-(HW / "report.html").write_text(head + t1_html + script + "</body>\n</html>\n", encoding="utf-8")
+t2res = {n: json.loads((BIN / f"tsp{n}" / f"HW9_T2_{n}_results.json").read_text()) for n in (100, 500, 2000)}
+t2_rows = [[str(n), f"{t2res[n]['mst']['length']:,.3f}", f"{t2res[n]['mst']['seconds']:.3f} s",
+            f"{t2res[n]['mst_tour']['length']:,.3f}", f"{t2res[n]['mst_tour']['gap_percent']:.2f}%", f"{1000 * t2res[n]['mst_tour']['seconds']:.2f} ms",
+            f"{t2res[n]['nn_tour']['length']:,.3f}", f"{t2res[n]['nn_tour']['gap_percent']:.2f}%", f"{1000 * t2res[n]['nn_tour']['seconds']:.2f} ms"] for n in (100, 500, 2000)]
+baseline = json.loads((HW / "HW9_TSP_baseline_score.json").read_text())
+T2D = BIN / "tsp100"
+t2_html = f"""<details>
+    <summary>Task T2: One tree, two baseline tours</summary>
+    <div class="details-content">
+
+        <h3>Method</h3>
+        <ul>
+            <li><strong>Distances:</strong> ordinary Euclidean distances, no rounding; the full distance matrix is computed once before timing the tours.</li>
+            <li><strong>MST:</strong> library routine <code>petgraph::algo::min_spanning_tree</code> (Kruskal) on the complete graph of all point pairs. The trees are saved and reused in T3.</li>
+            <li><strong>MST tour (own code):</strong> the tree is rooted at ID 1 and traversed depth-first, children in increasing ID order; every vertex is recorded at its first visit, and the order is closed into a cycle.</li>
+            <li><strong>NN tour (own code):</strong> start at ID 1, always go to the nearest unvisited point (ties: smaller ID), finally return to the start.</li>
+            <li>Gap above the MST lower bound: 100 · (tour length / MST length − 1). This is not the gap to the unknown optimal tour.</li>
+        </ul>
+
+        <h3>Results</h3>
+        {table(["Points", "MST length", "MST time", "MST tour", "Gap", "Time", "NN tour", "Gap", "Time"], t2_rows)}
+        <p>
+            All six tours pass the course validator (<code>HW9_helpers.py validate</code>), and the lengths above are the validator's.
+            The 2000-point NN tour is identical to the supplied baseline (length {baseline["length"]:.6f}, same <code>cycle_sha256</code>), which confirms the NN rule and the tie-breaking.
+            NN is about 12–13% shorter than the MST tour on every dataset, and both stay far below the factor-2 guarantee. The gaps grow slightly with N.
+        </p>
+
+        <h3>100 Points: Tree and Both Tours</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+            <div>{figure(T2D / "HW9_T2_100_mst.png", "Minimum spanning tree of the 100 points", 900)}<p style="font-size: 13px; text-align: center;">MST, length {t2res[100]['mst']['length']:,.3f}</p></div>
+            <div>{figure(T2D / "HW9_T2_100_mst_tour.png", "Tour from the depth-first traversal of the MST", 900)}<p style="font-size: 13px; text-align: center;">MST tour (DFS from ID 1)</p></div>
+            <div>{figure(T2D / "HW9_T2_100_nn_tour.png", "Nearest-neighbour tour from ID 1", 900)}<p style="font-size: 13px; text-align: center;">NN tour from ID 1</p></div>
+        </div>
+        <p>
+            The MST tour follows the branches of the tree and then makes long diagonal shortcuts when a branch ends and the traversal jumps to the next unvisited branch.
+            The NN tour is mostly built from short steps, but near the end it has a few very long edges: the remaining unvisited points are scattered, and the walk must fly back to them.
+        </p>
+
+        <h3>Why MST Length Is a Lower Bound</h3>
+        <p>
+            Remove any one edge from a tour: what remains is a path through all points, and a path is a spanning tree. The MST is the shortest spanning tree, so
+            MST ≤ that path ≤ the tour (all edges are non-negative). This holds for every tour, including the optimal one.
+        </p>
+        <h3>Why the Shortcut Tour Is at Most Twice the MST</h3>
+        <p>
+            A full depth-first walk of the tree goes down and back up every edge, so it has length exactly 2 · MST and visits every point. The tour is this walk with repeated points skipped:
+            each skipped stretch is replaced by one straight segment. In Euclidean space the triangle inequality holds, so a straight segment is never longer than the walk it replaces.
+            Therefore the tour is at most 2 · MST.
+        </p>
+    </div>
+</details>
+"""
+(HW / "report.html").write_text(head + t1_html + t2_html + script + "</body>\n</html>\n", encoding="utf-8")
 print("report written", (HW / "report.html").stat().st_size)

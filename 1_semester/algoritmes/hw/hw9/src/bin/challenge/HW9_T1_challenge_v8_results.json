@@ -1,0 +1,31 @@
+{
+  "best_cost": 37421350,
+  "best_start": 0,
+  "correct_order_cost": null,
+  "distance": "sum of absolute RGB differences",
+  "height": 940,
+  "image": "HW9_rows_challenge_shuffled.png",
+  "matrix_seconds": 3.9577536,
+  "method": "greedy nearest neighbour growing the chain at both ends (course hint): attach the better of the best top match and the best bottom match; ties by row index, then prepend",
+  "trials": [
+    {
+      "cost": 37421350,
+      "recovered": null,
+      "seconds": 0.0069015,
+      "start": 0
+    },
+    {
+      "cost": 37421350,
+      "recovered": null,
+      "seconds": 0.0064697,
+      "start": 470
+    },
+    {
+      "cost": 37421350,
+      "recovered": null,
+      "seconds": 0.0164484,
+      "start": 939
+    }
+  ],
+  "width": 1672
+}

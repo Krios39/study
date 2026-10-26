@@ -66,3 +66,30 @@ pub fn recovered_pairs(order: &[usize], truth: &[usize]) -> (usize, usize) {
     let hits = truth.windows(2).filter(|w| pos[w[0]].abs_diff(pos[w[1]]) == 1).count();
     (hits, n - 1)
 }
+
+pub fn load_points(path: &str) -> Vec<(f64, f64)> {
+    let text = std::fs::read_to_string(path).expect("cannot read points");
+    let mut points = Vec::new();
+    for line in text.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with('#')) {
+        let v: Vec<f64> = line.split_whitespace().map(|x| x.parse().unwrap()).collect();
+        assert_eq!(v[0] as usize, points.len() + 1, "IDs must be 1..N in order");
+        points.push((v[1], v[2]));
+    }
+    points
+}
+
+pub fn euclid(a: (f64, f64), b: (f64, f64)) -> f64 {
+    ((a.0 - b.0).powi(2) + (a.1 - b.1).powi(2)).sqrt()
+}
+
+pub fn point_distances(points: &[(f64, f64)]) -> Vec<Vec<f64>> {
+    points.iter().map(|&a| points.iter().map(|&b| euclid(a, b)).collect()).collect()
+}
+
+pub fn tour_length(d: &[Vec<f64>], tour: &[usize]) -> f64 {
+    tour.iter().zip(tour.iter().cycle().skip(1)).map(|(&a, &b)| d[a][b]).sum()
+}
+
+pub fn save_ids(ids: &[usize], file: &str) {
+    std::fs::write(file, ids.iter().map(|x| (x + 1).to_string()).collect::<Vec<_>>().join("\n") + "\n").unwrap();
+}

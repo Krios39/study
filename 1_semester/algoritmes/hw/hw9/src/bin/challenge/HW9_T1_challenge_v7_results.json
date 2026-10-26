@@ -1,0 +1,64 @@
+{
+  "best_cost": 37476374,
+  "best_start": 470,
+  "correct_order_cost": null,
+  "distance": "sum of absolute RGB differences",
+  "height": 940,
+  "image": "HW9_rows_challenge_shuffled.png",
+  "matrix_seconds": 4.121426,
+  "method": "one-directional greedy nearest neighbour; split at the largest full-row jump; the small pile stays in place and is reversed when its far end is closer (full row) to the big-pile row at the seam",
+  "trials": [
+    {
+      "cost": 38469031,
+      "piles": {
+        "big_pile": 806,
+        "big_row_at_seam": 799,
+        "cut_after_position": 805,
+        "full_row_gap": 282455,
+        "small_bottom_to_big": 286154,
+        "small_pile": 134,
+        "small_pile_reversed": false,
+        "small_pile_was_above": false,
+        "small_top_to_big": 282455
+      },
+      "recovered": null,
+      "seconds": 0.0105675,
+      "start": 0
+    },
+    {
+      "cost": 37476374,
+      "piles": {
+        "big_pile": 899,
+        "big_row_at_seam": 425,
+        "cut_after_position": 40,
+        "full_row_gap": 119582,
+        "small_bottom_to_big": 119582,
+        "small_pile": 41,
+        "small_pile_reversed": true,
+        "small_pile_was_above": true,
+        "small_top_to_big": 40601
+      },
+      "recovered": null,
+      "seconds": 0.0084436,
+      "start": 470
+    },
+    {
+      "cost": 38061399,
+      "piles": {
+        "big_pile": 920,
+        "big_row_at_seam": 463,
+        "cut_after_position": 919,
+        "full_row_gap": 315233,
+        "small_bottom_to_big": 335921,
+        "small_pile": 20,
+        "small_pile_reversed": false,
+        "small_pile_was_above": false,
+        "small_top_to_big": 315233
+      },
+      "recovered": null,
+      "seconds": 0.0085618,
+      "start": 939
+    }
+  ],
+  "width": 1672
+}

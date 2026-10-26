@@ -1,0 +1,22 @@
+{
+  "distance_matrix_seconds": 0.0337838,
+  "mst": {
+    "edges": 1999,
+    "length": 59856.901741292975,
+    "method": "petgraph::algo::min_spanning_tree (Kruskal) on the complete Euclidean graph",
+    "seconds": 2.0652761
+  },
+  "mst_tour": {
+    "gap_percent": 57.49676764266187,
+    "length": 94272.68545358062,
+    "method": "DFS preorder from ID 1, children in increasing ID order",
+    "seconds": 0.0005491
+  },
+  "nn_tour": {
+    "gap_percent": 37.37428438369912,
+    "length": 82227.99042135516,
+    "method": "nearest neighbour from ID 1, distance ties by ID",
+    "seconds": 0.0167962
+  },
+  "points": 2000
+}
