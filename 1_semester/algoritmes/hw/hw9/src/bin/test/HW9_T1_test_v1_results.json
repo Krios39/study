@@ -1,0 +1,43 @@
+{
+  "best_cost": 43830311,
+  "best_start": 512,
+  "correct_order_cost": 43641126,
+  "distance": "sum of absolute RGB differences",
+  "height": 1024,
+  "image": "HW9_rows_test_shuffled.png",
+  "matrix_seconds": 5.0084605,
+  "method": "one-directional greedy nearest neighbour",
+  "trials": [
+    {
+      "cost": 44293162,
+      "recovered": {
+        "fraction": 0.9970674486803519,
+        "of": 1023,
+        "pairs": 1020
+      },
+      "seconds": 0.0054588,
+      "start": 0
+    },
+    {
+      "cost": 43830311,
+      "recovered": {
+        "fraction": 0.9980449657869013,
+        "of": 1023,
+        "pairs": 1021
+      },
+      "seconds": 0.0063332,
+      "start": 512
+    },
+    {
+      "cost": 44418026,
+      "recovered": {
+        "fraction": 0.9951124144672532,
+        "of": 1023,
+        "pairs": 1018
+      },
+      "seconds": 0.0048041,
+      "start": 1023
+    }
+  ],
+  "width": 1536
+}

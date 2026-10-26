@@ -1,0 +1,7 @@
+{
+  "method": "nearest neighbour, start ID 1, distance ties by ID",
+  "vertices": 2000,
+  "length": 82227.99042135518,
+  "points_sha256": "4dac0eaf01cb15d06128982530d228972a37fe7aefe7d8a1c4b6d1b1d420b1de",
+  "cycle_sha256": "35e207b803b2e3cc41b84c6241089a16031a3e19db507398080554f688b8a033"
+}

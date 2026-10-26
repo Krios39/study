@@ -1,0 +1,37 @@
+{
+  "best_cost": 37858771,
+  "best_start": 470,
+  "correct_order_cost": null,
+  "distance": "sum of absolute RGB differences",
+  "height": 940,
+  "image": "HW9_rows_challenge_shuffled.png",
+  "matrix_seconds": 3.8406956,
+  "method": "one-directional greedy nearest neighbour, then cut at the largest first-pixel jump and swap the two parts",
+  "trials": [
+    {
+      "cost": 38673175,
+      "cut_after_position": 725,
+      "first_pixel_gap": 293,
+      "recovered": null,
+      "seconds": 0.0040533,
+      "start": 0
+    },
+    {
+      "cost": 37858771,
+      "cut_after_position": 249,
+      "first_pixel_gap": 293,
+      "recovered": null,
+      "seconds": 0.0035159,
+      "start": 470
+    },
+    {
+      "cost": 38232539,
+      "cut_after_position": 229,
+      "first_pixel_gap": 293,
+      "recovered": null,
+      "seconds": 0.0040495,
+      "start": 939
+    }
+  ],
+  "width": 1672
+}

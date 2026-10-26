@@ -1,0 +1,30 @@
+{
+  "version": "HW9-2026-v2",
+  "seed": 20261018,
+  "coordinate_range": [
+    0,
+    1999
+  ],
+  "minimum_separation": 10,
+  "frame": 10,
+  "outer_margin": 20,
+  "canvas_size": 2060,
+  "nested_prefixes": true,
+  "datasets": {
+    "HW9_TSP_100.txt": {
+      "count": 100,
+      "minimum_observed_distance": 18.027756377319946,
+      "sha256": "5c40f11036e3672feec7ead4f8e43c84616c25579d855a4fb6aabac1a51eed02"
+    },
+    "HW9_TSP_500.txt": {
+      "count": 500,
+      "minimum_observed_distance": 11.40175425099138,
+      "sha256": "cebc6eeb87176a95c2e2bc1f5865b6227e2b337767a1dd9438712a5e1a086263"
+    },
+    "HW9_TSP_2000.txt": {
+      "count": 2000,
+      "minimum_observed_distance": 10.0,
+      "sha256": "4dac0eaf01cb15d06128982530d228972a37fe7aefe7d8a1c4b6d1b1d420b1de"
+    }
+  }
+}

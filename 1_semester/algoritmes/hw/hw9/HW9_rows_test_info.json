@@ -1,0 +1,10 @@
+{
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB",
+  "row_index_base": 0,
+  "resized": false,
+  "reconstruction": "original[y] = shuffled[correct_order[y]]",
+  "original_rgb_sha256": "dbb9535f80286b1bb382de216fd5214b55ea55548646a9a090fc414fc9cb75da",
+  "shuffled_png_sha256": "849db6dd8a26fc587afd2886f6e3032058eb13952f82c8532ad96846d483819e"
+}
