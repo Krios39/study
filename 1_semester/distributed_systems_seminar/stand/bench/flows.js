@@ -20,6 +20,7 @@ const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] :
 const RTTS = opt('--rtt', '0,20').split(',').map((x) => (x === 'q0' ? 'q0' : Number(x)));   // q0 — netem стоит, задержка 0
 const CONFIGS = opt('--configs', 'full,reuse').split(',');
 const N = Number(opt('--n', '20'));
+const MODE = opt('--mode', 'egress');                       // egress | ingress — где стоит netem (см. lib.js netemScript)
 const SIZE = Number(opt('--size', '10240'));
 const OUT = path.resolve(opt('--out', path.join(L.STAND, 'results', `flows-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}`)));
 if (L.THIS_HOST && L.hostOf('ss1') !== L.THIS_HOST) { console.error('run on the ss1 host'); process.exit(2); }
@@ -84,13 +85,13 @@ function analyse(req, rtt) {
   L.setLogFile(path.join(OUT, 'run.log'));
   const ss1ip = L.dexec('ss1', 'getent', 'hosts', 'ss1').split(/\s+/)[0];
   const ss2ip = L.dexec('ss1', 'getent', 'hosts', 'ss2').split(/\s+/)[0];
-  L.log(`flows → ${OUT}; ss1 ${ss1ip}, ss2 ${ss2ip}; configs ${CONFIGS}, RTT ${RTTS}, n ${N}, size ${SIZE}`);
+  L.log(`flows → ${OUT}; ss1 ${ss1ip}, ss2 ${ss2ip}; configs ${CONFIGS}, RTT ${RTTS}, n ${N}, size ${SIZE}, netem ${MODE}`);
   const result = { size: SIZE, n: N, ss1: ss1ip, ss2: ss2ip, cases: [] };
   try {
     for (const config of CONFIGS) {
       await applyConfig(config);
       for (const rtt of RTTS) {
-        const netem = L.netem(rtt);
+        const netem = L.netem(rtt, 'ss1', 'ss2', MODE);
         L.sh('docker', curlLoop(30));                                   // прогрев: пул соединений, кеши, JIT
         const name = `${config}_rtt${rtt}.pcap`;
         L.sh('docker', ['rm', '-f', 'flowcap'], { ok: true });

@@ -220,7 +220,7 @@ function controlVerdict() {
   let netemNow = null;                         // фактические правила tc с обеих сторон — в meta каждого прогона
   const setRtt = (rtt) => {
     if (rtt === rttNow) return;
-    const st = L.netem(rtt);
+    const st = L.netem(rtt, 'ss1', 'ss2', M.netem_mode || 'egress');   // M.netem_mode: egress | ingress (ifb у получателя)
     netemNow = st;
     L.log(`netem rtt ${rtt} ms: ${JSON.stringify(st)}`);
     rttNow = rtt;
@@ -247,7 +247,7 @@ function controlVerdict() {
     clean();
     const tsaRestarted = r.target !== 'direct' ? await L.ensureTsa() : false;   // TSA жив? иначе restart ca (помечается в meta)
     if (M.rtts && r.target !== 'direct') setRtt(r.rtt || 0);
-    await runOne(r, path.join(RESULTS, runName(r)), warmup, { tsa_restarted_before: tsaRestarted, ...(M.rtts ? { rtt_ms: r.rtt === 'q0' ? 0 : r.rtt || 0, netem_qdisc: r.rtt === 'q0' || (r.rtt || 0) > 0, netem: netemNow } : {}) });
+    await runOne(r, path.join(RESULTS, runName(r)), warmup, { tsa_restarted_before: tsaRestarted, ...(M.rtts ? { rtt_ms: r.rtt === 'q0' ? 0 : r.rtt || 0, netem_qdisc: r.rtt === 'q0' || (r.rtt || 0) > 0, netem_mode: M.netem_mode || 'egress', netem: netemNow } : {}) });
     if (/^control/.test(r.tag || '')) controlVerdict();
   }
   if (M.rtts) setRtt(0);

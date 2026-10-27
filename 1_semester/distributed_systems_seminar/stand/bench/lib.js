@@ -259,23 +259,32 @@ function netcountTc(c) {
 }
 // rtt 'q0' — контроль: те же правила tc (prio + netem + фильтр), но задержка 0 мс (проверка, что сама очередь netem
 // ничего не меняет); 0 — правил нет совсем
-function netemScript(peerIp, rttMs, keepQdisc = false) {
+// mode 'egress' (по умолчанию): netem на исходящих пакетах отправителя к пиру. mode 'ingress': входящие пакеты от пира
+// перенаправляются (ingress qdisc + mirred) на ifb-интерфейс в том же namespace, netem стоит на нём — задержка у получателя,
+// без влияния на очередь отправителя (TCP Small Queues, см. man tc-netem). Перед установкой снимаются правила обоих режимов.
+function netemScript(peerIp, rttMs, keepQdisc = false, mode = 'egress') {
   const dev = `DEV=$(ip -o route get ${peerIp} | sed -n 's/.* dev \\([^ ]*\\).*/\\1/p')`;
-  const add = rttMs > 0 || keepQdisc
-    ? `tc qdisc add dev $DEV root handle 1: prio bands 4 priomap 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 && `
-      + `tc qdisc add dev $DEV parent 1:4 handle 40: netem delay ${rttMs / 2}ms limit 100000 && `
-      + `tc filter add dev $DEV parent 1: protocol ip prio 1 u32 match ip dst ${peerIp}/32 flowid 1:4; `
-    : '';
-  return `${dev}; tc qdisc del dev $DEV root 2>/dev/null; ${add}tc qdisc show dev $DEV | grep -o 'netem.*' || true`;
+  const clean = 'tc qdisc del dev $DEV root 2>/dev/null; tc qdisc del dev $DEV ingress 2>/dev/null; ip link del ifbn 2>/dev/null; ';
+  const on = rttMs > 0 || keepQdisc;
+  const add = !on ? ''
+    : mode === 'ingress'
+      ? 'ip link add ifbn type ifb && ip link set ifbn up && '
+        + 'tc qdisc add dev $DEV handle ffff: ingress && '
+        + `tc filter add dev $DEV parent ffff: protocol ip prio 1 u32 match ip src ${peerIp}/32 action mirred egress redirect dev ifbn && `
+        + `tc qdisc add dev ifbn root netem delay ${rttMs / 2}ms limit 100000; `
+      : `tc qdisc add dev $DEV root handle 1: prio bands 4 priomap 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 && `
+        + `tc qdisc add dev $DEV parent 1:4 handle 40: netem delay ${rttMs / 2}ms limit 100000 && `
+        + `tc filter add dev $DEV parent 1: protocol ip prio 1 u32 match ip dst ${peerIp}/32 flowid 1:4; `;
+  return `${dev}; ${clean}${add}tc qdisc show | grep -o 'netem.*' || true`;
 }
-function netem(rtt, a = 'ss1', b = 'ss2') {
+function netem(rtt, a = 'ss1', b = 'ss2', mode = 'egress') {
   const keep = rtt === 'q0';
   const rttMs = keep ? 0 : Number(rtt) || 0;
   const state = {};
   for (const [c, peer] of [[a, b], [b, a]]) {
     netcountTc(c);
     const ip = dexec(c, 'getent', 'hosts', peer).split(/\s+/)[0];
-    const out = sh('docker', [...ctx(c), 'run', '--rm', '--net', `container:${c}`, '--cap-add', 'NET_ADMIN', 'stand-netcount', 'sh', '-c', netemScript(ip, rttMs, keep)]);
+    const out = sh('docker', [...ctx(c), 'run', '--rm', '--net', `container:${c}`, '--cap-add', 'NET_ADMIN', 'stand-netcount', 'sh', '-c', netemScript(ip, rttMs, keep, mode)]);
     state[c] = (out.match(/netem.*/) || [null])[0];
   }
   return state;

@@ -12,8 +12,10 @@
 //   synctsa  — [message-log] timestamp-immediately=true           (метка времени синхронно на каждое сообщение)
 //   reuse    — [proxy] pool-enable-connection-reuse=true (клиент), server-support-clients-pooled-connections=true и
 //              server-connector-max-idle-time=120000 (провайдер) — как в пакете FI. По умолчанию (и в EE) false: каждое
-//              сообщение открывает новое TCP + mTLS-соединение между SS (видно по tcpdump 05.10). Разность full − reuse =
-//              цена mTLS-рукопожатия на каждое сообщение. Ставится на ss1 и ss2 (обе роли на обоих — не мешает).
+//              сообщение открывает новое TCP-соединение и возобновляет TLS-сессию по session ticket (tcpdump 05.10, 12.10).
+//              Разность full − reuse = эффект политики соединений между SS: установка TCP, возобновление TLS и передача
+//              с нового TCP-соединения (окно растёт заново); чистую цену TLS-рукопожатия она НЕ изолирует.
+//              Ставится на ss1 и ss2 (обе роли на обоих — не мешает).
 //   ocsp     — CS system_parameters.ocspFreshnessSeconds=10. НЕ РАБОТАЕТ и из сетки убран (matrix.json): по исходникам 7.8.3
 //              клиентский proxy никогда не ходит к OCSP-ответчику сам — берёт ответ из кеша signer'а (свой или у peer'а по 5577,
 //              AuthTrustVerifier.getOcspResponses), а signer обновляет ответы раз в ocspFetchInterval (мин. 60 с, по умолчанию
