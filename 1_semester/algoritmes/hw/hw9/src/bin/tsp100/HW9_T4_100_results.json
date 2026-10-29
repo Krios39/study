@@ -1,0 +1,60 @@
+{
+  "candidate_seconds": 0.0009087,
+  "candidate_size_max": 10,
+  "candidate_size_min": 10,
+  "candidates": 100,
+  "covered": 100,
+  "first_steps": [
+    {
+      "area": 145392.90800813562,
+      "centre_id": 17,
+      "newly_covered": 10,
+      "radius": 215.1278689523977,
+      "ratio": 0.00006877914567497638,
+      "size": 10,
+      "step": 1
+    },
+    {
+      "area": 183987.37375748623,
+      "centre_id": 9,
+      "newly_covered": 10,
+      "radius": 242.00206610688264,
+      "ratio": 0.000054351555738716075,
+      "size": 10,
+      "step": 2
+    },
+    {
+      "area": 187631.62123565038,
+      "centre_id": 68,
+      "newly_covered": 10,
+      "radius": 244.38698819699874,
+      "ratio": 0.000053295920667022305,
+      "size": 10,
+      "step": 3
+    }
+  ],
+  "greedy_seconds": 0.0001021,
+  "k": 10,
+  "points": 100,
+  "selected": 16,
+  "selected_centres": [
+    17,
+    9,
+    68,
+    11,
+    95,
+    58,
+    88,
+    55,
+    45,
+    80,
+    15,
+    42,
+    63,
+    37,
+    4,
+    10
+  ],
+  "total_area": 6118710.3653935455,
+  "verified": true
+}

@@ -520,6 +520,154 @@ t2_rows = [[str(n), f"{t2res[n]['mst']['length']:,.3f}", f"{t2res[n]['mst']['sec
             f"{t2res[n]['nn_tour']['length']:,.3f}", f"{t2res[n]['nn_tour']['gap_percent']:.2f}%", f"{1000 * t2res[n]['nn_tour']['seconds']:.2f} ms"] for n in (100, 500, 2000)]
 baseline = json.loads((HW / "HW9_TSP_baseline_score.json").read_text())
 T2D = BIN / "tsp100"
+t2w_data = {}
+for n in (100, 500):
+    pts = [tuple(map(int, line.split()[1:])) for line in (HW / f"HW9_TSP_{n}.txt").read_text().splitlines() if line.strip() and not line.startswith("#")]
+    ids = lambda f: [int(x) for x in (BIN / f"tsp{n}" / f).read_text().split()]
+    edges = [[int(a), int(b)] for a, b in (line.split() for line in (BIN / f"tsp{n}" / f"HW9_T2_{n}_mst_edges.txt").read_text().splitlines() if line.strip())]
+    t2w_data[n] = {"pts": pts, "mst": edges, "mstTour": ids(f"HW9_T2_{n}_mst_tour.txt"), "nnTour": ids(f"HW9_T2_{n}_nn_tour.txt"),
+                   "mstLen": t2res[n]["mst"]["length"], "lenMstTour": t2res[n]["mst_tour"]["length"], "lenNn": t2res[n]["nn_tour"]["length"]}
+t2_script = """
+<script>
+window.addEventListener('load', () => {
+    const DATA = __T2DATA__;
+    const CODE = {
+        mst: ['let mut pairs = all point pairs, sorted by distance;', 'for (a, b) in pairs {', '    if find(a) != find(b) {', '        mst.push((a, b)); union(a, b);', '    }', '}'],
+        dfs: ['let mut stack = vec![1];', 'while let Some(u) = stack.pop() {', '    if seen[u] { continue; }', '    seen[u] = true; tour.push(u);', '    push children of u, largest ID first;', '}', 'close the tour: last → 1;'],
+        nn: ['let mut tour = vec![1]; let mut u = 1;', 'while tour.len() < n {', '    let v = nearest unvisited to u (ties: smaller ID);', '    tour.push(v); u = v;', '}', 'close the tour: last → 1;'],
+    };
+    const root = document.getElementById('t2Widget');
+    root.className = 'trace-widget';
+    root.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <select class="trace-btn tw-n"><option value="100">100 points</option><option value="500">500 points</option></select>
+            <button class="trace-btn tw-full">⛶ Full screen</button>
+        </div>
+        <div style="display: flex; gap: 4px; border-bottom: 1px solid #e2e8f0; margin-top: 10px;">
+            <button class="trace-tab active tw-mode" data-mode="mst">1. MST (Kruskal)</button>
+            <button class="trace-tab tw-mode" data-mode="dfs">2. Tour from the tree (DFS)</button>
+            <button class="trace-tab tw-mode" data-mode="nn">3. Nearest-neighbour tour</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; margin: 10px 0 6px; flex-wrap: wrap; font-size: 14px;">
+            <button class="trace-btn tw-back">◀ Step</button>
+            <button class="trace-btn tw-play">▶ Play</button>
+            <button class="trace-btn tw-next">Step ▶</button>
+            <button class="trace-btn tw-end">⏭ End</button>
+            <button class="trace-btn tw-reset">↺ Start</button>
+            <input type="range" class="tw-step" min="0" value="0" style="width: 200px;">
+            <span class="tw-status" style="font-weight: bold;"></span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; align-items: start;">
+            <canvas class="tw-canvas" width="900" height="900" style="width: 100%; aspect-ratio: 1; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff;"></canvas>
+            <div>
+                <pre class="tw-code" style="margin: 0; padding: 10px; background: #0f172a; color: #cbd5e1; border-radius: 6px; font-size: 12px; line-height: 1.6; white-space: pre-wrap;"></pre>
+                <div class="tw-info" style="font-size: 13px; color: #334155; margin-top: 10px; line-height: 1.55;"></div>
+            </div>
+        </div>`;
+    const q = x => root.querySelector(x);
+    let n = 100, mode = 'mst', k = 0, timer = null, P, X, Y, dist, mstSorted, parent, depth, adj;
+    const S = 900, M = 30;
+    function prepare() {
+        P = DATA[n];
+        X = i => M + (P.pts[i - 1][0] / 1999) * (S - 2 * M);
+        Y = i => M + (P.pts[i - 1][1] / 1999) * (S - 2 * M);
+        dist = (a, b) => Math.hypot(P.pts[a - 1][0] - P.pts[b - 1][0], P.pts[a - 1][1] - P.pts[b - 1][1]);
+        mstSorted = P.mst.slice().sort((e, f) => dist(e[0], e[1]) - dist(f[0], f[1]));
+        adj = Array.from({length: n + 1}, () => []);
+        P.mst.forEach(([a, b]) => { adj[a].push(b); adj[b].push(a); });
+        parent = new Array(n + 1).fill(0); depth = new Array(n + 1).fill(0);
+        const order = [1], seen = new Set([1]);
+        for (let i = 0; i < order.length; i++) { const u = order[i]; adj[u].forEach(v => { if (!seen.has(v)) { seen.add(v); parent[v] = u; depth[v] = depth[u] + 1; order.push(v); } }); }
+    }
+    function treePath(a, b) {
+        const left = [], right = [];
+        while (a !== b) { if (depth[a] >= depth[b]) { left.push(a); a = parent[a]; } else { right.push(b); b = parent[b]; } }
+        return left.concat([a], right.reverse());
+    }
+    const maxStep = () => mode === 'mst' ? n - 1 : n;
+    function code(i) {
+        q('.tw-code').innerHTML = CODE[mode].map((l, j) => `<div style="padding: 0 4px; border-radius: 3px; ${j === i ? 'background: #facc15; color: #0f172a;' : ''}">${l.replace(/</g, '&lt;')}</div>`).join('');
+    }
+    function dot(g, i, r, col) { g.beginPath(); g.arc(X(i), Y(i), r, 0, 2 * Math.PI); g.fillStyle = col; g.fill(); }
+    function seg(g, a, b, col, w, dash) { g.beginPath(); g.setLineDash(dash || []); g.moveTo(X(a), Y(a)); g.lineTo(X(b), Y(b)); g.strokeStyle = col; g.lineWidth = w; g.stroke(); g.setLineDash([]); }
+    function render() {
+        const c = q('.tw-canvas'), g = c.getContext('2d'), r = n > 200 ? 2.5 : 4;
+        g.clearRect(0, 0, S, S);
+        q('.tw-step').max = maxStep(); q('.tw-step').value = k;
+        let info = '';
+        if (mode === 'mst') {
+            mstSorted.slice(0, k).forEach(([a, b], i) => seg(g, a, b, i === k - 1 ? '#dc2626' : '#2563eb', i === k - 1 ? 3 : 1.6));
+            for (let i = 1; i <= n; i++) dot(g, i, r, '#0f172a');
+            const total = mstSorted.slice(0, k).reduce((t, [a, b]) => t + dist(a, b), 0);
+            q('.tw-status').textContent = `${k} / ${n - 1} edges`;
+            if (k === 0) { info = `Every point is its own tree (${n} trees). All pairs are sorted by distance.`; code(0); }
+            else {
+                const [a, b] = mstSorted[k - 1];
+                info = `Edge <b>${a}–${b}</b> (length ${dist(a, b).toFixed(1)}) joins two different trees, so it is added (red). Shorter pairs inside one tree were skipped. `
+                    + `Trees left: <b>${n - k}</b>, MST length so far ${total.toFixed(1)}` + (k === n - 1 ? `. <b>Done: MST length ${P.mstLen.toFixed(3)}</b>.` : '.');
+                code(k === n - 1 ? 5 : 3);
+            }
+        } else {
+            const tour = mode === 'dfs' ? P.mstTour : P.nnTour;
+            if (mode === 'dfs') P.mst.forEach(([a, b]) => seg(g, a, b, '#cbd5e1', 1.2));
+            const m = Math.min(k, n);
+            for (let i = 1; i < m; i++) seg(g, tour[i - 1], tour[i], '#ea580c', 1.8);
+            let walked = 0, straight = 0;
+            for (let i = 1; i < m; i++) straight += dist(tour[i - 1], tour[i]);
+            if (k === n) seg(g, tour[n - 1], tour[0], '#ea580c', 2.5, [8, 6]);
+            const visited = new Set(tour.slice(0, m));
+            for (let i = 1; i <= n; i++) dot(g, i, r, visited.has(i) ? '#ea580c' : '#94a3b8');
+            dot(g, 1, r + 3, '#16a34a');
+            q('.tw-status').textContent = `${m} / ${n} points`;
+            if (m >= 2 && k < n) {
+                const a = tour[m - 2], b = tour[m - 1];
+                if (mode === 'dfs') {
+                    const path = treePath(a, b);
+                    for (let i = 1; i < path.length; i++) { seg(g, path[i - 1], path[i], '#2563eb', 4); walked += dist(path[i - 1], path[i]); }
+                    seg(g, a, b, '#dc2626', 3);
+                    info = `First visit of <b>${b}</b> in DFS order. Walking along the tree from ${a} would take ${path.length - 1} edge(s), length <b>${walked.toFixed(1)}</b> (blue); `
+                        + `the tour takes the straight shortcut ${a} → ${b}, length <b>${dist(a, b).toFixed(1)}</b> (red). By the triangle inequality the shortcut is never longer.`;
+                    code(3);
+                } else {
+                    const d = dist(a, b);
+                    g.beginPath(); g.arc(X(a), Y(a), d * (S - 2 * M) / 1999, 0, 2 * Math.PI); g.strokeStyle = '#2563eb'; g.lineWidth = 1.5; g.setLineDash([5, 4]); g.stroke(); g.setLineDash([]);
+                    seg(g, a, b, '#dc2626', 3);
+                    info = `From <b>${a}</b> the nearest unvisited point is <b>${b}</b> at distance <b>${d.toFixed(1)}</b>: no unvisited (grey) point lies inside the blue circle. Tour so far ${straight.toFixed(1)}.`;
+                    code(2);
+                }
+                dot(g, b, r + 3, '#dc2626');
+            } else if (k === n) {
+                const L = mode === 'dfs' ? P.lenMstTour : P.lenNn;
+                info = `All points visited; the dashed edge closes the tour back to ID 1. <b>Tour length ${L.toFixed(3)}</b>, MST ${P.mstLen.toFixed(3)}, gap ${(100 * (L / P.mstLen - 1)).toFixed(2)}%`
+                    + (mode === 'dfs' ? `, below 2 · MST = ${(2 * P.mstLen).toFixed(1)}.` : '.');
+                code(mode === 'dfs' ? 6 : 5);
+            } else { info = 'Start at ID 1 (green).'; code(0); }
+        }
+        q('.tw-info').innerHTML = info;
+    }
+    function stop() { if (timer) clearInterval(timer); timer = null; q('.tw-play').textContent = '▶ Play'; }
+    q('.tw-play').onclick = () => {
+        if (timer) { stop(); return; }
+        if (k >= maxStep()) k = 0;
+        q('.tw-play').textContent = '❚❚ Pause';
+        timer = setInterval(() => { k = Math.min(maxStep(), k + 1); render(); if (k >= maxStep()) stop(); }, n > 200 ? 40 : 160);
+    };
+    q('.tw-next').onclick = () => { stop(); k = Math.min(maxStep(), k + 1); render(); };
+    q('.tw-back').onclick = () => { stop(); k = Math.max(0, k - 1); render(); };
+    q('.tw-end').onclick = () => { stop(); k = maxStep(); render(); };
+    q('.tw-reset').onclick = () => { stop(); k = 0; render(); };
+    q('.tw-step').oninput = () => { stop(); k = +q('.tw-step').value; render(); };
+    q('.tw-n').onchange = () => { stop(); n = +q('.tw-n').value; k = 0; prepare(); render(); };
+    root.querySelectorAll('.tw-mode').forEach(b => b.onclick = () => {
+        mode = b.dataset.mode; stop(); k = 0;
+        root.querySelectorAll('.tw-mode').forEach(x => x.classList.toggle('active', x === b));
+        render();
+    });
+    q('.tw-full').onclick = () => { const on = root.classList.toggle('expanded'); q('.tw-full').textContent = on ? '✕ Close' : '⛶ Full screen'; q('.tw-canvas').style.maxHeight = on ? '80vh' : ''; q('.tw-canvas').style.width = on ? 'auto' : '100%'; };
+    prepare(); render();
+});
+</script>
+""".replace("__T2DATA__", json.dumps(t2w_data))
 t2_html = f"""<details>
     <summary>Task T2: One tree, two baseline tours</summary>
     <div class="details-content">
@@ -540,6 +688,10 @@ t2_html = f"""<details>
             The 2000-point NN tour is identical to the supplied baseline (length {baseline["length"]:.6f}, same <code>cycle_sha256</code>), which confirms the NN rule and the tie-breaking.
             NN is about 12–13% shorter than the MST tour on every dataset, and both stay far below the factor-2 guarantee. The gaps grow slightly with N.
         </p>
+
+        <h3>Step by Step</h3>
+        <p style="font-size: 13px; color: #475569;">The three constructions replayed on the same points, with the code line being executed highlighted.</p>
+        <div id="t2Widget"></div>
 
         <h3>100 Points: Tree and Both Tours</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
@@ -566,5 +718,145 @@ t2_html = f"""<details>
     </div>
 </details>
 """
-(HW / "report.html").write_text(head + t1_html + t2_html + script + "</body>\n</html>\n", encoding="utf-8")
+t3res = {n: json.loads((BIN / f"tsp{n}" / f"HW9_T3_{n}_results.json").read_text()) for n in (100, 500, 2000)}
+
+
+def t3_run(r):
+    order = {"increasing": " inc", "decreasing": " dec"}.get(r["child_order"], "")
+    return f"{r['length']:,.3f} (ID {r['start_id']}{order})"
+
+
+t3_rows = []
+for n in (100, 500, 2000):
+    for key, name in (("mst_tours", "MST"), ("nn_tours", "NN")):
+        s = t3res[n][key]
+        t3_rows.append([str(n), name, str(s["tours"]), t3_run(s["best"]), t3_run(s["worst"]), f"{s['median']:,.3f}",
+                        f"{s['spread_percent']:.2f}%", f"{s['distinct_cycles']}", f"{1000 * s['all_start_seconds']:.1f} ms"])
+t3_prep = ", ".join(f"{t3res[n]['preparation_seconds']:.3f} s" for n in (100, 500, 2000))
+t3_vs = [[str(n), f"{t2res[n]['mst_tour']['length']:,.3f}", f"{t3res[n]['mst_tours']['best']['length']:,.3f}",
+          f"{100 * (1 - t3res[n]['mst_tours']['best']['length'] / t2res[n]['mst_tour']['length']):.2f}%",
+          f"{t2res[n]['nn_tour']['length']:,.3f}", f"{t3res[n]['nn_tours']['best']['length']:,.3f}",
+          f"{100 * (1 - t3res[n]['nn_tours']['best']['length'] / t2res[n]['nn_tour']['length']):.2f}%"] for n in (100, 500, 2000)]
+t3_html = f"""<details>
+    <summary>Task T3: How many tours can one tree give?</summary>
+    <div class="details-content">
+
+        <h3>Method</h3>
+        <ul>
+            <li><strong>Same tree:</strong> the MST is read from the T2 edge file and never rebuilt. The tree adjacency lists are sorted once.</li>
+            <li><strong>MST-derived tours (own code):</strong> the tree is rooted at every ID 1..N and traversed depth-first with increasing-ID and with decreasing-ID child order: 2N tours.</li>
+            <li><strong>NN tours (own code):</strong> one nearest-neighbour tour from every ID 1..N. Each point's neighbours are sorted once by (distance, ID), and every NN step takes the first unvisited entry of that list.</li>
+            <li><strong>Timing:</strong> preparation (distance matrix, tree, sorted lists) is timed separately: {t3_prep} for 100 / 500 / 2000 points.</li>
+            <li><strong>Check:</strong> the ID-1 tours reproduce the T2 lengths exactly. All best and worst routes pass the course validator.</li>
+            <li><strong>Distinct cycles:</strong> each tour is rotated to start at ID 1 and the smaller of its two directions is kept, so rotations and reversals of the same cycle count once.</li>
+        </ul>
+
+        <h3>Results</h3>
+        {table(["Points", "Method", "Tours", "Best (start)", "Worst (start)", "Median", "Spread", "Distinct cycles", "All-start time"], t3_rows)}
+        <p style="font-size: 13px; color: #475569;">inc / dec = increasing / decreasing child order. Spread = 100 · (max / min − 1). All individual scores: <code>HW9_T3_N_mst_scores.csv</code> and <code>HW9_T3_N_nn_scores.csv</code>.</p>
+
+        <h3>Best Start Compared with the ID-1 Baseline</h3>
+        {table(["Points", "MST tour, ID 1", "Best MST tour", "Shorter by", "NN tour, ID 1", "Best NN tour", "Shorter by"], t3_vs)}
+
+        <h3>100 Points: Shortest and Longest Tours</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+            <div>{figure(T2D / "HW9_T3_100_mst_best.png", "Shortest MST-derived tour", 900)}<p style="font-size: 13px; text-align: center;">Shortest MST tour: {t3_run(t3res[100]['mst_tours']['best'])}</p></div>
+            <div>{figure(T2D / "HW9_T3_100_mst_worst.png", "Longest MST-derived tour", 900)}<p style="font-size: 13px; text-align: center;">Longest MST tour: {t3_run(t3res[100]['mst_tours']['worst'])}</p></div>
+            <div>{figure(T2D / "HW9_T3_100_nn_best.png", "Shortest NN tour", 900)}<p style="font-size: 13px; text-align: center;">Shortest NN tour: {t3_run(t3res[100]['nn_tours']['best'])}</p></div>
+            <div>{figure(T2D / "HW9_T3_100_nn_worst.png", "Longest NN tour", 900)}<p style="font-size: 13px; text-align: center;">Longest NN tour: {t3_run(t3res[100]['nn_tours']['worst'])}</p></div>
+        </div>
+        <p>
+            All four tours are different. They share most short local edges and differ mainly in their long jumps.
+            The shortest MST tour has 6 edges longer than 500 and the longest has 10: in the longest one, the branches are visited in an order that makes the shortcuts cross the map and each other.
+            The shortest NN tour has only 3 edges longer than 500. The longest NN tour has 5, and its three longest edges (1630, 1168 and 1140) are the late "fly back" edges to points that were skipped earlier.
+            Its five longest edges make up 27% of its length, compared with 19% for the shortest NN tour.
+        </p>
+
+        <h3>Answers</h3>
+        <ul>
+            <li><strong>Best vs worst:</strong> the spread is 14.0% (MST) and 13.5% (NN) on 100 points, 3.0% and 9.6% on 500, and 2.6% and 6.3% on 2000.
+                With more points a single bad shortcut matters less, so the spread shrinks, especially for the MST tours.</li>
+            <li><strong>Better method:</strong> NN gives the better best tour on every dataset (16,808 vs 18,541; 40,563 vs 46,254; 80,219 vs 92,092).
+                Even the worst NN tour is shorter than the best MST tour on all three sets.</li>
+            <li><strong>Rooting and branch order:</strong> the tree edges stay the same; only the order in which the branches are finished changes. Every time a branch ends, the tour jumps straight to the next unvisited branch.
+                The root and the child order decide which branch ends next to which, so they decide how long these shortcuts are. A branch visited last ends with a long jump back to the root.</li>
+            <li><strong>New start, new cycle?</strong> Not always. The 2N MST runs give only {t3res[100]['mst_tours']['distinct_cycles']} / {t3res[500]['mst_tours']['distinct_cycles']} / {t3res[2000]['mst_tours']['distinct_cycles']} distinct cycles.
+                Example: ID 75 is a leaf attached to ID 78, which has one other neighbour (46). Rooted at 75 the order is 75, 78, 46, …; rooted at 78 with increasing children it is 78, 46, …, 75, the same cycle rotated.
+                NN almost always gives a new cycle ({t3res[100]['nn_tours']['distinct_cycles']} / {t3res[500]['nn_tours']['distinct_cycles']} / {t3res[2000]['nn_tours']['distinct_cycles']} distinct); for example, starts 29 and 60 are each other's nearest neighbours and produce the same cycle.</li>
+            <li><strong>Trusting one greedy run:</strong> the ID-1 baselines are not special. On 2000 points the best NN start is 2.44% shorter than the ID-1 baseline, and the best MST start is 2.31% shorter.
+                One greedy run is just one sample from a wide distribution. Trying all starts is cheap (under a second here), and the best result should be reported together with the spread.</li>
+        </ul>
+    </div>
+</details>
+"""
+t4res = {n: json.loads((BIN / f"tsp{n}" / f"HW9_T4_{n}_results.json").read_text()) for n in (100, 500, 2000)}
+t4_rows = [[str(n), str(r["k"]), f"{r['candidate_size_min']}–{r['candidate_size_max']}", str(r["selected"]), f"{r['total_area']:,.3f}",
+            f"{1000 * r['candidate_seconds']:.2f} ms", f"{1000 * r['greedy_seconds']:.2f} ms"] for n, r in t4res.items()]
+t4_first = [[str(s["step"]), str(s["centre_id"]), f"{s['radius']:.3f}", str(s["size"]), str(s["newly_covered"]), f"{s['area']:,.3f}", f"{s['ratio']:.4e}"]
+            for s in t4res[100]["first_steps"]]
+t4_tail = {n: [l.split(",")[6] for l in (BIN / f"tsp{n}" / f"HW9_T4_{n}_selected.csv").read_text().splitlines()[1:]] for n in (100, 500, 2000)}
+t4_alt = [["100", "16", "6,118,710", "17", "7,784,634", "34", "12,720,274"],
+          ["500", "22", "8,759,307", "17", "8,559,794", "73", "27,142,230"],
+          ["2000", "40", "8,020,417", "35", "8,968,594", "188", "35,437,237"]]
+t4_html = f"""<details>
+    <summary>Task T4: Cover the points with neighbourhood disks</summary>
+    <div class="details-content">
+
+        <h3>Method</h3>
+        <ul>
+            <li><strong>Candidates:</strong> for every point i, its K − 1 nearest other points are found (distance ties: smaller ID); K = 10 / 50 / 100 for N = 100 / 500 / 2000.
+                The disk is centred at i with radius equal to the distance to the farthest of them. Its set is every point inside or on the disk, including the centre.</li>
+            <li><strong>Exact geometry:</strong> coordinates are integers, so membership and comparisons use integer squared distances. Points exactly on the boundary are never lost to rounding.</li>
+            <li><strong>Neighbour graph:</strong> the K − 1 links of every point are saved as a directed graph (<code>HW9_T4_N_knn_links.txt</code>), not symmetrised. Coverage is purely geometric.</li>
+            <li><strong>Weighted greedy (own code):</strong> repeatedly pick the disk with the largest (newly covered points) / r²; π is a common factor.
+                Ratios are compared by cross-multiplication in 128-bit integers, ties go to the smaller centre ID, and zero-gain disks are skipped.
+                After each pick, the gain of every disk containing a newly covered point is decreased.</li>
+            <li><strong>Cost:</strong> the full area π · r² of every selected disk; overlaps and parts outside the square are paid in full.</li>
+            <li><strong>Verification:</strong> a separate check recomputes, for every point, whether some selected disk contains it. All three covers are complete.</li>
+        </ul>
+
+        <h3>Results</h3>
+        {table(["Points", "K", "Candidate set sizes", "Selected disks", "Total area", "Candidate time", "Greedy time"], t4_rows)}
+        <p>
+            Candidate sets have exactly K points, except on 2000 points, where distance ties give some disks 101 points.
+            Newly covered points per step: N = 100: {" ".join(t4_tail[100])}; N = 500: {" ".join(t4_tail[500])}; N = 2000: {" ".join(t4_tail[2000])}.
+        </p>
+
+        <h3>First Three Choices on 100 Points</h3>
+        {table(["Step", "Centre ID", "Radius", "Set size", "Newly covered", "Area", "Ratio"], t4_first)}
+        <p>
+            At the start all disks give the full 10 new points, so the ratio is decided by the area alone: greedy takes the densest neighbourhoods, which have the smallest disks.
+            Late in the run the picture is the opposite. The last five disks on 100 points cover only 6 points, but they cost about 36% of the total area.
+        </p>
+
+        <h3>Selected Covers</h3>
+        <p style="font-size: 13px; color: #475569;">Crosses mark the selected centres. Each point has the colour of the first selected disk that covers it.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+            <div>{figure(BIN / "tsp100" / "HW9_T4_100_cover.png", "Weighted greedy cover of 100 points", 900)}<p style="font-size: 13px; text-align: center;">N = 100, K = 10: {t4res[100]['selected']} disks</p></div>
+            <div>{figure(BIN / "tsp500" / "HW9_T4_500_cover.png", "Weighted greedy cover of 500 points", 900)}<p style="font-size: 13px; text-align: center;">N = 500, K = 50: {t4res[500]['selected']} disks</p></div>
+            <div>{figure(BIN / "tsp2000" / "HW9_T4_2000_cover.png", "Weighted greedy cover of 2000 points", 900)}<p style="font-size: 13px; text-align: center;">N = 2000, K = 100: {t4res[2000]['selected']} disks</p></div>
+        </div>
+        <p>
+            Dense areas are covered first by small, cheap disks. Isolated points near the edges and in the gaps between earlier disks are left for the end,
+            and each of them can only be reached by a large disk centred on itself or a neighbour. These disks overlap a lot with the earlier ones, and the overlap is paid in full.
+        </p>
+
+        <h3>Why Not the Largest Set or the Smallest Disk?</h3>
+        <p>
+            Weighted greedy looks at both numbers at once: what a disk gives (newly covered points) and what it costs (area). Each of the two simpler rules looks at only one of them.
+        </p>
+        <ul>
+            <li><strong>Largest set only</strong> ignores the cost. Here all sets have about K points, so at the start every disk ties and the choice is made by ID, not by geometry; a huge disk is as good as a small one.</li>
+            <li><strong>Smallest disk only</strong> ignores what the disk gives. It keeps taking small disks even when they cover one or two new points, so it needs many more disks.</li>
+        </ul>
+        {table(["Points", "Weighted greedy: disks", "Area", "Largest new set: disks", "Area", "Smallest disk: disks", "Area"], t4_alt)}
+        <p>
+            For comparison only, both rules were run on the same candidates (ties by ID, zero-gain disks skipped). The smallest-disk rule is 2–4 times worse everywhere.
+            The largest-set rule is worse on 100 and 2000 points, but on 500 points it happens to be 2.3% cheaper than weighted greedy.
+            So weighted greedy is a good rule, not an optimal one. Its early cheap choices can leave expensive leftovers, which is the subject of T5 and B1.
+        </p>
+    </div>
+</details>
+"""
+(HW / "report.html").write_text(head + t1_html + t2_html + t3_html + t4_html + script + t2_script + "</body>\n</html>\n", encoding="utf-8")
 print("report written", (HW / "report.html").stat().st_size)

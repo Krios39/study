@@ -1,0 +1,39 @@
+{
+  "mst_tours": {
+    "all_start_seconds": 0.0008195,
+    "best": {
+      "child_order": "increasing",
+      "length": 18540.5075518204,
+      "start_id": 75
+    },
+    "distinct_cycles": 152,
+    "median": 20172.320154660993,
+    "spread_percent": 14.043731762817213,
+    "tours": 200,
+    "worst": {
+      "child_order": "decreasing",
+      "length": 21144.286699862925,
+      "start_id": 85
+    }
+  },
+  "nn_tours": {
+    "all_start_seconds": 0.0003696,
+    "best": {
+      "child_order": null,
+      "length": 16807.615784056292,
+      "start_id": 2
+    },
+    "distinct_cycles": 98,
+    "median": 17705.14186921617,
+    "spread_percent": 13.48533407162462,
+    "tours": 100,
+    "worst": {
+      "child_order": null,
+      "length": 19074.178922011393,
+      "start_id": 4
+    }
+  },
+  "points": 100,
+  "preparation": "distance matrix, T2 MST read from file, sorted tree adjacency, sorted neighbour lists",
+  "preparation_seconds": 0.0146999
+}
