@@ -1,0 +1,273 @@
+{
+  "alternatives": [
+    {
+      "area": 5036994.041316855,
+      "disks": 13,
+      "method": "weighted greedy, redundant disks removed"
+    },
+    {
+      "area": 9742578.33201387,
+      "disks": 3,
+      "method": "largest new set first"
+    },
+    {
+      "area": 9742578.33201387,
+      "disks": 3,
+      "method": "largest new set first, redundant disks removed"
+    }
+  ],
+  "candidate_seconds": 0.0037624,
+  "candidates": 500,
+  "counterexample": {
+    "area": 5036994.041316855,
+    "cover": [
+      {
+        "area": 145392.90800813562,
+        "centre_id": 17,
+        "radius": 215.1278689523977,
+        "radius_squared": 46280,
+        "set_size": 10
+      },
+      {
+        "area": 187631.62123565038,
+        "centre_id": 68,
+        "radius": 244.38698819699874,
+        "radius_squared": 59725,
+        "set_size": 10
+      },
+      {
+        "area": 207549.31865940968,
+        "centre_id": 11,
+        "radius": 257.0311265197272,
+        "radius_squared": 66065,
+        "set_size": 10
+      },
+      {
+        "area": 328139.3526674539,
+        "centre_id": 58,
+        "radius": 323.18725222384626,
+        "radius_squared": 104450,
+        "set_size": 10
+      },
+      {
+        "area": 368445.9864130109,
+        "centre_id": 88,
+        "radius": 342.4616766880639,
+        "radius_squared": 117280,
+        "set_size": 10
+      },
+      {
+        "area": 276940.81719190103,
+        "centre_id": 55,
+        "radius": 296.90570893803977,
+        "radius_squared": 88153,
+        "set_size": 10
+      },
+      {
+        "area": 599598.0906788408,
+        "centre_id": 45,
+        "radius": 436.87297925140666,
+        "radius_squared": 190858,
+        "set_size": 10
+      },
+      {
+        "area": 459216.0229531808,
+        "centre_id": 80,
+        "radius": 382.32577731562907,
+        "radius_squared": 146173,
+        "set_size": 10
+      },
+      {
+        "area": 1206387.2869417486,
+        "centre_id": 40,
+        "radius": 619.6813697377064,
+        "radius_squared": 384005,
+        "set_size": 15
+      },
+      {
+        "area": 250086.48318901547,
+        "centre_id": 42,
+        "radius": 282.14358046923553,
+        "radius_squared": 79605,
+        "set_size": 10
+      },
+      {
+        "area": 272077.63176414405,
+        "centre_id": 92,
+        "radius": 294.2872746144488,
+        "radius_squared": 86605,
+        "set_size": 10
+      },
+      {
+        "area": 337363.06869839353,
+        "centre_id": 37,
+        "radius": 327.6980317304332,
+        "radius_squared": 107386,
+        "set_size": 10
+      },
+      {
+        "area": 398165.45291597035,
+        "centre_id": 4,
+        "radius": 356.0056179332006,
+        "radius_squared": 126740,
+        "set_size": 10
+      }
+    ],
+    "disks": 13,
+    "lower_than_greedy": true,
+    "method": "weighted greedy, redundant disks removed"
+  },
+  "greedy_seconds": 0.0013134,
+  "points": 100,
+  "single_size_families": {
+    "10": {
+      "area": 6118710.3653935455,
+      "disks": 16
+    },
+    "15": {
+      "area": 7166230.453435913,
+      "disks": 12
+    },
+    "20": {
+      "area": 9538283.703343578,
+      "disks": 10
+    },
+    "30": {
+      "area": 10671540.996495062,
+      "disks": 8
+    },
+    "50": {
+      "area": 9030881.932269637,
+      "disks": 4
+    }
+  },
+  "t4": {
+    "area": 6118710.3653935455,
+    "disks": 16
+  },
+  "t4_k": 10,
+  "t5": {
+    "area": 5456729.6693923725,
+    "cover": [
+      {
+        "area": 145392.90800813562,
+        "centre_id": 17,
+        "radius": 215.1278689523977,
+        "radius_squared": 46280,
+        "set_size": 10
+      },
+      {
+        "area": 183987.37375748623,
+        "centre_id": 9,
+        "radius": 242.00206610688264,
+        "radius_squared": 58565,
+        "set_size": 10
+      },
+      {
+        "area": 187631.62123565038,
+        "centre_id": 68,
+        "radius": 244.38698819699874,
+        "radius_squared": 59725,
+        "set_size": 10
+      },
+      {
+        "area": 207549.31865940968,
+        "centre_id": 11,
+        "radius": 257.0311265197272,
+        "radius_squared": 66065,
+        "set_size": 10
+      },
+      {
+        "area": 235748.25431803166,
+        "centre_id": 95,
+        "radius": 273.93612394133055,
+        "radius_squared": 75041,
+        "set_size": 10
+      },
+      {
+        "area": 328139.3526674539,
+        "centre_id": 58,
+        "radius": 323.18725222384626,
+        "radius_squared": 104450,
+        "set_size": 10
+      },
+      {
+        "area": 368445.9864130109,
+        "centre_id": 88,
+        "radius": 342.4616766880639,
+        "radius_squared": 117280,
+        "set_size": 10
+      },
+      {
+        "area": 276940.81719190103,
+        "centre_id": 55,
+        "radius": 296.90570893803977,
+        "radius_squared": 88153,
+        "set_size": 10
+      },
+      {
+        "area": 599598.0906788408,
+        "centre_id": 45,
+        "radius": 436.87297925140666,
+        "radius_squared": 190858,
+        "set_size": 10
+      },
+      {
+        "area": 459216.0229531808,
+        "centre_id": 80,
+        "radius": 382.32577731562907,
+        "radius_squared": 146173,
+        "set_size": 10
+      },
+      {
+        "area": 1206387.2869417486,
+        "centre_id": 40,
+        "radius": 619.6813697377064,
+        "radius_squared": 384005,
+        "set_size": 15
+      },
+      {
+        "area": 250086.48318901547,
+        "centre_id": 42,
+        "radius": 282.14358046923553,
+        "radius_squared": 79605,
+        "set_size": 10
+      },
+      {
+        "area": 272077.63176414405,
+        "centre_id": 92,
+        "radius": 294.2872746144488,
+        "radius_squared": 86605,
+        "set_size": 10
+      },
+      {
+        "area": 337363.06869839353,
+        "centre_id": 37,
+        "radius": 327.6980317304332,
+        "radius_squared": 107386,
+        "set_size": 10
+      },
+      {
+        "area": 398165.45291597035,
+        "centre_id": 4,
+        "radius": 356.0056179332006,
+        "radius_squared": 126740,
+        "set_size": 10
+      }
+    ],
+    "disks": 15,
+    "improvement_percent": 10.81895785989856,
+    "selected_set_sizes": {
+      "10": 14,
+      "15": 1
+    }
+  },
+  "target_sizes": [
+    10,
+    15,
+    20,
+    30,
+    50
+  ],
+  "verified": true
+}

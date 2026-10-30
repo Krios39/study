@@ -858,5 +858,96 @@ t4_html = f"""<details>
     </div>
 </details>
 """
-(HW / "report.html").write_text(head + t1_html + t2_html + t3_html + t4_html + script + t2_script + "</body>\n</html>\n", encoding="utf-8")
+t5res = {n: json.loads((BIN / f"tsp{n}" / f"HW9_T5_{n}_results.json").read_text()) for n in (100, 500)}
+t5pairs = {n: json.loads((BIN / f"tsp{n}" / f"HW9_T5_{n}_size_pairs.json").read_text()) for n in (100, 500)}
+t5ce = json.loads((BIN / "tsp100" / "HW9_T5_100_counterexample.json").read_text())
+
+
+def t5_sizes(r):
+    return ", ".join(f"{count} × {size}" for size, count in sorted(r["t5"]["selected_set_sizes"].items(), key=lambda x: int(x[0])))
+
+
+t5_rows = [[str(n), ", ".join(map(str, r["target_sizes"])), str(r["candidates"]), f"{r['t4']['disks']} → {r['t5']['disks']}",
+            f"{r['t4']['area']:,.3f}", f"{r['t5']['area']:,.3f}", f"{r['t5']['improvement_percent']:.2f}%", t5_sizes(r),
+            f"{1000 * r['candidate_seconds']:.2f} ms", f"{1000 * r['greedy_seconds']:.2f} ms"] for n, r in t5res.items()]
+t5_single = [[str(n)] + [f"{t5pairs[n]['single'][str(k)]:,.0f}" for k in (10, 12, 15, 20, 25, 30, 40, 50, 75, 100)] for n in (100, 500)]
+t5_misled = []
+for n in (100, 500):
+    bad = [p for p in t5pairs[n]["pairs"] if p["worse_percent"] > 1e-9]
+    w = max(bad, key=lambda p: p["worse_percent"])
+    t5_misled.append([str(n), f"{len(bad)} of {len(t5pairs[n]['pairs'])}", f"{w['sizes'][0]} and {w['sizes'][1]}", f"{w['area']:,.0f}", f"{w['best_single_area']:,.0f}", f"{w['worse_percent']:.2f}%"])
+t5_prune = [[str(n), f"{r['t5']['disks']}", f"{r['t5']['area']:,.3f}", f"{r['counterexample']['disks']}", f"{r['counterexample']['area']:,.3f}",
+             f"{100 * (1 - r['counterexample']['area'] / r['t5']['area']):.2f}%"] for n, r in t5res.items()]
+t5_one = t5ce["better_cover"][0]
+t5_html = f"""<details>
+    <summary>Task T5: Better choices of set size</summary>
+    <div class="details-content">
+
+        <h3>Method</h3>
+        <ul>
+            <li><strong>Enlarged family:</strong> every centre gets one disk per target size. The sizes contain the T4 value and four others, all at least 10 points including the centre. The 2000-point case is optional and was not run.</li>
+            <li><strong>Deduplication:</strong> disks with the same centre and the same radius are kept once. Boundary ties are included, and the cost is the full area, as in T4.</li>
+            <li><strong>Selection:</strong> the same weighted greedy as in T4; ties go to the smaller centre ID, then the smaller radius squared.</li>
+            <li><strong>Checks:</strong> every cover is verified independently. A family with only the T4 size reproduces the T4 cost exactly.</li>
+        </ul>
+
+        <h3>Results</h3>
+        {table(["Points", "Target sizes", "Candidates", "Disks T4 → T5", "T4 area", "T5 area", "Improvement", "Selected set sizes", "Candidate time", "Greedy time"], t5_rows)}
+        <p>
+            Improvement = 100 · (T4 area − T5 area) / T4 area. Coverage is complete in all cases.
+            Given the choice, greedy takes almost only the smallest disks: with a fixed ratio rule, small disks in dense areas have the best points-per-area value.
+            The gain is largest on 500 points because K = 50 in T4 forced every disk to be large.
+        </p>
+
+        <h3>Before and After</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+            <div>{figure(BIN / "tsp100" / "HW9_T4_100_cover.png", "T4 cover of 100 points", 900)}<p style="font-size: 13px; text-align: center;">N = 100, T4: {t5res[100]['t4']['disks']} disks, area {t5res[100]['t4']['area']:,.0f}</p></div>
+            <div>{figure(BIN / "tsp100" / "HW9_T5_100_cover.png", "T5 cover of 100 points", 900)}<p style="font-size: 13px; text-align: center;">N = 100, T5: {t5res[100]['t5']['disks']} disks, area {t5res[100]['t5']['area']:,.0f}</p></div>
+            <div>{figure(BIN / "tsp500" / "HW9_T4_500_cover.png", "T4 cover of 500 points", 900)}<p style="font-size: 13px; text-align: center;">N = 500, T4: {t5res[500]['t4']['disks']} disks, area {t5res[500]['t4']['area']:,.0f}</p></div>
+            <div>{figure(BIN / "tsp500" / "HW9_T5_500_cover.png", "T5 cover of 500 points", 900)}<p style="font-size: 13px; text-align: center;">N = 500, T5: {t5res[500]['t5']['disks']} disks, area {t5res[500]['t5']['area']:,.0f}</p></div>
+        </div>
+
+        <h3>Can a Larger Family Mislead Greedy?</h3>
+        <p>
+            Yes. Ten single sizes and all 45 pairs of them were run on both datasets. A larger family cannot worsen the true optimum, so any pair that does worse than the better of its two single sizes is a greedy failure.
+        </p>
+        <p style="font-size: 13px; color: #475569;">Greedy area for a family with one size only:</p>
+        {table(["Points", "10", "12", "15", "20", "25", "30", "40", "50", "75", "100"], t5_single)}
+        {table(["Points", "Pairs worse than best single size", "Worst pair", "Pair area", "Best single area", "Worse by"], t5_misled)}
+        <p>
+            The single-size costs are not monotonic, so the result depends strongly on which disks happen to be available.
+            The worst failures on 100 points all involve K = 100, where a disk contains every point. Greedy never takes it, because its ratio is low at the start, and the small disks it takes instead make it unnecessary.
+        </p>
+
+        <h3>What Helped and What Hurt</h3>
+        <ul>
+            <li><strong>Dense groups helped:</strong> small disks can now cover them at a low cost, which larger fixed sizes could not do.</li>
+            <li><strong>Isolated points hurt:</strong> they stay uncovered until the end, and each is then bought with a whole disk.</li>
+            <li><strong>Overlap hurt:</strong> later disks often cover what earlier ones already covered, and every overlap is paid in full. Some early disks even become fully redundant.</li>
+            <li><strong>Attractive early choices hurt:</strong> greedy never reconsiders them, as the counterexamples below show.</li>
+        </ul>
+
+        <h3>Counterexample 1: One Disk Beats Sixteen</h3>
+        <p>
+            Family: all 100 points, with sizes 10 and 100 at every centre ({len(t5ce['candidates'])} candidates, all with at least 10 members).
+            Greedy selects {len(t5ce['greedy_cover'])} disks of total area <strong>{t5ce['greedy_area']:,.3f}</strong>.
+            The single disk centred at ID {t5_one['centre_id']} with radius {t5_one['radius']:.3f} (r² = {t5_one['radius_squared']}) contains all 100 points and costs <strong>{t5ce['better_area']:,.3f}</strong>, which is {100 * (1 - t5ce['better_area'] / t5ce['greedy_area']):.1f}% less.
+            So greedy is provably suboptimal on this family. The points, candidates and both covers are in <code>HW9_T5_100_counterexample.json</code>, and the membership of all points was rechecked with a separate script.
+        </p>
+        <div style="max-width: 420px; margin: 0 auto;">{figure(BIN / "tsp100" / "HW9_T5_100_counterexample_one_disk.png", "One disk covering all 100 points", 900)}</div>
+
+        <h3>Counterexample 2: Redundant Disks in the Main Family</h3>
+        <p>
+            On the main T5 families, removing selected disks whose points are all covered by other selected disks (most expensive first) leaves a valid and cheaper cover from the same candidates. Greedy pays for these disks only because it never looks back.
+        </p>
+        {table(["Points", "Greedy disks", "Greedy area", "After removal: disks", "Area", "Lower by"], t5_prune)}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+            <div>{figure(BIN / "tsp100" / "HW9_T5_100_alternative.png", "T5 cover of 100 points after removing redundant disks", 900)}<p style="font-size: 13px; text-align: center;">N = 100, after removal</p></div>
+            <div>{figure(BIN / "tsp500" / "HW9_T5_500_alternative.png", "T5 cover of 500 points after removing redundant disks", 900)}<p style="font-size: 13px; text-align: center;">N = 500, after removal</p></div>
+        </div>
+        <p style="font-size: 13px; color: #475569;">The candidates are in <code>HW9_T5_N_candidates.csv</code>, and both covers are in <code>HW9_T5_N_results.json</code>. The points are the course files <code>HW9_TSP_100.txt</code> and <code>HW9_TSP_500.txt</code>.</p>
+    </div>
+</details>
+"""
+(HW / "report.html").write_text(head + t1_html + t2_html + t3_html + t4_html + t5_html + script + t2_script + "</body>\n</html>\n", encoding="utf-8")
 print("report written", (HW / "report.html").stat().st_size)
