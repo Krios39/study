@@ -14,13 +14,25 @@
 
 \title{Measuring the Overhead of Trust Mechanisms\\in the X-Road Data Exchange Layer}
 \author{Ruslan Nechshadimov\\\small University of Tartu\\\small Supervisor: Artjom Lind}
-\date{Draft v0.2, October 25, 2026}
+\date{Draft v0.3, October 31, 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-WIP
+X-Road secures data exchange between organisations with signatures, certificate status checks,
+time-stamps and a message log, and proposals to change these mechanisms need a baseline for what they
+cost now. This study measures the overhead of the trust mechanisms of X-Road 7.8.3 per message on a
+testbed of three laptops connected by a switch, on one of them alone, on a faster laptop, and with a
+controlled round-trip time added between the Security Servers. Since the mechanisms cannot all be
+switched off, each is observed by changing its configuration, through per-stage timings and through
+packet captures. With one client the X-Road path adds about 28\,ms to a 10\,KB exchange. Writing the
+body to the message log accounts for almost half of the latency of a 1\,MB exchange, and synchronous
+time-stamping adds about 90\,ms and lowers the highest throughput to 37--47\,\%, while status checks and batched time-stamps stay
+out of the request path. With an added round-trip time the default policy of opening a new connection
+for every message has the largest effect: each message waits for about five round trips at 10\,KB and
+ten at 1\,MB, against two with reused connections, which saves 54\,\% and 72\,\% of the latency at
+50\,ms. The cost of distance between Security Servers thus depends strongly on the connection policy.
 \end{abstract}
 
 \section{Introduction}
@@ -327,11 +339,15 @@ one, and how many times one side waits for the other. From these exchanges a pre
 latency should grow with the round-trip time, and it is compared with the measured slope; where they
 disagree, captures under delay are used to find the waits the prediction missed. Captures of a 1\,MB
 response with and without connection reuse check how the transfer of a large response depends on the
-state of the TCP connection.
+state of the TCP connection. Since the delay is applied to outgoing packets, they wait inside the
+sending host, where they may still count against the limits of the sender's TCP stack on queued data
+and so influence how its window grows. As a cross-check, the 1\,MB captures and part of the grid are
+repeated with the delay applied to incoming packets on the receiving side instead.
 
 The delay grid crosses \emph{full} and \emph{reuse} with 10\,KB and 1\,MB responses at one client
 and 0, 5, 20 and 50\,ms, and an extended grid adds 100\,KB responses and 4 and 16 clients at 0, 20
-and 50\,ms.
+and 50\,ms. The cross-check grid repeats \emph{full} and \emph{reuse} with 10\,KB and 1\,MB
+responses at one client and 0 and 50\,ms.
 
 \subsection{Threats to validity}
 
@@ -353,7 +369,9 @@ with a real service. Under load the spread between repetitions is larger, so the
 throughput and the results of synchronous time-stamping are reported together with the spread and
 the errors, and small differences between the other configurations are not assigned to individual
 mechanisms. The added round-trip time is emulated:
-it has no cross traffic and no losses.
+it has no cross traffic and no losses, and it is applied inside the hosts of the Security
+Servers; applying it to incoming instead of outgoing packets did not change the slopes
+(Section~\ref{sec:rq3}).
 
 Because of these factors the absolute latencies describe this testbed rather than a production
 deployment. The comparisons are therefore made between configurations on the same machines and
@@ -499,21 +517,22 @@ becomes longer, so the consumer is the limit.
 
 \begin{table}[h]
 \centering\small
-\begin{tabular}{@{}lrrrrr@{}}
+\begin{tabular}{@{}lccccc@{}}
 \toprule
 & \emph{full} & \emph{nobody} & \emph{reuse} & two providers & \emph{synctsa} \\
 \midrule
-Three machines & 106 & 106 & 108 & 111 & 50 \\
-One machine & 75 & 76 & 79 & 82 & 28 \\
-Development laptop & 112 & 107 & 118 & 109 & 41 \\
+Three machines & 106 (16; 32) & 106 (32; 19) & 108 (16; 21) & 111 (32; 24) & 50 (16; 10) \\
+One machine & 75 (32; 29) & 76 (16; 17) & 79 (16; 20) & 82 (16; 36) & 28 (32; 5) \\
+Development laptop & 112 (32; 9) & 107 (32; 15) & 118 (32; 15) & 109 (32; 24) & 41 (32; 5) \\
 \bottomrule
 \end{tabular}
 \caption{Highest median throughput reached at 4, 16 or 32 clients, 10\,KB response (requests per
-second).}
+second); in brackets the number of clients at which it was reached and the interquartile range of
+the throughput between repetitions (\%).}
 \label{tab:load}
 \end{table}
 
-\subsection{Environment and added round-trip time (RQ3)}
+\subsection{Environment and added round-trip time (RQ3)}\label{sec:rq3}
 
 With one client, three machines and one machine give the same picture (Table~\ref{tab:onecl}): the
 latency of \emph{full} differs by 0.7--1.5\,ms and the differences between configurations by at most
@@ -543,7 +562,7 @@ and a message of \emph{reuse} for one. The growth of latency is therefore descri
 against the added round-trip time: a slope of 3 means that the latency grows by three times the added
 round-trip time, that is, every message waits for three round trips. It is computed from the medians at 0 and
 50\,ms. The prediction was a slope of 3
-for \emph{full} and 1 for \emph{reuse}. Figure~\ref{fig:rtt} shows the measurement: at 10\,KB the
+for \emph{full} and 1 for \emph{reuse}. Figure~\ref{fig:rtt} and Table~\ref{tab:rtt} show the measurement: at 10\,KB the
 slope is 5.1 for \emph{full} and 2.1 for \emph{reuse}, so the prediction underestimated both.
 Captures under delay showed two waits it did not include: the last part of the request (842 bytes
 after about 10\,KB) is held until the provider acknowledges the earlier data, which adds one round
@@ -579,10 +598,28 @@ forwarding stage is 1 in both.
 \end{axis}
 \end{tikzpicture}
 \caption{Latency with one client against the round-trip time added between the Security Servers,
-three machines, 20 repetitions (interquartile range 0.2--3.6\,\% at 20\,ms and more); lines without
+three machines, 20 repetitions; lines without
 marks show the prediction made before the measurement.}
 \label{fig:rtt}
 \end{figure}
+
+\begin{table}[h]
+\centering
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+& 0\,ms & 5\,ms & 20\,ms & 50\,ms \\
+\midrule
+\emph{full}, 10\,KB & 28.5 (27.9--28.7) & 57.4 (57.0--57.9) & 131.1 (130.9--131.4) & 284.1 (283.6--284.3) \\
+\emph{reuse}, 10\,KB & 26.4 (26.1--26.7) & 37.5 (37.0--37.6) & 69.5 (69.2--69.7) & 131.0 (130.7--131.1) \\
+\emph{full}, 1\,MB & 73.1 (71.5--76.1) & 120.0 (118.6--121.8) & 276.7 (275.6--281.1) & 608.4 (607.3--610.4) \\
+\emph{reuse}, 1\,MB & 70.7 (68.3--72.9) & 81.5 (80.0--82.8) & 112.9 (110.9--115.0) & 172.0 (170.3--173.7) \\
+\bottomrule
+\end{tabular}
+\caption{The points of Figure~\ref{fig:rtt}: median latency over 20 repetitions (ms), in brackets the
+first and third quartiles of the run medians.}
+\label{tab:rtt}
+\end{table}
 
 At 1\,MB the slope is 10.7 for \emph{full} and 2.0 for \emph{reuse}.
 Captures of a 1\,MB response at 50\,ms show the reason: on a new connection the body leaves in about
@@ -606,6 +643,14 @@ against 140\,ms for \emph{full}); at 50\,ms \emph{full} falls to 57 requests per
 \emph{reuse} keeps 104. Errors again occurred only with \emph{reuse} under load: 17 of 90\,000
 requests at 4 and 16 clients.
 
+With the delay applied to incoming instead of outgoing packets the slopes are the same: 5.0 for
+\emph{full} and 2.1 for \emph{reuse} at 10\,KB, and 9.6 and 2.0 at 1\,MB (15 repetitions, no
+errors). Captures of a 1\,MB response at 50\,ms show the same flights on a new connection (28, 57,
+113, 226 and 453\,KB), and with \emph{reuse} the window is again kept between messages. The slope
+of \emph{full} at 1\,MB therefore does not depend on where the delay is applied: it agrees with the
+extended grid (9.7), while the first delay grids gave 10.7, so between nights it varies by about one
+round trip.
+
 \section{Discussion}
 
 \subsection{What the results mean for the proposed changes}
@@ -614,15 +659,18 @@ The proposals discussed in the introduction affect different mechanisms, and the
 them in different positions.
 
 Post-quantum signatures change signing and verification, which are paid on every message and run on
-the CPU of the Security Servers. In the measurements this work is part of the stages on the way to
-the provider and of the provider's stages, a few milliseconds each on these laptops, and like all
-CPU-bound costs it was smaller on the faster CPU of the development laptop. Larger signatures would
+the CPU of the Security Servers. In the measurements this work happens within the stages on the way to
+the provider and the provider's stages, which also contain other work, so the measurements do not
+give its cost alone; like all CPU-bound costs, these stages were shorter on the faster CPU of the
+development laptop. Larger signatures would
 also make every message bigger: replacing an RSA-2048 signature of 256 bytes with a Dilithium5
 signature of 4595 bytes~\cite{snetkov2023} on both the request and the response adds about 8.7\,KB to
 an exchange that now carries about 40\,KB in both directions. On the local network this is small. With
-distance between the Security Servers it matters more than the computation, because with the default
-connection policy a larger response needs more flights on a new connection (Section~4.4): the slope
-grew from 5 to 7 between a 10\,KB and a 100\,KB response. The TLS handshake between the Security
+distance between the Security Servers the size may matter more than the computation: with the default
+connection policy a larger response needs more flights on a new connection (Section~4.4), and the
+slope grew from 5 to 7 between a 10\,KB and a 100\,KB response. Whether a few additional kilobytes
+would add a flight depends on whether the message still fits into the flights it needs now, and that
+was not measured. The TLS handshake between the Security
 Servers, which post-quantum algorithms would also enlarge~\cite{bakhtina2026pqc}, was resumed from a
 session ticket without exchanging certificates in every captured message, so larger certificates would
 mainly affect new sessions rather than every message.
@@ -642,7 +690,8 @@ effect of the connection policy with an added round-trip time of 50\,ms.
 \subsection{The connection policy}
 
 The largest effect in the measurements is not a cryptographic mechanism but the decision to open a
-new connection for every message. On the local network it costs about 2\,ms and 3\,KB per message,
+new connection for every message. On the local network it costs about 2\,ms and 6.2\,KB per exchange (3.3\,KB towards the provider
+and 2.9\,KB back),
 which is why it is easy to overlook. With an added round-trip time every message waits for several
 additional round trips, and at 50\,ms reusing connections saves 54\,\% of the latency for a 10\,KB
 response and 72\,\% for a 1\,MB response, and almost doubles the throughput with 16 clients. This
@@ -654,8 +703,8 @@ with a pooled connection that had already been closed by the other side.
 
 The connection policy also decides how much larger post-quantum messages would cost. With reused
 connections a few additional kilobytes leave in the same flight, while with a new connection for
-every message and distance between the Security Servers they can cost additional round trips on every
-message (Section~5.1).
+every message and distance between the Security Servers they could cost additional round trips on
+every message if the messages no longer fit into the same flights (Section~5.1).
 
 \subsection{Comparison with earlier measurements}
 
@@ -698,11 +747,12 @@ added between the Security Servers.
 For RQ1, the X-Road path added about 28\,ms to a 10\,KB exchange with one client on these machines.
 Logging the message body made no measurable difference for small messages and accounted for almost
 half of the latency of a 1\,MB exchange. Opening a new connection for every message cost about 2\,ms
-and 3\,KB per message on the local network. Certificate status checking and batched time-stamping
+and 6.2\,KB per exchange on the local network. Certificate status checking and batched time-stamping
 were not in the request path: requests to the OCSP responder only from background refreshes and about two time-stamping
 requests per 1200 messages,
-while synchronous time-stamping added about 90\,ms. Signing and verification cannot be switched off,
-and the per-stage breakdown places them in stages of 4 to 11\,ms each.
+while synchronous time-stamping added about 90\,ms. Signing and verification cannot be switched off;
+the stages that contain them take 4 to 11\,ms each, which bounds their cost but does not measure the
+operations alone.
 
 For RQ2, most of the growth from a 10\,KB to a 1\,MB response came from writing the body to the
 message log. Under load the Security Servers reached about 100 requests per second on three machines,
@@ -718,8 +768,8 @@ missed two waits inside TCP.
 The results give a baseline for the present system against which post-quantum signatures, a
 decentralised PKI and threshold signatures can be compared. They also show that the cost of larger
 post-quantum messages will depend on the connection policy: small with reused connections, but
-possibly additional round trips on every message when each message opens a new connection and the
-Security Servers are far apart. Further work could measure post-quantum
+possibly additional round trips on every message when each message opens a new connection, the
+Security Servers are far apart and the larger messages no longer fit into the same flights. Further work could measure post-quantum
 signatures once they are available in X-Road, repeat the measurements with external certification and
 time-stamping services and over a real wide-area link, and use server hardware.
 
