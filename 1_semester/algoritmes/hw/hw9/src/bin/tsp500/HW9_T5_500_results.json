@@ -1,0 +1,1127 @@
+{
+  "alternatives": [
+    {
+      "area": 4636981.331920574,
+      "disks": 73,
+      "method": "weighted greedy, redundant disks removed"
+    },
+    {
+      "area": 10185448.648390422,
+      "disks": 9,
+      "method": "largest new set first"
+    },
+    {
+      "area": 8537180.646758001,
+      "disks": 8,
+      "method": "largest new set first, redundant disks removed"
+    }
+  ],
+  "candidate_seconds": 0.0287669,
+  "candidates": 2500,
+  "counterexample": {
+    "area": 4636981.331920574,
+    "cover": [
+      {
+        "area": 18739.600178663117,
+        "centre_id": 479,
+        "radius": 77.23341245859851,
+        "radius_squared": 5965,
+        "set_size": 10
+      },
+      {
+        "area": 20973.27255536546,
+        "centre_id": 19,
+        "radius": 81.70679286326198,
+        "radius_squared": 6676,
+        "set_size": 10
+      },
+      {
+        "area": 23150.396264303185,
+        "centre_id": 23,
+        "radius": 85.84287972802403,
+        "radius_squared": 7369,
+        "set_size": 10
+      },
+      {
+        "area": 24460.44040085013,
+        "centre_id": 175,
+        "radius": 88.23831367382311,
+        "radius_squared": 7786,
+        "set_size": 10
+      },
+      {
+        "area": 31532.165464080754,
+        "centre_id": 198,
+        "radius": 100.18482919085105,
+        "radius_squared": 10037,
+        "set_size": 10
+      },
+      {
+        "area": 37589.15610020187,
+        "centre_id": 64,
+        "radius": 109.38464243210744,
+        "radius_squared": 11965,
+        "set_size": 10
+      },
+      {
+        "area": 40127.56296430243,
+        "centre_id": 476,
+        "radius": 113.01769772916099,
+        "radius_squared": 12773,
+        "set_size": 10
+      },
+      {
+        "area": 42537.1645296058,
+        "centre_id": 442,
+        "radius": 116.36150566231085,
+        "radius_squared": 13540,
+        "set_size": 10
+      },
+      {
+        "area": 43470.217547721964,
+        "centre_id": 433,
+        "radius": 117.63077828527702,
+        "radius_squared": 13837,
+        "set_size": 10
+      },
+      {
+        "area": 44764.553721000964,
+        "centre_id": 388,
+        "radius": 119.36917525056458,
+        "radius_squared": 14249,
+        "set_size": 10
+      },
+      {
+        "area": 47262.11988060485,
+        "centre_id": 374,
+        "radius": 122.65398485169571,
+        "radius_squared": 15044,
+        "set_size": 10
+      },
+      {
+        "area": 47667.38533291793,
+        "centre_id": 293,
+        "radius": 123.17873193047572,
+        "radius_squared": 15173,
+        "set_size": 10
+      },
+      {
+        "area": 48333.402975478966,
+        "centre_id": 351,
+        "radius": 124.03628501370073,
+        "radius_squared": 15385,
+        "set_size": 10
+      },
+      {
+        "area": 49275.8807715559,
+        "centre_id": 54,
+        "radius": 125.23977004130916,
+        "radius_squared": 15685,
+        "set_size": 10
+      },
+      {
+        "area": 46457.87216128586,
+        "centre_id": 255,
+        "radius": 121.60592090848209,
+        "radius_squared": 14788,
+        "set_size": 10
+      },
+      {
+        "area": 51726.32304135594,
+        "centre_id": 236,
+        "radius": 128.3160161476345,
+        "radius_squared": 16465,
+        "set_size": 10
+      },
+      {
+        "area": 42235.57163486118,
+        "centre_id": 76,
+        "radius": 115.94826432508596,
+        "radius_squared": 13444,
+        "set_size": 10
+      },
+      {
+        "area": 53133.75655016417,
+        "centre_id": 250,
+        "radius": 130.04999038831184,
+        "radius_squared": 16913,
+        "set_size": 10
+      },
+      {
+        "area": 53234.28751507904,
+        "centre_id": 270,
+        "radius": 130.17296186228538,
+        "radius_squared": 16945,
+        "set_size": 10
+      },
+      {
+        "area": 54820.79180514189,
+        "centre_id": 256,
+        "radius": 132.09844813622905,
+        "radius_squared": 17450,
+        "set_size": 10
+      },
+      {
+        "area": 55244.90681337651,
+        "centre_id": 496,
+        "radius": 132.60844618650805,
+        "radius_squared": 17585,
+        "set_size": 10
+      },
+      {
+        "area": 52480.30527821749,
+        "centre_id": 144,
+        "radius": 129.24782396620841,
+        "radius_squared": 16705,
+        "set_size": 10
+      },
+      {
+        "area": 53846.89808252906,
+        "centre_id": 84,
+        "radius": 130.91982279242512,
+        "radius_squared": 17140,
+        "set_size": 10
+      },
+      {
+        "area": 60098.667463172744,
+        "centre_id": 135,
+        "radius": 138.31124321616085,
+        "radius_squared": 19130,
+        "set_size": 10
+      },
+      {
+        "area": 56941.366846315,
+        "centre_id": 25,
+        "radius": 134.6291201783626,
+        "radius_squared": 18125,
+        "set_size": 10
+      },
+      {
+        "area": 50721.01339220721,
+        "centre_id": 126,
+        "radius": 127.06297651164952,
+        "radius_squared": 16145,
+        "set_size": 10
+      },
+      {
+        "area": 38987.16483104933,
+        "centre_id": 383,
+        "radius": 111.40017953306898,
+        "radius_squared": 12410,
+        "set_size": 10
+      },
+      {
+        "area": 58722.64988090041,
+        "centre_id": 280,
+        "radius": 136.7186892857008,
+        "radius_squared": 18692,
+        "set_size": 10
+      },
+      {
+        "area": 65385.96789916437,
+        "centre_id": 435,
+        "radius": 144.26711336961034,
+        "radius_squared": 20813,
+        "set_size": 10
+      },
+      {
+        "area": 69746.49850234699,
+        "centre_id": 484,
+        "radius": 149.0,
+        "radius_squared": 22201,
+        "set_size": 10
+      },
+      {
+        "area": 48949.155135582565,
+        "centre_id": 427,
+        "radius": 124.82387592123551,
+        "radius_squared": 15581,
+        "set_size": 10
+      },
+      {
+        "area": 64591.144957806144,
+        "centre_id": 80,
+        "radius": 143.38758663147937,
+        "radius_squared": 20560,
+        "set_size": 10
+      },
+      {
+        "area": 64396.36621328358,
+        "centre_id": 226,
+        "radius": 143.17122615944868,
+        "radius_squared": 20498,
+        "set_size": 10
+      },
+      {
+        "area": 57786.45527013065,
+        "centre_id": 499,
+        "radius": 135.6244815658294,
+        "radius_squared": 18394,
+        "set_size": 10
+      },
+      {
+        "area": 74707.07330236529,
+        "centre_id": 32,
+        "radius": 154.20765220960988,
+        "radius_squared": 23780,
+        "set_size": 10
+      },
+      {
+        "area": 78740.87826957458,
+        "centre_id": 400,
+        "radius": 158.3161394173064,
+        "radius_squared": 25064,
+        "set_size": 10
+      },
+      {
+        "area": 100672.33658428492,
+        "centre_id": 432,
+        "radius": 179.0111728356641,
+        "radius_squared": 32045,
+        "set_size": 10
+      },
+      {
+        "area": 61942.78235082995,
+        "centre_id": 407,
+        "radius": 140.41723540933285,
+        "radius_squared": 19717,
+        "set_size": 10
+      },
+      {
+        "area": 121353.44102286652,
+        "centre_id": 41,
+        "radius": 196.5400722499104,
+        "radius_squared": 38628,
+        "set_size": 10
+      },
+      {
+        "area": 75310.25909185452,
+        "centre_id": 88,
+        "radius": 154.82893786369524,
+        "radius_squared": 23972,
+        "set_size": 10
+      },
+      {
+        "area": 63189.9946343051,
+        "centre_id": 331,
+        "radius": 141.8238343861849,
+        "radius_squared": 20114,
+        "set_size": 10
+      },
+      {
+        "area": 67308.62260316132,
+        "centre_id": 171,
+        "radius": 146.37281168304446,
+        "radius_squared": 21425,
+        "set_size": 10
+      },
+      {
+        "area": 27174.77645355171,
+        "centre_id": 204,
+        "radius": 93.00537618869137,
+        "radius_squared": 8650,
+        "set_size": 10
+      },
+      {
+        "area": 42829.33264638965,
+        "centre_id": 197,
+        "radius": 116.76043850551436,
+        "radius_squared": 13633,
+        "set_size": 10
+      },
+      {
+        "area": 88693.44379614704,
+        "centre_id": 120,
+        "radius": 168.02380783686579,
+        "radius_squared": 28232,
+        "set_size": 10
+      },
+      {
+        "area": 104856.93799886653,
+        "centre_id": 424,
+        "radius": 182.69373278796402,
+        "radius_squared": 33377,
+        "set_size": 10
+      },
+      {
+        "area": 97269.99174044718,
+        "centre_id": 330,
+        "radius": 175.96022277776305,
+        "radius_squared": 30962,
+        "set_size": 10
+      },
+      {
+        "area": 67999.77298695107,
+        "centre_id": 188,
+        "radius": 147.12239802287073,
+        "radius_squared": 21645,
+        "set_size": 10
+      },
+      {
+        "area": 68116.01191513389,
+        "centre_id": 430,
+        "radius": 147.24808997063425,
+        "radius_squared": 21682,
+        "set_size": 10
+      },
+      {
+        "area": 71490.08242508933,
+        "centre_id": 422,
+        "radius": 150.8509197850646,
+        "radius_squared": 22756,
+        "set_size": 10
+      },
+      {
+        "area": 110489.81362675302,
+        "centre_id": 217,
+        "radius": 187.5366630821824,
+        "radius_squared": 35170,
+        "set_size": 10
+      },
+      {
+        "area": 93707.42567127635,
+        "centre_id": 224,
+        "radius": 172.70784579746226,
+        "radius_squared": 29828,
+        "set_size": 10
+      },
+      {
+        "area": 137341.006036985,
+        "centre_id": 414,
+        "radius": 209.0861066642162,
+        "radius_squared": 43717,
+        "set_size": 10
+      },
+      {
+        "area": 80688.66571480024,
+        "centre_id": 386,
+        "radius": 160.262285020525,
+        "radius_squared": 25684,
+        "set_size": 10
+      },
+      {
+        "area": 41861.722109083996,
+        "centre_id": 3,
+        "radius": 115.43396380615195,
+        "radius_squared": 13325,
+        "set_size": 10
+      },
+      {
+        "area": 105463.26538100936,
+        "centre_id": 358,
+        "radius": 183.22117781522965,
+        "radius_squared": 33570,
+        "set_size": 10
+      },
+      {
+        "area": 65046.67589257667,
+        "centre_id": 311,
+        "radius": 143.8923208513922,
+        "radius_squared": 20705,
+        "set_size": 10
+      },
+      {
+        "area": 65674.99442329463,
+        "centre_id": 194,
+        "radius": 144.5856147754679,
+        "radius_squared": 20905,
+        "set_size": 10
+      },
+      {
+        "area": 49266.45599359513,
+        "centre_id": 87,
+        "radius": 125.22779244241272,
+        "radius_squared": 15682,
+        "set_size": 10
+      },
+      {
+        "area": 49401.5444776995,
+        "centre_id": 474,
+        "radius": 125.39936203984452,
+        "radius_squared": 15725,
+        "set_size": 10
+      },
+      {
+        "area": 53058.35832647802,
+        "centre_id": 412,
+        "radius": 129.9576854210631,
+        "radius_squared": 16889,
+        "set_size": 10
+      },
+      {
+        "area": 80528.44448946716,
+        "centre_id": 202,
+        "radius": 160.1030917877603,
+        "radius_squared": 25633,
+        "set_size": 10
+      },
+      {
+        "area": 55920.34923389832,
+        "centre_id": 431,
+        "radius": 133.41664064126334,
+        "radius_squared": 17800,
+        "set_size": 10
+      },
+      {
+        "area": 57214.68540717731,
+        "centre_id": 260,
+        "radius": 134.9518432626987,
+        "radius_squared": 18212,
+        "set_size": 10
+      },
+      {
+        "area": 30778.183227219204,
+        "centre_id": 108,
+        "radius": 98.97979591815695,
+        "radius_squared": 9797,
+        "set_size": 10
+      },
+      {
+        "area": 65762.95901759515,
+        "centre_id": 206,
+        "radius": 144.68241081762497,
+        "radius_squared": 20933,
+        "set_size": 10
+      },
+      {
+        "area": 166435.29560188006,
+        "centre_id": 106,
+        "radius": 230.16950275829333,
+        "radius_squared": 52978,
+        "set_size": 20
+      },
+      {
+        "area": 76918.7545304925,
+        "centre_id": 93,
+        "radius": 156.4736399525492,
+        "radius_squared": 24484,
+        "set_size": 10
+      },
+      {
+        "area": 55621.89793180729,
+        "centre_id": 96,
+        "radius": 133.06013678032951,
+        "radius_squared": 17705,
+        "set_size": 10
+      },
+      {
+        "area": 68502.42781152544,
+        "centre_id": 187,
+        "radius": 147.6651617681029,
+        "radius_squared": 21805,
+        "set_size": 10
+      },
+      {
+        "area": 86814.77138930034,
+        "centre_id": 10,
+        "radius": 166.23477373883,
+        "radius_squared": 27634,
+        "set_size": 10
+      },
+      {
+        "area": 102045.21257390366,
+        "centre_id": 153,
+        "radius": 180.22763384120648,
+        "radius_squared": 32482,
+        "set_size": 10
+      },
+      {
+        "area": 107392.20327031349,
+        "centre_id": 441,
+        "radius": 184.88915598271305,
+        "radius_squared": 34184,
+        "set_size": 10
+      }
+    ],
+    "disks": 73,
+    "lower_than_greedy": true,
+    "method": "weighted greedy, redundant disks removed"
+  },
+  "greedy_seconds": 0.0076945,
+  "points": 500,
+  "single_size_families": {
+    "10": {
+      "area": 4951172.013206089,
+      "disks": 78
+    },
+    "100": {
+      "area": 10934058.761814335,
+      "disks": 13
+    },
+    "20": {
+      "area": 6626520.543512455,
+      "disks": 46
+    },
+    "30": {
+      "area": 7759099.252650764,
+      "disks": 34
+    },
+    "50": {
+      "area": 8759306.955330068,
+      "disks": 22
+    }
+  },
+  "t4": {
+    "area": 8759306.955330068,
+    "disks": 22
+  },
+  "t4_k": 50,
+  "t5": {
+    "area": 4832187.333044029,
+    "cover": [
+      {
+        "area": 18739.600178663117,
+        "centre_id": 479,
+        "radius": 77.23341245859851,
+        "radius_squared": 5965,
+        "set_size": 10
+      },
+      {
+        "area": 20973.27255536546,
+        "centre_id": 19,
+        "radius": 81.70679286326198,
+        "radius_squared": 6676,
+        "set_size": 10
+      },
+      {
+        "area": 23150.396264303185,
+        "centre_id": 23,
+        "radius": 85.84287972802403,
+        "radius_squared": 7369,
+        "set_size": 10
+      },
+      {
+        "area": 24460.44040085013,
+        "centre_id": 175,
+        "radius": 88.23831367382311,
+        "radius_squared": 7786,
+        "set_size": 10
+      },
+      {
+        "area": 31532.165464080754,
+        "centre_id": 198,
+        "radius": 100.18482919085105,
+        "radius_squared": 10037,
+        "set_size": 10
+      },
+      {
+        "area": 37589.15610020187,
+        "centre_id": 64,
+        "radius": 109.38464243210744,
+        "radius_squared": 11965,
+        "set_size": 10
+      },
+      {
+        "area": 40127.56296430243,
+        "centre_id": 476,
+        "radius": 113.01769772916099,
+        "radius_squared": 12773,
+        "set_size": 10
+      },
+      {
+        "area": 42537.1645296058,
+        "centre_id": 442,
+        "radius": 116.36150566231085,
+        "radius_squared": 13540,
+        "set_size": 10
+      },
+      {
+        "area": 43470.217547721964,
+        "centre_id": 433,
+        "radius": 117.63077828527702,
+        "radius_squared": 13837,
+        "set_size": 10
+      },
+      {
+        "area": 44764.553721000964,
+        "centre_id": 388,
+        "radius": 119.36917525056458,
+        "radius_squared": 14249,
+        "set_size": 10
+      },
+      {
+        "area": 44962.47405817712,
+        "centre_id": 350,
+        "radius": 119.63277142990545,
+        "radius_squared": 14312,
+        "set_size": 10
+      },
+      {
+        "area": 46074.59785754791,
+        "centre_id": 423,
+        "radius": 121.10326172320876,
+        "radius_squared": 14666,
+        "set_size": 10
+      },
+      {
+        "area": 47262.11988060485,
+        "centre_id": 374,
+        "radius": 122.65398485169571,
+        "radius_squared": 15044,
+        "set_size": 10
+      },
+      {
+        "area": 47667.38533291793,
+        "centre_id": 293,
+        "radius": 123.17873193047572,
+        "radius_squared": 15173,
+        "set_size": 10
+      },
+      {
+        "area": 48333.402975478966,
+        "centre_id": 351,
+        "radius": 124.03628501370073,
+        "radius_squared": 15385,
+        "set_size": 10
+      },
+      {
+        "area": 49275.8807715559,
+        "centre_id": 54,
+        "radius": 125.23977004130916,
+        "radius_squared": 15685,
+        "set_size": 10
+      },
+      {
+        "area": 46457.87216128586,
+        "centre_id": 255,
+        "radius": 121.60592090848209,
+        "radius_squared": 14788,
+        "set_size": 10
+      },
+      {
+        "area": 51726.32304135594,
+        "centre_id": 236,
+        "radius": 128.3160161476345,
+        "radius_squared": 16465,
+        "set_size": 10
+      },
+      {
+        "area": 42235.57163486118,
+        "centre_id": 76,
+        "radius": 115.94826432508596,
+        "radius_squared": 13444,
+        "set_size": 10
+      },
+      {
+        "area": 53133.75655016417,
+        "centre_id": 250,
+        "radius": 130.04999038831184,
+        "radius_squared": 16913,
+        "set_size": 10
+      },
+      {
+        "area": 53234.28751507904,
+        "centre_id": 270,
+        "radius": 130.17296186228538,
+        "radius_squared": 16945,
+        "set_size": 10
+      },
+      {
+        "area": 54820.79180514189,
+        "centre_id": 256,
+        "radius": 132.09844813622905,
+        "radius_squared": 17450,
+        "set_size": 10
+      },
+      {
+        "area": 55244.90681337651,
+        "centre_id": 496,
+        "radius": 132.60844618650805,
+        "radius_squared": 17585,
+        "set_size": 10
+      },
+      {
+        "area": 52480.30527821749,
+        "centre_id": 144,
+        "radius": 129.24782396620841,
+        "radius_squared": 16705,
+        "set_size": 10
+      },
+      {
+        "area": 53846.89808252906,
+        "centre_id": 84,
+        "radius": 130.91982279242512,
+        "radius_squared": 17140,
+        "set_size": 10
+      },
+      {
+        "area": 60098.667463172744,
+        "centre_id": 135,
+        "radius": 138.31124321616085,
+        "radius_squared": 19130,
+        "set_size": 10
+      },
+      {
+        "area": 56941.366846315,
+        "centre_id": 25,
+        "radius": 134.6291201783626,
+        "radius_squared": 18125,
+        "set_size": 10
+      },
+      {
+        "area": 50721.01339220721,
+        "centre_id": 126,
+        "radius": 127.06297651164952,
+        "radius_squared": 16145,
+        "set_size": 10
+      },
+      {
+        "area": 38987.16483104933,
+        "centre_id": 383,
+        "radius": 111.40017953306898,
+        "radius_squared": 12410,
+        "set_size": 10
+      },
+      {
+        "area": 58722.64988090041,
+        "centre_id": 280,
+        "radius": 136.7186892857008,
+        "radius_squared": 18692,
+        "set_size": 10
+      },
+      {
+        "area": 65385.96789916437,
+        "centre_id": 435,
+        "radius": 144.26711336961034,
+        "radius_squared": 20813,
+        "set_size": 10
+      },
+      {
+        "area": 69746.49850234699,
+        "centre_id": 484,
+        "radius": 149.0,
+        "radius_squared": 22201,
+        "set_size": 10
+      },
+      {
+        "area": 48949.155135582565,
+        "centre_id": 427,
+        "radius": 124.82387592123551,
+        "radius_squared": 15581,
+        "set_size": 10
+      },
+      {
+        "area": 64591.144957806144,
+        "centre_id": 80,
+        "radius": 143.38758663147937,
+        "radius_squared": 20560,
+        "set_size": 10
+      },
+      {
+        "area": 64396.36621328358,
+        "centre_id": 226,
+        "radius": 143.17122615944868,
+        "radius_squared": 20498,
+        "set_size": 10
+      },
+      {
+        "area": 57786.45527013065,
+        "centre_id": 499,
+        "radius": 135.6244815658294,
+        "radius_squared": 18394,
+        "set_size": 10
+      },
+      {
+        "area": 74707.07330236529,
+        "centre_id": 32,
+        "radius": 154.20765220960988,
+        "radius_squared": 23780,
+        "set_size": 10
+      },
+      {
+        "area": 78740.87826957458,
+        "centre_id": 400,
+        "radius": 158.3161394173064,
+        "radius_squared": 25064,
+        "set_size": 10
+      },
+      {
+        "area": 100672.33658428492,
+        "centre_id": 432,
+        "radius": 179.0111728356641,
+        "radius_squared": 32045,
+        "set_size": 10
+      },
+      {
+        "area": 61942.78235082995,
+        "centre_id": 407,
+        "radius": 140.41723540933285,
+        "radius_squared": 19717,
+        "set_size": 10
+      },
+      {
+        "area": 121353.44102286652,
+        "centre_id": 41,
+        "radius": 196.5400722499104,
+        "radius_squared": 38628,
+        "set_size": 10
+      },
+      {
+        "area": 75310.25909185452,
+        "centre_id": 88,
+        "radius": 154.82893786369524,
+        "radius_squared": 23972,
+        "set_size": 10
+      },
+      {
+        "area": 63189.9946343051,
+        "centre_id": 331,
+        "radius": 141.8238343861849,
+        "radius_squared": 20114,
+        "set_size": 10
+      },
+      {
+        "area": 67308.62260316132,
+        "centre_id": 171,
+        "radius": 146.37281168304446,
+        "radius_squared": 21425,
+        "set_size": 10
+      },
+      {
+        "area": 27174.77645355171,
+        "centre_id": 204,
+        "radius": 93.00537618869137,
+        "radius_squared": 8650,
+        "set_size": 10
+      },
+      {
+        "area": 42829.33264638965,
+        "centre_id": 197,
+        "radius": 116.76043850551436,
+        "radius_squared": 13633,
+        "set_size": 10
+      },
+      {
+        "area": 88693.44379614704,
+        "centre_id": 120,
+        "radius": 168.02380783686579,
+        "radius_squared": 28232,
+        "set_size": 10
+      },
+      {
+        "area": 104856.93799886653,
+        "centre_id": 424,
+        "radius": 182.69373278796402,
+        "radius_squared": 33377,
+        "set_size": 10
+      },
+      {
+        "area": 97269.99174044718,
+        "centre_id": 330,
+        "radius": 175.96022277776305,
+        "radius_squared": 30962,
+        "set_size": 10
+      },
+      {
+        "area": 67999.77298695107,
+        "centre_id": 188,
+        "radius": 147.12239802287073,
+        "radius_squared": 21645,
+        "set_size": 10
+      },
+      {
+        "area": 68116.01191513389,
+        "centre_id": 430,
+        "radius": 147.24808997063425,
+        "radius_squared": 21682,
+        "set_size": 10
+      },
+      {
+        "area": 71490.08242508933,
+        "centre_id": 422,
+        "radius": 150.8509197850646,
+        "radius_squared": 22756,
+        "set_size": 10
+      },
+      {
+        "area": 71618.88772388651,
+        "centre_id": 288,
+        "radius": 150.98675438593943,
+        "radius_squared": 22797,
+        "set_size": 10
+      },
+      {
+        "area": 110489.81362675302,
+        "centre_id": 217,
+        "radius": 187.5366630821824,
+        "radius_squared": 35170,
+        "set_size": 10
+      },
+      {
+        "area": 93707.42567127635,
+        "centre_id": 224,
+        "radius": 172.70784579746226,
+        "radius_squared": 29828,
+        "set_size": 10
+      },
+      {
+        "area": 137341.006036985,
+        "centre_id": 414,
+        "radius": 209.0861066642162,
+        "radius_squared": 43717,
+        "set_size": 10
+      },
+      {
+        "area": 80688.66571480024,
+        "centre_id": 386,
+        "radius": 160.262285020525,
+        "radius_squared": 25684,
+        "set_size": 10
+      },
+      {
+        "area": 41861.722109083996,
+        "centre_id": 3,
+        "radius": 115.43396380615195,
+        "radius_squared": 13325,
+        "set_size": 10
+      },
+      {
+        "area": 105463.26538100936,
+        "centre_id": 358,
+        "radius": 183.22117781522965,
+        "radius_squared": 33570,
+        "set_size": 10
+      },
+      {
+        "area": 65046.67589257667,
+        "centre_id": 311,
+        "radius": 143.8923208513922,
+        "radius_squared": 20705,
+        "set_size": 10
+      },
+      {
+        "area": 65674.99442329463,
+        "centre_id": 194,
+        "radius": 144.5856147754679,
+        "radius_squared": 20905,
+        "set_size": 10
+      },
+      {
+        "area": 49266.45599359513,
+        "centre_id": 87,
+        "radius": 125.22779244241272,
+        "radius_squared": 15682,
+        "set_size": 10
+      },
+      {
+        "area": 49401.5444776995,
+        "centre_id": 474,
+        "radius": 125.39936203984452,
+        "radius_squared": 15725,
+        "set_size": 10
+      },
+      {
+        "area": 53058.35832647802,
+        "centre_id": 412,
+        "radius": 129.9576854210631,
+        "radius_squared": 16889,
+        "set_size": 10
+      },
+      {
+        "area": 80528.44448946716,
+        "centre_id": 202,
+        "radius": 160.1030917877603,
+        "radius_squared": 25633,
+        "set_size": 10
+      },
+      {
+        "area": 55920.34923389832,
+        "centre_id": 431,
+        "radius": 133.41664064126334,
+        "radius_squared": 17800,
+        "set_size": 10
+      },
+      {
+        "area": 57214.68540717731,
+        "centre_id": 260,
+        "radius": 134.9518432626987,
+        "radius_squared": 18212,
+        "set_size": 10
+      },
+      {
+        "area": 30778.183227219204,
+        "centre_id": 108,
+        "radius": 98.97979591815695,
+        "radius_squared": 9797,
+        "set_size": 10
+      },
+      {
+        "area": 32550.04148384385,
+        "centre_id": 336,
+        "radius": 101.78899744078434,
+        "radius_squared": 10361,
+        "set_size": 10
+      },
+      {
+        "area": 65762.95901759515,
+        "centre_id": 206,
+        "radius": 144.68241081762497,
+        "radius_squared": 20933,
+        "set_size": 10
+      },
+      {
+        "area": 166435.29560188006,
+        "centre_id": 106,
+        "radius": 230.16950275829333,
+        "radius_squared": 52978,
+        "set_size": 20
+      },
+      {
+        "area": 76918.7545304925,
+        "centre_id": 93,
+        "radius": 156.4736399525492,
+        "radius_squared": 24484,
+        "set_size": 10
+      },
+      {
+        "area": 55621.89793180729,
+        "centre_id": 96,
+        "radius": 133.06013678032951,
+        "radius_squared": 17705,
+        "set_size": 10
+      },
+      {
+        "area": 68502.42781152544,
+        "centre_id": 187,
+        "radius": 147.6651617681029,
+        "radius_squared": 21805,
+        "set_size": 10
+      },
+      {
+        "area": 86814.77138930034,
+        "centre_id": 10,
+        "radius": 166.23477373883,
+        "radius_squared": 27634,
+        "set_size": 10
+      },
+      {
+        "area": 102045.21257390366,
+        "centre_id": 153,
+        "radius": 180.22763384120648,
+        "radius_squared": 32482,
+        "set_size": 10
+      },
+      {
+        "area": 107392.20327031349,
+        "centre_id": 441,
+        "radius": 184.88915598271305,
+        "radius_squared": 34184,
+        "set_size": 10
+      }
+    ],
+    "disks": 77,
+    "improvement_percent": 44.833679677093336,
+    "selected_set_sizes": {
+      "10": 76,
+      "20": 1
+    }
+  },
+  "target_sizes": [
+    10,
+    20,
+    30,
+    50,
+    100
+  ],
+  "verified": true
+}

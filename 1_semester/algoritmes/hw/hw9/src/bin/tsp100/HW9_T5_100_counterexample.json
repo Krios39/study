@@ -1,0 +1,1631 @@
+{
+  "better_area": 4962525.729056163,
+  "better_cover": [
+    {
+      "area": 4962525.729056163,
+      "centre_id": 46,
+      "radius": 1256.8297418505022,
+      "radius_squared": 1579621,
+      "set_size": 100
+    }
+  ],
+  "candidates": [
+    {
+      "centre_id": 1,
+      "radius_squared": 192953,
+      "set_size": 10
+    },
+    {
+      "centre_id": 1,
+      "radius_squared": 4974506,
+      "set_size": 100
+    },
+    {
+      "centre_id": 2,
+      "radius_squared": 237058,
+      "set_size": 10
+    },
+    {
+      "centre_id": 2,
+      "radius_squared": 3530368,
+      "set_size": 100
+    },
+    {
+      "centre_id": 3,
+      "radius_squared": 134657,
+      "set_size": 10
+    },
+    {
+      "centre_id": 3,
+      "radius_squared": 5209885,
+      "set_size": 100
+    },
+    {
+      "centre_id": 4,
+      "radius_squared": 126740,
+      "set_size": 10
+    },
+    {
+      "centre_id": 4,
+      "radius_squared": 3680849,
+      "set_size": 100
+    },
+    {
+      "centre_id": 5,
+      "radius_squared": 143905,
+      "set_size": 10
+    },
+    {
+      "centre_id": 5,
+      "radius_squared": 4387997,
+      "set_size": 100
+    },
+    {
+      "centre_id": 6,
+      "radius_squared": 116644,
+      "set_size": 10
+    },
+    {
+      "centre_id": 6,
+      "radius_squared": 3399625,
+      "set_size": 100
+    },
+    {
+      "centre_id": 7,
+      "radius_squared": 54577,
+      "set_size": 10
+    },
+    {
+      "centre_id": 7,
+      "radius_squared": 4786304,
+      "set_size": 100
+    },
+    {
+      "centre_id": 8,
+      "radius_squared": 55400,
+      "set_size": 10
+    },
+    {
+      "centre_id": 8,
+      "radius_squared": 4507265,
+      "set_size": 100
+    },
+    {
+      "centre_id": 9,
+      "radius_squared": 58565,
+      "set_size": 10
+    },
+    {
+      "centre_id": 9,
+      "radius_squared": 3946297,
+      "set_size": 100
+    },
+    {
+      "centre_id": 10,
+      "radius_squared": 210920,
+      "set_size": 10
+    },
+    {
+      "centre_id": 10,
+      "radius_squared": 3558685,
+      "set_size": 100
+    },
+    {
+      "centre_id": 11,
+      "radius_squared": 66065,
+      "set_size": 10
+    },
+    {
+      "centre_id": 11,
+      "radius_squared": 3923604,
+      "set_size": 100
+    },
+    {
+      "centre_id": 12,
+      "radius_squared": 148936,
+      "set_size": 10
+    },
+    {
+      "centre_id": 12,
+      "radius_squared": 5403257,
+      "set_size": 100
+    },
+    {
+      "centre_id": 13,
+      "radius_squared": 133498,
+      "set_size": 10
+    },
+    {
+      "centre_id": 13,
+      "radius_squared": 2918642,
+      "set_size": 100
+    },
+    {
+      "centre_id": 14,
+      "radius_squared": 127250,
+      "set_size": 10
+    },
+    {
+      "centre_id": 14,
+      "radius_squared": 4180186,
+      "set_size": 100
+    },
+    {
+      "centre_id": 15,
+      "radius_squared": 291645,
+      "set_size": 10
+    },
+    {
+      "centre_id": 15,
+      "radius_squared": 4985825,
+      "set_size": 100
+    },
+    {
+      "centre_id": 16,
+      "radius_squared": 213021,
+      "set_size": 10
+    },
+    {
+      "centre_id": 16,
+      "radius_squared": 5120242,
+      "set_size": 100
+    },
+    {
+      "centre_id": 17,
+      "radius_squared": 46280,
+      "set_size": 10
+    },
+    {
+      "centre_id": 17,
+      "radius_squared": 5177005,
+      "set_size": 100
+    },
+    {
+      "centre_id": 18,
+      "radius_squared": 165373,
+      "set_size": 10
+    },
+    {
+      "centre_id": 18,
+      "radius_squared": 4095572,
+      "set_size": 100
+    },
+    {
+      "centre_id": 19,
+      "radius_squared": 60074,
+      "set_size": 10
+    },
+    {
+      "centre_id": 19,
+      "radius_squared": 3701269,
+      "set_size": 100
+    },
+    {
+      "centre_id": 20,
+      "radius_squared": 215060,
+      "set_size": 10
+    },
+    {
+      "centre_id": 20,
+      "radius_squared": 5564672,
+      "set_size": 100
+    },
+    {
+      "centre_id": 21,
+      "radius_squared": 98818,
+      "set_size": 10
+    },
+    {
+      "centre_id": 21,
+      "radius_squared": 2895770,
+      "set_size": 100
+    },
+    {
+      "centre_id": 22,
+      "radius_squared": 166473,
+      "set_size": 10
+    },
+    {
+      "centre_id": 22,
+      "radius_squared": 4573348,
+      "set_size": 100
+    },
+    {
+      "centre_id": 23,
+      "radius_squared": 49625,
+      "set_size": 10
+    },
+    {
+      "centre_id": 23,
+      "radius_squared": 4548484,
+      "set_size": 100
+    },
+    {
+      "centre_id": 24,
+      "radius_squared": 121153,
+      "set_size": 10
+    },
+    {
+      "centre_id": 24,
+      "radius_squared": 1889768,
+      "set_size": 100
+    },
+    {
+      "centre_id": 25,
+      "radius_squared": 87309,
+      "set_size": 10
+    },
+    {
+      "centre_id": 25,
+      "radius_squared": 5441780,
+      "set_size": 100
+    },
+    {
+      "centre_id": 26,
+      "radius_squared": 128042,
+      "set_size": 10
+    },
+    {
+      "centre_id": 26,
+      "radius_squared": 4709140,
+      "set_size": 100
+    },
+    {
+      "centre_id": 27,
+      "radius_squared": 136357,
+      "set_size": 10
+    },
+    {
+      "centre_id": 27,
+      "radius_squared": 4803796,
+      "set_size": 100
+    },
+    {
+      "centre_id": 28,
+      "radius_squared": 82314,
+      "set_size": 10
+    },
+    {
+      "centre_id": 28,
+      "radius_squared": 2468485,
+      "set_size": 100
+    },
+    {
+      "centre_id": 29,
+      "radius_squared": 146365,
+      "set_size": 10
+    },
+    {
+      "centre_id": 29,
+      "radius_squared": 5447312,
+      "set_size": 100
+    },
+    {
+      "centre_id": 30,
+      "radius_squared": 76585,
+      "set_size": 10
+    },
+    {
+      "centre_id": 30,
+      "radius_squared": 3586306,
+      "set_size": 100
+    },
+    {
+      "centre_id": 31,
+      "radius_squared": 76585,
+      "set_size": 10
+    },
+    {
+      "centre_id": 31,
+      "radius_squared": 3987341,
+      "set_size": 100
+    },
+    {
+      "centre_id": 32,
+      "radius_squared": 70346,
+      "set_size": 10
+    },
+    {
+      "centre_id": 32,
+      "radius_squared": 4160405,
+      "set_size": 100
+    },
+    {
+      "centre_id": 33,
+      "radius_squared": 74421,
+      "set_size": 10
+    },
+    {
+      "centre_id": 33,
+      "radius_squared": 3729065,
+      "set_size": 100
+    },
+    {
+      "centre_id": 34,
+      "radius_squared": 83753,
+      "set_size": 10
+    },
+    {
+      "centre_id": 34,
+      "radius_squared": 4473181,
+      "set_size": 100
+    },
+    {
+      "centre_id": 35,
+      "radius_squared": 87994,
+      "set_size": 10
+    },
+    {
+      "centre_id": 35,
+      "radius_squared": 3874725,
+      "set_size": 100
+    },
+    {
+      "centre_id": 36,
+      "radius_squared": 171477,
+      "set_size": 10
+    },
+    {
+      "centre_id": 36,
+      "radius_squared": 5701205,
+      "set_size": 100
+    },
+    {
+      "centre_id": 37,
+      "radius_squared": 107386,
+      "set_size": 10
+    },
+    {
+      "centre_id": 37,
+      "radius_squared": 2103172,
+      "set_size": 100
+    },
+    {
+      "centre_id": 38,
+      "radius_squared": 281588,
+      "set_size": 10
+    },
+    {
+      "centre_id": 38,
+      "radius_squared": 5267474,
+      "set_size": 100
+    },
+    {
+      "centre_id": 39,
+      "radius_squared": 56338,
+      "set_size": 10
+    },
+    {
+      "centre_id": 39,
+      "radius_squared": 5275125,
+      "set_size": 100
+    },
+    {
+      "centre_id": 40,
+      "radius_squared": 281588,
+      "set_size": 10
+    },
+    {
+      "centre_id": 40,
+      "radius_squared": 4493498,
+      "set_size": 100
+    },
+    {
+      "centre_id": 41,
+      "radius_squared": 193937,
+      "set_size": 10
+    },
+    {
+      "centre_id": 41,
+      "radius_squared": 4126824,
+      "set_size": 100
+    },
+    {
+      "centre_id": 42,
+      "radius_squared": 79605,
+      "set_size": 10
+    },
+    {
+      "centre_id": 42,
+      "radius_squared": 4234709,
+      "set_size": 100
+    },
+    {
+      "centre_id": 43,
+      "radius_squared": 85396,
+      "set_size": 10
+    },
+    {
+      "centre_id": 43,
+      "radius_squared": 3060136,
+      "set_size": 100
+    },
+    {
+      "centre_id": 44,
+      "radius_squared": 172346,
+      "set_size": 10
+    },
+    {
+      "centre_id": 44,
+      "radius_squared": 2826785,
+      "set_size": 100
+    },
+    {
+      "centre_id": 45,
+      "radius_squared": 190858,
+      "set_size": 10
+    },
+    {
+      "centre_id": 45,
+      "radius_squared": 5083370,
+      "set_size": 100
+    },
+    {
+      "centre_id": 46,
+      "radius_squared": 148978,
+      "set_size": 10
+    },
+    {
+      "centre_id": 46,
+      "radius_squared": 1579621,
+      "set_size": 100
+    },
+    {
+      "centre_id": 47,
+      "radius_squared": 114580,
+      "set_size": 10
+    },
+    {
+      "centre_id": 47,
+      "radius_squared": 3617861,
+      "set_size": 100
+    },
+    {
+      "centre_id": 48,
+      "radius_squared": 348725,
+      "set_size": 10
+    },
+    {
+      "centre_id": 48,
+      "radius_squared": 6303124,
+      "set_size": 100
+    },
+    {
+      "centre_id": 49,
+      "radius_squared": 120761,
+      "set_size": 10
+    },
+    {
+      "centre_id": 49,
+      "radius_squared": 1639208,
+      "set_size": 100
+    },
+    {
+      "centre_id": 50,
+      "radius_squared": 417709,
+      "set_size": 10
+    },
+    {
+      "centre_id": 50,
+      "radius_squared": 5504426,
+      "set_size": 100
+    },
+    {
+      "centre_id": 51,
+      "radius_squared": 139666,
+      "set_size": 10
+    },
+    {
+      "centre_id": 51,
+      "radius_squared": 3915652,
+      "set_size": 100
+    },
+    {
+      "centre_id": 52,
+      "radius_squared": 203108,
+      "set_size": 10
+    },
+    {
+      "centre_id": 52,
+      "radius_squared": 4204496,
+      "set_size": 100
+    },
+    {
+      "centre_id": 53,
+      "radius_squared": 167645,
+      "set_size": 10
+    },
+    {
+      "centre_id": 53,
+      "radius_squared": 2827793,
+      "set_size": 100
+    },
+    {
+      "centre_id": 54,
+      "radius_squared": 86305,
+      "set_size": 10
+    },
+    {
+      "centre_id": 54,
+      "radius_squared": 4627080,
+      "set_size": 100
+    },
+    {
+      "centre_id": 55,
+      "radius_squared": 88153,
+      "set_size": 10
+    },
+    {
+      "centre_id": 55,
+      "radius_squared": 3700496,
+      "set_size": 100
+    },
+    {
+      "centre_id": 56,
+      "radius_squared": 481157,
+      "set_size": 10
+    },
+    {
+      "centre_id": 56,
+      "radius_squared": 5862946,
+      "set_size": 100
+    },
+    {
+      "centre_id": 57,
+      "radius_squared": 222664,
+      "set_size": 10
+    },
+    {
+      "centre_id": 57,
+      "radius_squared": 3550653,
+      "set_size": 100
+    },
+    {
+      "centre_id": 58,
+      "radius_squared": 104450,
+      "set_size": 10
+    },
+    {
+      "centre_id": 58,
+      "radius_squared": 2615365,
+      "set_size": 100
+    },
+    {
+      "centre_id": 59,
+      "radius_squared": 135545,
+      "set_size": 10
+    },
+    {
+      "centre_id": 59,
+      "radius_squared": 5106964,
+      "set_size": 100
+    },
+    {
+      "centre_id": 60,
+      "radius_squared": 124525,
+      "set_size": 10
+    },
+    {
+      "centre_id": 60,
+      "radius_squared": 5701205,
+      "set_size": 100
+    },
+    {
+      "centre_id": 61,
+      "radius_squared": 212042,
+      "set_size": 10
+    },
+    {
+      "centre_id": 61,
+      "radius_squared": 4538585,
+      "set_size": 100
+    },
+    {
+      "centre_id": 62,
+      "radius_squared": 161089,
+      "set_size": 10
+    },
+    {
+      "centre_id": 62,
+      "radius_squared": 2735186,
+      "set_size": 100
+    },
+    {
+      "centre_id": 63,
+      "radius_squared": 178760,
+      "set_size": 10
+    },
+    {
+      "centre_id": 63,
+      "radius_squared": 3135250,
+      "set_size": 100
+    },
+    {
+      "centre_id": 64,
+      "radius_squared": 113060,
+      "set_size": 10
+    },
+    {
+      "centre_id": 64,
+      "radius_squared": 4799845,
+      "set_size": 100
+    },
+    {
+      "centre_id": 65,
+      "radius_squared": 171652,
+      "set_size": 10
+    },
+    {
+      "centre_id": 65,
+      "radius_squared": 3329893,
+      "set_size": 100
+    },
+    {
+      "centre_id": 66,
+      "radius_squared": 66596,
+      "set_size": 10
+    },
+    {
+      "centre_id": 66,
+      "radius_squared": 3814618,
+      "set_size": 100
+    },
+    {
+      "centre_id": 67,
+      "radius_squared": 183361,
+      "set_size": 10
+    },
+    {
+      "centre_id": 67,
+      "radius_squared": 4999178,
+      "set_size": 100
+    },
+    {
+      "centre_id": 68,
+      "radius_squared": 59725,
+      "set_size": 10
+    },
+    {
+      "centre_id": 68,
+      "radius_squared": 4986218,
+      "set_size": 100
+    },
+    {
+      "centre_id": 69,
+      "radius_squared": 100426,
+      "set_size": 10
+    },
+    {
+      "centre_id": 69,
+      "radius_squared": 2797925,
+      "set_size": 100
+    },
+    {
+      "centre_id": 70,
+      "radius_squared": 178760,
+      "set_size": 10
+    },
+    {
+      "centre_id": 70,
+      "radius_squared": 4162849,
+      "set_size": 100
+    },
+    {
+      "centre_id": 71,
+      "radius_squared": 127961,
+      "set_size": 10
+    },
+    {
+      "centre_id": 71,
+      "radius_squared": 4562330,
+      "set_size": 100
+    },
+    {
+      "centre_id": 72,
+      "radius_squared": 139520,
+      "set_size": 10
+    },
+    {
+      "centre_id": 72,
+      "radius_squared": 2959492,
+      "set_size": 100
+    },
+    {
+      "centre_id": 73,
+      "radius_squared": 161089,
+      "set_size": 10
+    },
+    {
+      "centre_id": 73,
+      "radius_squared": 2869805,
+      "set_size": 100
+    },
+    {
+      "centre_id": 74,
+      "radius_squared": 158465,
+      "set_size": 10
+    },
+    {
+      "centre_id": 74,
+      "radius_squared": 3040685,
+      "set_size": 100
+    },
+    {
+      "centre_id": 75,
+      "radius_squared": 123490,
+      "set_size": 10
+    },
+    {
+      "centre_id": 75,
+      "radius_squared": 1959325,
+      "set_size": 100
+    },
+    {
+      "centre_id": 76,
+      "radius_squared": 61393,
+      "set_size": 10
+    },
+    {
+      "centre_id": 76,
+      "radius_squared": 5083601,
+      "set_size": 100
+    },
+    {
+      "centre_id": 77,
+      "radius_squared": 236570,
+      "set_size": 10
+    },
+    {
+      "centre_id": 77,
+      "radius_squared": 4703725,
+      "set_size": 100
+    },
+    {
+      "centre_id": 78,
+      "radius_squared": 108333,
+      "set_size": 10
+    },
+    {
+      "centre_id": 78,
+      "radius_squared": 1819909,
+      "set_size": 100
+    },
+    {
+      "centre_id": 79,
+      "radius_squared": 58301,
+      "set_size": 10
+    },
+    {
+      "centre_id": 79,
+      "radius_squared": 4224464,
+      "set_size": 100
+    },
+    {
+      "centre_id": 80,
+      "radius_squared": 146173,
+      "set_size": 10
+    },
+    {
+      "centre_id": 80,
+      "radius_squared": 2812340,
+      "set_size": 100
+    },
+    {
+      "centre_id": 81,
+      "radius_squared": 109993,
+      "set_size": 10
+    },
+    {
+      "centre_id": 81,
+      "radius_squared": 2691373,
+      "set_size": 100
+    },
+    {
+      "centre_id": 82,
+      "radius_squared": 114592,
+      "set_size": 10
+    },
+    {
+      "centre_id": 82,
+      "radius_squared": 3438788,
+      "set_size": 100
+    },
+    {
+      "centre_id": 83,
+      "radius_squared": 96400,
+      "set_size": 10
+    },
+    {
+      "centre_id": 83,
+      "radius_squared": 3835332,
+      "set_size": 100
+    },
+    {
+      "centre_id": 84,
+      "radius_squared": 702836,
+      "set_size": 10
+    },
+    {
+      "centre_id": 84,
+      "radius_squared": 6303124,
+      "set_size": 100
+    },
+    {
+      "centre_id": 85,
+      "radius_squared": 79721,
+      "set_size": 10
+    },
+    {
+      "centre_id": 85,
+      "radius_squared": 4690969,
+      "set_size": 100
+    },
+    {
+      "centre_id": 86,
+      "radius_squared": 351073,
+      "set_size": 10
+    },
+    {
+      "centre_id": 86,
+      "radius_squared": 5196401,
+      "set_size": 100
+    },
+    {
+      "centre_id": 87,
+      "radius_squared": 118337,
+      "set_size": 10
+    },
+    {
+      "centre_id": 87,
+      "radius_squared": 4068145,
+      "set_size": 100
+    },
+    {
+      "centre_id": 88,
+      "radius_squared": 117280,
+      "set_size": 10
+    },
+    {
+      "centre_id": 88,
+      "radius_squared": 2220356,
+      "set_size": 100
+    },
+    {
+      "centre_id": 89,
+      "radius_squared": 145466,
+      "set_size": 10
+    },
+    {
+      "centre_id": 89,
+      "radius_squared": 3078868,
+      "set_size": 100
+    },
+    {
+      "centre_id": 90,
+      "radius_squared": 60493,
+      "set_size": 10
+    },
+    {
+      "centre_id": 90,
+      "radius_squared": 5533789,
+      "set_size": 100
+    },
+    {
+      "centre_id": 91,
+      "radius_squared": 162045,
+      "set_size": 10
+    },
+    {
+      "centre_id": 91,
+      "radius_squared": 2890760,
+      "set_size": 100
+    },
+    {
+      "centre_id": 92,
+      "radius_squared": 86605,
+      "set_size": 10
+    },
+    {
+      "centre_id": 92,
+      "radius_squared": 3727690,
+      "set_size": 100
+    },
+    {
+      "centre_id": 93,
+      "radius_squared": 150250,
+      "set_size": 10
+    },
+    {
+      "centre_id": 93,
+      "radius_squared": 3122370,
+      "set_size": 100
+    },
+    {
+      "centre_id": 94,
+      "radius_squared": 129449,
+      "set_size": 10
+    },
+    {
+      "centre_id": 94,
+      "radius_squared": 1818913,
+      "set_size": 100
+    },
+    {
+      "centre_id": 95,
+      "radius_squared": 75041,
+      "set_size": 10
+    },
+    {
+      "centre_id": 95,
+      "radius_squared": 3128530,
+      "set_size": 100
+    },
+    {
+      "centre_id": 96,
+      "radius_squared": 121153,
+      "set_size": 10
+    },
+    {
+      "centre_id": 96,
+      "radius_squared": 1875077,
+      "set_size": 100
+    },
+    {
+      "centre_id": 97,
+      "radius_squared": 108424,
+      "set_size": 10
+    },
+    {
+      "centre_id": 97,
+      "radius_squared": 4381508,
+      "set_size": 100
+    },
+    {
+      "centre_id": 98,
+      "radius_squared": 110005,
+      "set_size": 10
+    },
+    {
+      "centre_id": 98,
+      "radius_squared": 3642277,
+      "set_size": 100
+    },
+    {
+      "centre_id": 99,
+      "radius_squared": 70810,
+      "set_size": 10
+    },
+    {
+      "centre_id": 99,
+      "radius_squared": 3354706,
+      "set_size": 100
+    },
+    {
+      "centre_id": 100,
+      "radius_squared": 201269,
+      "set_size": 10
+    },
+    {
+      "centre_id": 100,
+      "radius_squared": 3010241,
+      "set_size": 100
+    }
+  ],
+  "greedy_area": 6118710.3653935455,
+  "greedy_cover": [
+    {
+      "area": 145392.90800813562,
+      "centre_id": 17,
+      "radius": 215.1278689523977,
+      "radius_squared": 46280,
+      "set_size": 10
+    },
+    {
+      "area": 183987.37375748623,
+      "centre_id": 9,
+      "radius": 242.00206610688264,
+      "radius_squared": 58565,
+      "set_size": 10
+    },
+    {
+      "area": 187631.62123565038,
+      "centre_id": 68,
+      "radius": 244.38698819699874,
+      "radius_squared": 59725,
+      "set_size": 10
+    },
+    {
+      "area": 207549.31865940968,
+      "centre_id": 11,
+      "radius": 257.0311265197272,
+      "radius_squared": 66065,
+      "set_size": 10
+    },
+    {
+      "area": 235748.25431803166,
+      "centre_id": 95,
+      "radius": 273.93612394133055,
+      "radius_squared": 75041,
+      "set_size": 10
+    },
+    {
+      "area": 328139.3526674539,
+      "centre_id": 58,
+      "radius": 323.18725222384626,
+      "radius_squared": 104450,
+      "set_size": 10
+    },
+    {
+      "area": 368445.9864130109,
+      "centre_id": 88,
+      "radius": 342.4616766880639,
+      "radius_squared": 117280,
+      "set_size": 10
+    },
+    {
+      "area": 276940.81719190103,
+      "centre_id": 55,
+      "radius": 296.90570893803977,
+      "radius_squared": 88153,
+      "set_size": 10
+    },
+    {
+      "area": 599598.0906788408,
+      "centre_id": 45,
+      "radius": 436.87297925140666,
+      "radius_squared": 190858,
+      "set_size": 10
+    },
+    {
+      "area": 459216.0229531808,
+      "centre_id": 80,
+      "radius": 382.32577731562907,
+      "radius_squared": 146173,
+      "set_size": 10
+    },
+    {
+      "area": 916229.7894561952,
+      "centre_id": 15,
+      "radius": 540.0416650592804,
+      "radius_squared": 291645,
+      "set_size": 10
+    },
+    {
+      "area": 250086.48318901547,
+      "centre_id": 42,
+      "radius": 282.14358046923553,
+      "radius_squared": 79605,
+      "set_size": 10
+    },
+    {
+      "area": 561591.1027557114,
+      "centre_id": 63,
+      "radius": 422.8001892147164,
+      "radius_squared": 178760,
+      "set_size": 10
+    },
+    {
+      "area": 337363.06869839353,
+      "centre_id": 37,
+      "radius": 327.6980317304332,
+      "radius_squared": 107386,
+      "set_size": 10
+    },
+    {
+      "area": 398165.45291597035,
+      "centre_id": 4,
+      "radius": 356.0056179332006,
+      "radius_squared": 126740,
+      "set_size": 10
+    },
+    {
+      "area": 662624.7224951591,
+      "centre_id": 10,
+      "radius": 459.26027478979717,
+      "radius_squared": 210920,
+      "set_size": 10
+    }
+  ],
+  "points": [
+    [
+      1,
+      1754,
+      1603
+    ],
+    [
+      2,
+      411,
+      674
+    ],
+    [
+      3,
+      1599,
+      130
+    ],
+    [
+      4,
+      1768,
+      936
+    ],
+    [
+      5,
+      1028,
+      1950
+    ],
+    [
+      6,
+      1116,
+      1620
+    ],
+    [
+      7,
+      236,
+      1705
+    ],
+    [
+      8,
+      452,
+      1794
+    ],
+    [
+      9,
+      114,
+      1264
+    ],
+    [
+      10,
+      558,
+      524
+    ],
+    [
+      11,
+      1179,
+      1742
+    ],
+    [
+      12,
+      1893,
+      380
+    ],
+    [
+      13,
+      1498,
+      1105
+    ],
+    [
+      14,
+      1040,
+      1889
+    ],
+    [
+      15,
+      100,
+      490
+    ],
+    [
+      16,
+      1770,
+      1633
+    ],
+    [
+      17,
+      258,
+      1838
+    ],
+    [
+      18,
+      1311,
+      227
+    ],
+    [
+      19,
+      155,
+      1205
+    ],
+    [
+      20,
+      1615,
+      1900
+    ],
+    [
+      21,
+      455,
+      1242
+    ],
+    [
+      22,
+      1541,
+      1676
+    ],
+    [
+      23,
+      434,
+      1793
+    ],
+    [
+      24,
+      1121,
+      1026
+    ],
+    [
+      25,
+      128,
+      1803
+    ],
+    [
+      26,
+      1505,
+      197
+    ],
+    [
+      27,
+      1395,
+      1854
+    ],
+    [
+      28,
+      1406,
+      993
+    ],
+    [
+      29,
+      0,
+      1681
+    ],
+    [
+      30,
+      158,
+      1139
+    ],
+    [
+      31,
+      209,
+      1411
+    ],
+    [
+      32,
+      350,
+      1608
+    ],
+    [
+      33,
+      185,
+      1281
+    ],
+    [
+      34,
+      1193,
+      1889
+    ],
+    [
+      35,
+      87,
+      1163
+    ],
+    [
+      36,
+      1684,
+      65
+    ],
+    [
+      37,
+      690,
+      1121
+    ],
+    [
+      38,
+      1966,
+      1459
+    ],
+    [
+      39,
+      235,
+      1847
+    ],
+    [
+      40,
+      602,
+      199
+    ],
+    [
+      41,
+      1156,
+      118
+    ],
+    [
+      42,
+      162,
+      1450
+    ],
+    [
+      43,
+      1583,
+      941
+    ],
+    [
+      44,
+      1060,
+      467
+    ],
+    [
+      45,
+      1852,
+      1533
+    ],
+    [
+      46,
+      969,
+      1005
+    ],
+    [
+      47,
+      1049,
+      1725
+    ],
+    [
+      48,
+      1779,
+      1962
+    ],
+    [
+      49,
+      882,
+      1063
+    ],
+    [
+      50,
+      404,
+      61
+    ],
+    [
+      51,
+      1533,
+      1468
+    ],
+    [
+      52,
+      1940,
+      1017
+    ],
+    [
+      53,
+      1171,
+      1387
+    ],
+    [
+      54,
+      1691,
+      409
+    ],
+    [
+      55,
+      404,
+      1501
+    ],
+    [
+      56,
+      44,
+      273
+    ],
+    [
+      57,
+      1072,
+      241
+    ],
+    [
+      58,
+      626,
+      828
+    ],
+    [
+      59,
+      1835,
+      411
+    ],
+    [
+      60,
+      77,
+      1831
+    ],
+    [
+      61,
+      16,
+      766
+    ],
+    [
+      62,
+      765,
+      1440
+    ],
+    [
+      63,
+      914,
+      417
+    ],
+    [
+      64,
+      1580,
+      237
+    ],
+    [
+      65,
+      1566,
+      1206
+    ],
+    [
+      66,
+      156,
+      1273
+    ],
+    [
+      67,
+      1854,
+      474
+    ],
+    [
+      68,
+      1710,
+      308
+    ],
+    [
+      69,
+      386,
+      1036
+    ],
+    [
+      70,
+      1252,
+      163
+    ],
+    [
+      71,
+      1072,
+      1975
+    ],
+    [
+      72,
+      1403,
+      735
+    ],
+    [
+      73,
+      1165,
+      1407
+    ],
+    [
+      74,
+      445,
+      839
+    ],
+    [
+      75,
+      1043,
+      818
+    ],
+    [
+      76,
+      360,
+      1890
+    ],
+    [
+      77,
+      1980,
+      1222
+    ],
+    [
+      78,
+      932,
+      912
+    ],
+    [
+      79,
+      384,
+      1657
+    ],
+    [
+      80,
+      1129,
+      525
+    ],
+    [
+      81,
+      1335,
+      778
+    ],
+    [
+      82,
+      961,
+      1716
+    ],
+    [
+      83,
+      1643,
+      655
+    ],
+    [
+      84,
+      159,
+      44
+    ],
+    [
+      85,
+      472,
+      1860
+    ],
+    [
+      86,
+      484,
+      86
+    ],
+    [
+      87,
+      1051,
+      1853
+    ],
+    [
+      88,
+      1175,
+      1134
+    ],
+    [
+      89,
+      656,
+      1487
+    ],
+    [
+      90,
+      274,
+      1948
+    ],
+    [
+      91,
+      553,
+      784
+    ],
+    [
+      92,
+      92,
+      1023
+    ],
+    [
+      93,
+      1578,
+      1097
+    ],
+    [
+      94,
+      811,
+      1093
+    ],
+    [
+      95,
+      1538,
+      834
+    ],
+    [
+      96,
+      773,
+      1033
+    ],
+    [
+      97,
+      1675,
+      479
+    ],
+    [
+      98,
+      1623,
+      712
+    ],
+    [
+      99,
+      218,
+      1121
+    ],
+    [
+      100,
+      914,
+      458
+    ]
+  ]
+}
