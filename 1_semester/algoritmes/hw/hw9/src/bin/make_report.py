@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -822,6 +823,10 @@ t4_html = f"""<details>
             Newly covered points per step: N = 100: {" ".join(t4_tail[100])}; N = 500: {" ".join(t4_tail[500])}; N = 2000: {" ".join(t4_tail[2000])}.
         </p>
 
+        <h3>Step by Step</h3>
+        <p style="font-size: 13px; color: #475569;">The recorded runs on 100 points replayed: T4 here, T5 and the B1 improvements in the second tab. Dashed circles show what greedy takes next (black) and the two rules it does not follow: most new points (purple) and smallest disk (orange).</p>
+        <div id="coverWidget"></div>
+
         <h3>First Three Choices on 100 Points</h3>
         {table(["Step", "Centre ID", "Radius", "Set size", "Newly covered", "Area", "Ratio"], t4_first)}
         <p>
@@ -898,6 +903,8 @@ t5_html = f"""<details>
             Given the choice, greedy takes almost only the smallest disks: with a fixed ratio rule, small disks in dense areas have the best points-per-area value.
             The gain is largest on 500 points because K = 50 in T4 forced every disk to be large.
         </p>
+
+        <p style="font-size: 13px; color: #475569;">The T5 run on 100 points can be replayed step by step in the second tab of the widget in T4.</p>
 
         <h3>Before and After</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
@@ -1006,6 +1013,8 @@ b1_html = f"""<details>
             <div>{figure(BIN / "tsp500" / "HW9_B1_500_best.png", "Improved cover of 500 points", 900)}<p style="font-size: 13px; text-align: center;">N = 500, improved: {b1res[500]['searched']['disks']} disks, area {b1res[500]['searched']['area']:,.0f}</p></div>
         </div>
 
+        <p style="font-size: 13px; color: #475569;">Every improvement on 100 points can be replayed in the second tab of the widget in T4, after the greedy steps.</p>
+
         <h3>What Helped</h3>
         <p>
             Greedy judges one disk at a time and buys many small disks, paying for every overlap between them. It cannot see that one somewhat larger disk would make several small ones unnecessary, because at the moment of choice that disk has a lower ratio.
@@ -1015,5 +1024,258 @@ b1_html = f"""<details>
     </div>
 </details>
 """
-(HW / "report.html").write_text(head + t1_html + t2_html + t3_html + t4_html + t5_html + b1_html + script + t2_script + "</body>\n</html>\n", encoding="utf-8")
+def cover_data():
+    n = 100
+    pts = [tuple(map(int, line.split()[1:])) for line in (HW / f"HW9_TSP_{n}.txt").read_text().splitlines() if line.strip() and not line.startswith("#")]
+    inside = lambda c, r2, j: (pts[c - 1][0] - pts[j][0]) ** 2 + (pts[c - 1][1] - pts[j][1]) ** 2 <= r2
+    members = lambda c, r2: {j for j in range(n) if inside(c, r2, j)}
+    data = {"pts": pts}
+    for name in ("T4", "T5"):
+        rows = (BIN / "tsp100" / f"HW9_{name}_100_candidates.csv").read_text().splitlines()[1:]
+        family = [[int(r.split(",")[0]), int(r.split(",")[1])] for r in rows]
+        rows = (BIN / "tsp100" / f"HW9_{name}_100_selected.csv").read_text().splitlines()[1:]
+        selected = [[int(r.split(",")[1]), int(r.split(",")[2])] for r in rows]
+        covered = set()
+        for c, r2 in selected:
+            scored = [(len(members(a, b) - covered), a, b) for a, b in family]
+            top = min((s for s in scored if s[0] > 0), key=lambda s: (-s[0] / s[2], s[1], s[2]))
+            assert (top[1], top[2]) == (c, r2)
+            covered |= members(c, r2)
+        assert len(covered) == n
+        data[name.lower()] = {"family": family, "selected": selected}
+    history = json.loads((BIN / "tsp100" / "HW9_B1_100_history.json").read_text())
+    assert sorted(map(tuple, history[0]["cover"])) == sorted(map(tuple, data["t5"]["selected"]))
+    if sorted(map(tuple, history[-1]["cover"])) == sorted(map(tuple, history[-2]["cover"])):
+        history.pop()
+    family = set(map(tuple, data["t5"]["family"]))
+    costs = []
+    for h in history:
+        assert set(map(tuple, h["cover"])) <= family
+        assert set().union(*(members(c, r2) for c, r2 in h["cover"])) == set(range(n))
+        costs.append(math.pi * sum(r2 for _, r2 in h["cover"]))
+    assert all(b <= a for a, b in zip(costs, costs[1:]))
+    assert abs(costs[-1] - b1res[100]["searched"]["area"]) < 1e-6 and abs(costs[0] - b1res[100]["greedy"]["area"]) < 1e-6
+    data["b1"] = history[1:]
+    return data
+
+
+cover_script = """
+<script>
+window.addEventListener('load', () => {
+    const D = __COVERDATA__;
+    const root = document.getElementById('coverWidget');
+    root.className = 'trace-widget';
+    root.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; gap: 4px; border-bottom: 1px solid #e2e8f0;">
+                <button class="trace-tab active cvw-mode" data-mode="t4">T4 disks, greedy</button>
+                <button class="trace-tab cvw-mode" data-mode="t5">T5 disks, greedy, then B1</button>
+            </div>
+            <button class="trace-btn cvw-full">⛶ Full screen</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; margin: 10px 0 6px; flex-wrap: wrap; font-size: 14px;">
+            <button class="trace-btn cvw-back">◀ Step</button>
+            <button class="trace-btn cvw-play">▶ Play</button>
+            <button class="trace-btn cvw-next">Step ▶</button>
+            <button class="trace-btn cvw-end">⏭ End</button>
+            <button class="trace-btn cvw-reset">↺ Start</button>
+            <input type="range" class="cvw-step" min="0" value="0" style="width: 200px;">
+            <span class="cvw-status" style="font-weight: bold;"></span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start;">
+            <div>
+                <canvas class="cvw-map" width="900" height="900" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;"></canvas>
+                <canvas class="cvw-chart" width="900" height="200" style="width: 100%; margin-top: 8px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;"></canvas>
+                <div style="font-size: 12px; color: #64748b;">Total area of the current cover at every step. Click to jump.</div>
+            </div>
+            <div style="font-size: 13px; color: #334155; line-height: 1.5; overflow-x: auto;">
+                <div class="cvw-info"></div>
+                <div class="cvw-table" style="margin-top: 10px;"></div>
+                <div class="cvw-point" style="margin-top: 10px;"></div>
+                <div style="font-size: 12px; color: #64748b; margin-top: 10px;">Click a point to compare the disks centred there.</div>
+            </div>
+        </div>`;
+    const q = s => root.querySelector(s);
+    const key = d => d[0] + ':' + d[1];
+    const area = r2 => Math.PI * r2;
+    const members = d => {
+        const c = D.pts[d[0] - 1];
+        return D.pts.map((p, j) => (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 <= d[1] ? j : -1).filter(j => j >= 0);
+    };
+    const memberCache = {};
+    const inside = d => memberCache[key(d)] || (memberCache[key(d)] = members(d));
+    const colourIndex = {};
+    const colourOf = d => {
+        const k = key(d);
+        if (!(k in colourIndex)) colourIndex[k] = Object.keys(colourIndex).length;
+        return `hsl(${(colourIndex[k] * 0.618033988749895 % 1) * 360}, 75%, 45%)`;
+    };
+    const STAGE = {
+        start: ['Start', '#64748b'], greedy: ['Weighted greedy', '#3b82f6'], prune: ['B1: redundant disks', '#ef4444'],
+        replace: ['B1: replacements', '#f59e0b'], search: ['B1: destroy and repair', '#16a34a'], final: ['B1: final polish', '#16a34a'],
+    };
+    function buildSteps(m) {
+        const steps = [{ stage: 'start', cover: [] }];
+        D[m].selected.forEach((d, i) => steps.push({ stage: 'greedy', cover: D[m].selected.slice(0, i + 1), picked: d }));
+        if (m === 't5') D.b1.forEach(h => {
+            const prev = steps[steps.length - 1].cover, now = new Set(h.cover.map(key)), old = new Set(prev.map(key));
+            steps.push({ stage: h.stage, cover: h.cover, removed: prev.filter(d => !now.has(key(d))), added: h.cover.filter(d => !old.has(key(d))) });
+        });
+        return steps;
+    }
+    const STEPS = { t4: buildSteps('t4'), t5: buildSteps('t5') };
+    const cost = s => s.cover.reduce((a, d) => a + area(d[1]), 0);
+    const maxCost = Math.max(...Object.values(STEPS).flat().map(cost));
+    let mode = 't4', k = 0, timer = null, selected = -1;
+    const steps = () => STEPS[mode];
+    function ranking(cover) {
+        const covered = new Set(cover.flatMap(inside));
+        const list = D[mode].family.map(d => ({ d, gain: inside(d).filter(j => !covered.has(j)).length })).filter(x => x.gain > 0);
+        list.sort((a, b) => b.gain * a.d[1] - a.gain * b.d[1] || a.d[0] - b.d[0] || a.d[1] - b.d[1]);
+        list.forEach((x, i) => x.rank = i + 1);
+        return list;
+    }
+    function circle(ctx, d, stroke, width, dash, fill) {
+        const s = 900 / 1999, c = D.pts[d[0] - 1];
+        ctx.beginPath();
+        ctx.arc(c[0] * s, c[1] * s, Math.sqrt(d[1]) * s, 0, 2 * Math.PI);
+        if (fill) { ctx.globalAlpha = 0.08; ctx.fillStyle = fill; ctx.fill(); ctx.globalAlpha = 1; }
+        ctx.setLineDash(dash || []); ctx.lineWidth = width; ctx.strokeStyle = stroke; ctx.stroke(); ctx.setLineDash([]);
+    }
+    const mostNew = rank => rank.reduce((a, b) => b.gain > a.gain || (b.gain === a.gain && b.rank < a.rank) ? b : a);
+    const smallest = rank => rank.reduce((a, b) => b.d[1] < a.d[1] || (b.d[1] === a.d[1] && b.rank < a.rank) ? b : a);
+    function drawMap(s, rank) {
+        const ctx = q('.cvw-map').getContext('2d'), scale = 900 / 1999;
+        ctx.clearRect(0, 0, 900, 900);
+        s.cover.forEach(d => circle(ctx, d, colourOf(d), 2, null, colourOf(d)));
+        (s.removed || []).forEach(d => circle(ctx, d, '#dc2626', 3, [10, 7]));
+        (s.added || []).forEach(d => circle(ctx, d, '#16a34a', 5));
+        if (s.picked) circle(ctx, s.picked, '#0f172a', 4);
+        if (rank.length) {
+            circle(ctx, smallest(rank).d, '#ea580c', 3, [4, 6]);
+            circle(ctx, mostNew(rank).d, '#9333ea', 3, [4, 6]);
+            circle(ctx, rank[0].d, '#0f172a', 3, [12, 7]);
+        }
+        if (selected >= 0) D[mode].family.filter(d => d[0] === selected + 1).forEach(d => circle(ctx, d, '#0284c7', 2, [3, 4]));
+        const first = {};
+        s.cover.forEach(d => inside(d).forEach(j => { if (!(j in first)) first[j] = d; }));
+        const holes = new Set();
+        if (s.removed) {
+            const kept = s.cover.filter(d => !s.added.some(a => key(a) === key(d)));
+            const left = new Set(kept.flatMap(inside));
+            s.removed.flatMap(inside).forEach(j => { if (!left.has(j)) holes.add(j); });
+        }
+        D.pts.forEach((p, j) => {
+            ctx.beginPath(); ctx.arc(p[0] * scale, p[1] * scale, j === selected ? 9 : 6, 0, 2 * Math.PI);
+            ctx.fillStyle = first[j] ? colourOf(first[j]) : '#94a3b8'; ctx.fill();
+            if (j === selected) { ctx.lineWidth = 2; ctx.strokeStyle = '#0284c7'; ctx.stroke(); }
+            if (holes.has(j)) { ctx.lineWidth = 3; ctx.strokeStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(p[0] * scale, p[1] * scale, 12, 0, 2 * Math.PI); ctx.stroke(); }
+        });
+        ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2;
+        s.cover.forEach(d => {
+            const c = D.pts[d[0] - 1], x = c[0] * scale, y = c[1] * scale;
+            ctx.beginPath(); ctx.moveTo(x - 7, y); ctx.lineTo(x + 7, y); ctx.moveTo(x, y - 7); ctx.lineTo(x, y + 7); ctx.stroke();
+        });
+    }
+    function drawChart() {
+        const ctx = q('.cvw-chart').getContext('2d'), list = steps(), W = 900, H = 200, L = 92, R = 14, T = 12, B = 14;
+        ctx.clearRect(0, 0, W, H);
+        const X = i => L + (W - L - R) * i / (list.length - 1), Y = v => H - B - (H - T - B) * v / maxCost;
+        ctx.font = '18px system-ui, sans-serif'; ctx.fillStyle = '#64748b'; ctx.textAlign = 'right'; ctx.lineWidth = 1;
+        [0, maxCost].forEach(v => {
+            ctx.fillText((v / 1e6).toFixed(2) + ' M', L - 8, Y(v) + 6);
+            ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(W - R, Y(v)); ctx.stroke();
+        });
+        ctx.lineWidth = 3;
+        for (let i = 1; i < list.length; i++) {
+            ctx.strokeStyle = STAGE[list[i].stage][1];
+            ctx.beginPath(); ctx.moveTo(X(i - 1), Y(cost(list[i - 1]))); ctx.lineTo(X(i), Y(cost(list[i]))); ctx.stroke();
+        }
+        ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(X(k), T); ctx.lineTo(X(k), H - B); ctx.stroke();
+        ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(X(k), Y(cost(list[k])), 7, 0, 2 * Math.PI); ctx.fill();
+    }
+    const num = v => Math.round(v).toLocaleString('en-US');
+    const ratio = x => (x.gain / area(x.d[1]) * 1e5).toFixed(3);
+    const table = (head, rows) => `<table style="width: 100%; border-collapse: collapse; font-size: 12px;"><tr>${head.map(h => `<th style="text-align: left; border-bottom: 1px solid #cbd5e1; padding: 3px 5px;">${h}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map(c => `<td style="border-bottom: 1px solid #f1f5f9; padding: 3px 5px;">${c}</td>`).join('')}</tr>`).join('')}</table>`;
+    const swatch = (colour, label) => `<span style="color: ${colour}; font-weight: bold;">${label}</span>`;
+    function render() {
+        const list = steps(), s = list[k], rank = s.stage === 'start' || s.stage === 'greedy' ? ranking(s.cover) : [];
+        q('.cvw-step').max = list.length - 1; q('.cvw-step').value = k;
+        q('.cvw-status').textContent = `${k} / ${list.length - 1} · ${STAGE[s.stage][0]}`;
+        drawMap(s, rank); drawChart();
+        const total = `<b>${s.cover.length}</b> disk${s.cover.length === 1 ? '' : 's'}, total area <b>${num(cost(s))}</b>`;
+        let info = '', tab = '';
+        if (s.stage === 'start') {
+            info = 'Nothing is selected yet, so every disk still offers all of its points.';
+        } else if (s.stage === 'greedy') {
+            const prev = new Set(list[k - 1].cover.flatMap(inside)), gain = inside(s.picked).filter(j => !prev.has(j)).length;
+            info = `Selected the disk at ID ${s.picked[0]}: <b>${gain}</b> new point${gain === 1 ? '' : 's'} for area <b>${num(area(s.picked[1]))}</b> (solid black). The gains of all disks holding these points just dropped.`;
+        } else {
+            const before = cost(list[k - 1]), saved = before - cost(s);
+            if (s.stage === 'prune') info = 'All points of the red disks are covered by other selected disks, so they are simply removed.';
+            if (s.stage === 'replace') info = 'The red disks are taken out. Orange rings mark the points left without cover, and the cheapest single candidate covering them (green) is added.';
+            if (s.stage === 'search' || s.stage === 'final') info = 'Destroy and repair, best seed: a neighbourhood is rebuilt at once. Red disks left the cover and green disks joined it since the previous step shown; only improving iterations are shown, so equal-cost changes between them are merged in.';
+            info += ` Saved <b>${num(saved)}</b> (${(100 * saved / before).toFixed(2)}%).`;
+            const row = (d, what) => [what, d[0], inside(d).length, num(area(d[1]))];
+            tab = table(['', 'Centre ID', 'Set size', 'Area'], [...s.removed.map(d => row(d, swatch('#dc2626', 'out'))), ...s.added.map(d => row(d, swatch('#16a34a', 'in')))]);
+        }
+        q('.cvw-info').innerHTML = `${total}. ${info}`;
+        if (rank.length) {
+            const row = (x, label) => [label, x.rank, x.d[0], x.gain, num(area(x.d[1])), ratio(x)];
+            tab = `<div style="font-weight: bold; margin-bottom: 4px;">Next choice: ranking of ${rank.length} disks with new points</div>` + table(['', 'Rank', 'Centre', 'New', 'Area', 'New / area ×10⁻⁵'], [
+                ...rank.slice(0, 5).map((x, i) => row(x, i === 0 ? swatch('#0f172a', 'next') : '')),
+                row(mostNew(rank), swatch('#9333ea', 'most new')), row(smallest(rank), swatch('#ea580c', 'smallest')),
+            ]);
+        } else if (s.stage === 'greedy') {
+            tab = 'All points are covered, so greedy stops.';
+        }
+        q('.cvw-table').innerHTML = tab;
+        let point = '';
+        if (selected >= 0) {
+            const here = D[mode].family.filter(d => d[0] === selected + 1);
+            if (rank.length) {
+                const rows = here.map(d => rank.find(x => key(x.d) === key(d)) || { d, gain: 0 });
+                point = `<div style="font-weight: bold; margin-bottom: 4px;">Disks centred at ID ${selected + 1}</div>` + table(['Rank', 'New', 'Area', 'New / area ×10⁻⁵'], rows.map(x => [x.rank || '—', x.gain, num(area(x.d[1])), x.gain ? ratio(x) : '0']));
+            } else {
+                const by = s.cover.filter(d => inside(d).includes(selected)).map(d => d[0]);
+                point = `ID ${selected + 1} is covered by ${by.length} selected disk${by.length === 1 ? '' : 's'}${by.length ? ` (centre${by.length === 1 ? "" : "s"} ${by.join(', ')})` : ''}.`;
+            }
+        }
+        q('.cvw-point').innerHTML = point;
+    }
+    function stop() { if (timer) clearInterval(timer); timer = null; q('.cvw-play').textContent = '▶ Play'; }
+    q('.cvw-play').onclick = () => {
+        if (timer) { stop(); return; }
+        if (k >= steps().length - 1) k = 0;
+        q('.cvw-play').textContent = '❚❚ Pause';
+        timer = setInterval(() => { k = Math.min(steps().length - 1, k + 1); render(); if (k >= steps().length - 1) stop(); }, 900);
+    };
+    q('.cvw-next').onclick = () => { stop(); k = Math.min(steps().length - 1, k + 1); render(); };
+    q('.cvw-back').onclick = () => { stop(); k = Math.max(0, k - 1); render(); };
+    q('.cvw-end').onclick = () => { stop(); k = steps().length - 1; render(); };
+    q('.cvw-reset').onclick = () => { stop(); k = 0; render(); };
+    q('.cvw-step').oninput = () => { stop(); k = +q('.cvw-step').value; render(); };
+    root.querySelectorAll('.cvw-mode').forEach(b => b.onclick = () => {
+        mode = b.dataset.mode; stop(); k = 0;
+        root.querySelectorAll('.cvw-mode').forEach(x => x.classList.toggle('active', x === b));
+        render();
+    });
+    q('.cvw-map').onclick = e => {
+        const r = q('.cvw-map').getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 1999, y = (e.clientY - r.top) / r.height * 1999;
+        let best = -1, dist = 40 ** 2;
+        D.pts.forEach((p, j) => { const v = (p[0] - x) ** 2 + (p[1] - y) ** 2; if (v < dist) { dist = v; best = j; } });
+        selected = best === selected ? -1 : best;
+        render();
+    };
+    q('.cvw-chart').onclick = e => {
+        const r = q('.cvw-chart').getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 900;
+        stop(); k = Math.max(0, Math.min(steps().length - 1, Math.round((x - 92) / (900 - 92 - 14) * (steps().length - 1)))); render();
+    };
+    q('.cvw-full').onclick = () => { const on = root.classList.toggle('expanded'); q('.cvw-full').textContent = on ? '✕ Close' : '⛶ Full screen'; q('.cvw-map').style.maxHeight = on ? '70vh' : ''; q('.cvw-map').style.width = on ? 'auto' : '100%'; };
+    render();
+});
+</script>
+""".replace("__COVERDATA__", json.dumps(cover_data()))
+(HW / "report.html").write_text(head + t1_html + t2_html + t3_html + t4_html + t5_html + b1_html + script + t2_script + cover_script + "</body>\n</html>\n", encoding="utf-8")
 print("report written", (HW / "report.html").stat().st_size)

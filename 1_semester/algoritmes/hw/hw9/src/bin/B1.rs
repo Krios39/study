@@ -95,7 +95,7 @@ fn prune(n: usize, disks: &[Disk], cover: &[usize]) -> Vec<usize> {
     kept
 }
 
-fn replacements(n: usize, disks: &[Disk], containing: &[Vec<usize>], inside: &[Vec<bool>], start: &[usize]) -> (Vec<usize>, usize, usize) {
+fn replacements(n: usize, disks: &[Disk], containing: &[Vec<usize>], inside: &[Vec<bool>], start: &[usize], history: &mut Vec<(&'static str, Vec<usize>)>) -> (Vec<usize>, usize, usize) {
     let mut cover = start.to_vec();
     let (mut moves, mut evaluated) = (0, 0);
     loop {
@@ -136,11 +136,12 @@ fn replacements(n: usize, disks: &[Disk], containing: &[Vec<usize>], inside: &[V
         cover.extend(add);
         cover = prune(n, disks, &cover);
         moves += 1;
+        history.push(("replace", cover.clone()));
     }
     (cover, moves, evaluated)
 }
 
-fn destroy_and_repair(n: usize, p: &[(i64, i64)], disks: &[Disk], containing: &[Vec<usize>], start: &[usize], seed: u64, iterations: usize) -> (Vec<usize>, Vec<(usize, i64)>, usize) {
+fn destroy_and_repair(n: usize, p: &[(i64, i64)], disks: &[Disk], containing: &[Vec<usize>], start: &[usize], seed: u64, iterations: usize, history: &mut Vec<(&'static str, Vec<usize>)>) -> (Vec<usize>, Vec<(usize, i64)>, usize) {
     let mut rng = Rng(seed);
     let mut cur = start.to_vec();
     let mut cur_cost = cost2(disks, &cur);
@@ -185,6 +186,7 @@ fn destroy_and_repair(n: usize, p: &[(i64, i64)], disks: &[Disk], containing: &[
         if c <= cur_cost {
             if c < cur_cost {
                 improved += 1;
+                history.push(("search", next.clone()));
             }
             cur = next;
             cur_cost = c;
@@ -291,15 +293,18 @@ fn main() {
         let prune_time = t.elapsed().as_secs_f64();
 
         let t = Instant::now();
-        let (replaced, moves, evaluated) = replacements(n, &disks, &containing, &inside, &pruned);
+        let mut history = vec![("greedy", greedy.clone()), ("prune", pruned.clone())];
+        let (replaced, moves, evaluated) = replacements(n, &disks, &containing, &inside, &pruned, &mut history);
         let replace_time = t.elapsed().as_secs_f64();
 
         let mut runs = Vec::new();
         let mut best: Option<Vec<usize>> = None;
+        let mut best_history = Vec::new();
         for &seed in &seeds {
             let t = Instant::now();
-            let (searched, trace, improved) = destroy_and_repair(n, &p, &disks, &containing, &replaced, seed, iterations);
-            let (polished, _, _) = replacements(n, &disks, &containing, &inside, &searched);
+            let mut run_history = Vec::new();
+            let (searched, trace, improved) = destroy_and_repair(n, &p, &disks, &containing, &replaced, seed, iterations, &mut run_history);
+            let (polished, _, _) = replacements(n, &disks, &containing, &inside, &searched, &mut run_history);
             let seconds = t.elapsed().as_secs_f64();
             assert!(verify(&p, &disks, &polished));
             println!("  n={n} seed {seed}: {} disks, area {:.3}, improving iterations {improved}, {seconds:.2}s", polished.len(), area(&disks, &polished));
@@ -310,9 +315,12 @@ fn main() {
             }));
             if best.as_ref().map_or(true, |b| cost2(&disks, &polished) < cost2(&disks, b)) {
                 best = Some(polished);
+                best_history = run_history;
             }
         }
         let best = best.unwrap();
+        history.extend(best_history);
+        history.push(("final", best.clone()));
 
         for cover in [&greedy, &pruned, &replaced, &best] {
             assert!(verify(&p, &disks, cover));
@@ -332,6 +340,9 @@ fn main() {
             "replaced": {"disks": replaced.len(), "area": a2, "improvement_percent": pct(a2), "moves": moves, "groups_evaluated": evaluated, "seconds": replace_time, "cover": cover_json(&disks, &replaced)},
             "searched": {"disks": best.len(), "area": a3, "improvement_percent": pct(a3), "runs": runs, "cover": cover_json(&disks, &best)},
         })).unwrap()).unwrap();
+        std::fs::write(format!("{dir}/HW9_B1_{n}_history.json"), serde_json::to_string(&history.iter().map(|(stage, cover)| json!({
+            "stage": stage, "cover": cover.iter().map(|&c| [disks[c].centre + 1, disks[c].r2 as usize]).collect::<Vec<_>>(),
+        })).collect::<Vec<_>>()).unwrap()).unwrap();
         plot(&format!("{dir}/HW9_B1_{n}_best.png"), &p, &disks, &best);
     }
 }
