@@ -1,0 +1,28 @@
+{
+  "ants": 10,
+  "beta": 2,
+  "candidates": 20,
+  "length": 81380.3414037362,
+  "method": "Ant Colony System without local search",
+  "q0": 0.9,
+  "rho": 0.1,
+  "runs": [
+    {
+      "iterations": 2355,
+      "length": 81753.18907291726,
+      "seed": 1
+    },
+    {
+      "iterations": 2353,
+      "length": 82301.78849500809,
+      "seed": 2
+    },
+    {
+      "iterations": 1765,
+      "length": 81380.3414037362,
+      "seed": 3
+    }
+  ],
+  "seconds_per_seed": 120.0,
+  "xi": 0.1
+}

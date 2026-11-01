@@ -949,5 +949,71 @@ t5_html = f"""<details>
     </div>
 </details>
 """
-(HW / "report.html").write_text(head + t1_html + t2_html + t3_html + t4_html + t5_html + script + t2_script + "</body>\n</html>\n", encoding="utf-8")
+b1res = {n: json.loads((BIN / f"tsp{n}" / f"HW9_B1_{n}_results.json").read_text()) for n in (100, 500)}
+
+
+def b1_stage(n, key, name, effort):
+    s = b1res[n][key]
+    pct = s.get("improvement_percent")
+    return [str(n), name, str(s["disks"]), f"{s['area']:,.3f}", "—" if pct is None else f"{pct:.2f}%", effort]
+
+
+b1_rows = []
+for n in (100, 500):
+    r = b1res[n]
+    b1_rows += [b1_stage(n, "greedy", "Weighted greedy (T5)", f"{1000 * r['greedy']['seconds']:.2f} ms"),
+                b1_stage(n, "pruned", "Redundant disks removed", f"{1000 * r['pruned']['seconds']:.3f} ms"),
+                b1_stage(n, "replaced", "Replacements", f"{r['replaced']['moves']} moves, {r['replaced']['groups_evaluated']:,} groups, {1000 * r['replaced']['seconds']:.2f} ms"),
+                b1_stage(n, "searched", "Destroy and repair", f"{len(r['searched']['runs'])} seeds × {r['searched']['runs'][0]['iterations']:,} iterations")]
+b1_seeds = [[str(n), str(x["seed"]), str(x["disks"]), f"{x['area']:,.3f}", str(x["improving_iterations"])] for n in (100, 500) for x in b1res[n]["searched"]["runs"]]
+b1_html = f"""<details>
+    <summary>Bonus B1: Improve the cover, not just its available disks</summary>
+    <div class="details-content">
+
+        <h3>Setup</h3>
+        <p>
+            The input points and candidates are unchanged: the T5 families with {len(b1res[100]['target_sizes'])} target sizes ({b1res[100]['candidates']} candidates on 100 points, {b1res[500]['candidates']} on 500).
+            Only the selection method differs. All costs are compared in exact integer r² and reported as full areas.
+        </p>
+
+        <h3>Method</h3>
+        <ul>
+            <li><strong>Redundant disks:</strong> selected disks whose points are all covered by other selected disks are removed, most expensive first.</li>
+            <li><strong>Replacements (own code):</strong> every group of one or two selected disks is tried. The group is taken out, and the cheapest single candidate covering all resulting holes is found. The best saving is applied, and this repeats until no group gives a saving.</li>
+            <li><strong>Destroy and repair (own code):</strong> starting from the replacement result, take a random selected disk and remove it together with its nearest selected disks (2 to 6 in total). Repair the holes with weighted greedy using a random ±30% factor on the ratio, then remove redundant disks.
+                The result is kept if it is not more expensive. Each run ends with one more replacement pass. The random generator is a fixed SplitMix64 with seeds 1 to 5.</li>
+        </ul>
+
+        <h3>Results</h3>
+        {table(["Points", "Stage", "Disks", "Area", "Improvement over greedy", "Effort"], b1_rows)}
+        <p>
+            Every cover was verified by the Rust code, and the greedy, replacement and search covers were also rechecked by a separate Python script for full coverage, membership in the T5 family and area.
+            One destroy-and-repair run took a few seconds; timings varied widely between identical runs (about 2 to 28 s on 100 points and 4 to 14 s on 500), so they are only approximate. The areas are reproducible.
+        </p>
+
+        <h3>All Seeds</h3>
+        {table(["Points", "Seed", "Disks", "Area", "Improving iterations"], b1_seeds)}
+        <p>
+            On 100 points only seed 3 improved on the replacement result, so that result is already a strong local minimum. On 500 points, four of the five seeds reached the same area.
+            This agreement does not prove optimality: the optimum was not computed, and a cheaper cover may exist.
+        </p>
+
+        <h3>Greedy and Improved Covers</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+            <div>{figure(BIN / "tsp100" / "HW9_T5_100_cover.png", "Weighted greedy cover of 100 points", 900)}<p style="font-size: 13px; text-align: center;">N = 100, greedy: {b1res[100]['greedy']['disks']} disks, area {b1res[100]['greedy']['area']:,.0f}</p></div>
+            <div>{figure(BIN / "tsp100" / "HW9_B1_100_best.png", "Improved cover of 100 points", 900)}<p style="font-size: 13px; text-align: center;">N = 100, improved: {b1res[100]['searched']['disks']} disks, area {b1res[100]['searched']['area']:,.0f}</p></div>
+            <div>{figure(BIN / "tsp500" / "HW9_T5_500_cover.png", "Weighted greedy cover of 500 points", 900)}<p style="font-size: 13px; text-align: center;">N = 500, greedy: {b1res[500]['greedy']['disks']} disks, area {b1res[500]['greedy']['area']:,.0f}</p></div>
+            <div>{figure(BIN / "tsp500" / "HW9_B1_500_best.png", "Improved cover of 500 points", 900)}<p style="font-size: 13px; text-align: center;">N = 500, improved: {b1res[500]['searched']['disks']} disks, area {b1res[500]['searched']['area']:,.0f}</p></div>
+        </div>
+
+        <h3>What Helped</h3>
+        <p>
+            Greedy judges one disk at a time and buys many small disks, paying for every overlap between them. It cannot see that one somewhat larger disk would make several small ones unnecessary, because at the moment of choice that disk has a lower ratio.
+            Replacements look at the groups directly, so they find exactly these trades: on 100 points the 14 size-10 disks and one size-15 disk become 5 size-10 and 4 size-15 disks, and on 500 points one size-20 disk becomes six. Overlap drops visibly in the figures.
+            Destroy and repair then escapes the point where no single replacement helps, because it can rebuild a whole neighbourhood at once.
+        </p>
+    </div>
+</details>
+"""
+(HW / "report.html").write_text(head + t1_html + t2_html + t3_html + t4_html + t5_html + b1_html + script + t2_script + "</body>\n</html>\n", encoding="utf-8")
 print("report written", (HW / "report.html").stat().st_size)

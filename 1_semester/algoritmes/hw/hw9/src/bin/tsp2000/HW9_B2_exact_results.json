@@ -1,0 +1,10 @@
+{
+  "method": "HiGHS via scipy: subtour LP with pricing over all edges, then integer solves with lazy subtour cuts",
+  "lower_bound": null,
+  "length": 67019.92393795101,
+  "gap_percent": null,
+  "status": "time limit",
+  "seconds": 2403.371932029724,
+  "candidate_edges": 13123,
+  "cuts": 1359
+}

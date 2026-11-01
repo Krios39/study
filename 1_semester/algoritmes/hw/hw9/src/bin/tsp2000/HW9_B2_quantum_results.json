@@ -1,0 +1,31 @@
+{
+  "candidates": 10,
+  "gamma_end": 0.01,
+  "gamma_start": 300.0,
+  "length": 67649.9659380135,
+  "method": "simulated quantum annealing (path-integral style): replicas on a ring, coupled by shared edges, with a final descent on the best replica",
+  "moves": 1000000000,
+  "polish_moves": 50000000,
+  "replicas": 20,
+  "runs": [
+    {
+      "before_polish": 67811.72042015163,
+      "length": 67667.8311694147,
+      "seconds": 2116.4833786,
+      "seed": 1
+    },
+    {
+      "before_polish": 67865.0529759076,
+      "length": 67741.04908600273,
+      "seconds": 2089.3464351,
+      "seed": 2
+    },
+    {
+      "before_polish": 67816.35697939753,
+      "length": 67649.9659380135,
+      "seconds": 2086.9834132,
+      "seed": 3
+    }
+  ],
+  "tau": 5.0
+}

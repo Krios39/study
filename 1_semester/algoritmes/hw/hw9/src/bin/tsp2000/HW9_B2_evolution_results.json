@@ -1,0 +1,27 @@
+{
+  "candidates": 10,
+  "length": 66690.6957725116,
+  "method": "steady-state memetic algorithm: tournament parents, edge-preserving crossover, 2-opt and single-point insertion local search",
+  "population": 50,
+  "runs": [
+    {
+      "first_population_best": 70619.27771525783,
+      "generations": 41101,
+      "length": 66690.6957725116,
+      "seed": 1
+    },
+    {
+      "first_population_best": 70645.23715939085,
+      "generations": 45278,
+      "length": 66705.71692406767,
+      "seed": 2
+    },
+    {
+      "first_population_best": 70247.26502189711,
+      "generations": 56793,
+      "length": 66718.53784443831,
+      "seed": 3
+    }
+  ],
+  "seconds_per_seed": 300.0
+}

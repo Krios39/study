@@ -1,0 +1,30 @@
+{
+  "method": "Held-Karp dynamic programming on sliding windows of consecutive tour points, repeated until no window improves",
+  "runs": [
+    {
+      "after": 78855.18042139096,
+      "before": 82227.99042135516,
+      "changes": 152,
+      "passes": 4,
+      "seconds": 41.7732162,
+      "start": "nn_id1"
+    },
+    {
+      "after": 72826.97028534391,
+      "before": 76308.1696030454,
+      "changes": 229,
+      "passes": 3,
+      "seconds": 34.8570293,
+      "start": "hungarian"
+    },
+    {
+      "after": 66638.39637890786,
+      "before": 66638.5803945431,
+      "changes": 1,
+      "passes": 2,
+      "seconds": 21.0805823,
+      "start": "anneal_from_ant"
+    }
+  ],
+  "window": 12
+}

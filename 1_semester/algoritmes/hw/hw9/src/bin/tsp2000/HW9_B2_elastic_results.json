@@ -1,0 +1,14 @@
+{
+  "alpha": 0.2,
+  "beta": 2.0,
+  "farthest_point_from_ring": 11.354642374328055,
+  "iterations": 9200,
+  "iterations_per_k": 25,
+  "k_end": 0.005,
+  "k_factor": 0.99,
+  "k_start": 0.2,
+  "length": 78701.67570735503,
+  "method": "elastic net (Durbin-Willshaw), points ordered by their nearest ring node",
+  "ring_nodes": 4000,
+  "seconds": 1045.1392239
+}

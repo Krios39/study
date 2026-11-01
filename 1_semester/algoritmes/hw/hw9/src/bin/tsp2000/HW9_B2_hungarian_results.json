@@ -1,0 +1,9 @@
+{
+  "assignment_cost": 56113.437964891804,
+  "cycles": 923,
+  "hungarian_seconds": 0.1401937,
+  "length": 76308.1696030454,
+  "method": "assignment problem by the Hungarian method, subtours merged by the cheapest exchange of two edges",
+  "patch_seconds": 91.82538,
+  "two_cycles": 779
+}

@@ -1,0 +1,15 @@
+{
+  "all_starts_seconds": 1077.3292205,
+  "best": {
+    "length": 79903.40180807373,
+    "start_id": 1111
+  },
+  "median": 80496.1358449824,
+  "method": "cheapest insertion from a two-point tour (start and its nearest neighbour), all starts",
+  "one_run_seconds": 1.0876608,
+  "threads": 8,
+  "worst": {
+    "length": 80892.62788267748,
+    "start_id": 756
+  }
+}

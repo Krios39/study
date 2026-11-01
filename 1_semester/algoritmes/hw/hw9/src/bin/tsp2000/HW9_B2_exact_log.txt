@@ -1,0 +1,59 @@
+[    0.4s] start tour 76308.169603
+[    0.9s] candidate edges 11396
+[    1.7s] lp round 1: value 64062.517, added 225 cuts, total 225
+[    2.3s] lp round 2: value 65434.243, added 78 cuts, total 303
+[    2.8s] lp round 3: value 65704.767, added 34 cuts, total 337
+[    3.6s] lp round 4: value 65779.357, added 18 cuts, total 355
+[    4.1s] lp round 5: value 65805.890, added 3 cuts, total 358
+[   13.1s] lp round 6: value 65808.334, priced in 891 of 891 edges
+[   14.4s] lp round 7: value 60019.458, added 559 cuts, total 917
+[   15.5s] lp round 8: value 65135.390, added 170 cuts, total 1087
+[   16.7s] lp round 9: value 65711.575, added 48 cuts, total 1135
+[   17.5s] lp round 10: value 65814.302, added 16 cuts, total 1151
+[   18.7s] lp round 11: value 65825.254, added 7 cuts, total 1158
+[   19.6s] lp round 12: value 65828.178, added 1 cuts, total 1159
+[   50.5s] lp round 13: value 65829.634, priced in 262 of 262 edges
+[   51.5s] lp round 14: value 65676.877, added 65 cuts, total 1224
+[   52.7s] lp round 15: value 65829.157, added 4 cuts, total 1228
+[   80.4s] lp round 16: value 65829.634, priced in 150 of 150 edges
+[   81.5s] lp round 17: value 65808.722, added 12 cuts, total 1240
+[   82.6s] lp round 18: value 65829.634, added 1 cuts, total 1241
+[   83.6s] lp round 19: value 65832.202, added 2 cuts, total 1243
+[  112.3s] lp round 20: value 65834.568, priced in 79 of 79 edges
+[  142.9s] lp round 21: value 65834.568, priced in 61 of 61 edges
+[  187.0s] lp round 22: value 65834.568, priced in 51 of 51 edges
+[  239.8s] lp round 23: value 65834.568, priced in 28 of 28 edges
+[  290.7s] lp round 24: value 65834.568, priced in 26 of 26 edges
+[  319.0s] lp round 25: value 65834.568, priced in 30 of 30 edges
+[  349.1s] lp round 26: value 65834.568, priced in 15 of 15 edges
+[  379.3s] lp round 27: value 65834.568, priced in 17 of 17 edges
+[  409.9s] lp round 28: value 65834.568, priced in 14 of 14 edges
+[  439.7s] lp round 29: value 65834.568, priced in 12 of 12 edges
+[  471.5s] lp round 30: value 65834.568, priced in 6 of 6 edges
+[  497.3s] lp round 31: value 65834.568, priced in 11 of 11 edges
+[  530.2s] lp round 32: value 65834.568, priced in 9 of 9 edges
+[  576.0s] lp round 33: value 65834.568, priced in 2 of 2 edges
+[  616.3s] lp round 34: value 65834.568, priced in 6 of 6 edges
+[  656.3s] lp round 35: value 65834.568, priced in 5 of 5 edges
+[  700.9s] lp round 36: value 65834.568, priced in 8 of 8 edges
+[  744.6s] lp round 37: value 65834.568, priced in 5 of 5 edges
+[  784.2s] lp round 38: value 65834.568, priced in 6 of 6 edges
+[  827.1s] lp round 39: value 65834.568, priced in 5 of 5 edges
+[  867.5s] lp round 40: value 65834.568, priced in 2 of 2 edges
+[  907.1s] lp round 41: value 65834.568, priced in 3 of 3 edges
+[  948.4s] lp round 42: value 65834.568, priced in 1 of 1 edges
+[  980.0s] lp round 43: value 65834.568, priced in 2 of 2 edges
+[ 1019.9s] lp round 44: value 65834.568, priced in 4 of 4 edges
+[ 1054.5s] lp round 45: value 65834.568, priced in 5 of 5 edges
+[ 1082.9s] lp round 46: value 65834.568, priced in 3 of 3 edges
+[ 1113.0s] lp round 47: value 65834.568, priced in 2 of 2 edges
+[ 1144.3s] lp round 48: value 65834.568, priced in 1 of 1 edges
+[ 1175.6s] lp round 49: value 65834.568, priced in 1 of 1 edges
+[ 1204.8s] lp round 50: value 65834.568, priced in 4 of 4 edges
+[ 1814.4s] milp status 1, value 66056.86895735351, bound 66049.19235744332, edges 13123, cuts 1243
+[ 1816.1s] new best tour 67150.894897 from milp with 62 cycles
+[ 1816.1s] 62 cycles, added 62 cuts
+[ 2401.3s] milp status 1, value 66202.27384477509, bound 66113.17517617885, edges 13123, cuts 1305
+[ 2403.3s] new best tour 67019.923938 from milp with 54 cycles
+[ 2403.3s] 54 cycles, added 54 cuts
+[ 2403.4s] finished: time limit, best 67019.923938, lower bound None

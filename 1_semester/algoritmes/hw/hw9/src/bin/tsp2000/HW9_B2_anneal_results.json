@@ -1,0 +1,25 @@
+{
+  "candidates": 10,
+  "length": 66651.04600411843,
+  "method": "simulated annealing with 2-opt and segment insertion moves on neighbour lists, started from the Hungarian tour",
+  "moves": 1000000000,
+  "runs": [
+    {
+      "length": 66651.04600411843,
+      "seconds": 402.2763968,
+      "seed": 1
+    },
+    {
+      "length": 66707.64007839099,
+      "seconds": 392.7196775,
+      "seed": 2
+    },
+    {
+      "length": 66835.71127508352,
+      "seconds": 451.4307638,
+      "seed": 3
+    }
+  ],
+  "t_end": 0.3,
+  "t_start": 30.0
+}
