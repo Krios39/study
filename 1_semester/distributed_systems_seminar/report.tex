@@ -1,20 +1,18 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[conference,a4paper]{IEEEtran}
 
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \setlength{\emergencystretch}{2em}
 \usepackage[english]{babel}
-\usepackage[margin=2.5cm]{geometry}
 \usepackage{booktabs}
 \usepackage[hidelinks]{hyperref}
-\usepackage{enumitem}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta}
 \DeclareUrlCommand\param{\urlstyle{tt}\def\UrlBreaks{\do\-\do\=}}
 
 \title{Measuring the Overhead of Trust Mechanisms\\in the X-Road Data Exchange Layer}
-\author{Ruslan Nechshadimov\\\small University of Tartu\\\small Supervisor: Artjom Lind}
-\date{Draft v0.3, October 31, 2026}
+\author{\IEEEauthorblockN{Ruslan Nechshadimov}
+\IEEEauthorblockA{University of Tartu\\Supervisor: Artjom Lind}}
 
 \begin{document}
 \maketitle
@@ -30,7 +28,7 @@ packet captures. With one client the X-Road path adds about 28\,ms to a 10\,KB e
 body to the message log accounts for almost half of the latency of a 1\,MB exchange, and synchronous
 time-stamping adds about 90\,ms and lowers the highest throughput to 37--47\,\%, while status checks and batched time-stamps stay
 out of the request path. With an added round-trip time the default policy of opening a new connection
-for every message has the largest effect: each message waits for about five round trips at 10\,KB and
+for every message has the largest effect among the configurations compared: each message waits for about five round trips at 10\,KB and
 ten at 1\,MB, against two with reused connections, which saves 54\,\% and 72\,\% of the latency at
 50\,ms. The cost of distance between Security Servers thus depends strongly on the connection policy.
 \end{abstract}
@@ -100,7 +98,7 @@ bound~\cite{bakhtina2026ijis}, whereas the Security Servers of two organisations
 over a network, and the NIIS report expects post-quantum handshakes to add round trips on
 it~\cite{bakhtina2026pqc}. This leads to the following research questions:
 
-\begin{description}[leftmargin=2.2em,style=nextline]
+\begin{description}
   \item[RQ1] How much do the trust mechanisms of an exchange contribute to its latency and to the
   bytes between the Security Servers, as far as they can be separated from each other, and which of
   them are paid on every message rather than deferred?
@@ -129,7 +127,7 @@ xroadarcss}.
 
 For this study the mechanisms divide by their position relative to the request path:
 
-\begin{itemize}[leftmargin=1.4em]
+\begin{itemize}
   \item \textbf{Synchronous}, paid on every message: the mutually authenticated TLS channel between
   the Security Servers; signing with the member's signing key; verification of the incoming
   signature; and writing request and response into the message log, whose bodies are logged in full
@@ -184,6 +182,38 @@ generator, and the third runs the provider and the echo service. The containers 
 addresses on the switch network (Docker \texttt{ipvlan}), so the traffic between the Security
 Servers is not translated by the host and leaves the machine. Clocks are synchronised with chrony to
 within half a millisecond, which matters when timestamps from two machines are compared.
+Figure~\ref{fig:testbed} shows the layout.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >={Latex[length=1.6mm]},
+  c/.style={draw, rounded corners=1pt, minimum height=5mm, align=center, inner sep=2pt, fill=white}]
+\foreach \x/\n in {0/1, 2.85/2, 5.7/3} {
+  \draw[rounded corners=2pt] (\x,0) rectangle ++(2.4,2.85);
+  \node[anchor=north west, inner sep=2pt] at (\x,2.85) {\textbf{Laptop \n}};
+  \draw (\x+1.2,0) -- (\x+1.2,-0.25);
+}
+\draw[fill=black!12] (0,-0.25) rectangle (8.1,-0.7);
+\node at (4.05,-0.475) {Gigabit switch};
+\node[c, minimum width=2cm] (cs) at (1.2,1.95) {Central Server};
+\node[c, minimum width=2cm] (ca) at (1.2,1.2) {CA, OCSP, TSA};
+\node[c, minimum width=2cm] at (1.2,0.45) {ss0; ss3 + echo};
+\node[c, minimum width=1.5cm] (ss1) at (4.05,1.45) {ss1};
+\node[c, minimum width=1.5cm] (k6) at (4.05,0.45) {k6};
+\node[c, minimum width=1.5cm] (ss2) at (6.9,1.45) {ss2};
+\node[c, minimum width=1.5cm] (echo) at (6.9,0.45) {echo};
+\draw[<->, very thick] (k6) -- (ss1);
+\draw[<->, very thick] (ss1) -- node[above=1pt, fill=white, inner sep=1pt] {added RTT} (ss2);
+\draw[<->, very thick] (ss2) -- (echo);
+\draw[dashed] (cs.east) -- (2.6,1.95) -- (2.6,2.28) -- (6.9,2.28);
+\draw[dashed, ->] (6.9,2.28) -- (ss2.north);
+\draw[dashed, ->] (4.05,2.28) -- (ss1.north);
+\end{tikzpicture}
+\caption{The testbed on three machines, with the test CA providing OCSP and time-stamping (TSA). Thick line: the measured path. Dashed line: background
+traffic to the central services, which is not delayed. All traffic between the Security Servers
+passes through the switch.}
+\label{fig:testbed}
+\end{figure}
 
 \paragraph{One machine.} The same stack on one of these laptops alone. With the same CPU and the
 same container limits, the difference to the three-machine environment is the network between the
@@ -206,14 +236,16 @@ described in Section~\ref{sec:delay}.
 On all machines the CPU runs in its performance power mode, which is checked before every grid and
 recorded with it, since the power mode affects the latency.
 
-\subsection{Isolating the cost of a mechanism}
+\subsection{Isolating the cost of a mechanism}\label{sec:iso}
 
 The trust mechanisms of RQ1 cannot all be switched off one at a time, so each of them is observed
 in the way that changes as little else as possible (Table~\ref{tab:mech}).
 
-\begin{table}[h]
+\begin{table}[t]
 \centering\small
-\begin{tabular}{@{}ll@{}}
+\caption{How the cost of each trust mechanism is observed.}
+\label{tab:mech}
+\begin{tabular}{@{}p{0.40\columnwidth}p{0.54\columnwidth}@{}}
 \toprule
 Mechanism & Observed through \\
 \midrule
@@ -225,14 +257,12 @@ Time-stamping & requests to the time-stamping service; \emph{synctsa} as another
 Certificate status checking & requests to the OCSP responder \\
 \bottomrule
 \end{tabular}
-\caption{How the cost of each trust mechanism is observed.}
-\label{tab:mech}
 \end{table}
 
 Where a setting removes or changes a mechanism, a configuration is compared with the default one
 (\emph{full}) and differs from it in that setting only:
 
-\begin{itemize}[leftmargin=1.4em]
+\begin{itemize}
   \item \textbf{direct} --- plain HTTP from the load generator to the echo service, without X-Road.
   Its difference to \emph{full} is the whole X-Road path, not any single mechanism.
   \item {\sloppy \textbf{reuse} --- connections between the Security Servers are kept open
@@ -286,7 +316,7 @@ one host are more reliable than the two stages that span hosts, where the residu
 the result; explanations that involve the network are checked against packet captures
 (Section~\ref{sec:delay}).
 
-\subsection{Procedure}
+\subsection{Procedure}\label{sec:proc}
 
 Two message sizes are used with one client. Post-quantum signatures and certificates would add a few
 kilobytes to every message~\cite{snetkov2023}, which matters most for small messages, so a 10\,KB
@@ -391,7 +421,7 @@ otherwise: the latency did not settle within the first thousand requests after a
 Security Servers, and the first run after a restart remained slower even after 4000 requests at one
 client. Repeated runs at the same
 point differed by up to 20\,\%. These observations set the warm-up and the number of repetitions
-described in Section~3.5.
+described in Section~\ref{sec:proc}.
 The effect of the power mode of the CPU was found in the first measurements on three machines. The default
 configuration took 78\,ms with one client, against 41\,ms on one of the same laptops alone, and the
 difference looked like a cost of the network. Changing how the Security Servers acknowledge TCP
@@ -423,8 +453,11 @@ Security Servers saves 2.0\,ms at 10\,KB and 4.3\,ms at 1\,MB. Synchronous time-
 to 9.4\,\% on the development laptop, and up to 5.1\,\% on one machine except for \emph{synctsa}
 (18--31\,\%).
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering\small
+\caption{Median latency with one client (ms) by response size and environment; differences to
+\emph{full} in the same environment. Every request succeeded.}
+\label{tab:onecl}
 \begin{tabular}{@{}lrrrrrr@{}}
 \toprule
 & \multicolumn{2}{c}{Three machines} & \multicolumn{2}{c}{One machine} & \multicolumn{2}{c}{Development laptop} \\
@@ -440,10 +473,7 @@ to 9.4\,\% on the development laptop, and up to 5.1\,\% on one machine except fo
 repetitions & \multicolumn{2}{c}{30} & \multicolumn{2}{c}{15} & \multicolumn{2}{c}{20} \\
 \bottomrule
 \end{tabular}
-\caption{Median latency with one client (ms) by response size and environment; differences to
-\emph{full} in the same environment. Every request succeeded.}
-\label{tab:onecl}
-\end{table}
+\end{table*}
 
 On three machines a 10\,KB exchange carries 14.8\,KB from consumer to provider and 25.7\,KB back;
 with \emph{reuse} 11.5 and 22.8\,KB, so the connection policy costs 3.3 and 2.9\,KB per message in the
@@ -454,7 +484,7 @@ The two background mechanisms did not appear in the request path. The median num
 the OCSP responder per run was zero; in about 5\,\% of the runs (35 of 741 on three machines) a
 background refresh of 2 to 8 requests fell into the run. A configuration with an OCSP freshness
 shorter than the refresh of the cached responses made every request fail, as described in
-Section~3.3; this was observed in an early run on the development laptop, but it does not depend on
+Section~\ref{sec:iso}; this was observed in an early run on the development laptop, but it does not depend on
 the power mode. Batched time-stamping sent a median of zero requests to the time-stamping service
 during a run (at most two) and about two per run, of about 1200 messages, while the runner waited for
 the time stamps; \emph{synctsa} sent 4802 per run, four for each exchange, one for
@@ -470,8 +500,14 @@ stage by 17.0\,ms, that is, logging the body costs about 17\,ms on each side; an
 time-stamping adds 20--25\,ms to each of the four stages in which a record is logged. The two stages
 that span machines include the residual clock offset of below half a millisecond.
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering\small
+\caption{Per-stage breakdown from operational monitoring on three machines, one client (mean of
+each run, median over the 15 repetitions of the second series of grids, for which the records of both
+servers were kept; ms; resolution 1\,ms). Each column is a median of its own, so the columns
+do not add up exactly to the total. ``To provider'' and ``Consumer
+finishing'' span two machines.}
+\label{tab:stages}
 \begin{tabular}{@{}lrrrrrrr@{}}
 \toprule
 & Consumer & To & Provider & Echo & Provider & Consumer & Total \\
@@ -488,13 +524,7 @@ that span machines include the residual clock offset of below half a millisecond
 \quad \emph{synctsa} $-$ \emph{full} & 0.1 & 24.5 & 20.9 & 0.2 & 21.8 & 25.0 & 94.5 \\
 \bottomrule
 \end{tabular}
-\caption{Per-stage breakdown from operational monitoring on three machines, one client (mean of
-each run, median over the 15 repetitions of the second series of grids, for which the records of both
-servers were kept; ms; resolution 1\,ms). Each column is a median of its own, so the columns
-do not add up exactly to the total. ``To provider'' and ``Consumer
-finishing'' span two machines.}
-\label{tab:stages}
-\end{table}
+\end{table*}
 
 \subsection{Response size and load (RQ2)}
 
@@ -515,8 +545,12 @@ machines (50 against 106 requests per second). A second provider does not raise 
 with two providers the stages of each provider become shorter, but the consumer's finishing stage
 becomes longer, so the consumer is the limit.
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering\small
+\caption{Highest median throughput reached at 4, 16 or 32 clients, 10\,KB response (requests per
+second); in brackets the number of clients at which it was reached and the interquartile range of
+the throughput between repetitions (\%).}
+\label{tab:load}
 \begin{tabular}{@{}lccccc@{}}
 \toprule
 & \emph{full} & \emph{nobody} & \emph{reuse} & two providers & \emph{synctsa} \\
@@ -526,11 +560,7 @@ One machine & 75 (32; 29) & 76 (16; 17) & 79 (16; 20) & 82 (16; 36) & 28 (32; 5)
 Development laptop & 112 (32; 9) & 107 (32; 15) & 118 (32; 15) & 109 (32; 24) & 41 (32; 5) \\
 \bottomrule
 \end{tabular}
-\caption{Highest median throughput reached at 4, 16 or 32 clients, 10\,KB response (requests per
-second); in brackets the number of clients at which it was reached and the interquartile range of
-the throughput between repetitions (\%).}
-\label{tab:load}
-\end{table}
+\end{table*}
 
 \subsection{Environment and added round-trip time (RQ3)}\label{sec:rq3}
 
@@ -575,12 +605,12 @@ consumer to the negotiated keys and its first encrypted message, appeared at 20\
 the way to the provider is 2.6 for \emph{full} and 0.5 for \emph{reuse}, and that of the provider's
 forwarding stage is 1 in both.
 
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
 \begin{tikzpicture}
-\begin{axis}[width=0.8\textwidth, height=6cm, xlabel={Added round-trip time (ms)},
+\begin{axis}[width=\columnwidth, height=6cm, xlabel={Added round-trip time (ms)},
   ylabel={Median latency (ms)}, xtick={0,5,20,50}, ymin=0, ymax=650, grid=major,
-  legend style={font=\small, at={(0.5,-0.3)}, anchor=north, legend columns=2,
+  legend style={font=\footnotesize, at={(0.5,-0.25)}, anchor=north, legend columns=2,
   /tikz/every even column/.append style={column sep=1em}}, legend cell align=left,
   tick label style={font=\small}]
 \addplot[mark=*, thick, blue!70!black] coordinates {(0,28.5) (5,57.4) (20,131.1) (50,284.1)};
@@ -603,8 +633,11 @@ marks show the prediction made before the measurement.}
 \label{fig:rtt}
 \end{figure}
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering
+\caption{The points of Figure~\ref{fig:rtt}: median latency over 20 repetitions (ms), in brackets the
+first and third quartiles of the run medians.}
+\label{tab:rtt}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
@@ -616,10 +649,7 @@ marks show the prediction made before the measurement.}
 \emph{reuse}, 1\,MB & 70.7 (68.3--72.9) & 81.5 (80.0--82.8) & 112.9 (110.9--115.0) & 172.0 (170.3--173.7) \\
 \bottomrule
 \end{tabular}
-\caption{The points of Figure~\ref{fig:rtt}: median latency over 20 repetitions (ms), in brackets the
-first and third quartiles of the run medians.}
-\label{tab:rtt}
-\end{table}
+\end{table*}
 
 At 1\,MB the slope is 10.7 for \emph{full} and 2.0 for \emph{reuse}.
 Captures of a 1\,MB response at 50\,ms show the reason: on a new connection the body leaves in about
@@ -653,7 +683,7 @@ round trip.
 
 \section{Discussion}
 
-\subsection{What the results mean for the proposed changes}
+\subsection{What the results mean for the proposed changes}\label{sec:pq}
 
 The proposals discussed in the introduction affect different mechanisms, and the measurements put
 them in different positions.
@@ -667,7 +697,7 @@ also make every message bigger: replacing an RSA-2048 signature of 256 bytes wit
 signature of 4595 bytes~\cite{snetkov2023} on both the request and the response adds about 8.7\,KB to
 an exchange that now carries about 40\,KB in both directions. On the local network this is small. With
 distance between the Security Servers the size may matter more than the computation: with the default
-connection policy a larger response needs more flights on a new connection (Section~4.4), and the
+connection policy a larger response needs more flights on a new connection (Section~\ref{sec:rq3}), and the
 slope grew from 5 to 7 between a 10\,KB and a 100\,KB response. Whether a few additional kilobytes
 would add a flight depends on whether the message still fits into the flights it needs now, and that
 was not measured. The TLS handshake between the Security
@@ -689,8 +719,8 @@ effect of the connection policy with an added round-trip time of 50\,ms.
 
 \subsection{The connection policy}
 
-The largest effect in the measurements is not a cryptographic mechanism but the decision to open a
-new connection for every message. On the local network it costs about 2\,ms and 6.2\,KB per exchange (3.3\,KB towards the provider
+Among the configurations compared, the largest effect is the decision to open a new connection for
+every message. On the local network it costs about 2\,ms and 6.2\,KB per exchange (3.3\,KB towards the provider
 and 2.9\,KB back),
 which is why it is easy to overlook. With an added round-trip time every message waits for several
 additional round trips, and at 50\,ms reusing connections saves 54\,\% of the latency for a 10\,KB
@@ -704,7 +734,7 @@ with a pooled connection that had already been closed by the other side.
 The connection policy also decides how much larger post-quantum messages would cost. With reused
 connections a few additional kilobytes leave in the same flight, while with a new connection for
 every message and distance between the Security Servers they could cost additional round trips on
-every message if the messages no longer fit into the same flights (Section~5.1).
+every message if the messages no longer fit into the same flights (Section~\ref{sec:pq}).
 
 \subsection{Comparison with earlier measurements}
 
