@@ -1,0 +1,29 @@
+{
+  "candidates": 10,
+  "length": 66317.04196819197,
+  "method": "simulated annealing with 2-opt and segment insertion moves on neighbour lists, started from a given tour",
+  "moves": 1000000000,
+  "runs": [
+    {
+      "last_length": 66318.21621444357,
+      "length": 66317.04196819197,
+      "seconds": 511.6310502,
+      "seed": 1
+    },
+    {
+      "last_length": 66318.2835095956,
+      "length": 66317.04196819197,
+      "seconds": 511.2088769,
+      "seed": 2
+    },
+    {
+      "last_length": 66318.26083870363,
+      "length": 66317.04196819197,
+      "seconds": 530.0267255,
+      "seed": 3
+    }
+  ],
+  "start": "irismetov",
+  "t_end": 0.3,
+  "t_start": 1.5
+}

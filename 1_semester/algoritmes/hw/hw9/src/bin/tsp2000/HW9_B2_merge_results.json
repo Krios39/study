@@ -1,0 +1,581 @@
+{
+  "base": "HW9_B2_irismetov.txt",
+  "base_length": 66317.04196819197,
+  "length": 66317.04196819197,
+  "merged": [
+    {
+      "length": 66317.04196819197,
+      "start": "HW9_B2_irismetov.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed2.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed30.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed9.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed1.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed20.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed31.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_HW9_B2_anneal.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed10.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed21.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed32.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_HW9_B2_anneal_from_ant.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed11.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed22.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed33.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_HW9_B2_anneal_from_lk_T3.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed12.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed23.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed34.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_HW9_B2_anneal_from_spiral.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed13.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed24.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed35.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_HW9_B2_dp_anneal_from_ant.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed14.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed25.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed36.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_HW9_B2_evolution.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed15.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed26.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed4.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_HW9_B2_lk.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed16.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed27.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed5.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_HW9_B2_lk_from_nn.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed17.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed28.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed6.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_T2_500M.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed18.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed29.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed7.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_lk_T3_300M.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed19.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed3.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "T4_seed8.txt"
+    },
+    {
+      "length": 66317.04196819222,
+      "start": "saved_lk_long.txt"
+    }
+  ],
+  "method": "partition crossover: edges shared by two tours are kept, each part where they differ takes the cheaper version if the result is still one cycle, repeated over a pool",
+  "pairs_with_base": [
+    {
+      "best_part_gain": -0.21919862116897804,
+      "cheaper_parts": 0,
+      "length": 66322.79307601141,
+      "parts": 3,
+      "shared_edges": 1988,
+      "tour": "T4_seed1.txt"
+    },
+    {
+      "best_part_gain": -0.7588516786193829,
+      "cheaper_parts": 0,
+      "length": 66332.48238311514,
+      "parts": 7,
+      "shared_edges": 1975,
+      "tour": "T4_seed10.txt"
+    },
+    {
+      "best_part_gain": -0.6267444232202468,
+      "cheaper_parts": 0,
+      "length": 66334.6237992009,
+      "parts": 6,
+      "shared_edges": 1980,
+      "tour": "T4_seed11.txt"
+    },
+    {
+      "best_part_gain": 24.82662753503255,
+      "cheaper_parts": 1,
+      "length": 66340.54123751287,
+      "parts": 5,
+      "shared_edges": 1985,
+      "tour": "T4_seed12.txt"
+    },
+    {
+      "best_part_gain": -0.7588516786193829,
+      "cheaper_parts": 0,
+      "length": 66352.1455247092,
+      "parts": 5,
+      "shared_edges": 1979,
+      "tour": "T4_seed13.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66337.4559920695,
+      "parts": 4,
+      "shared_edges": 1987,
+      "tour": "T4_seed14.txt"
+    },
+    {
+      "best_part_gain": -0.3900556122270764,
+      "cheaper_parts": 0,
+      "length": 66351.52682514892,
+      "parts": 9,
+      "shared_edges": 1962,
+      "tour": "T4_seed15.txt"
+    },
+    {
+      "best_part_gain": -0.9902306163518482,
+      "cheaper_parts": 0,
+      "length": 66330.26797246322,
+      "parts": 5,
+      "shared_edges": 1978,
+      "tour": "T4_seed16.txt"
+    },
+    {
+      "best_part_gain": 4.613514539487532,
+      "cheaper_parts": 2,
+      "length": 66340.27138358791,
+      "parts": 5,
+      "shared_edges": 1985,
+      "tour": "T4_seed17.txt"
+    },
+    {
+      "best_part_gain": 0.1152050048545945,
+      "cheaper_parts": 1,
+      "length": 66334.45560087558,
+      "parts": 5,
+      "shared_edges": 1984,
+      "tour": "T4_seed18.txt"
+    },
+    {
+      "best_part_gain": -0.7588516786193829,
+      "cheaper_parts": 0,
+      "length": 66339.4238740237,
+      "parts": 5,
+      "shared_edges": 1972,
+      "tour": "T4_seed19.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66354.81259618071,
+      "parts": 11,
+      "shared_edges": 1964,
+      "tour": "T4_seed2.txt"
+    },
+    {
+      "best_part_gain": 4.613514539487532,
+      "cheaper_parts": 2,
+      "length": 66329.83130167243,
+      "parts": 6,
+      "shared_edges": 1975,
+      "tour": "T4_seed20.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66342.75217613397,
+      "parts": 5,
+      "shared_edges": 1979,
+      "tour": "T4_seed21.txt"
+    },
+    {
+      "best_part_gain": -0.6267444232202468,
+      "cheaper_parts": 0,
+      "length": 66345.86671579513,
+      "parts": 7,
+      "shared_edges": 1971,
+      "tour": "T4_seed22.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66332.82576340198,
+      "parts": 6,
+      "shared_edges": 1976,
+      "tour": "T4_seed23.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66340.34620452435,
+      "parts": 6,
+      "shared_edges": 1975,
+      "tour": "T4_seed24.txt"
+    },
+    {
+      "best_part_gain": -0.7588516786193829,
+      "cheaper_parts": 0,
+      "length": 66319.08486837227,
+      "parts": 2,
+      "shared_edges": 1992,
+      "tour": "T4_seed25.txt"
+    },
+    {
+      "best_part_gain": 0.1152050048545945,
+      "cheaper_parts": 1,
+      "length": 66337.5421135809,
+      "parts": 6,
+      "shared_edges": 1974,
+      "tour": "T4_seed26.txt"
+    },
+    {
+      "best_part_gain": 12.455098890458345,
+      "cheaper_parts": 1,
+      "length": 66362.87292135505,
+      "parts": 8,
+      "shared_edges": 1976,
+      "tour": "T4_seed27.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66326.89631740327,
+      "parts": 5,
+      "shared_edges": 1987,
+      "tour": "T4_seed28.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66318.45696369089,
+      "parts": 2,
+      "shared_edges": 1994,
+      "tour": "T4_seed29.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66340.4086035709,
+      "parts": 10,
+      "shared_edges": 1959,
+      "tour": "T4_seed3.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66344.67602882913,
+      "parts": 11,
+      "shared_edges": 1963,
+      "tour": "T4_seed30.txt"
+    },
+    {
+      "best_part_gain": -0.9699607094573537,
+      "cheaper_parts": 0,
+      "length": 66335.65744775762,
+      "parts": 8,
+      "shared_edges": 1966,
+      "tour": "T4_seed31.txt"
+    },
+    {
+      "best_part_gain": -0.21919862116897804,
+      "cheaper_parts": 0,
+      "length": 66328.86178888881,
+      "parts": 3,
+      "shared_edges": 1988,
+      "tour": "T4_seed32.txt"
+    },
+    {
+      "best_part_gain": -1.042531316834868,
+      "cheaper_parts": 0,
+      "length": 66323.54857963149,
+      "parts": 3,
+      "shared_edges": 1989,
+      "tour": "T4_seed33.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66324.88168539958,
+      "parts": 6,
+      "shared_edges": 1983,
+      "tour": "T4_seed34.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66327.6303473428,
+      "parts": 6,
+      "shared_edges": 1980,
+      "tour": "T4_seed35.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66350.9075192918,
+      "parts": 5,
+      "shared_edges": 1977,
+      "tour": "T4_seed36.txt"
+    },
+    {
+      "best_part_gain": -0.29867408975055554,
+      "cheaper_parts": 0,
+      "length": 66329.25999636015,
+      "parts": 6,
+      "shared_edges": 1976,
+      "tour": "T4_seed4.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66356.97108979616,
+      "parts": 10,
+      "shared_edges": 1967,
+      "tour": "T4_seed5.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66327.91937343434,
+      "parts": 5,
+      "shared_edges": 1985,
+      "tour": "T4_seed6.txt"
+    },
+    {
+      "best_part_gain": -0.21919862116897804,
+      "cheaper_parts": 0,
+      "length": 66332.42035565147,
+      "parts": 5,
+      "shared_edges": 1981,
+      "tour": "T4_seed7.txt"
+    },
+    {
+      "best_part_gain": -0.29867408975055554,
+      "cheaper_parts": 0,
+      "length": 66332.03125528929,
+      "parts": 6,
+      "shared_edges": 1971,
+      "tour": "T4_seed8.txt"
+    },
+    {
+      "best_part_gain": -0.18401563525118547,
+      "cheaper_parts": 0,
+      "length": 66336.78927988584,
+      "parts": 8,
+      "shared_edges": 1972,
+      "tour": "T4_seed9.txt"
+    },
+    {
+      "best_part_gain": 21.17990993737963,
+      "cheaper_parts": 3,
+      "length": 66651.04600411843,
+      "parts": 23,
+      "shared_edges": 1737,
+      "tour": "saved_HW9_B2_anneal.txt"
+    },
+    {
+      "best_part_gain": 4.6507046154209135,
+      "cheaper_parts": 4,
+      "length": 66638.5803945431,
+      "parts": 17,
+      "shared_edges": 1764,
+      "tour": "saved_HW9_B2_anneal_from_ant.txt"
+    },
+    {
+      "best_part_gain": 21.17990993737963,
+      "cheaper_parts": 6,
+      "length": 66372.32225299417,
+      "parts": 13,
+      "shared_edges": 1824,
+      "tour": "saved_HW9_B2_anneal_from_lk_T3.txt"
+    },
+    {
+      "best_part_gain": 21.17990993737963,
+      "cheaper_parts": 3,
+      "length": 66772.72529759051,
+      "parts": 16,
+      "shared_edges": 1690,
+      "tour": "saved_HW9_B2_anneal_from_spiral.txt"
+    },
+    {
+      "best_part_gain": 4.6507046154209135,
+      "cheaper_parts": 4,
+      "length": 66638.39637890786,
+      "parts": 16,
+      "shared_edges": 1766,
+      "tour": "saved_HW9_B2_dp_anneal_from_ant.txt"
+    },
+    {
+      "best_part_gain": 5.0159746337335065,
+      "cheaper_parts": 3,
+      "length": 66690.6957725116,
+      "parts": 12,
+      "shared_edges": 1708,
+      "tour": "saved_HW9_B2_evolution.txt"
+    },
+    {
+      "best_part_gain": 21.17990993737963,
+      "cheaper_parts": 7,
+      "length": 66365.36616291244,
+      "parts": 12,
+      "shared_edges": 1824,
+      "tour": "saved_HW9_B2_lk.txt"
+    },
+    {
+      "best_part_gain": 21.17990993737963,
+      "cheaper_parts": 7,
+      "length": 66365.36616291244,
+      "parts": 12,
+      "shared_edges": 1824,
+      "tour": "saved_HW9_B2_lk_from_nn.txt"
+    },
+    {
+      "best_part_gain": -0.43076915688119044,
+      "cheaper_parts": 0,
+      "length": 66317.47273734886,
+      "parts": 1,
+      "shared_edges": 1998,
+      "tour": "saved_T2_500M.txt"
+    },
+    {
+      "best_part_gain": 21.17990993737963,
+      "cheaper_parts": 7,
+      "length": 66369.55579629379,
+      "parts": 14,
+      "shared_edges": 1819,
+      "tour": "saved_lk_T3_300M.txt"
+    },
+    {
+      "best_part_gain": 21.17990993737963,
+      "cheaper_parts": 7,
+      "length": 66351.43699489662,
+      "parts": 11,
+      "shared_edges": 1822,
+      "tour": "saved_lk_long.txt"
+    }
+  ],
+  "pool": 48,
+  "seconds": 28.8787127,
+  "started_from": "HW9_B2_irismetov.txt"
+}

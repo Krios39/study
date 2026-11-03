@@ -1,0 +1,26 @@
+{
+  "candidates": 10,
+  "length": 66369.55579629379,
+  "method": "simulated annealing with 2-opt and segment insertion moves on neighbour lists, started from a given tour",
+  "moves": 300000000,
+  "runs": [
+    {
+      "length": 66384.37911231886,
+      "seconds": 84.4234716,
+      "seed": 1
+    },
+    {
+      "length": 66390.07826314738,
+      "seconds": 84.8742023,
+      "seed": 2
+    },
+    {
+      "length": 66369.55579629379,
+      "seconds": 117.1709424,
+      "seed": 3
+    }
+  ],
+  "start": "lk",
+  "t_end": 0.3,
+  "t_start": 3.0
+}
