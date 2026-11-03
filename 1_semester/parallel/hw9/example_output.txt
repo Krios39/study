@@ -1,0 +1,16 @@
+mpiexec -n 2 python3 ManagerWorker.py
+Got back [0. 1. 2.] from  1  with msg tag 2
+exit code 0
+mpiexec -n 4 python3 ManagerWorker.py
+Got back [0. 2. 4.] from  2  with msg tag 4
+Got back [0. 1. 2.] from  1  with msg tag 2
+Got back [0. 3. 6.] from  3  with msg tag 6
+exit code 0
+mpiexec -n 7 python3 ManagerWorker.py
+Got back [0. 1. 2.] from  1  with msg tag 2
+Got back [0. 2. 4.] from  2  with msg tag 4
+Got back [0. 3. 6.] from  3  with msg tag 6
+Got back [0. 4. 8.] from  4  with msg tag 8
+Got back [ 0.  5. 10.] from  5  with msg tag 10
+Got back [ 0.  6. 12.] from  6  with msg tag 12
+exit code 0

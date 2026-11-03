@@ -189,7 +189,7 @@ struct Outcome {
     trace: Vec<f64>,
 }
 
-fn run(d: &[Vec<f64>], neigh: &[Vec<usize>], start: Vec<usize>, seed: u64, name: String) -> Outcome {
+fn run(d: &[Vec<f64>], neigh: &[Vec<usize>], start: Vec<usize>, seed: u64, name: String, seconds: f64) -> Outcome {
     let n = d.len();
     let mut rng = Rng(seed);
     let start_len = tour_length(d, &start);
@@ -206,7 +206,7 @@ fn run(d: &[Vec<f64>], neigh: &[Vec<usize>], start: Vec<usize>, seed: u64, name:
     let mut trace = Vec::new();
     let mut mark = 60.0;
     let clock = Instant::now();
-    while clock.elapsed().as_secs_f64() < SECONDS {
+    while clock.elapsed().as_secs_f64() < seconds {
         kicks += 1;
         let delta = kick(&mut t, d, &mut rng, &mut queue, &mut waiting);
         let saved = optimise(&mut t, d, neigh, &mut queue, &mut waiting);
@@ -238,6 +238,35 @@ fn main() {
         l.truncate(CANDIDATES);
         l
     }).collect();
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() == 5 {
+        let (rounds, round_seconds, threads): (usize, f64, usize) = (args[2].parse().unwrap(), args[3].parse().unwrap(), args[4].parse().unwrap());
+        let mut best: Vec<usize> = std::fs::read_to_string(format!("{dir}/{}", args[1])).unwrap().split_whitespace().map(|x| x.parse::<usize>().unwrap() - 1).collect();
+        let mut rounds_log = Vec::new();
+        println!("start {:.6}", tour_length(&d, &best));
+        for round in 0..rounds {
+            let outcomes: Vec<Outcome> = std::thread::scope(|s| {
+                let handles: Vec<_> = (0..threads).map(|k| {
+                    let (d, neigh, start) = (&d, &neigh, best.clone());
+                    s.spawn(move || run(d, neigh, start, (1000 * round + k + 1) as u64, format!("round{round}_thread{k}"), round_seconds))
+                }).collect();
+                handles.into_iter().map(|h| h.join().unwrap()).collect()
+            });
+            let top = outcomes.iter().min_by(|a, b| a.length.total_cmp(&b.length)).unwrap();
+            println!("round {round}: best {:.6}, worst {:.6}, kicks {}", top.length, outcomes.iter().map(|o| o.length).fold(f64::MIN, f64::max), outcomes.iter().map(|o| o.kicks).sum::<usize>());
+            let mut check = top.tour.clone();
+            check.sort_unstable();
+            assert!(check.iter().enumerate().all(|(i, &c)| i == c));
+            best = top.tour.clone();
+            rounds_log.push(json!({"round": round, "lengths": outcomes.iter().map(|o| o.length).collect::<Vec<_>>()}));
+            save_ids(&best, &format!("{dir}/HW9_B2_lk_long.txt"));
+            std::fs::write(format!("{dir}/HW9_B2_lk_long_results.json"), serde_json::to_string_pretty(&json!({
+                "method": "iterated Lin-Kernighan style chains, all threads restart from the best tour after every round",
+                "start": args[1], "threads": threads, "round_seconds": round_seconds, "length": tour_length(&d, &best), "rounds": rounds_log,
+            })).unwrap()).unwrap();
+        }
+        return;
+    }
     let read = |file: &str| -> Vec<usize> { std::fs::read_to_string(format!("{dir}/{file}")).unwrap().split_whitespace().map(|x| x.parse::<usize>().unwrap() - 1).collect() };
     let baseline: Vec<usize> = std::fs::read_to_string("HW9_TSP_baseline_tour.txt").unwrap().split_whitespace().map(|x| x.parse::<usize>().unwrap() - 1).collect();
     let jobs = vec![
@@ -249,7 +278,7 @@ fn main() {
     let outcomes: Vec<Outcome> = std::thread::scope(|s| {
         let handles: Vec<_> = jobs.into_iter().map(|(start, seed, name)| {
             let (d, neigh) = (&d, &neigh);
-            s.spawn(move || run(d, neigh, start, seed, name))
+            s.spawn(move || run(d, neigh, start, seed, name, SECONDS))
         }).collect();
         handles.into_iter().map(|h| h.join().unwrap()).collect()
     });

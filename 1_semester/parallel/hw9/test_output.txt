@@ -1,0 +1,108 @@
+PASS  P=2  known integers N=6  m=1
+PASS  P=2  known integers N=6  m=2
+PASS  P=2  known integers N=6  m=3
+PASS  P=2  known integers N=6  m=6
+PASS  P=2  identity x random N=12  m=1
+PASS  P=2  identity x random N=12  m=2
+PASS  P=2  identity x random N=12  m=3
+PASS  P=2  identity x random N=12  m=4
+PASS  P=2  identity x random N=12  m=6
+PASS  P=2  identity x random N=12  m=12
+PASS  P=2  random x identity N=12  m=2
+PASS  P=2  random x identity N=12  m=4
+PASS  P=2  zero x random N=8  m=2
+PASS  P=2  zero x random N=8  m=4
+PASS  P=2  N=m=1  m=1
+PASS  P=2  random N=60  m=1
+PASS  P=2  random N=60  m=2
+PASS  P=2  random N=60  m=3
+PASS  P=2  random N=60  m=5
+PASS  P=2  random N=60  m=6
+PASS  P=2  random N=60  m=10
+PASS  P=2  random N=60  m=12
+PASS  P=2  fewer tasks than workers possible N=4 m=1  m=1
+PASS  P=2  many tasks N=64 m=16  m=16
+PASS  P=2  course test N=5*P m=5  m=5
+all tests passed
+exit code 0
+PASS  P=3  known integers N=6  m=1
+PASS  P=3  known integers N=6  m=2
+PASS  P=3  known integers N=6  m=3
+PASS  P=3  known integers N=6  m=6
+PASS  P=3  identity x random N=12  m=1
+PASS  P=3  identity x random N=12  m=2
+PASS  P=3  identity x random N=12  m=3
+PASS  P=3  identity x random N=12  m=4
+PASS  P=3  identity x random N=12  m=6
+PASS  P=3  identity x random N=12  m=12
+PASS  P=3  random x identity N=12  m=2
+PASS  P=3  random x identity N=12  m=4
+PASS  P=3  zero x random N=8  m=2
+PASS  P=3  zero x random N=8  m=4
+PASS  P=3  N=m=1  m=1
+PASS  P=3  random N=60  m=1
+PASS  P=3  random N=60  m=2
+PASS  P=3  random N=60  m=3
+PASS  P=3  random N=60  m=5
+PASS  P=3  random N=60  m=6
+PASS  P=3  random N=60  m=10
+PASS  P=3  random N=60  m=12
+PASS  P=3  fewer tasks than workers possible N=4 m=1  m=1
+PASS  P=3  many tasks N=64 m=16  m=16
+PASS  P=3  course test N=5*P m=5  m=5
+all tests passed
+exit code 0
+PASS  P=4  known integers N=6  m=1
+PASS  P=4  known integers N=6  m=2
+PASS  P=4  known integers N=6  m=3
+PASS  P=4  known integers N=6  m=6
+PASS  P=4  identity x random N=12  m=1
+PASS  P=4  identity x random N=12  m=2
+PASS  P=4  identity x random N=12  m=3
+PASS  P=4  identity x random N=12  m=4
+PASS  P=4  identity x random N=12  m=6
+PASS  P=4  identity x random N=12  m=12
+PASS  P=4  random x identity N=12  m=2
+PASS  P=4  random x identity N=12  m=4
+PASS  P=4  zero x random N=8  m=2
+PASS  P=4  zero x random N=8  m=4
+PASS  P=4  N=m=1  m=1
+PASS  P=4  random N=60  m=1
+PASS  P=4  random N=60  m=2
+PASS  P=4  random N=60  m=3
+PASS  P=4  random N=60  m=5
+PASS  P=4  random N=60  m=6
+PASS  P=4  random N=60  m=10
+PASS  P=4  random N=60  m=12
+PASS  P=4  fewer tasks than workers possible N=4 m=1  m=1
+PASS  P=4  many tasks N=64 m=16  m=16
+PASS  P=4  course test N=5*P m=5  m=5
+all tests passed
+exit code 0
+PASS  P=7  known integers N=6  m=1
+PASS  P=7  known integers N=6  m=2
+PASS  P=7  known integers N=6  m=3
+PASS  P=7  known integers N=6  m=6
+PASS  P=7  identity x random N=12  m=1
+PASS  P=7  identity x random N=12  m=2
+PASS  P=7  identity x random N=12  m=3
+PASS  P=7  identity x random N=12  m=4
+PASS  P=7  identity x random N=12  m=6
+PASS  P=7  identity x random N=12  m=12
+PASS  P=7  random x identity N=12  m=2
+PASS  P=7  random x identity N=12  m=4
+PASS  P=7  zero x random N=8  m=2
+PASS  P=7  zero x random N=8  m=4
+PASS  P=7  N=m=1  m=1
+PASS  P=7  random N=60  m=1
+PASS  P=7  random N=60  m=2
+PASS  P=7  random N=60  m=3
+PASS  P=7  random N=60  m=5
+PASS  P=7  random N=60  m=6
+PASS  P=7  random N=60  m=10
+PASS  P=7  random N=60  m=12
+PASS  P=7  fewer tasks than workers possible N=4 m=1  m=1
+PASS  P=7  many tasks N=64 m=16  m=16
+PASS  P=7  course test N=5*P m=5  m=5
+all tests passed
+exit code 0

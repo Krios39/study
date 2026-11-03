@@ -8,6 +8,7 @@ const MOVES: u64 = 1_000_000_000;
 const T_START: f64 = 30.0;
 const T_END: f64 = 0.3;
 const CANDIDATES: usize = 10;
+const SAVE_SECONDS: f64 = 10.0;
 
 struct Rng(u64);
 
@@ -73,20 +74,30 @@ impl Tour {
     }
 }
 
-fn anneal(d: &[Vec<f64>], neigh: &[Vec<usize>], start: &[usize], seed: u64) -> (Vec<usize>, Vec<(u64, f64)>) {
+fn anneal(d: &[Vec<f64>], neigh: &[Vec<usize>], start: &[usize], seed: u64, t_start: f64, moves: u64, best_file: &str) -> (Vec<usize>, Vec<(u64, f64)>, f64, Vec<usize>) {
     let n = d.len();
     let mut rng = Rng(seed);
     let mut t = Tour::new(start.to_vec());
     let mut length = tour_length(d, start);
     let mut trace = Vec::new();
     let step = 1_000_000u64;
-    let factor = (T_END / T_START).powf(step as f64 / MOVES as f64);
-    let mut temperature = T_START;
-    for m in 0..MOVES {
+    let factor = (T_END / t_start).powf(step as f64 / moves as f64);
+    let mut temperature = t_start;
+    let mut best = start.to_vec();
+    let mut best_length = length;
+    let mut unsaved = false;
+    let mut saved_at = Instant::now();
+    for m in 0..moves {
         if m % step == 0 && m > 0 {
             temperature *= factor;
-            if m % (MOVES / 10) == 0 {
+            if m % (moves / 10) == 0 {
                 trace.push((m, length));
+            }
+            if unsaved && saved_at.elapsed().as_secs_f64() >= SAVE_SECONDS {
+                save_ids(&best, best_file);
+                println!("seed {seed}: new best {best_length:.6} at move {m}");
+                unsaved = false;
+                saved_at = Instant::now();
             }
         }
         let a = rng.below(n);
@@ -105,6 +116,11 @@ fn anneal(d: &[Vec<f64>], neigh: &[Vec<usize>], start: &[usize], seed: u64) -> (
                     t.exchange(b, a, e, c);
                 }
                 length += delta;
+                if length < best_length - 1e-7 {
+                    best_length = length;
+                    best.copy_from_slice(&t.order);
+                    unsaved = true;
+                }
             }
         } else {
             let len = 1 + rng.below(3);
@@ -133,10 +149,19 @@ fn anneal(d: &[Vec<f64>], neigh: &[Vec<usize>], start: &[usize], seed: u64) -> (
                 }
                 t.exchange(c, l, f, e);
                 length += delta;
+                if length < best_length - 1e-7 {
+                    best_length = length;
+                    best.copy_from_slice(&t.order);
+                    unsaved = true;
+                }
             }
         }
     }
-    (t.order, trace)
+    if unsaved {
+        save_ids(&best, best_file);
+    }
+    let last = tour_length(d, &t.order);
+    (best, trace, last, t.order)
 }
 
 fn main() {
@@ -151,34 +176,55 @@ fn main() {
         l
     }).collect();
     let source = std::env::args().nth(1).unwrap_or("hungarian".to_string());
-    let suffix = if source == "hungarian" { String::new() } else { format!("_from_{source}") };
+    let t_start: f64 = std::env::args().nth(2).map_or(T_START, |x| x.parse().unwrap());
+    let moves: u64 = std::env::args().nth(3).map_or(MOVES, |x| x.parse().unwrap());
+    let suffix = if source == "hungarian" { String::new() } else if t_start != T_START { format!("_from_{source}_T{t_start}") } else { format!("_from_{source}") };
     let start: Vec<usize> = std::fs::read_to_string(format!("{dir}/HW9_B2_{source}.txt")).unwrap().split_whitespace().map(|x| x.parse::<usize>().unwrap() - 1).collect();
 
+    if let Some(count) = std::env::args().nth(4).map(|x| x.parse::<u64>().unwrap()) {
+        std::fs::create_dir_all(format!("{dir}/pool")).unwrap();
+        let threads = 12;
+        std::thread::scope(|s| {
+            for k in 0..threads {
+                let (d, neigh, start, dir) = (&d, &neigh, &start, &dir);
+                s.spawn(move || {
+                    for seed in (1..=count).filter(|x| x % threads == k) {
+                        let (_, _, last, tour) = anneal(d, neigh, start, seed, t_start, moves, &format!("{dir}/pool_unused_{k}.txt"));
+                        save_ids(&tour, &format!("{dir}/pool/T{t_start}_seed{seed}.txt"));
+                        println!("T {t_start} seed {seed}: {last:.6}");
+                    }
+                    let _ = std::fs::remove_file(format!("{dir}/pool_unused_{k}.txt"));
+                });
+            }
+        });
+        return;
+    }
+
     let t = Instant::now();
-    let runs: Vec<(u64, Vec<usize>, f64, Vec<(u64, f64)>, f64)> = std::thread::scope(|s| {
+    let runs: Vec<(u64, Vec<usize>, f64, Vec<(u64, f64)>, f64, f64)> = std::thread::scope(|s| {
         let handles: Vec<_> = [1u64, 2, 3].map(|seed| {
-            let (d, neigh, start) = (&d, &neigh, &start);
+            let (d, neigh, start, suffix) = (&d, &neigh, &start, &suffix);
             s.spawn(move || {
                 let t = Instant::now();
-                let (tour, trace) = anneal(d, neigh, start, seed);
+                let (tour, trace, last, _) = anneal(d, neigh, start, seed, t_start, moves, &format!("{dir}/HW9_B2_anneal{suffix}_seed{seed}_best.txt"));
                 let mut check = tour.clone();
                 check.sort_unstable();
                 assert!(check.iter().enumerate().all(|(i, &c)| i == c));
                 let length = tour_length(d, &tour);
-                (seed, tour, length, trace, t.elapsed().as_secs_f64())
+                (seed, tour, length, trace, t.elapsed().as_secs_f64(), last)
             })
         }).into_iter().collect();
         handles.into_iter().map(|h| h.join().unwrap()).collect()
     });
-    for (seed, _, length, trace, seconds) in &runs {
-        println!("seed {seed}: {length:.3} in {seconds:.1}s; trace {:?}", trace.iter().map(|p| p.1.round()).collect::<Vec<_>>());
+    for (seed, _, length, trace, seconds, last) in &runs {
+        println!("seed {seed}: best {length:.3}, last {last:.3} in {seconds:.1}s; trace {:?}", trace.iter().map(|p| p.1.round()).collect::<Vec<_>>());
     }
     let best = runs.iter().min_by(|a, b| a.2.total_cmp(&b.2)).unwrap();
     println!("best {:.6}, total {:.1}s", best.2, t.elapsed().as_secs_f64());
     save_ids(&best.1, &format!("{dir}/HW9_B2_anneal{suffix}.txt"));
     std::fs::write(format!("{dir}/HW9_B2_anneal{suffix}_results.json"), serde_json::to_string_pretty(&json!({
         "method": "simulated annealing with 2-opt and segment insertion moves on neighbour lists, started from a given tour", "start": source,
-        "moves": MOVES, "t_start": T_START, "t_end": T_END, "candidates": CANDIDATES, "length": best.2,
-        "runs": runs.iter().map(|r| json!({"seed": r.0, "length": r.2, "seconds": r.4})).collect::<Vec<_>>(),
+        "moves": moves, "t_start": t_start, "t_end": T_END, "candidates": CANDIDATES, "length": best.2,
+        "runs": runs.iter().map(|r| json!({"seed": r.0, "length": r.2, "last_length": r.5, "seconds": r.4})).collect::<Vec<_>>(),
     })).unwrap()).unwrap();
 }

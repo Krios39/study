@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homework 9 Report - Parallel Computing</title>
+        <style>
+            table.t { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: center; }
+            table.t th { background: #2d2d2d; color: #fff; padding: 8px; border: 1px solid #444; }
+            table.t td { padding: 6px; border: 1px solid #ddd; }
+            table.t tr:nth-child(even) td { background: #f9f9f9; }
+            pre.term { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0; max-height: 520px; overflow-y: auto; }
+        </style>
+    </head>
+    <body>
+<details>
+    <summary>Test environment and reproducibility</summary>
+    <div class="details-content">
+        <table class="t">
+            <thead><tr><th></th><th>Exercise 9.1 and Bonus A</th><th>Exercises 9.2, 9.3, Bonus B and C</th></tr></thead>
+            <tbody>
+                <tr><td>Machine</td><td>Laptop, Intel Core Ultra 7 265U, Ubuntu under WSL 2 (7 cores × 2 threads visible)</td><td>Course server parcomp2026, AMD EPYC 7742 VM, 64 vCPUs</td></tr>
+                <tr><td>Software</td><td>Open MPI 5.0.10, Python 3.14.4, mpi4py 4.1.1, NumPy 2.5.3</td><td>DD Schwarz Lab <strong>version 0.9.10</strong>, native engine, CPU backend. PETSc and OpenCL were not used</td></tr>
+                <tr><td>Threads</td><td><code>OMP_NUM_THREADS=1</code>, <code>OPENBLAS_NUM_THREADS=1</code></td><td>The Lab fixes BLAS thread counts</td></tr>
+                <tr><td>Repetitions</td><td>1 checked warm-up + 3 timed runs per cell, median</td><td>1 warm-up + 3 timed runs per configuration, median. All 112 jobs converged</td></tr>
+            </tbody>
+        </table>
+        <ul style="font-size: 14px;">
+            <li><strong>How the Lab was used:</strong> every job was started from the Lab page itself: settings entered in the form fields, then the Run selected configuration button, one run after another. The page's run data is saved as <code>DD_Schwarz_experiments.json</code> in the structure of the Export experiment JSON file, without the stored problem fields, and <code>dd_runs.json</code> is the same data labelled by series for plotting. An earlier pass of the same plan, submitted by a script, gave identical iteration counts and is not used here.</li>
+            <li><strong>Queue:</strong> jobs ran one at a time. The largest measured queue wait was 0.0015 s and it is not part of any timing. Other activity on the VM outside the Lab queue was not monitored.</li>
+            <li><strong>Timing used for comparisons:</strong> <code>solve_seconds</code> as reported by the Lab. Setup is reported separately. Snapshots (Examine the solution) were off.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 9.1: Matrix multiplication using the manager-worker model</summary>
+    <div class="details-content">
+        <h3>Course example (<code>ManagerWorker.py</code>, log in <code>example_output.txt</code>)</h3>
+        <p style="font-size: 14px;">Run with $P = 2, 4, 7, all exiting with code 0. The manager receives with <code>MPI.ANY_SOURCE</code> and <code>MPI.ANY_TAG</code>, then learns the sender and tag from <code>status.source</code> and <code>status.tag</code>. Arrival order is not fixed: with $P=4$ the replies came back from ranks 2, 1, 3, while with $P=7$ they came back in rank order. So the manager must not assume any order, and my implementation uses the same mechanism.</p>
+        <h3>Implementation (<code>task9_1.py</code>, <code>manager_worker_AxB(A, B, m)</code>, with default $m=5$ because the course test calls it without $m$)</h3>
+        <ul style="font-size: 14px;">
+            <li>Rank 0 broadcasts $N$ and $m$ so that workers can allocate their block buffers of size $n = N/m$. Rank 0 returns $C$, all other ranks return <code>None</code>.</li>
+            <li><strong>How the manager identifies the sender:</strong> it calls <code>Probe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)</code>, reads <code>status.Get_source()</code> and <code>status.Get_tag()</code>, and then receives from exactly that rank.</li>
+        </ul>
+        <table class="t">
+            <thead><tr><th>Tag</th><th>Direction</th><th>Content</th></tr></thead>
+            <tbody>
+                <tr><td>REQUEST=1</td><td>worker → manager</td><td>empty <code>int64</code> buffer</td></tr>
+                <tr><td>TASK=2</td><td>manager → worker</td><td>3 messages: indices $(i,k,j)$ as <code>int64</code>, blocks $A_{ik}$ and $B_{kj}$ as <code>float64</code></td></tr>
+                <tr><td>RESULT=3</td><td>worker → manager</td><td>2 messages: indices as <code>int64</code>, block $D$ as <code>float64</code></td></tr>
+                <tr><td>STOP=4</td><td>manager → worker</td><td>empty <code>int64</code> buffer</td></tr>
+            </tbody>
+        </table>
+        <ul style="font-size: 14px;">
+            <li><strong>Why no result can be lost:</strong> a worker sends its next REQUEST only after its previous RESULT was sent, and the manager sends STOP only as a reply to a REQUEST. So a worker that gets STOP has no outstanding result, and when <code>active</code> reaches 0 every result has been added to $C$. Running out of tasks does not end the manager loop, only the last STOP does.</li>
+            <li><strong>Why multi-part messages do not mix:</strong> after the probe the manager receives both RESULT parts with <code>source=worker</code>, and MPI keeps messages from one sender in order.</li>
+            <li><strong>Why no deadlock:</strong> the manager sends a TASK only to a worker that has just requested work and is about to receive it.</li>
+        </ul>
+        <h3>Correctness (<code>a9_test.py</code>, log in <code>test_output.txt</code>)</h3>
+        <p style="font-size: 14px;">Each case compares rank 0's result with <code>numpy.matmul(A, B)</code> using <code>numpy.testing.assert_allclose</code> and checks that the other ranks return <code>None</code>. Cases: the course test from the provided <code>a9_test.py</code> ($N = 5P$, $m = 5$, random matrices), known integers, identity on either side, zero matrix, $N=m=1$ and random matrices up to $N=64$, with $m$ from 1 to $N$, including $m=1$ with more workers than tasks. The test file is adapted from the course one. The 25 cases were run on $P = 2, 3, 4, 7$: <strong>100 passed, 0 failed</strong>, and every run exited with code 0, so no worker was left waiting.</p>
+        <h3>Short discussion</h3>
+        <ul style="font-size: 14px;">
+            <li><strong>Many more tasks than workers:</strong> load balances itself. A faster worker simply asks more often, so uneven task costs and uneven workers are absorbed without planning.</li>
+            <li><strong>Extremely small blocks:</strong> there are $m^3$ tasks with 6 messages per task, and the payload is $24 N^2 m$ bytes, growing linearly with $m$. All of it passes through one manager, which becomes the bottleneck, and each small task does too little arithmetic to pay for its messages. Bonus A shows this in measurements.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 9.2: Weak scaling experiments with DD Schwarz Lab</summary>
+    <div class="details-content">
+        <h3>Part A: Hypothesis</h3>
+        <p style="font-size: 14px;">Set after one 64×64 pilot run and before the measurement campaign. <em>With a constant 64×64 owned grid per subdomain and one rank per subdomain, one-level ASM should need more outer iterations as the subdomain count grows, because a local correction moves information only as far as its neighbours. So solve time will not stay constant. A balanced coarse correction whose size grows with the subdomain count should keep iterations much flatter, at the price of extra setup and coarse work. A coarse space of fixed size should lose this benefit as the grid grows.</em></p>
+        <h3>Parts B and C: Plan and control variables</h3>
+        <ul style="font-size: 14px;">
+            <li><strong>Changed together:</strong> $N_x = N_y = 64 P_x$ with $P_x = P_y \in \{1, 2, 3, 4, 6, 8\}$, so 4096 owned points per subdomain in all six configurations.</li>
+            <li><strong>MPI ranks:</strong> equal to the subdomain count, one subdomain per rank. The Lab's rank report confirms these are separate MPI processes. 64 ranks use all 64 vCPUs.</li>
+            <li><strong>Held fixed:</strong> built-in diffusion, $H=1$, zero Dirichlet boundary, source = ones, guess = zeros, seed 42, ASM with IC(0), outer CG (Auto), native engine, CPU, halo 2 with rectangular geometry, rtol $10^{-8}$, maxiter 1600.</li>
+            <li><strong>Three series:</strong> one-level (no coarse), balanced with $C_x = C_y = 2 P_x$ (4 coarse functions per subdomain), and balanced with fixed $C_x = C_y = 4$.</li>
+            <li><strong>Note on physics:</strong> the Lab keeps unit grid spacing, so a larger grid is a larger plate rather than a refinement of the same physical problem.</li>
+        </ul>
+        <h3>Part D: Results</h3>
+        <p style="font-size: 14px;">Times are medians of 3 runs. E_weak uses solve time relative to the same series at 1 subdomain. "Local" and "Coarse" are the Lab's <code>local_seconds</code> and <code>coarse_seconds</code>, maximum over ranks. The Lab does not report communication separately.</p>
+        <div style="overflow-x:auto;"><table class="t"><thead><tr><th>Series</th><th>Px×Py</th><th>Nx×Ny</th><th>Unknowns</th><th>Ranks</th><th>Coarse dim</th><th>Iterations</th><th>Final rel. residual (worst rep)</th><th>Status</th><th>Reps</th><th>Setup, s</th><th>Solve, s (min..max)</th><th>Local, s</th><th>Coarse, s</th><th>Solve/iter, ms</th><th>E_weak</th></tr></thead><tbody><tr><td>one-level</td><td>1×1</td><td>64×64</td><td>4096</td><td>1</td><td>0</td><td>52</td><td>6.72e-9</td><td>converged</td><td>3</td><td>0.115</td><td>0.190 (0.188..0.194)</td><td>0.146</td><td>0.000</td><td>3.65</td><td>1.000</td></tr><tr><td>one-level</td><td>2×2</td><td>128×128</td><td>16384</td><td>4</td><td>0</td><td>164</td><td>9.01e-9</td><td>converged</td><td>3</td><td>0.135</td><td>0.720 (0.715..0.733)</td><td>0.537</td><td>0.000</td><td>4.39</td><td>0.263</td></tr><tr><td>one-level</td><td>3×3</td><td>192×192</td><td>36864</td><td>9</td><td>0</td><td>240</td><td>9.72e-9</td><td>converged</td><td>3</td><td>0.156</td><td>1.255 (1.239..1.265)</td><td>0.911</td><td>0.000</td><td>5.23</td><td>0.151</td></tr><tr><td>one-level</td><td>4×4</td><td>256×256</td><td>65536</td><td>16</td><td>0</td><td>293</td><td>8.44e-9</td><td>converged</td><td>3</td><td>0.174</td><td>1.876 (1.841..1.917)</td><td>1.301</td><td>0.000</td><td>6.40</td><td>0.101</td></tr><tr><td>one-level</td><td>6×6</td><td>384×384</td><td>147456</td><td>36</td><td>0</td><td>437</td><td>8.46e-9</td><td>converged</td><td>3</td><td>0.261</td><td>4.329 (4.040..4.588)</td><td>2.832</td><td>0.000</td><td>9.91</td><td>0.044</td></tr><tr><td>one-level</td><td>8×8</td><td>512×512</td><td>262144</td><td>64</td><td>0</td><td>579</td><td>9.77e-9</td><td>converged</td><td>3</td><td>0.365</td><td>8.951 (8.789..9.265)</td><td>5.603</td><td>0.000</td><td>15.46</td><td>0.021</td></tr><tr><td>balanced, C=2·Px</td><td>1×1</td><td>64×64</td><td>4096</td><td>1</td><td>4</td><td>39</td><td>9.31e-9</td><td>converged</td><td>3</td><td>0.126</td><td>0.191 (0.188..0.193)</td><td>0.115</td><td>0.013</td><td>4.91</td><td>1.000</td></tr><tr><td>balanced, C=2·Px</td><td>2×2</td><td>128×128</td><td>16384</td><td>4</td><td>16</td><td>96</td><td>9.25e-9</td><td>converged</td><td>3</td><td>0.150</td><td>0.548 (0.544..0.558)</td><td>0.315</td><td>0.046</td><td>5.71</td><td>0.349</td></tr><tr><td>balanced, C=2·Px</td><td>3×3</td><td>192×192</td><td>36864</td><td>9</td><td>36</td><td>108</td><td>9.05e-9</td><td>converged</td><td>3</td><td>0.182</td><td>0.758 (0.730..0.803)</td><td>0.426</td><td>0.064</td><td>7.02</td><td>0.252</td></tr><tr><td>balanced, C=2·Px</td><td>4×4</td><td>256×256</td><td>65536</td><td>16</td><td>64</td><td>122</td><td>9.01e-9</td><td>converged</td><td>3</td><td>0.242</td><td>1.031 (0.981..1.236)</td><td>0.541</td><td>0.093</td><td>8.45</td><td>0.186</td></tr><tr><td>balanced, C=2·Px</td><td>6×6</td><td>384×384</td><td>147456</td><td>36</td><td>144</td><td>131</td><td>9.08e-9</td><td>converged</td><td>3</td><td>0.567</td><td>1.974 (1.968..1.988)</td><td>0.964</td><td>0.180</td><td>15.07</td><td>0.097</td></tr><tr><td>balanced, C=2·Px</td><td>8×8</td><td>512×512</td><td>262144</td><td>64</td><td>256</td><td>135</td><td>9.62e-9</td><td>converged</td><td>3</td><td>1.114</td><td>2.908 (2.896..2.912)</td><td>1.300</td><td>0.256</td><td>21.54</td><td>0.066</td></tr><tr><td>balanced, C=4</td><td>1×1</td><td>64×64</td><td>4096</td><td>1</td><td>16</td><td>29</td><td>8.35e-9</td><td>converged</td><td>3</td><td>0.132</td><td>0.136 (0.136..0.149)</td><td>0.081</td><td>0.010</td><td>4.70</td><td>1.000</td></tr><tr><td>balanced, C=4</td><td>2×2</td><td>128×128</td><td>16384</td><td>4</td><td>16</td><td>96</td><td>9.25e-9</td><td>converged</td><td>3</td><td>0.152</td><td>0.548 (0.541..0.605)</td><td>0.317</td><td>0.047</td><td>5.71</td><td>0.249</td></tr><tr><td>balanced, C=4</td><td>3×3</td><td>192×192</td><td>36864</td><td>9</td><td>16</td><td>141</td><td>7.39e-9</td><td>converged</td><td>3</td><td>0.162</td><td>0.949 (0.942..1.084)</td><td>0.530</td><td>0.076</td><td>6.73</td><td>0.144</td></tr><tr><td>balanced, C=4</td><td>4×4</td><td>256×256</td><td>65536</td><td>16</td><td>16</td><td>182</td><td>9.99e-9</td><td>converged</td><td>3</td><td>0.177</td><td>1.462 (1.460..1.467)</td><td>0.785</td><td>0.109</td><td>8.03</td><td>0.093</td></tr><tr><td>balanced, C=4</td><td>6×6</td><td>384×384</td><td>147456</td><td>36</td><td>16</td><td>271</td><td>9.37e-9</td><td>converged</td><td>3</td><td>0.289</td><td>3.893 (3.693..3.924)</td><td>1.936</td><td>0.287</td><td>14.37</td><td>0.035</td></tr><tr><td>balanced, C=4</td><td>8×8</td><td>512×512</td><td>262144</td><td>64</td><td>16</td><td>356</td><td>9.39e-9</td><td>converged</td><td>3</td><td>0.410</td><td>7.458 (7.404..7.779)</td><td>3.395</td><td>0.582</td><td>20.95</td><td>0.018</td></tr></tbody></table></div>
+        <h3>Part E: Plots</h3>
+        <img src="plots/weak_time.png" alt="Weak scaling solve time">
+        <img src="plots/weak_iterations.png" alt="Weak scaling iterations">
+        <img src="plots/weak_efficiency.png" alt="Weak scaling efficiency">
+        <img src="plots/weak_per_iteration.png" alt="Solve time per iteration">
+        <h3>Answers</h3>
+        <ol style="font-size: 14px;">
+            <li><strong>Does solve time stay constant?</strong> No. From 1 to 64 subdomains it grew from 0.190 s to 8.951 s one-level (×47, E_weak 0.02), from 0.136 s to 7.458 s with fixed coarse (×55, E_weak 0.02), and from 0.191 s to 2.908 s with growing coarse (×15, E_weak 0.07). The 1-subdomain reference is flattering because it has no neighbours and no halo. Relative to 4 subdomains, E_weak at 64 is 0.08 one-level and 0.19 with growing coarse.</li>
+            <li><strong>Does the iteration count change?</strong> Yes. One-level: 52 → 579, roughly proportional to $P_x$ from 2×2 on (164, 293, 579 at $P_x$ = 2, 4, 8). Growing coarse: 39 → 135, almost flat from 4×4 on (122, 131, 135). Fixed coarse: 29 → 356. It starts better than growing coarse at 1×1 because $C=4$ is larger there, equals it at 2×2 where both use $C=4$ (96 iterations, an internal check), then falls behind. Total time is iterations × cost per iteration, so iteration growth feeds directly into time: one-level goes ×11 in iterations and ×4.2 per iteration, giving ×47.</li>
+            <li><strong>Which costs matter most?</strong> At 64 subdomains one-level, <code>local_seconds</code> is 5.60 s of the 8.95 s solve. With growing coarse: local 1.30 s, coarse 0.26 s, and the remaining 1.35 s of the 2.91 s solve is not attributed by the Lab. Setup is small except with growing coarse, where it rose from 0.13 s to 1.11 s. Even so, setup + solve at 64 subdomains is 4.02 s, against 9.32 s one-level and 7.87 s with fixed coarse.</li>
+            <li><strong>Measured versus hypothesis.</strong>
+                <ul>
+                    <li><em>Measured:</em> times, iteration counts, residuals, the setup, local and coarse columns, and that all runs converged. Iterations were identical in all repetitions of a configuration.</li>
+                    <li><em>Measured and surprising:</em> local time per iteration rises from 2.80 ms at 1 subdomain to 9.68 ms at 64 (one-level), while the average local problem grows only 11%. The strong-scaling series suggests this is not caused by the algorithm: the same 16 subdomains cost 2.90 ms per subdomain per iteration on 1 rank and 4.28 ms on 16 ranks.</li>
+                    <li><em>Hypothesis, not measured:</em> this slowdown comes from shared memory bandwidth and VM scheduling when many ranks are active, especially at 64 ranks on 64 vCPUs. The unattributed solve time presumably contains <code>Ax</code>, neighbour exchange, global reductions and true-residual monitoring, but the Lab does not separate them, so I cannot say how much of it is communication. The explanation of iteration growth (information travels about one subdomain per iteration, and a coarse space shortcuts this) fits the data but is not proven by it.</li>
+                </ul>
+            </li>
+            <li><strong>Is local work independent of subdomain count with overlap?</strong> No. With halo 2 a local problem is 64×64 = 4096 at 1×1 (no neighbours), 66×66 = 4356 at a corner, 66×68 = 4488 at an edge and 68×68 = 4624 in the interior. The average rises from 4096 to 4556 at 8×8 (+11%) as the share of interior blocks grows, and neighbour exchange goes from none to four neighbours. So the runs have only approximately equal work per process, and E_weak has to be read with that in mind.</li>
+        </ol>
+        <p style="font-size: 14px;"><strong>Conclusion:</strong> the hypothesis held for iterations: one-level iterations grow roughly linearly in $P_x$, a growing coarse space nearly stops this, and a fixed one does not. It did not anticipate the growth in cost per iteration: even with near-flat iterations, that cost rose about 4.4× with growing coarse, so on this VM solve time is far from constant for all three series.</p>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 9.3: Coarse correction as the design choice</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;"><strong>Question:</strong> how does the iteration count change with subdomain count, with and without a coarse solver? <strong>Hypothesis:</strong> as in 9.2, Part A. <strong>Changed parameter:</strong> coarse correction only, using the same problem and runs as 9.2. Comparison graph: <code>plots/weak_iterations.png</code> above.</p>
+        <table class="t">
+            <thead><tr><th>Subdomains</th><th>1</th><th>4</th><th>9</th><th>16</th><th>36</th><th>64</th></tr></thead>
+            <tbody>
+                <tr><td>One-level</td><td>52</td><td>164</td><td>240</td><td>293</td><td>437</td><td>579</td></tr>
+                <tr><td>Balanced, $C = 2 P_x$</td><td>39</td><td>96</td><td>108</td><td>122</td><td>131</td><td>135</td></tr>
+                <tr><td>Balanced, $C = 4$</td><td>29</td><td>96</td><td>141</td><td>182</td><td>271</td><td>356</td></tr>
+            </tbody>
+        </table>
+        <p style="font-size: 14px;"><strong>Conclusion:</strong> at 64 subdomains the growing coarse space cuts iterations 4.3× compared with one-level, and setup + solve 2.3×. Fixed $C=4$ cuts iterations only 1.6×, so here the coarse space has to grow with the subdomain count.</p>
+        <p style="font-size: 14px;"><strong>Confounders:</strong> the two coarse series differ in coarse size, and within a series the global size changes along with the subdomain count. Each balanced iteration also costs more than a one-level one (21.5 vs 15.5 ms at 64 subdomains), so iterations alone overstate the time gain. Only $H=1$ was tested: the Lab's geometric coarse functions may help less with a high-contrast channel, as Lesson 7 warns.</p>
+    </div>
+</details>
+
+<details>
+    <summary>Bonus A: Task granularity in manager-worker</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;">Option chosen: compare block counts $m$ with $N=1920$ fixed (<code>task9_bonus_a.py</code>, <code>results_9_1.csv</code>). Laptop, median of 3 runs, warm-up result checked against <code>A @ B</code>. Only the multiplication call is timed.</p>
+        <table class="t"><thead><tr><th>m</th><th>Block n</th><th>Tasks</th><th>Payload, MB</th><th>P=2, s</th><th>P=3, s</th><th>P=5, s</th><th>P=7, s</th></tr></thead><tbody><tr><td>1</td><td>1920</td><td>1</td><td>88.5</td><td>0.250</td><td>0.420</td><td>0.554</td><td>0.663</td></tr><tr><td>2</td><td>960</td><td>8</td><td>176.9</td><td>0.370</td><td>0.373</td><td>0.284</td><td>0.274</td></tr><tr><td>4</td><td>480</td><td>64</td><td>353.9</td><td>0.586</td><td>0.575</td><td>0.266</td><td>0.285</td></tr><tr><td>8</td><td>240</td><td>512</td><td>707.8</td><td>0.724</td><td>0.539</td><td>0.374</td><td>0.465</td></tr><tr><td>16</td><td>120</td><td>4096</td><td>1415.6</td><td>0.722</td><td>0.623</td><td>0.832</td><td>0.868</td></tr><tr><td>32</td><td>60</td><td>32768</td><td>2831.2</td><td>1.890</td><td>1.718</td><td>2.452</td><td>3.043</td></tr><tr><td>64</td><td>30</td><td>262144</td><td>5662.3</td><td>5.964</td><td>7.491</td><td>9.845</td><td>12.602</td></tr></tbody></table>
+        <img src="plots/mw_granularity.png" alt="Manager-worker granularity">
+        <ul style="font-size: 14px;">
+            <li><strong>Measured:</strong> with several workers there is a sweet spot at moderate $m$: $m=4$ for $P=5$ (0.266 s), $m=2$ for $P=7$ (0.274 s). With $m=1$ extra workers do not help, as one worker gets the only task. Fine grain is very expensive: at $m=64$ (262144 tasks) the time is 6.0 to 12.6 s, and it gets worse with more workers.</li>
+            <li><strong>Measured and surprising:</strong> the best multi-worker result is no better than one worker with $m=1$ (0.250 s on $P=2$), so on this laptop at this size there was <strong>no real speedup</strong>. $m=1$ also slows from 0.250 s at $P=2$ to 0.663 s at $P=7$, though only one worker computes.</li>
+            <li><strong>Hypothesis, not measured:</strong> waiting MPI ranks busy-poll and take power and cores on this 15 W hybrid chip, and at $N=1920$ the compute part is too short to outweigh shipping blocks through one manager. A larger $N$ on the server would be needed to check this.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Bonus B: Weak versus strong scaling</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;">Same settings as 9.2, with $N_x=N_y=256$ and $P_x=P_y=4$ fixed, varying only the MPI ranks. These are real separate MPI processes. Subdomains go round-robin to ranks, so with fewer than 16 ranks each rank handles several.</p>
+        <div style="overflow-x:auto;"><table class="t"><thead><tr><th>Series</th><th>Ranks</th><th>Iterations</th><th>Status</th><th>Setup, s</th><th>Solve, s (min..max)</th><th>Speedup (solve)</th><th>Efficiency</th></tr></thead><tbody><tr><td>one-level</td><td>1</td><td>293</td><td>converged</td><td>2.066</td><td>16.790 (16.649..17.215)</td><td>1.00</td><td>1.00</td></tr><tr><td>one-level</td><td>2</td><td>293</td><td>converged</td><td>1.078</td><td>8.778 (8.726..8.836)</td><td>1.91</td><td>0.96</td></tr><tr><td>one-level</td><td>4</td><td>293</td><td>converged</td><td>0.572</td><td>4.785 (4.545..4.878)</td><td>3.51</td><td>0.88</td></tr><tr><td>one-level</td><td>8</td><td>293</td><td>converged</td><td>0.301</td><td>2.608 (2.579..2.705)</td><td>6.44</td><td>0.80</td></tr><tr><td>one-level</td><td>16</td><td>293</td><td>converged</td><td>0.176</td><td>1.814 (1.796..1.886)</td><td>9.26</td><td>0.58</td></tr><tr><td>balanced, C=8</td><td>1</td><td>122</td><td>converged</td><td>2.543</td><td>8.558 (8.326..8.727)</td><td>1.00</td><td>1.00</td></tr><tr><td>balanced, C=8</td><td>2</td><td>122</td><td>converged</td><td>1.288</td><td>4.422 (4.358..4.430)</td><td>1.94</td><td>0.97</td></tr><tr><td>balanced, C=8</td><td>4</td><td>122</td><td>converged</td><td>0.689</td><td>2.411 (2.406..2.564)</td><td>3.55</td><td>0.89</td></tr><tr><td>balanced, C=8</td><td>8</td><td>122</td><td>converged</td><td>0.388</td><td>1.390 (1.364..1.551)</td><td>6.16</td><td>0.77</td></tr><tr><td>balanced, C=8</td><td>16</td><td>122</td><td>converged</td><td>0.242</td><td>0.970 (0.955..1.009)</td><td>8.82</td><td>0.55</td></tr></tbody></table></div>
+        <img src="plots/strong_speedup.png" alt="Strong scaling speedup">
+        <ul style="font-size: 14px;">
+            <li><strong>Iterations do not depend on rank count</strong> (293 and 122 in all cases), because the decomposition is fixed. Ranks change the execution, not the method.</li>
+            <li><strong>Strong scaling holds up better:</strong> speedup at 16 ranks is 9.26 one-level and 8.82 balanced. Weak scaling also pays for iteration growth, which strong scaling at a fixed decomposition avoids entirely.</li>
+            <li><strong>Reproducibility check:</strong> weak 4×4 with 16 ranks and strong with 16 ranks are the same configuration run separately: 1.876 vs 1.814 s one-level, and 1.031 vs 0.970 s balanced.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Bonus C: Convergence and setup versus solve</summary>
+    <div class="details-content">
+        <img src="plots/residual_histories.png" alt="Residual histories">
+        <ul style="font-size: 14px;">
+            <li><strong>Residual histories:</strong> the one-level curves rise above the starting value and stay on a plateau that lengthens with subdomain count, well over 100 iterations at 64 subdomains (the $x$ scales differ between panels). With balanced coarse the curves from 16 subdomains on stay close together with a similar slope. Residual norms are not monotonic, which is normal for CG. That the plateau reflects slowly reducing global error is my interpretation.</li>
+            <li><strong>Can better convergence still be slower?</strong> In my data it failed to pay off once. At 1 subdomain balanced with $C=2$ needs 39 iterations against 52, yet its setup + solve is 0.318 s against 0.305 s, slightly slower. At larger sizes the balanced method with growing coarse clearly wins in total time.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Limitations</summary>
+    <div class="details-content">
+        <ul style="font-size: 14px;">
+            <li>One problem ($H=1$, zero boundary), one solver family, one server and one session. Results do not generalise to heterogeneous media or other machines.</li>
+            <li>Three timed repetitions per configuration. This does not cover slow changes in server load. The largest spread was about 25% of the median (balanced, 4×4), so small differences are not meaningful.</li>
+            <li>The Lab does not report communication time, and every iteration also computes a true residual for monitoring, which adds cost.</li>
+            <li>Bonus A was measured only on the laptop, not on the server.</li>
+        </ul>
+    </div>
+</details>
+
+    </body>
+    <script>
+        function loadKaTeXAndRender() {
+            const katexCSS = document.createElement("link");
+            katexCSS.rel = "stylesheet";
+            katexCSS.href =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(katexCSS);
+
+            const katexScript = document.createElement("script");
+            katexScript.src =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+            katexScript.defer = true;
+
+            katexScript.onload = () => {
+                const autoRenderScript = document.createElement("script");
+                autoRenderScript.src =
+                    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                autoRenderScript.defer = true;
+
+                autoRenderScript.onload = () => {
+                    if (window.renderMathInElement) {
+                        window.renderMathInElement(document.body, {
+                            delimiters: [
+                                { left: "$$", right: "$$", display: true },
+                                { left: "$", right: "$", display: false },
+                            ],
+                            throwOnError: false,
+                        });
+                    }
+                };
+                document.head.appendChild(autoRenderScript);
+            };
+
+            document.head.appendChild(katexScript);
+        }
+        loadKaTeXAndRender();
+    </script>
+</html>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.6;
+        color: #111;
+        background-color: #fff;
+        max-width: 1280px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 8px 0;
+    }
+
+    .math {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 17px;
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+
+    ul {
+        margin: 8px 0 16px 20px;
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    .report-header {
+        margin-bottom: 28px;
+    }
+
+    .report-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #111;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table th {
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        width: 15%;
+        padding: 3px 6px 3px 0;
+        white-space: nowrap;
+    }
+
+    .report-meta-table td {
+        color: #111;
+        width: 35%;
+        padding: 3px 12px 3px 0;
+    }
+
+    .report-meta-table a {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .report-meta-table a:hover {
+        text-decoration: underline;
+    }
+
+    .report-divider {
+        border: 0;
+        border-top: 1px solid #d1d5db;
+        margin-top: 8px;
+    }
+
+    .math-left .katex-display {
+        text-align: left !important;
+    }
+
+    .math-left .katex-display > .katex {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    /* Сноски в тексте */
+    a.ref-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0 1px;
+    }
+
+    a.ref-link:hover {
+        text-decoration: underline;
+    }
+
+    .report-references {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .report-references h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .report-references ol {
+        padding-left: 20px;
+    }
+
+    .report-references li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
+
+    .report-references .ref-title {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .report-references a {
+        color: #1a73e8 !important;
+        text-decoration: underline !important;
+        word-break: break-all;
+        cursor: pointer;
+    }
+
+    details {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin: 16px 0;
+        background-color: #fff;
+        transition: all 0.2s ease;
+    }
+
+    details[open] {
+        border-color: #cbd5e1;
+    }
+
+    details > :not(summary) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    summary {
+        cursor: pointer;
+        padding: 10px 14px;
+        user-select: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    summary:hover {
+        background-color: #f8fafc;
+    }
+
+    summary h2 {
+        display: inline;
+        font-size: 16px;
+        margin: 0 0 0 6px;
+    }
+
+    .details-content {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 16px auto;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    img + p {
+        text-align: center;
+        font-size: 13px;
+        color: #57606a;
+        margin-top: -8px;
+        margin-bottom: 20px;
+    }
+</style>
