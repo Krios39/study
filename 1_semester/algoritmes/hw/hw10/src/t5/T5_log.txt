@@ -1,0 +1,13 @@
+original (w, h) (1188, 1000) working (w, h) (128, 108) sha256 4aac9fdfdced4519232d1fee1d8e041f3f743aa615b7451eb237c04eacc8336c
+seed 0: evals 3000, 57.79s, initial best 0.05000 (eval 20), final 0.02268
+  best at cutoffs {20: 0.05, 500: 0.03251, 1000: 0.02932, 2000: 0.0243, 3000: 0.02268}
+  verified MSE 0.022682324298940102
+seed 1: evals 3000, 58.44s, initial best 0.06531 (eval 20), final 0.02058
+  best at cutoffs {20: 0.06531, 500: 0.0338, 1000: 0.02819, 2000: 0.02305, 3000: 0.02058}
+  verified MSE 0.020582506846844283
+seed 2: evals 3000, 43.95s, initial best 0.05512 (eval 20), final 0.02248
+  best at cutoffs {20: 0.05512, 500: 0.03434, 1000: 0.03034, 2000: 0.02427, 3000: 0.02248}
+  verified MSE 0.022482704153435767
+GA 50 circles, 128x108, seed 0 seed=0  fitness=0.022682  evals=3000  seconds=57.790
+GA 50 circles, 128x108, seed 1 seed=1  fitness=0.020583  evals=3000  seconds=58.439
+GA 50 circles, 128x108, seed 2 seed=2  fitness=0.022483  evals=3000  seconds=43.949

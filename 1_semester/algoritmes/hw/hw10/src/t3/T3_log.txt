@@ -1,0 +1,33 @@
+All runs
+NP=40, CR=1.0, s=0       seed=0  fitness=0.071744  evals=16000  seconds=5.001  target=2411
+NP=40, CR=1.0, s=1       seed=1  fitness=0.072950  evals=16000  seconds=3.119  target=2574
+NP=40, CR=1.0, s=2       seed=2  fitness=0.071845  evals=16000  seconds=2.802  target=3120
+NP=40, CR=0.7, s=0       seed=0  fitness=0.077770  evals=16000  seconds=2.478  target=6549
+NP=40, CR=0.7, s=1       seed=1  fitness=0.077840  evals=16000  seconds=2.821  target=4279
+NP=40, CR=0.7, s=2       seed=2  fitness=0.074332  evals=16000  seconds=2.964  target=7000
+NP=40, CR=0.3, s=0       seed=0  fitness=0.104645  evals=16000  seconds=2.702  target=not reached
+NP=40, CR=0.3, s=1       seed=1  fitness=0.119223  evals=16000  seconds=3.379  target=not reached
+NP=40, CR=0.3, s=2       seed=2  fitness=0.092677  evals=16000  seconds=3.048  target=6690
+NP=40, CR=0.0, s=0       seed=0  fitness=0.139485  evals=16000  seconds=3.760  target=not reached
+NP=40, CR=0.0, s=1       seed=1  fitness=0.123851  evals=16000  seconds=3.469  target=not reached
+NP=40, CR=0.0, s=2       seed=2  fitness=0.140932  evals=16000  seconds=3.465  target=not reached
+NP=20, CR=0.7, s=0       seed=0  fitness=0.072271  evals=16000  seconds=2.663  target=4293
+NP=20, CR=0.7, s=1       seed=1  fitness=0.073445  evals=16000  seconds=3.283  target=3323
+NP=20, CR=0.7, s=2       seed=2  fitness=0.074487  evals=16000  seconds=3.222  target=3437
+NP=80, CR=0.7, s=0       seed=0  fitness=0.090272  evals=16000  seconds=3.190  target=11876
+NP=80, CR=0.7, s=1       seed=1  fitness=0.081085  evals=16000  seconds=2.770  target=11305
+NP=80, CR=0.7, s=2       seed=2  fitness=0.098953  evals=16000  seconds=2.960  target=14490
+
+Groups: final MedAE median [min, max]; target hits; evaluations and seconds to target per seed
+NP=40  CR=1.0  median 0.07184 [0.07174, 0.07295] hits 3/3 evals [2411, 2574, 3120] sec [1.222, 0.502, 0.364]
+    median best at 500/1000/2000/4000: [0.2923, 0.2242, 0.1085, 0.0806]; held-out MAE [0.0367, 0.0476, 0.037]; run seconds [5.001, 3.119, 2.802]
+NP=40  CR=0.7  median 0.07777 [0.07433, 0.07784] hits 3/3 evals [6549, 4279, 7000] sec [1.013, 0.623, 1.306]
+    median best at 500/1000/2000/4000: [0.2708, 0.255, 0.1876, 0.1191]; held-out MAE [0.0308, 0.0322, 0.0397]; run seconds [2.478, 2.821, 2.964]
+NP=40  CR=0.3  median 0.10464 [0.09268, 0.11922] hits 1/3 evals ['not reached', 'not reached', 6690] sec ['not reached', 'not reached', 1.451]
+    median best at 500/1000/2000/4000: [0.3758, 0.3055, 0.2327, 0.1425]; held-out MAE [0.0697, 0.2073, 0.0587]; run seconds [2.702, 3.379, 3.048]
+NP=40  CR=0.0  median 0.13948 [0.12385, 0.14093] hits 0/3 evals ['not reached', 'not reached', 'not reached'] sec ['not reached', 'not reached', 'not reached']
+    median best at 500/1000/2000/4000: [0.2825, 0.2464, 0.2181, 0.1916]; held-out MAE [0.8331, 0.5279, 0.2758]; run seconds [3.76, 3.469, 3.465]
+NP=20  CR=0.7  median 0.07344 [0.07227, 0.07449] hits 3/3 evals [4293, 3323, 3437] sec [0.759, 0.701, 0.683]
+    median best at 500/1000/2000/4000: [0.3522, 0.1933, 0.1279, 0.0945]; held-out MAE [0.0307, 0.0429, 0.0439]; run seconds [2.663, 3.283, 3.222]
+NP=80  CR=0.7  median 0.09027 [0.08109, 0.09895] hits 3/3 evals [11876, 11305, 14490] sec [2.392, 1.951, 2.69]
+    median best at 500/1000/2000/4000: [0.4125, 0.2851, 0.2747, 0.1897]; held-out MAE [0.0647, 0.0315, 0.0698]; run seconds [3.19, 2.77, 2.96]

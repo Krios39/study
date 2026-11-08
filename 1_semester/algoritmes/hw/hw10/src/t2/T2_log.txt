@@ -1,0 +1,32 @@
+cubic, outliers 0%, truth [0.1, -2.4, 0.2, 2.7]
+  truth metrics {'training_MAE': 0.07735, 'training_MedAE': 0.06691, 'held_out_MAE': 0.0, 'held_out_MedAE': 0.0}
+  MAE: evals 16000, 1.711s, best [0.109, -2.458, 0.183, 2.759]
+    metrics {'training_MAE': 0.07569, 'training_MedAE': 0.07028, 'held_out_MAE': 0.01509, 'held_out_MedAE': 0.01635}
+    best at cutoffs {1000: 0.12346, 2000: 0.08219, 4000: 0.07572, 8000: 0.07569, 16000: 0.07569}
+  MedAE: evals 16000, 1.952s, best [0.162, -2.546, 0.083, 2.816]
+    metrics {'training_MAE': 0.08545, 'training_MedAE': 0.05526, 'held_out_MAE': 0.0562, 'held_out_MedAE': 0.0615}
+    best at cutoffs {1000: 0.14339, 2000: 0.07757, 4000: 0.05844, 8000: 0.05564, 16000: 0.05526}
+cubic, outliers 20%, truth [0.1, -2.4, 0.2, 2.7]
+  truth metrics {'training_MAE': 0.89577, 'training_MedAE': 0.09543, 'held_out_MAE': 0.0, 'held_out_MedAE': 0.0}
+  MAE: evals 16000, 2.220s, best [0.14, -2.45, 0.156, 2.772]
+    metrics {'training_MAE': 0.89233, 'training_MedAE': 0.09306, 'held_out_MAE': 0.02713, 'held_out_MedAE': 0.02514}
+    best at cutoffs {1000: 0.96163, 2000: 0.8938, 4000: 0.89235, 8000: 0.89233, 16000: 0.89233}
+  MedAE: evals 16000, 1.495s, best [0.141, -2.514, 0.163, 2.757]
+    metrics {'training_MAE': 0.90107, 'training_MedAE': 0.0756, 'held_out_MAE': 0.04982, 'held_out_MedAE': 0.05048}
+    best at cutoffs {1000: 0.17815, 2000: 0.09148, 4000: 0.07702, 8000: 0.07565, 16000: 0.0756}
+quintic, outliers 0%, truth [0.1, 1.8, -0.8, -5.0, 0.4, 3.5]
+  truth metrics {'training_MAE': 0.07735, 'training_MedAE': 0.06691, 'held_out_MAE': 0.0, 'held_out_MedAE': 0.0}
+  MAE: evals 16000, 1.507s, best [0.112, 1.69, -0.817, -4.743, 0.403, 3.346]
+    metrics {'training_MAE': 0.07558, 'training_MedAE': 0.07245, 'held_out_MAE': 0.01699, 'held_out_MedAE': 0.01564}
+    best at cutoffs {1000: 0.17929, 2000: 0.12865, 4000: 0.07711, 8000: 0.07559, 16000: 0.07558}
+  MedAE: evals 16000, 3.677s, best [0.091, 1.578, -0.358, -3.996, -0.251, 2.494]
+    metrics {'training_MAE': 0.09287, 'training_MedAE': 0.05105, 'held_out_MAE': 0.05128, 'held_out_MedAE': 0.03365}
+    best at cutoffs {1000: 0.16894, 2000: 0.08677, 4000: 0.06166, 8000: 0.05331, 16000: 0.05105}
+quintic, outliers 20%, truth [0.1, 1.8, -0.8, -5.0, 0.4, 3.5]
+  truth metrics {'training_MAE': 0.89577, 'training_MedAE': 0.09543, 'held_out_MAE': 0.0, 'held_out_MedAE': 0.0}
+  MAE: evals 16000, 2.344s, best [0.146, 1.766, -0.943, -4.983, 0.542, 3.551]
+    metrics {'training_MAE': 0.89144, 'training_MedAE': 0.09438, 'held_out_MAE': 0.02658, 'held_out_MedAE': 0.02613}
+    best at cutoffs {1000: 0.97602, 2000: 0.92983, 4000: 0.89319, 8000: 0.89146, 16000: 0.89144}
+  MedAE: evals 16000, 3.422s, best [0.147, 1.718, -1.167, -4.736, 0.736, 3.254]
+    metrics {'training_MAE': 0.90031, 'training_MedAE': 0.07174, 'held_out_MAE': 0.03666, 'held_out_MedAE': 0.04018}
+    best at cutoffs {1000: 0.22447, 2000: 0.10746, 4000: 0.07856, 8000: 0.07279, 16000: 0.07174}

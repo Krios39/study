@@ -1,0 +1,22 @@
+one-wave truth [0.3, -0.5, 0.3, 1.2, 10.0531, 0.4]
+  truth metrics {'training_MAE': 0.0773, 'training_MedAE': 0.07028, 'held_out_MAE': 0.0, 'held_out_MedAE': 0.0}
+  seed 0: evals 16000, 2.920s, best [0.2986, -0.5069, 0.3098, 1.2052, 10.0666, 0.3879]
+    metrics {'training_MAE': 0.0763, 'training_MedAE': 0.07186, 'held_out_MAE': 0.01083, 'held_out_MedAE': 0.00863}
+    best at cutoffs {1000: 0.45559, 2000: 0.38981, 4000: 0.13169, 8000: 0.07641, 16000: 0.0763}
+  seed 1: evals 16000, 2.887s, best [0.2986, -0.5071, 0.3094, 1.2052, 10.0667, 0.388]
+    metrics {'training_MAE': 0.0763, 'training_MedAE': 0.07158, 'held_out_MAE': 0.01079, 'held_out_MedAE': 0.00859}
+    best at cutoffs {1000: 0.53859, 2000: 0.53859, 4000: 0.1009, 8000: 0.07642, 16000: 0.0763}
+  seed 2: evals 16000, 2.844s, best [0.2986, -0.5069, 0.3097, 1.2053, 10.0665, 0.3879]
+    metrics {'training_MAE': 0.0763, 'training_MedAE': 0.07183, 'held_out_MAE': 0.01085, 'held_out_MedAE': 0.00873}
+    best at cutoffs {1000: 0.54061, 2000: 0.31803, 4000: 0.09732, 8000: 0.07643, 16000: 0.0763}
+two-wave truth [0.3, -0.5, 0.3, 1.2, 19.1637, 0.4, 0.8, 36.7566, -0.9]
+  truth metrics {'training_MAE': 0.0773, 'training_MedAE': 0.07028, 'held_out_MAE': 0.0, 'held_out_MedAE': 0.0}
+  seed 0: evals 16000, 2.369s, best [0.3127, -0.5223, 0.2822, 1.2032, 19.1726, 0.4031, 0.7924, 36.7132, -0.9299]
+    metrics {'training_MAE': 0.07521, 'training_MedAE': 0.05928, 'held_out_MAE': 0.02321, 'held_out_MedAE': 0.0212}
+    best at cutoffs {1000: 0.54804, 2000: 0.54804, 4000: 0.4914, 8000: 0.15503, 16000: 0.07521}
+  seed 1: evals 16000, 2.053s, best [0.3079, -0.5222, 0.2793, 1.201, 19.1672, 0.4049, 0.7946, 36.7124, -0.929]
+    metrics {'training_MAE': 0.07517, 'training_MedAE': 0.06427, 'held_out_MAE': 0.02027, 'held_out_MedAE': 0.01705}
+    best at cutoffs {1000: 0.78425, 2000: 0.60905, 4000: 0.5651, 8000: 0.12188, 16000: 0.07517}
+  seed 2: evals 16000, 2.892s, best [0.3093, -0.5157, 0.289, 1.2019, 19.1758, 0.4049, 0.795, 36.7073, -0.9262]
+    metrics {'training_MAE': 0.0752, 'training_MedAE': 0.06175, 'held_out_MAE': 0.02088, 'held_out_MedAE': 0.01791}
+    best at cutoffs {1000: 0.63272, 2000: 0.58468, 4000: 0.48961, 8000: 0.18682, 16000: 0.0752}
