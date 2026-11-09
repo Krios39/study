@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from statistics import median
 
+import numpy as np
 from PIL import Image
 
 from nb import helpers
@@ -37,6 +38,13 @@ def figure(path, alt, caption=None, width=1100):
     text = f'<p style="font-size: 13px; text-align: center; margin-top: 4px;">{caption}</p>' if caption else ""
     return (f'<div><img src="{uri}" alt="{alt}" style="width: 100%; height: auto; border: 1px solid #ccc; '
             f'border-radius: 4px; margin-top: 10px;">{text}</div>')
+
+
+def gif(name, alt, caption):
+    uri = "data:image/gif;base64," + base64.b64encode((SRC / "anim" / name).read_bytes()).decode()
+    return (f'<div><img src="{uri}" alt="{alt}" style="width: 100%; height: auto; border: 1px solid #ccc; '
+            f'border-radius: 4px; margin-top: 10px;"><p style="font-size: 13px; text-align: center; margin-top: 4px;">'
+            f'Animation: {caption}</p></div>')
 
 
 def load(path):
@@ -90,6 +98,7 @@ t1_html = f"""<details>
         {figure(SRC / "t1" / "T1_fits.png", "Observations, original line and both fitted lines")}
         {figure(SRC / "t1" / "T1_landscapes.png", "3D fitness landscapes", "Training fitness landscapes over the whole box, red dot = the returned solution")}
         {figure(SRC / "t1" / "T1_landscapes_contours.png", "Contour fitness landscapes", "The same landscapes as contours")}
+        {gif("T1_population.gif", "DE population moving on the landscapes", "the 40 population members (red) of both runs on the contour landscapes, generation by generation; bottom row zoomed in around the original line (white x). The population is reconstructed after the search from the logged trials, replaying the same replacement rule")}
         {figure(SRC / "t1" / "T1_MAE_progress.png", "MAE progress")}
         {figure(SRC / "t1" / "T1_MedAE_progress.png", "MedAE progress")}
 
@@ -282,6 +291,7 @@ t4_html = f"""<details>
         <p>Best candidate of each two-wave run at intermediate points (from the saved snapshots):</p>
         {table(["Seed", "Evaluation", "Best MAE", "First sine: frequency (amplitude)", "Second sine: frequency (amplitude)"], t4_middle)}
         {figure(SRC / "t4" / "T4_two-wave_at_4000.png", "Two-wave best curves at 4,000 evaluations", "Best curves of the two-wave runs after 4,000 evaluations: only the strong 6.1π wave is fitted")}
+        {gif("T4_two_wave.gif", "Two-wave best curves during the search", "best-so-far curve of each two-wave run every 400 evaluations (from the saved snapshots); the titles show the fitted frequencies and amplitudes. The strong wave is placed first, the second sine stays at amplitude 0.2 for thousands of evaluations and then switches on")}
 
         <h3>Discussion</h3>
         <ul>
@@ -334,6 +344,7 @@ t5_html = f"""<details>
         {table(["Seed", "Best initial MSE (eval 20)"] + [f"at {c:,}" for c in T5_CUTS[:-1]] + ["Final MSE (3,000)", "Evaluations", "Search time"], t5_rows)}
         <p {NOTE}>Every final genome was exported with the notebook's exporter (JSON genome, recomputed PNG, working target PNG, full log) and its score was recomputed independently by <code>verify_image_export</code>; files <code>t5/T5_128x108_…_circles_50_seed_N_budget_3000.*</code>.</p>
         {figure(SRC / "t5" / "T5_c50_b3000_progress.png", "Best MSE against evaluations and time, all seeds")}
+        {gif("T5_evolution.gif", "Image evolution", "best image of seed 1 every 100 evaluations with its fitness curve; the run was repeated with a recording wrapper around the counter and gives the identical final score")}
         {"".join(figure(SRC / "t5" / f"T5_c50_b3000_seed{s}_evolution.png", f"Seed {s} images", f"Seed {s}: target, best initial image (evaluation 20), intermediate and final best images") for s in (0, 1, 2))}
 
         <h3>Discussion</h3>
@@ -347,13 +358,153 @@ t5_html = f"""<details>
 </details>
 """
 
+b1 = json.loads((SRC / "b1" / "B1_summary.json").read_text())
+B1_METHODS = ("baseline DE, CR=0.7", "control DE, CR=1.0", "jDE, start CR=0.7")
+B1_CUTS = ("4000", "6000", "8000", "10000", "12000", "16000")
+b1_rows = []
+for r in b1:
+    hit = f"{r['target_evaluation']:,}" if r["target_evaluation"] else "not reached"
+    b1_rows.append([r["method"], str(r["seed"]), hit] + [f(r["cutoffs"][c], 3) for c in B1_CUTS] +
+                   [f(r["final"]), f(r["held_out_MAE"], 3), f"{r['evaluations']:,}", f"{r['seconds']:.2f} s"])
+b1_group = []
+for name in B1_METHODS:
+    g = [r for r in b1 if r["method"] == name]
+    hits = [r["target_evaluation"] for r in g if r["target_evaluation"]]
+    b1_group.append([name, f"{len(hits)}/3", f"{median(hits):,.0f}" if len(hits) == 3 else "—",
+                     f(median(r["cutoffs"]["8000"] for r in g), 3), f(median(r["final"] for r in g), 4)])
+b1_jde = [r for r in b1 if r["method"] == B1_METHODS[2]]
+b1_last = [r["adaptation"][-1] for r in b1_jde]
+b1_stuck = {s: load(SRC / "b1" / f"B1_control_CR10_{s}")["best"] for s in (1, 2)}
+
+b1_html = f"""<details>
+    <summary>Bonus B1: Improve own optimiser (self-adaptive DE)</summary>
+    <div class="details-content">
+
+        <h3>Method</h3>
+        <ul>
+            <li><strong>Case:</strong> the T4 two-wave dataset, MAE, population 40, budget 16,000 per run, seeds 0, 1, 2. It is the only T4 case with room for improvement: the baseline finds the curve, but loses thousands of evaluations on the competing fit described in T4.</li>
+            <li><strong>Measure:</strong> all methods get the same total budget of 16,000. Compared are the first evaluation at which the best MAE reaches 0.08 (the final fits are at 0.075, the original curve scores 0.077), the best MAE after 8,000 evaluations, and the final fit. All read from the same runs.</li>
+            <li><strong>Change: self-adaptive F and CR (jDE, function <code>student_jde</code> in <code>de.py</code>).</strong> Every member carries its own F and CR, starting from the baseline values 0.8 and 0.7. Before a trial is made, with probability 0.1 a new F is drawn uniformly from [0.1, 1.0], and with probability 0.1 a new CR from [0, 1]; otherwise the member's values are used. If the trial replaces the target, it keeps the F and CR that produced it. Successful settings therefore spread, unsuccessful ones disappear. Everything else (donor, clipping, binomial crossover, replacement, counter) is the unchanged T3/T4 code.</li>
+            <li><strong>Why this change:</strong> T3 showed that the crossover rate strongly affects speed on coupled parameters, and T4 fixes CR = 0.7 and F = 0.8 without tuning. The frequency search needs large jumps early and fine steps later. Adaptation lets the population choose these values itself, without extra tuning runs.</li>
+            <li><strong>Control:</strong> the baseline DE with CR = 1.0. My expectation was that jDE would win simply by moving CR towards 1, as T3 suggested; this control tests that explanation.</li>
+            <li><strong>Baseline:</strong> the unchanged T4 runs (rerun; identical results).</li>
+        </ul>
+
+        <h3>Results</h3>
+        {table(["Method", "Reached 0.08", "Median evaluation to 0.08", "Median best at 8,000", "Median final MAE"], b1_group)}
+        {table(["Method", "Seed", "First MAE ≤ 0.08"] + [f"at {int(c):,}" for c in B1_CUTS] + ["Final MAE", "Held-out MAE", "Evaluations", "Search time"], b1_rows)}
+        {figure(SRC / "b1" / "B1_progress.png", "B1 progress", "Best-so-far MAE (log scale) for all methods and seeds; grey line = 0.08")}
+        {gif("B1_race.gif", "B1 race", "the three methods on the same seed 1, best curve every 400 evaluations: jDE fits both waves first, the baseline later, and DE with CR = 1.0 stays in the competing fit")}
+        {figure(SRC / "b1" / "B1_adaptation.png", "jDE adaptation", "Population mean F and CR in the jDE runs")}
+        {figure(SRC / "b1" / "B1_control_fits.png", "Control fits", "Final curves of the control DE with CR = 1.0: seeds 1 and 2 are stuck")}
+
+        <h3>Discussion</h3>
+        <ul>
+            <li><strong>Success:</strong> jDE reaches MAE 0.08 in all three seeds, about 3,000 evaluations earlier than the baseline (median {b1_group[2][2]} vs {b1_group[0][2]}). After 8,000 evaluations it is already close to the final fit ({b1_group[2][3]}), while the baseline is still at {b1_group[0][3]}. The final fits are the same: all six curves match the original.</li>
+            <li><strong>My explanation was wrong.</strong> jDE did not move CR towards 1; both parameters went down: at the end the mean F is {min(t["mean_F"] for t in b1_last):.2f}–{max(t["mean_F"] for t in b1_last):.2f} and the mean CR {min(t["mean_CR"] for t in b1_last):.2f}–{max(t["mean_CR"] for t in b1_last):.2f}, after spending most of the search around 0.4–0.5. Smaller F gives shorter, more precise steps once a wave is roughly located, and the spread of values between members mixes large and small moves in the same generation.</li>
+            <li><strong>Failure of the control:</strong> DE with CR = 1.0 got stuck in two of three seeds (final MAE {f(b1[4]["final"], 3)} and {f(b1[5]["final"], 3)}). Seed 1 sits exactly in the competing fit from T4: the 6.1π wave is fitted, the second sine is switched off (amplitude {b1_stuck[1][6]:.1f}, frequency {b1_stuck[1][7] / PI:.0f}π, at the bounds). Seed 2 spends both sines on the strong wave ({b1_stuck[2][4] / PI:.2f}π and {b1_stuck[2][7] / PI:.2f}π) and never finds 11.7π. Without crossover, all members move along the population's own difference vectors; once the population has collapsed around one local minimum, these differences become tiny and the search cannot leave it.</li>
+            <li><strong>Lesson compared with T3:</strong> on the polynomial, with one main valley, CR = 1 was best. On this multimodal landscape the same setting fails, and crossover is needed for diversity. The best setting depends on the problem, which is exactly the argument for letting the algorithm adapt it.</li>
+            <li><strong>Limits:</strong> three seeds and one dataset; jDE was not tested on the one-wave case or with other budgets, so the size of the gain is an estimate. Search times are again affected by the CPU clock and are not comparable with the T4 table; the comparison is by evaluations.</li>
+        </ul>
+    </div>
+</details>
+"""
+
+import scipy
+
+B2_METHODS = ("own", "SciPy matched", "SciPy defaults", "SciPy defaults no stop")
+B2_NAMES = {"t4": {"own": "own DE (rand/1/bin, F 0.8, CR 0.7)"}, "t5": {"own": "own GA (T5)"}}
+b2 = {case: json.loads((SRC / "b2" / f"B2_{case}_summary.json").read_text()) for case in ("t4", "t5")}
+
+
+def b2_runs(case):
+    rows = []
+    for r in b2[case]:
+        sc = r["scipy"]
+        if sc:
+            stop = f"{sc['scipy_nit']} gens, " + ("stopped by tol" if "successfully" in sc["scipy_message"] else "maxiter")
+        else:
+            stop = "budget"
+        extra = [f(r["held_out_MAE"], 3)] if case == "t4" else []
+        rows.append([B2_NAMES[case].get(r["method"], r["method"]), str(r["seed"]), f(r["final"])] + extra +
+                    [f"{r['evaluations']:,}", stop, f"{r['seconds']:.2f} s", f"{1000 * r['seconds'] / r['evaluations']:.3f}"])
+    return rows
+
+
+def b2_groups(case):
+    rows = []
+    for name in B2_METHODS:
+        g = [r for r in b2[case] if r["method"] == name]
+        finals = [r["final"] for r in g]
+        extra = [f"{sum(r['held_out_MAE'] < 0.1 for r in g)}/3"] if case == "t4" else []
+        rows.append([B2_NAMES[case].get(name, name), f"{f(median(finals))} [{f(min(finals))}, {f(max(finals))}]"] + extra +
+                    [f"{median(r['evaluations'] for r in g):,.0f}", f"{median(r['seconds'] for r in g):.2f} s",
+                     f"{1000 * median(r['seconds'] / r['evaluations'] for r in g):.3f}"])
+    return rows
+
+
+def b2_get(case, name, key):
+    return [r[key] for r in b2[case] if r["method"] == name]
+
+
+b2_t4_stuck = [r for r in b2["t4"] if r["held_out_MAE"] > 0.1 and r["method"] == "SciPy defaults"]
+b2_t4_def_evals = b2_get("t4", "SciPy defaults", "evaluations")
+b2_t5_early = [r for r in b2["t5"] if r["method"] == "SciPy defaults" and r["evaluations"] < 3000]
+GROUP_B2 = ["Method", "Final fitness: median [min, max]"]
+
+b2_html = f"""<details>
+    <summary>Bonus B2: Comparison with SciPy differential_evolution</summary>
+    <div class="details-content">
+
+        <h3>Method</h3>
+        <ul>
+            <li><strong>Package:</strong> SciPy {scipy.__version__}, <code>scipy.optimize.differential_evolution</code> (NumPy {np.__version__}). Two contrasting cases: the difficult two-wave fit from T4 (MAE, budget 16,000, population 40) and the image from T5 (Venice, 128 × 108, 50 circles, RGB MSE, budget 3,000, population 20). Seeds 0, 1, 2; my own method is rerun in the same script, so all times come from the same session.</li>
+            <li><strong>Same problem:</strong> the same data or target image, objective, representation, bounds and budget. SciPy's <code>init</code> receives exactly the initial population my methods start from (the notebook's <code>initial_population</code> with the same seed), so all methods begin from the same candidates. SciPy's random generator is seeded with the same number as mine (<code>rng = 10000 + seed</code>), but it is a different generator, so the random choices differ.</li>
+            <li><strong>Counting:</strong> SciPy calls a wrapper for each candidate (<code>vectorized=False</code>, one worker), and the wrapper calls the supplied counter <code>run(candidate)</code>. The wrapper clips each value to the bounds, only to absorb floating-point rounding when SciPy scales from [0, 1] back to the parameter range. <code>polish=False</code>, so there is no extra local optimisation. <code>maxiter</code> is set so that the initial population plus <code>maxiter</code> generations equal the budget exactly (399 generations × 40 for T4, 149 × 20 for T5). A <code>BudgetExhausted</code> exception would stop the run with an error; it never occurred.</li>
+            <li><strong>Variants:</strong>
+                <ul>
+                    <li><strong>SciPy matched:</strong> configured like my DE: <code>strategy='rand1bin'</code>, F = 0.8, CR = 0.7, <code>updating='deferred'</code> (whole generation from the previous one, as in my snapshot), <code>tol=0, atol=0</code> (no early stop).</li>
+                    <li><strong>SciPy defaults:</strong> only <code>polish=False</code> changed: <code>strategy='best1bin'</code> (donor built around the current best member), F drawn anew from [0.5, 1) each generation ("dithering"), CR = 0.7, <code>updating='immediate'</code> (an improvement is visible to the following trials of the same generation), and the default stopping rule <code>tol=0.01</code>: stop when the spread of fitness in the population is below 1% of its mean.</li>
+                    <li><strong>SciPy defaults no stop:</strong> the defaults with <code>tol=0</code>, added to separate the effect of the stopping rule from the effect of the search strategy.</li>
+                </ul></li>
+            <li><strong>Remaining differences (disclosed):</strong> a SciPy trial value outside the bounds is replaced by a random value inside them, while my DE clips it to the bound. For T5 the comparison is my <em>genetic algorithm</em> against SciPy's <em>differential evolution</em>, since SciPy has no GA: there it compares two different algorithms on the same problem, not two implementations of one.</li>
+        </ul>
+
+        <h3>Case 1: Two-Wave Fit (T4)</h3>
+        {table(GROUP_B2 + ["Found the curve (held-out MAE &lt; 0.1)", "Median evaluations used", "Median search time", "ms per evaluation"], b2_groups("t4"))}
+        {table(["Method", "Seed", "Final MAE", "Held-out MAE", "Evaluations", "Stop", "Search time", "ms per evaluation"], b2_runs("t4"))}
+        {figure(SRC / "b2" / "B2_t4_progress.png", "B2 two-wave progress", "Best-so-far MAE (log scale) of all methods and seeds, against evaluations and search time")}
+        {gif("B2_t4_race.gif", "B2 two-wave race", "first 8,000 evaluations: my DE (seed 2) against SciPy's default strategy (seeds 0 and 2, without early stop); the greedy strategy fits seed 0 within about 1,500 evaluations, but seed 2 settles in the one-wave fit")}
+        {figure(SRC / "b2" / "B2_t4_SciPy_defaults_no_stop_fits.png", "SciPy default strategy fits", "Final curves of SciPy with the default strategy and no early stop: seed 2 is stuck")}
+
+        <h3>Case 2: Image with 50 Circles (T5)</h3>
+        {table(GROUP_B2 + ["Median evaluations used", "Median search time", "ms per evaluation"], b2_groups("t5"))}
+        {table(["Method", "Seed", "Final MSE", "Evaluations", "Stop", "Search time", "ms per evaluation"], b2_runs("t5"))}
+        {figure(SRC / "b2" / "B2_t5_progress.png", "B2 image progress", "Best-so-far RGB MSE (log scale) of all methods and seeds")}
+        {gif("B2_t5_race.gif", "B2 image race", "best image of each method for seed 0 every 200 evaluations (from the saved snapshots)")}
+        {figure(SRC / "b2" / "B2_t5_final_images.png", "B2 final images", "Final best images; rows: own GA, SciPy matched, SciPy defaults, SciPy defaults without early stop; columns: seeds 0, 1, 2")}
+
+        <h3>Discussion</h3>
+        <ul>
+            <li><strong>Two-wave fit, same algorithm:</strong> my DE and SciPy matched are the same method, and they behave the same: all six runs find the curve, the final MAE agrees to the fourth digit and the progress curves overlap within the spread between seeds. The remaining differences (other random numbers, random reset instead of clipping at the bounds) do not matter here. This is also a check of my implementation.</li>
+            <li><strong>Two-wave fit, SciPy defaults: the strategy is the main effect.</strong> With <code>best1bin</code> every donor is built around the current best member, and improvements are used at once (<code>immediate</code>). This makes the search about five times faster: the two successful seeds are near the final MAE after about 2,000 evaluations, against about 10,000 for rand/1. But it is greedy: seed 2 pulls the whole population into the competing fit from T4 (one wave, MAE {f(b2_t4_stuck[0]["final"], 2)}) and never leaves it, also with the full budget. This is the same failure as the CR = 1.0 control in B1.</li>
+            <li><strong>Two-wave fit, stopping rule:</strong> the default <code>tol=0.01</code> ended the runs after only {min(b2_t4_def_evals):,}–{max(b2_t4_def_evals):,} evaluations with the message "Optimization terminated successfully", including the stuck seed 2. The variant without the early stop shows that the stopping rule does not change the outcome: the two good runs improve only in the fourth digit, and the stuck run stays stuck. The stop saves evaluations, but "success" only means that the population has converged, not that the global optimum was found.</li>
+            <li><strong>Image: my GA is best in every seed.</strong> SciPy matched is clearly the worst: rand/1/bin with CR = 0.7 changes about 70% of the 350 values of a candidate at once, by large differences between random members. Almost every such trial ruins the image, so there are long stretches without any accepted trial (flat lines in the progress plot). The defaults are better (greedy best1bin and smaller, dithered F keep trials closer to the best image), but still behind the GA. The GA changes only about 7 values by small steps and exchanges whole circles, so most children stay close to a good parent; this fits a problem where large random moves almost always make things worse. With population 20 for 350 values, DE also has very few difference vectors to choose from. On the image, the difference therefore comes from the search strategy, not from the package.</li>
+            <li><strong>Image, stopping rule:</strong> the default stop ended seeds 0 and 2 slightly before the budget ({", ".join(f"{r['evaluations']:,}" for r in b2_t5_early)} evaluations); the full budget improved them a little. Seed 1 used the whole budget anyway.</li>
+            <li><strong>Implementation speed:</strong> it plays almost no role. Every method spends nearly all its time in the objective function: about 10 ms per image and a few hundredths of a millisecond per curve evaluation. SciPy adds a small overhead per candidate in the curve case (scaling, array handling), not visible for images. Larger differences in the tables are caused by the laptop's CPU clock: the SciPy runs for seed 2 of the image took up to {max(r["seconds"] for r in b2["t5"]):.0f} s for the same work that took about 30 s in the other seeds. Search quality is therefore compared by evaluations.</li>
+            <li><strong>Summary:</strong> with the same settings SciPy reproduces my DE, so the package itself gives no advantage. Its defaults are a different, greedier method with an early stop: faster when it works, but less reliable on a multimodal fit, and its "success" message must not be trusted without checking the curve. On the image, a GA with small mutations is better suited than any of the DE variants.</li>
+        </ul>
+    </div>
+</details>
+"""
+
 intro = f"""<details open>
     <summary>Setup and Notes</summary>
     <div class="details-content">
         <ul>
-            <li><strong>Code:</strong> Python 3.14. The search is my own differential evolution in <code>de.py</code> (standard Python: <code>random</code> and lists only). The course helpers (data generators, scoring, the evaluation counter <code>FitnessRun</code>, runners and plots) are loaded unchanged from the supplied notebook <code>HW10_DE_Fitting_2026.ipynb</code> by <code>nb.py</code>. The genetic algorithm for T5 is in <code>ga.py</code> (also standard Python only); the image helpers (loader, resizer, renderer, scorer, counter, exporter and verifier) are loaded unchanged from <code>HW10_Image_Evolution_2026.ipynb</code>. <code>T1.py</code>–<code>T5.py</code> run the experiments; all per-run CSV/JSON logs with settings and seeds are in <code>t1/</code>–<code>t5/</code>, together with the console logs <code>T*_log.txt</code>.</li>
+            <li><strong>Code:</strong> Python 3.14. The search is my own differential evolution in <code>de.py</code> (standard Python: <code>random</code> and lists only). The course helpers (data generators, scoring, the evaluation counter <code>FitnessRun</code>, runners and plots) are loaded unchanged from the supplied notebook <code>HW10_DE_Fitting_2026.ipynb</code> by <code>nb.py</code>. The genetic algorithm for T5 is in <code>ga.py</code> (also standard Python only); the image helpers (loader, resizer, renderer, scorer, counter, exporter and verifier) are loaded unchanged from <code>HW10_Image_Evolution_2026.ipynb</code>. <code>T1.py</code>–<code>T5.py</code>, <code>B1.py</code> and <code>B2.py</code> run the experiments, <code>anim.py</code> makes the animations from the saved logs; all per-run CSV/JSON logs with settings and seeds are in <code>t1/</code>–<code>t5/</code>, <code>b1/</code> and <code>b2/</code>. SciPy is used only in <code>B2.py</code>, together with the console logs <code>T*_log.txt</code>.</li>
             <li><strong>Training and evaluation are separate:</strong> every search decision uses only the training fitness from the counter. The original curve and the held-out values (the clean curve on 501 points in [−1, 1]) are computed after the search, for the tables only. Landscapes are diagnostic grids, not part of the search. In T5 only the working target image is used.</li>
-            <li><strong>Budgets:</strong> T1 8,000, T2–T4 16,000 and T5 3,000 evaluations per run; the reasons are given in each task. Every run used its full budget.</li>
+            <li><strong>Budgets:</strong> T1 8,000, T2–T4, B1 and B2 (fitting) 16,000, T5 and B2 (image) 3,000 evaluations per run; the reasons are given in each task. Every run used its full budget.</li>
             <li><strong>Assistance:</strong> an AI coding assistant helped to write the code and the report text. The algorithm choices were mine; I checked the code and the results.</li>
         </ul>
     </div>
@@ -374,5 +525,5 @@ head = """<!DOCTYPE html>
 <body>
 """
 
-(HW / "report.html").write_text(head + intro + t1_html + t2_html + t3_html + t4_html + t5_html + "</body>\n</html>\n", encoding="utf-8")
+(HW / "report.html").write_text(head + intro + t1_html + t2_html + t3_html + t4_html + t5_html + b1_html + b2_html + "</body>\n</html>\n", encoding="utf-8")
 print("report written", (HW / "report.html").stat().st_size)

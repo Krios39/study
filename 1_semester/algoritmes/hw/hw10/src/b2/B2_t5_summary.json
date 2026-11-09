@@ -1,0 +1,297 @@
+[
+  {
+    "case": "t5",
+    "method": "own",
+    "seed": 0,
+    "evaluations": 3000,
+    "seconds": 29.8233056999743,
+    "final": 0.022682324298940102,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.032508858920595594,
+      "1000": 0.029316097263160895,
+      "2000": 0.02430062956555171,
+      "3000": 0.022682324298940102
+    },
+    "scipy": {}
+  },
+  {
+    "case": "t5",
+    "method": "SciPy matched",
+    "seed": 0,
+    "evaluations": 3000,
+    "seconds": 27.716459000017494,
+    "final": 0.035904274412500416,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.04084216629643869,
+      "1000": 0.04084216629643869,
+      "2000": 0.035904274412500416,
+      "3000": 0.035904274412500416
+    },
+    "scipy": {
+      "package": "scipy 1.18.1",
+      "scipy_options": {
+        "polish": false,
+        "strategy": "rand1bin",
+        "mutation": 0.8,
+        "recombination": 0.7,
+        "updating": "deferred",
+        "tol": 0,
+        "atol": 0
+      },
+      "maxiter": 149,
+      "scipy_nit": 149,
+      "scipy_nfev": 3000,
+      "scipy_message": "Maximum number of iterations has been exceeded."
+    }
+  },
+  {
+    "case": "t5",
+    "method": "SciPy defaults",
+    "seed": 0,
+    "evaluations": 2700,
+    "seconds": 25.905953400069848,
+    "final": 0.0244761155491003,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.03710535418476275,
+      "1000": 0.03444967191215629,
+      "2000": 0.026932461354488537
+    },
+    "scipy": {
+      "package": "scipy 1.18.1",
+      "scipy_options": {
+        "polish": false
+      },
+      "maxiter": 149,
+      "scipy_nit": 134,
+      "scipy_nfev": 2700,
+      "scipy_message": "Optimization terminated successfully."
+    }
+  },
+  {
+    "case": "t5",
+    "method": "SciPy defaults no stop",
+    "seed": 0,
+    "evaluations": 3000,
+    "seconds": 29.204940899973735,
+    "final": 0.023323823621375445,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.03710535418476275,
+      "1000": 0.03444967191215629,
+      "2000": 0.026932461354488537,
+      "3000": 0.023323823621375445
+    },
+    "scipy": {
+      "package": "scipy 1.18.1",
+      "scipy_options": {
+        "polish": false,
+        "tol": 0,
+        "atol": 0
+      },
+      "maxiter": 149,
+      "scipy_nit": 149,
+      "scipy_nfev": 3000,
+      "scipy_message": "Maximum number of iterations has been exceeded."
+    }
+  },
+  {
+    "case": "t5",
+    "method": "own",
+    "seed": 1,
+    "evaluations": 3000,
+    "seconds": 24.857399999978952,
+    "final": 0.020582506846844283,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.03380344091007258,
+      "1000": 0.028194482639037222,
+      "2000": 0.023054216890702056,
+      "3000": 0.020582506846844283
+    },
+    "scipy": {}
+  },
+  {
+    "case": "t5",
+    "method": "SciPy matched",
+    "seed": 1,
+    "evaluations": 3000,
+    "seconds": 28.575542200007476,
+    "final": 0.03680488622312881,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.04035788296346135,
+      "1000": 0.03989816505759893,
+      "2000": 0.03989816505759893,
+      "3000": 0.03680488622312881
+    },
+    "scipy": {
+      "package": "scipy 1.18.1",
+      "scipy_options": {
+        "polish": false,
+        "strategy": "rand1bin",
+        "mutation": 0.8,
+        "recombination": 0.7,
+        "updating": "deferred",
+        "tol": 0,
+        "atol": 0
+      },
+      "maxiter": 149,
+      "scipy_nit": 149,
+      "scipy_nfev": 3000,
+      "scipy_message": "Maximum number of iterations has been exceeded."
+    }
+  },
+  {
+    "case": "t5",
+    "method": "SciPy defaults",
+    "seed": 1,
+    "evaluations": 3000,
+    "seconds": 32.47472219995689,
+    "final": 0.02830000539915797,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.03902368798978076,
+      "1000": 0.03299480019555632,
+      "2000": 0.030941915739910102,
+      "3000": 0.02830000539915797
+    },
+    "scipy": {
+      "package": "scipy 1.18.1",
+      "scipy_options": {
+        "polish": false
+      },
+      "maxiter": 149,
+      "scipy_nit": 149,
+      "scipy_nfev": 3000,
+      "scipy_message": "Maximum number of iterations has been exceeded."
+    }
+  },
+  {
+    "case": "t5",
+    "method": "SciPy defaults no stop",
+    "seed": 1,
+    "evaluations": 3000,
+    "seconds": 33.0495267000515,
+    "final": 0.02830000539915797,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.03902368798978076,
+      "1000": 0.03299480019555632,
+      "2000": 0.030941915739910102,
+      "3000": 0.02830000539915797
+    },
+    "scipy": {
+      "package": "scipy 1.18.1",
+      "scipy_options": {
+        "polish": false,
+        "tol": 0,
+        "atol": 0
+      },
+      "maxiter": 149,
+      "scipy_nit": 149,
+      "scipy_nfev": 3000,
+      "scipy_message": "Maximum number of iterations has been exceeded."
+    }
+  },
+  {
+    "case": "t5",
+    "method": "own",
+    "seed": 2,
+    "evaluations": 3000,
+    "seconds": 46.73112710006535,
+    "final": 0.022482704153435767,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.034340279261062936,
+      "1000": 0.030335722683227248,
+      "2000": 0.02426667828078944,
+      "3000": 0.022482704153435767
+    },
+    "scipy": {}
+  },
+  {
+    "case": "t5",
+    "method": "SciPy matched",
+    "seed": 2,
+    "evaluations": 3000,
+    "seconds": 117.15970909991302,
+    "final": 0.03812739661799118,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.04010216645663349,
+      "1000": 0.04010216645663349,
+      "2000": 0.03812739661799118,
+      "3000": 0.03812739661799118
+    },
+    "scipy": {
+      "package": "scipy 1.18.1",
+      "scipy_options": {
+        "polish": false,
+        "strategy": "rand1bin",
+        "mutation": 0.8,
+        "recombination": 0.7,
+        "updating": "deferred",
+        "tol": 0,
+        "atol": 0
+      },
+      "maxiter": 149,
+      "scipy_nit": 149,
+      "scipy_nfev": 3000,
+      "scipy_message": "Maximum number of iterations has been exceeded."
+    }
+  },
+  {
+    "case": "t5",
+    "method": "SciPy defaults",
+    "seed": 2,
+    "evaluations": 2900,
+    "seconds": 115.86352600005921,
+    "final": 0.02744703040378582,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.03628202375570175,
+      "1000": 0.03363896312731096,
+      "2000": 0.029881435455143084
+    },
+    "scipy": {
+      "package": "scipy 1.18.1",
+      "scipy_options": {
+        "polish": false
+      },
+      "maxiter": 149,
+      "scipy_nit": 144,
+      "scipy_nfev": 2900,
+      "scipy_message": "Optimization terminated successfully."
+    }
+  },
+  {
+    "case": "t5",
+    "method": "SciPy defaults no stop",
+    "seed": 2,
+    "evaluations": 3000,
+    "seconds": 127.6154697999591,
+    "final": 0.027196670781299694,
+    "held_out_MAE": null,
+    "cutoffs": {
+      "500": 0.03628202375570175,
+      "1000": 0.03363896312731096,
+      "2000": 0.029881435455143084,
+      "3000": 0.027196670781299694
+    },
+    "scipy": {
+      "package": "scipy 1.18.1",
+      "scipy_options": {
+        "polish": false,
+        "tol": 0,
+        "atol": 0
+      },
+      "maxiter": 149,
+      "scipy_nit": 149,
+      "scipy_nfev": 3000,
+      "scipy_message": "Maximum number of iterations has been exceeded."
+    }
+  }
+]
