@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algorithmics (MTAT.03.238) — Project proposal: School timetabling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap">
+<style>
+  :root { --ink: #1c1c1c; --muted: #5f5e5a; --line: #c9c7bf; --fill: #efede6; --mark: #fff3c4; }
+  * { box-sizing: border-box; }
+  html { font-size: 15px; }
+  body { margin: 0; padding: 32px 24px 64px; color: var(--ink); background: #fff;
+         font-family: "Rubik", Arial, Helvetica, sans-serif; line-height: 1.5; }
+  main { max-width: 820px; margin: 0 auto; }
+  h1 { font-size: 1.7rem; line-height: 1.25; margin: 0 0 6px; font-weight: 600; }
+  details { border: 1px solid #e2e8f0; border-radius: 6px; margin: 16px 0; background: #fff; }
+  details[open] { border-color: #cbd5e1; }
+  summary { cursor: pointer; padding: 10px 14px; user-select: none; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; }
+  summary:hover { background: #f8fafc; }
+  .details-content { padding: 12px 16px 16px; border-top: 1px solid #f1f5f9; }
+  h3 { font-size: 1.05rem; margin: 22px 0 8px; font-weight: 600; }
+  p { margin: 0 0 12px; }
+  .lead { color: var(--muted); font-size: .95rem; margin-bottom: 20px; }
+  dl.header { display: grid; grid-template-columns: 11rem 1fr; gap: 3px 16px; margin: 14px 0 0; padding: 14px 16px;
+              border: 1px solid var(--line); background: var(--fill); font-size: .92rem; }
+  dl.header dt { color: var(--muted); }
+  dl.header dd { margin: 0; }
+  .todo { background: var(--mark); padding: 0 4px; }
+  .stack { margin: 14px 0 0; padding: 12px 16px; border: 2px solid var(--ink); font-size: 1.05rem; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; margin: 10px 0 14px; }
+  th, td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--fill); font-weight: 600; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  td.c, th.c { text-align: center; }
+  .gantt td.c { width: 2.4rem; padding: 0; height: 1.9rem; }
+  .gantt td.on { background: #534ab7; }
+  .gantt tr.sum td { background: var(--fill); color: var(--muted); font-size: .85rem; }
+  .gantt tr.sum td.on { background: var(--fill); }
+  ol.tasks li, ol.refs li { margin-bottom: 8px; }
+  ol.refs { font-size: .9rem; }
+  ol.refs a { word-break: break-all; }
+  a { color: #185fa5; }
+  .note { font-size: .9rem; color: var(--muted); }
+  @media print {
+    html { font-size: 11.5pt; }
+    body { padding: 0; }
+    main { max-width: none; }
+    details { border: 0; margin: 18px 0 0; }
+    summary { padding: 0 0 4px; border-bottom: 1px solid var(--line); font-size: 1.25rem; page-break-after: avoid; }
+    summary::-webkit-details-marker, summary::marker { display: none; content: ""; }
+    .details-content { padding: 8px 0 0; border: 0; }
+    table, figure { page-break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+    .gantt td.on { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .lead, .todo { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @page { size: A4; margin: 18mm 16mm; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Algorithmics (MTAT.03.238) — Project proposal: School timetabling by heuristic optimisation</h1>
+<dl class="header">
+  <dt>Report title</dt><dd>Algorithmics (MTAT.03.238) — Project proposal: School timetabling by heuristic optimisation</dd>
+  <dt>Team</dt><dd>A — Ruslan Nechshadimov; B — <span class="todo">name, by HW12 (or not 🙃)</span>; C — <span class="todo">name, by HW12 (or not 🙃)</span></dd>
+  <dt>Date</dt><dd>8 November 2026 (draft)</dd>
+</dl>
+<p class="stack"><strong>Tools: TypeScript on Node.js.</strong> All project code is written in TypeScript, tests
+in Vitest, the ILP model is solved through the npm package <code>highs</code> (HiGHS) [8]. TypeScript is chosen because the
+solver is meant to be published openly as an online tool and/or used in an existing school platform, and in both
+cases JavaScript is the closest fit and the easiest to integrate.</p>
+
+<details open>
+<summary>1. Description</summary>
+<div class="details-content">
+<p>Schools in Kazakhstan build their weekly timetable by hand or in spreadsheets: 20–60 classes in grades 5–11,
+50–100 teachers, 35–40 lessons per week, lessons taught in subgroups and two shifts. We formulate the problem as
+constrained optimisation in the terms of the XHSTT model for high school timetabling [1], build a generator of
+realistic instances from Kazakhstani curricula and sanitary rules, and implement and compare a greedy
+constructive heuristic based on graph colouring, simulated annealing with neighbourhoods borrowed from graph
+colouring, and an integer programming model as an exact reference on small instances. The outcome is a solver
+library and an experimental study: time to a feasible timetable at real school size and its
+quality in open, checkable numbers (gaps per teacher, spread of subjects, daily difficulty). The proven optimum on
+small instances and a lower bound on larger ones serve as a check that the method works. The library is intended for later use in a school platform that one of the
+authors is developing.</p>
+
+</div>
+</details>
+
+<details>
+<summary>2. Motivation and main challenge</summary>
+<div class="details-content">
+<p>Timetabling is NP-hard already with class and teacher clashes alone. Real school rules add gap-free days for
+pupils, a weekly load limit per grade (Sanitary Rules ДСМ-76, Appendix 3 [12]), subgroup lessons that run in
+parallel (State Standard ГОСО, Order No. 348, §43 [14]), two shifts and teacher unavailability — so a timetable
+assembled by hand usually breaks several rules, and every later edit breaks others. The challenge is twofold:
+quickly reach a feasible timetable (zero hard violations) on instances of 40–60 classes, then improve soft quality
+(teacher gaps, spread of a subject over the week, an even daily difficulty according to the official subject
+difficulty scale) and report it in numbers that a deputy head can read and anyone can recompute.</p>
+
+<h3>Existing solutions</h3>
+<p>Automatic school timetabling is not new in Kazakhstan, but everywhere it remains a black box. The developer of
+the free electronic gradebook BilimClass (over 6,000 schools, according to the company) announced a built-in
+timetable constructor in August 2026: by the press release, up to 100 classes in under a minute and “at least 85 %
+of lessons placed without remarks” on the first run, taking clashes, rooms, subgroups and difficulty scores into
+account. The algorithm, cost function and quality metrics are not disclosed, the platform documentation does not
+describe the constructor, and there are no independent checks [15]. The free browser generator Class-KZ [16] and
+the desktop program “Raspisanie” by KostanaySoft [17] also place lessons automatically, but without disclosing
+the method or any measure of quality; the international aSc TimeTables and the Russian 1C:ASR “School” [18]
+formalise the norms of other countries. Academic work in Kazakhstan deals with universities and colleges [19],
+not schools. None of these lets an outsider check what quality the timetable actually has — the project closes
+exactly this gap: an open formulation with Kazakhstani norms as constraints, reproducible methods, and quality
+reported in absolute numbers that anyone can recompute on open instances. The proven optimum on small instances
+and a lower bound on class-level soft costs at any size confirm that the method works; they are a check, not the
+main claim.</p>
+
+</div>
+</details>
+
+<details>
+<summary>3. Central algorithmic content</summary>
+<div class="details-content">
+<h3>Model</h3>
+<p>Lessons are events with a class, a teacher, a subject and a number of weekly hours taken from the standard
+curricula (Order No. 500, Appendices 7 and 88 [13]). Hard constraints: one lesson per class per slot (except
+parallel subgroup lessons), one lesson per teacher per slot, every lesson placed, a class's lessons within its
+shift and under a daily limit derived from the weekly load, no gaps inside a class's day, teacher unavailability
+respected. Soft constraints, weighted: teacher gaps, the same subject twice in a day, poor spread of a subject over
+the week, teacher preferences, broken double lessons, an uneven number of lessons per day, and an uneven daily sum
+of subject difficulty scores (ДСМ-76, Appendix 4 [12]). The cost is lexicographic: hard violations first, then the
+weighted sum of soft ones — as in XHSTT [1]. Rooms are outside the model: choosing a room for every lesson adds a
+resource-assignment dimension beyond the course budget; specialised rooms (gym, laboratories) can be added later
+as additional clash resources.</p>
+
+<h3>Conflict graph and constructive heuristic</h3>
+<p>Lessons are vertices, edges join lessons sharing a class or a teacher, slots are colours. The constructive
+heuristic orders lessons by saturation degree (DSATUR [3]) and the “most constrained first” principle, and picks
+the slot with the smallest increase in soft cost.</p>
+
+<h3>Local search</h3>
+<p>Simulated annealing [4] over move, swap and Kempe chain neighbourhoods [5]; Kempe chains come from graph
+colouring and keep class and teacher clashes at zero while relocating whole chains of lessons. This combination
+underlies the GOAL solver, the winner of ITC 2011 [6]. Cost deltas are computed incrementally, in amortised O(1)
+per move, from class and teacher occupancy structures with per-day counters. Tabu search is a second
+metaheuristic on the same neighbourhoods, so the two can be compared directly; the parameter study covers the
+cooling schedule and the neighbourhood mix.</p>
+
+<h3>Exact reference</h3>
+<p>An integer linear model of the same problem following [7] (binary x[lesson, slot]), solved by HiGHS [8] under
+a time limit, gives optima on instances of 5–10 classes — this is how the gap of
+the heuristics is measured there. If the WASM build does not fit the time limit, the same model written to an LP file
+is solved by native HiGHS in a child process; CP-SAT (OR-tools) [9] is the last-resort fallback solver.</p>
+<p>On larger instances the lower bound comes from a decomposition. The same subject twice in a day, the spread
+over the week, double lessons, the number of lessons per day and the daily difficulty sum depend on the timetable
+of one class only. The same ILP model restricted to a single class, with teacher clashes dropped, is a
+relaxation and is small enough to solve to optimality; the sum of these per-class minima is a valid lower bound
+on the total soft cost at any instance size. Teacher gaps keep a bound of zero, so they are reported in absolute
+numbers rather than as a gap.</p>
+
+<h3>Why this combination</h3>
+<p>Selection criteria: proven strength on school timetabling, few parameters, a measurable result, and enough
+algorithmic work of our own to fit the course budget. Pure ILP or CP-SAT on a 30-class school with soft
+constraints does not finish within minutes, and contains no algorithm of ours — hence it is a reference, not a
+method. At ITC 2011 the top places went to local search methods [2], [6], not population-based ones; the latter
+have more parameters and are harder to explain. A constructive heuristic without an improvement phase leaves the
+soft cost high, a single metaheuristic gives no comparison, and the off-the-shelf solvers KHE and FET [10], [11]
+carry no algorithmic content of our own. Hence the combination: DSATUR [3] as a cheap start rooted in graph
+colouring, SA [4] and tabu on shared neighbourhoods as two simple methods with a fair comparison, and ILP [7] via
+HiGHS [8] in the same Node stack as the gap measure. Caveat: this is the best choice for a course project with a
+measurable poster, not a provably best solver; CP-SAT hybrids may win in practice, and the gap-to-bound
+experiment will show where that line lies.</p>
+
+<h3>Data</h3>
+<p>A generator of Kazakhstani-profile instances (10/30/60/100 classes, two shifts, subgroup splitting from
+24 pupils [14], curriculum hours per grade [13]) that plants a hidden feasible timetable — so every instance is
+guaranteed to be solvable.</p>
+
+<h3>Quality references</h3>
+<p>The main result is reported per instance in absolute numbers: hard violations by type, gaps per teacher per
+week, the share of subjects with poor spread, the spread of the daily difficulty sum. The validator computes them
+on open instances with fixed seeds, so anyone can rerun and recompute them. Two anchors within the core plan show
+that these numbers are good and not merely measured. First, our own ILP model [7]–[9]: proven
+optima on small instances and the decomposition lower bound at every size. Second, the generator's hidden timetable: a
+known feasible solution. Its soft cost is only an upper reference: it shows that the heuristics improve on a
+feasible start, not how far they are from the optimum. Independent external checks (the HSEval
+validator, the KHE and FET solvers, public instances from the HSTT archive) are listed under “If time remains”
+in section 4.</p>
+
+<h3>Experiments</h3>
+<p>Time to the first feasible timetable against instance size for greedy, SA and ILP; soft cost against time, broken
+down into absolute per-constraint numbers, with the decomposition lower bound; gap to the optimum on small instances; ablation of the Kempe chain neighbourhood. A separate measurement in the metrics of the industry's claimed
+benchmark [15]: a 100-class instance, a 60-second limit, the share of lessons placed without violations and the
+time to feasibility — an open method against the claimed “100 classes in a minute, at least 85 % of lessons”.
+This is a measurement in their metrics on an open instance, not a head-to-head comparison: their constructor also
+handles rooms, and our instance is solvable by construction.
+Fixed seeds, five repetitions, medians and spread.</p>
+
+</div>
+</details>
+
+<details>
+<summary>4. Tasks, hours and internal deadlines</summary>
+<div class="details-content">
+<p>Task 1 is the critical first step: tasks 2–5 depend on its instance format.</p>
+<table>
+  <thead><tr><th class="num">No.</th><th>Task</th><th class="num">Hours</th><th>Owner</th><th>Deadline</th></tr></thead>
+  <tbody>
+    <tr><td class="num">1</td><td>Problem model, own instance format (XHSTT terminology), loader</td><td class="num">4</td><td>B</td><td>12 November</td></tr>
+    <tr><td class="num">2</td><td>Generator of Kazakhstani-profile instances, 10/30/60/100 classes</td><td class="num">6</td><td>B</td><td>16 November</td></tr>
+    <tr><td class="num">3</td><td>Validator and cost function with unit tests</td><td class="num">6</td><td>C</td><td>19 November</td></tr>
+    <tr><td class="num">4</td><td>Greedy constructive heuristic (DSATUR order)</td><td class="num">6</td><td>A</td><td>19 November</td></tr>
+    <tr><td class="num">5</td><td>Simulated annealing with move/swap/Kempe neighbourhoods, incremental cost</td><td class="num">10</td><td>A</td><td>28 November</td></tr>
+    <tr><td class="num">6</td><td>ILP reference (HiGHS): optima on small instances, decomposition bound</td><td class="num">8</td><td>B</td><td>30 November</td></tr>
+    <tr><td class="num">7</td><td>Timetable grid visualiser</td><td class="num">6</td><td>C</td><td>30 November</td></tr>
+    <tr><td class="num">8</td><td>Tabu search on the same neighbourhoods</td><td class="num">6</td><td>A</td><td>5 December</td></tr>
+    <tr><td class="num">9</td><td>SA parameter study (cooling, neighbourhood mix)</td><td class="num">6</td><td>A</td><td>10 December</td></tr>
+    <tr><td class="num">10</td><td>Experiments and plots</td><td class="num">8</td><td>B + C</td><td>12 December</td></tr>
+    <tr><td class="num">11</td><td>Poster and short report</td><td class="num">8</td><td>C, all contribute</td><td>17 December (to align with the final deadline)</td></tr>
+  </tbody>
+</table>
+<p>Total: 74 hours. Implementation language: TypeScript (Node.js), tests in Vitest, ILP via the npm package
+<code>highs</code> [8].</p>
+
+<h3>Gantt chart</h3>
+<p class="note">Weeks: W1 — 10–16 November, W2 — 17–23 November, W3 — 24–30 November, W4 — 1–7 December,
+W5 — 8–14 December, W6 — 15–21 December. Filled cells — work in progress; the deadline is in the last column.</p>
+<table class="gantt">
+  <thead><tr><th class="num">No.</th><th>Task</th><th>Who</th><th class="num">Hours</th>
+    <th class="c">W1</th><th class="c">W2</th><th class="c">W3</th><th class="c">W4</th><th class="c">W5</th><th class="c">W6</th><th>Deadline</th></tr></thead>
+  <tbody>
+    <tr><td class="num">1</td><td>Model, format, loader</td><td>B</td><td class="num">4</td><td class="c on"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td>12 Nov</td></tr>
+    <tr><td class="num">2</td><td>Instance generator</td><td>B</td><td class="num">6</td><td class="c on"></td><td class="c on"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td>16 Nov</td></tr>
+    <tr><td class="num">3</td><td>Validator and cost</td><td>C</td><td class="num">6</td><td class="c on"></td><td class="c on"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td>19 Nov</td></tr>
+    <tr><td class="num">4</td><td>DSATUR constructive</td><td>A</td><td class="num">6</td><td class="c on"></td><td class="c on"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td>19 Nov</td></tr>
+    <tr><td class="num">5</td><td>Simulated annealing</td><td>A</td><td class="num">10</td><td class="c"></td><td class="c on"></td><td class="c on"></td><td class="c"></td><td class="c"></td><td class="c"></td><td>28 Nov</td></tr>
+    <tr><td class="num">6</td><td>ILP reference and bound</td><td>B</td><td class="num">8</td><td class="c"></td><td class="c on"></td><td class="c on"></td><td class="c"></td><td class="c"></td><td class="c"></td><td>30 Nov</td></tr>
+    <tr><td class="num">7</td><td>Visualiser</td><td>C</td><td class="num">6</td><td class="c"></td><td class="c on"></td><td class="c on"></td><td class="c"></td><td class="c"></td><td class="c"></td><td>30 Nov</td></tr>
+    <tr><td class="num">8</td><td>Tabu search</td><td>A</td><td class="num">6</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c on"></td><td class="c"></td><td class="c"></td><td>5 Dec</td></tr>
+    <tr><td class="num">9</td><td>SA parameters</td><td>A</td><td class="num">6</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c on"></td><td class="c on"></td><td class="c"></td><td>10 Dec</td></tr>
+    <tr><td class="num">10</td><td>Experiments and plots</td><td>B + C</td><td class="num">8</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c on"></td><td class="c on"></td><td class="c"></td><td>12 Dec</td></tr>
+    <tr><td class="num">11</td><td>Poster and report</td><td>C, all</td><td class="num">8</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c on"></td><td class="c on"></td><td>17 Dec</td></tr>
+    <tr class="sum"><td></td><td>Hours of A per week</td><td></td><td class="num">28</td><td class="c">3</td><td class="c">8</td><td class="c">5</td><td class="c">9</td><td class="c">3</td><td class="c"></td><td></td></tr>
+    <tr class="sum"><td></td><td>Hours of B per week</td><td></td><td class="num">22</td><td class="c">7</td><td class="c">7</td><td class="c">4</td><td class="c">2</td><td class="c">2</td><td class="c"></td><td></td></tr>
+    <tr class="sum"><td></td><td>Hours of C per week</td><td></td><td class="num">24</td><td class="c">3</td><td class="c">6</td><td class="c">3</td><td class="c">2</td><td class="c">6</td><td class="c">4</td><td></td></tr>
+  </tbody>
+</table>
+<p>Critical path: 1 → 2 → 4 → 5 → 10 → 11. Tasks 3, 6 and 7 run in parallel to it and depend only on the format
+from task 1.</p>
+
+<h3>Task contents</h3>
+<ol class="tasks">
+  <li>Formalise the entities (classes, teachers, subjects, slots, shifts, subgroups) and all hard and soft
+    constraints; define our own JSON format for instances and solutions that keeps the XHSTT
+    terminology [1], with a loader and a writer. Deliverable: the data types and instance loading that
+    every other task depends on.</li>
+  <li>The generator builds a school from curriculum hours [13] and parameters (number of classes, shifts, share
+    of classes with subgroups, teacher loads, unavailability): it first lays out a hidden feasible timetable, then
+    derives the requirements from it, so the instance is solvable by construction. Deliverable: instance sets of
+    10/30/60/100 classes with fixed seeds.</li>
+  <li>A function that, given an instance and a solution, counts hard violations by type and the weighted soft
+    sum; unit tests for every constraint (a violation is caught, a correct solution passes). This is the shared “judge” for all methods.</li>
+  <li>Conflict graph, DSATUR order [3], slot choice by minimum cost increase. A fast initial solution and the
+    baseline for comparison.</li>
+  <li>Local search with three neighbourhoods [4], [5], incremental cost updates, a cooling schedule and
+    restarts. The main method of the project.</li>
+  <li>A binary-variable model following [7], solved by HiGHS [8] under a time limit; the optimum on small
+    instances as the measure of the heuristics' gap; the same model run per class gives the decomposition lower
+    bound at any size.</li>
+  <li>Rendering of the “class × day × lesson” grid with violations highlighted — for debugging and for the
+    poster.</li>
+  <li>A second metaheuristic on the same neighbourhoods with a tabu list; comparison with SA under an equal time
+    budget.</li>
+  <li>A grid over initial temperature, cooling rate and neighbourhood mix; choice of settings for the main
+    experiments, sensitivity plots.</li>
+  <li>Runs of all methods on all instances with fixed seeds and repetitions, metric collection
+    and plots.</li>
+  <li>An A0 poster to the course requirements and a short report: problem statement, methods, results,
+    conclusions.</li>
+</ol>
+
+<h3>Risks and fallbacks</h3>
+<table>
+  <thead><tr><th>Risk</th><th>Fallback</th></tr></thead>
+  <tbody>
+    <tr><td>Full XHSTT is far larger than our model: 16 constraint types, each with its own deviation and cost
+      function, plus event splitting and resource assignment.</td>
+      <td>The core uses our own format with XHSTT terminology, so no external tool can read our instances
+      directly. The XML export is the first optional step and covers only the constraints our instances use.</td></tr>
+    <tr><td>The even daily sum of difficulty scores appears to have no direct counterpart among the standard
+      XHSTT constraints.</td>
+      <td>It is computed by our validator as an extension of the format, so an external validator cannot confirm
+      this part of the cost.</td></tr>
+    <tr><td>The full ILP model gives no useful lower bound on medium and large instances: the LP relaxation of
+      idle-time and spread constraints is known to be loose.</td>
+      <td>The gap to the optimum is claimed only where the optimum is proven. On larger instances the bound is
+      the sum of per-class minima; it ignores teacher coupling, so it may stay loose, and teacher gaps are
+      reported in absolute numbers.</td></tr>
+    <tr><td>The WASM build of HiGHS is too slow even on small instances.</td>
+      <td>The same model as an LP file solved by native HiGHS; CP-SAT [9] as the last resort.</td></tr>
+  </tbody>
+</table>
+
+<h3>If time remains</h3>
+<p>External comparisons are not part of the 74 hours. They are added in this order; the XML export comes first
+because every later step needs it:</p>
+<ol class="tasks">
+  <li>Export of our instances and solutions to XHSTT XML [1] for the constraints we use (time assignment,
+    clashes, unavailability, idle times, spread, busy-time limits).</li>
+  <li>HSEval [10]: recompute the cost of our solutions on our own instances by the XHSTT standard, independently
+    of our code (without the difficulty term) — a guard against errors in our cost function.</li>
+  <li>KHE [10] on our instances exported to XHSTT, under an equal time budget and by the number of evaluated
+    moves, since KHE is written in C.</li>
+  <li>FET [11] as a check that a feasible timetable is attainable; its cost model is its own, so the comparison
+    is on hard constraints only.</li>
+  <li>Two or three public instances from the HSTT archive [1] against best-known results. This requires exact
+    support of every constraint the chosen instance uses, including event splitting.</li>
+</ol>
+
+</div>
+</details>
+
+<details>
+<summary>5. Allocation</summary>
+<div class="details-content">
+<p>Roles: A — heuristics (solver core), B — model, data and the exact reference, C — validation, tooling,
+experiments and the poster. Team of three (74 h): A — 28 h (tasks 4, 5, 8, 9); B — 22 h (tasks 1, 2, 6, half
+of 10); C — 24 h (tasks 3, 7, half of 10, 11). Team of two (62 h, tasks 7 and 9 dropped): A — 30 h (tasks 4, 5,
+8, half of 10, half of 11); B — 32 h (tasks 1, 2, 3, 6, half of 10, half of 11).</p>
+
+</div>
+</details>
+
+<details>
+<summary>6. Expected results for the poster</summary>
+<div class="details-content">
+<ul>
+  <li>Plot: time to a feasible timetable against instance size for greedy, SA and ILP.</li>
+  <li>Table, the main result: quality at 30/60/100 classes in absolute numbers — hard violations, gaps per
+    teacher per week, the share of subjects with poor spread, the spread of the daily difficulty sum — for greedy,
+    SA and tabu.</li>
+  <li>Plot: soft cost against SA running time at every size, with the decomposition lower
+    bound on class-level terms.</li>
+  <li>Table, a check of the method: gap between SA and the ILP optimum on small instances.</li>
+  <li>Ablation: the effect of the Kempe chain neighbourhood on reaching feasibility.</li>
+  <li>Table: a 100-class instance in 60 seconds — the share of lessons without violations and the time to
+    feasibility, in the metrics of the BilimClass claim of “100 classes in a minute, ≥85 %” [15].</li>
+  <li>Example: a weekly timetable for 30 classes with violations highlighted before and after local search.</li>
+</ul>
+
+</div>
+</details>
+
+<details>
+<summary>References and assistance</summary>
+<div class="details-content">
+<ol class="refs">
+  <li>Post G., Kingston J. H., Ahmadi S. et al. XHSTT: an XML archive for high school timetabling problems in
+    different countries. Annals of Operations Research 218 (2014), 295–301. HSTT archive with instances,
+    best-known solutions and lower bounds: <a href="https://www.utwente.nl/en/eemcs/dmmp/hstt/">utwente.nl/en/eemcs/dmmp/hstt</a></li>
+  <li>Post G., Di Gaspero L., Kingston J. H., McCollum B., Schaerf A. The Third International Timetabling
+    Competition. Annals of Operations Research 239 (2016), 69–75.</li>
+  <li>Brélaz D. New methods to color the vertices of a graph. Communications of the ACM 22(4) (1979), 251–256.</li>
+  <li>Kirkpatrick S., Gelatt C. D., Vecchi M. P. Optimization by simulated annealing. Science 220(4598) (1983),
+    671–680.</li>
+  <li>Thompson J. M., Dowsland K. A. A robust simulated annealing based examination timetabling system.
+    Computers &amp; Operations Research 25(7–8) (1998), 637–648.</li>
+  <li>Fonseca G. H. G., Santos H. G., Carrano E. G. Integrating matheuristics and metaheuristics for
+    timetabling. Computers &amp; Operations Research 74 (2016), 108–117.</li>
+  <li>Kristiansen S., Sørensen M., Stidsen T. R. Integer programming for the generalized high school
+    timetabling problem. Journal of Scheduling 18(4) (2015), 377–392.</li>
+  <li>Huangfu Q., Hall J. A. J. Parallelizing the dual revised simplex method. Mathematical Programming
+    Computation 10(1) (2018), 119–142. HiGHS solver: <a href="https://highs.dev">highs.dev</a>; npm package
+    <code>highs</code>: <a href="https://www.npmjs.com/package/highs">npmjs.com/package/highs</a></li>
+  <li>Google OR-tools, CP-SAT solver:
+    <a href="https://developers.google.com/optimization/cp/cp_solver">developers.google.com/optimization/cp/cp_solver</a></li>
+  <li>Kingston J. H. KHE — an XHSTT library and solver in ANSI C, GPL v3, version 2.14 (December 2025):
+    <a href="http://jeffreykingston.id.au/khe/">jeffreykingston.id.au/khe</a>; HSEval 2.8 online validator:
+    <a href="http://jeffreykingston.id.au/cgi-bin/hseval.cgi">jeffreykingston.id.au/cgi-bin/hseval.cgi</a> (http only).</li>
+  <li>Lalescu L. FET — Free Timetabling Software (AGPL v3): <a href="https://lalescu.ro/liviu/fet/">lalescu.ro/liviu/fet</a></li>
+  <li>Sanitary Rules of the Republic of Kazakhstan, Order of the Minister of Healthcare No. ҚР ДСМ-76 (2021,
+    current version; in Russian): <a href="https://adilet.zan.kz/rus/docs/V2100023890">adilet.zan.kz/rus/docs/V2100023890</a></li>
+  <li>Standard curricula, Order of the Ministry of Education and Science of Kazakhstan No. 500 (2012, current
+    version; in Russian): <a href="https://adilet.zan.kz/rus/docs/V1200008170">adilet.zan.kz/rus/docs/V1200008170</a></li>
+  <li>State Compulsory Education Standard (ГОСО), Order of the Minister of Education of Kazakhstan No. 348 (2022,
+    current version; in Russian): <a href="https://adilet.zan.kz/rus/docs/V2200029031">adilet.zan.kz/rus/docs/V2200029031</a></li>
+  <li>BilimClass timetable constructor (Bilim Group): press release as reported by the media, 17–18 August 2026
+    (in Russian) — <a href="https://rus.azattyq-ruhy.kz/society/114310-zavuchi-v-kazakhstanskikh-shkolakh-teper-smogut-sostavit-raspisanie-za-neskolko-minut">rus.azattyq-ruhy.kz</a>,
+    <a href="https://dknews.kz/ru/dk-life/401186-kak-sostavit-shkolnoe-raspisanie-za-minutu-reshenie">dknews.kz</a>;
+    platform documentation with no description of the constructor — <a href="https://guide.bilimclass.kz/faq">guide.bilimclass.kz/faq</a>
+    (checked 8 November 2026).</li>
+  <li>Class-KZ. Online school timetable generator (in Russian):
+    <a href="https://class-kz.com/generator-raspisaniya-urokov-onlajn-class-kz/">class-kz.com/generator-raspisaniya-urokov-onlajn-class-kz</a></li>
+  <li>KostanaySoft LLP. “Raspisanie” (Timetable) program (in Russian):
+    <a href="https://www.kostanaysoft.com/index/raspisanie/0-94">kostanaysoft.com/index/raspisanie/0-94</a></li>
+  <li>aSc TimeTables, user manual (Russian edition):
+    <a href="https://help.asctimetables.com/pdf/asc_timetables_ru_P1.pdf">help.asctimetables.com/pdf/asc_timetables_ru_P1.pdf</a>;
+    1C: Automated Timetabling. School (in Russian): <a href="https://infostart.ru/soft1c/1910955/">infostart.ru/soft1c/1910955</a></li>
+  <li>Kazbekova G. N., Ongar A. Zh. Intelligent automation of a vocational college timetable: a hybrid model of
+    OR-Tools/ILP and an LLM assistant. Yassawi Journal of Engineering Science 1(1) (2026).
+    <a href="https://doi.org/10.47526/3135-6877.210">doi.org/10.47526/3135-6877.210</a></li>
+</ol>
+
+<h3>Assistance and tools</h3>
+<p>Libraries: HiGHS (<code>highs</code>, npm), Vitest, Node.js. External solvers for comparison, if time remains: KHE, FET.</p>
+<p>The AI assistant was used while preparing this proposal: searching for and first reading of sources [1]–[19],
+including Kazakhstani regulations on adilet.zan.kz and publications on existing solutions; structuring the
+sections to the course requirements; drafting the wording of the model, constraints and work plan; computing the
+hours per week. The choice of topic, the problem statement, the modelling decisions (grades 5–11, difficulty
+scores as a soft constraint, the set of methods) and the final wording were made and checked by the authors
+against the primary sources; the text was edited by hand.</p>
+</div>
+</details>
+
+</main>
+<script>
+  let closedBeforePrint = [];
+  window.addEventListener("beforeprint", () => {
+    closedBeforePrint = [...document.querySelectorAll("details:not([open])")];
+    closedBeforePrint.forEach(d => d.open = true);
+  });
+  window.addEventListener("afterprint", () => {
+    closedBeforePrint.forEach(d => d.open = false);
+    closedBeforePrint = [];
+  });
+</script>
+</body>
+</html>
