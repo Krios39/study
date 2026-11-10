@@ -1,0 +1,6 @@
+{
+  "name": "exam-build",
+  "private": true,
+  "scripts": { "build": "node build_exam.js" },
+  "dependencies": { "marked": "12.0.2" }
+}

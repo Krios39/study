@@ -1,0 +1,8 @@
+[package]
+name = "ftp_client"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+eframe = "0.37.0"
+suppaftp = "12.2.1"

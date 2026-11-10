@@ -1,0 +1,25 @@
+#include <iostream>
+#include <openvino/openvino.hpp>
+
+int main() {
+    try {
+        // Initialize OpenVINO
+        ov::Core core;
+
+        // Select the NPU device
+        std::string device_name = "NPU";
+
+        std::cout << "Checking device: " << device_name << std::endl;
+
+        // Print the full name of your NPU
+        std::string full_name = core.get_property(device_name, ov::device::full_name);
+        std::cout << "Success! Connected to: " << full_name << std::endl;
+
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Make sure your Intel NPU drivers are fully updated!" << std::endl;
+    }
+
+    return 0;
+}
