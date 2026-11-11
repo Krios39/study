@@ -1,0 +1,68 @@
+{
+ "query": "interdisciplinary",
+ "length": 10446,
+ "unit": [
+  {
+   "cost": 3.0,
+   "start": 0,
+   "end": 18,
+   "text": "intaxrdishiplinary"
+  },
+  {
+   "cost": 6.0,
+   "start": 666,
+   "end": 680,
+   "text": "ultcdisipliary"
+  },
+  {
+   "cost": 6.0,
+   "start": 2407,
+   "end": 2421,
+   "text": "ultcdisipliary"
+  },
+  {
+   "cost": 7.0,
+   "start": 1741,
+   "end": 1759,
+   "text": "iniaxridshipltnary"
+  },
+  {
+   "cost": 9.0,
+   "start": 3484,
+   "end": 3500,
+   "text": "iaxriDShipltnaRy"
+  }
+ ],
+ "weighted+swap": [
+  {
+   "cost": 3.0,
+   "start": 0,
+   "end": 18,
+   "text": "intaxrdishiplinary"
+  },
+  {
+   "cost": 5.2,
+   "start": 667,
+   "end": 680,
+   "text": "ltcdisipliary"
+  },
+  {
+   "cost": 5.2,
+   "start": 2408,
+   "end": 2421,
+   "text": "ltcdisipliary"
+  },
+  {
+   "cost": 6.0,
+   "start": 1741,
+   "end": 1759,
+   "text": "iniaxridshipltnary"
+  },
+  {
+   "cost": 6.0,
+   "start": 4149,
+   "end": 4162,
+   "text": "ltcdIsIpLiaRy"
+  }
+ ]
+}

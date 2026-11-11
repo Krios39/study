@@ -1,0 +1,147 @@
+<div id="ew" style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin: 15px 0; background: #fff; color: #1e293b;">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 14px;">
+        <label>Source <input id="ew-src" value="causality" maxlength="16" style="width: 130px; font-family: monospace; padding: 3px;"></label>
+        <label>Target <input id="ew-tgt" value="casualty" maxlength="16" style="width: 130px; font-family: monospace; padding: 3px;"></label>
+        <label>Rule <select id="ew-rule" style="padding: 3px;">
+            <option value="unit">unit costs</option>
+            <option value="A">A: adjacent swap costs 1</option>
+            <option value="B">B: substitution costs 3</option>
+        </select></label>
+        <label>Speed <input id="ew-speed" type="range" min="1" max="10" value="6"></label>
+        <button id="ew-play" style="padding: 4px 10px;">Animate</button>
+        <button id="ew-all" style="padding: 4px 10px;">Show all</button>
+    </div>
+    <div style="overflow-x: auto;"><table id="ew-table" style="border-collapse: collapse; margin: 14px auto; font-family: monospace; font-size: 14px;"></table></div>
+    <div id="ew-info" style="font-family: monospace; font-size: 13px; min-height: 40px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 8px; white-space: pre-wrap;">Hover over a filled cell to see how its value is computed.</div>
+    <div id="ew-result" style="font-size: 14px; margin-top: 10px;"></div>
+</div>
+<script>
+window.addEventListener("load", function () {
+    const $ = id => document.getElementById(id);
+    const table = $("ew-table"), info = $("ew-info"), result = $("ew-result");
+    let s = "", t = "", rule = "unit", D = [], cells = [], filled = 0, timer = null, order = [];
+
+    const sub = (a, b) => a === b ? 0 : (rule === "B" ? 3 : 1);
+    const canSwap = (i, j) => rule === "A" && i > 1 && j > 1 && s[i - 2] === t[j - 1] && s[i - 1] === t[j - 2];
+
+    function options(i, j) {
+        const list = [];
+        if (i > 0 && j > 0) list.push({ from: [i - 1, j - 1], cost: sub(s[i - 1], t[j - 1]), name: s[i - 1] === t[j - 1] ? `keep '${s[i - 1]}'` : `substitute '${s[i - 1]}'→'${t[j - 1]}'` });
+        if (canSwap(i, j)) list.push({ from: [i - 2, j - 2], cost: 1, name: `swap '${s.slice(i - 2, i)}'→'${t.slice(j - 2, j)}'` });
+        if (i > 0) list.push({ from: [i - 1, j], cost: 1, name: `delete '${s[i - 1]}'` });
+        if (j > 0) list.push({ from: [i, j - 1], cost: 1, name: `insert '${t[j - 1]}'` });
+        return list;
+    }
+
+    function compute() {
+        D = [];
+        for (let i = 0; i <= s.length; i++) {
+            D.push([]);
+            for (let j = 0; j <= t.length; j++) {
+                if (i === 0 || j === 0) { D[i].push(i + j); continue; }
+                D[i].push(Math.min(...options(i, j).map(o => D[o.from[0]][o.from[1]] + o.cost)));
+            }
+        }
+    }
+
+    function traceback() {
+        let i = s.length, j = t.length;
+        const steps = [];
+        while (i > 0 || j > 0) {
+            const o = options(i, j).find(o => D[o.from[0]][o.from[1]] + o.cost === D[i][j]);
+            steps.push({ i, j, o });
+            [i, j] = o.from;
+        }
+        return steps.reverse();
+    }
+
+    function color(v) {
+        const max = Math.max(s.length, t.length, 1) * (rule === "B" ? 1 : 1);
+        const x = Math.min(v / max, 1);
+        const r = Math.round(240 - 200 * x), g = Math.round(249 - 130 * x), b = Math.round(232 - 40 * x);
+        return `rgb(${r},${g},${b})`;
+    }
+
+    function build() {
+        clearInterval(timer);
+        s = $("ew-src").value.trim(); t = $("ew-tgt").value.trim(); rule = $("ew-rule").value;
+        compute();
+        const cs = "padding: 5px 9px; border: 1px solid #cbd5e1; text-align: center; min-width: 22px;";
+        let html = `<tr><th style="${cs}"></th><th style="${cs}">ε</th>` + [...t].map(c => `<th style="${cs} background:#e2e8f0;">${c}</th>`).join("") + "</tr>";
+        for (let i = 0; i <= s.length; i++) {
+            html += `<tr><th style="${cs} background:#e2e8f0;">${i ? s[i - 1] : "ε"}</th>`;
+            for (let j = 0; j <= t.length; j++) html += `<td data-i="${i}" data-j="${j}" style="${cs}"></td>`;
+            html += "</tr>";
+        }
+        table.innerHTML = html;
+        cells = [...table.querySelectorAll("td")];
+        order = cells.slice();
+        filled = 0;
+        result.innerHTML = "";
+        info.textContent = "Hover over a filled cell to see how its value is computed.";
+        cells.forEach(td => td.addEventListener("mouseenter", () => explain(td)));
+        cells.forEach(td => td.addEventListener("mouseleave", clearMarks));
+    }
+
+    function fill(td) {
+        const i = +td.dataset.i, j = +td.dataset.j;
+        td.textContent = D[i][j];
+        td.style.background = color(D[i][j]);
+        td.dataset.filled = "1";
+    }
+
+    function clearMarks() {
+        cells.forEach(td => { td.style.outline = ""; td.style.outlineOffset = ""; });
+    }
+
+    function cell(i, j) { return cells[i * (t.length + 1) + j]; }
+
+    function explain(td) {
+        if (!td.dataset.filled) return;
+        const i = +td.dataset.i, j = +td.dataset.j;
+        clearMarks();
+        td.style.outline = "3px solid #1d4ed8";
+        td.style.outlineOffset = "-3px";
+        if (i === 0 || j === 0) {
+            info.textContent = `DIST[${i}, ${j}] = ${D[i][j]}: ${i === 0 ? `insert all ${j} letters of '${t.slice(0, j)}'` : `delete all ${i} letters of '${s.slice(0, i)}'`}`;
+            return;
+        }
+        const lines = options(i, j).map(o => {
+            const v = D[o.from[0]][o.from[1]] + o.cost;
+            const best = v === D[i][j];
+            if (best) { const c = cell(...o.from); c.style.outline = "3px dashed #bf4700"; c.style.outlineOffset = "-3px"; }
+            return `${best ? "→" : " "} DIST[${o.from[0]}, ${o.from[1]}] + ${o.cost} = ${v}   (${o.name})`;
+        });
+        info.textContent = `DIST[${i}, ${j}]: '${s.slice(0, i) || "ε"}' → '${t.slice(0, j) || "ε"}' = min of\n` + lines.join("\n") + `\n= ${D[i][j]}   (dashed: predecessors that give the minimum)`;
+    }
+
+    function finish() {
+        clearInterval(timer);
+        cells.forEach(fill);
+        const steps = traceback();
+        cell(0, 0).style.boxShadow = "inset 0 0 0 3px #bf4700";
+        steps.forEach(st => { cell(st.i, st.j).style.boxShadow = "inset 0 0 0 3px #bf4700"; cell(st.i, st.j).style.fontWeight = "bold"; });
+        const edits = steps.filter(st => !st.o.name.startsWith("keep")).map((st, k) =>
+            `<li>${st.o.name} (cost ${st.o.cost}) → <code>${t.slice(0, st.j) + s.slice(st.i)}</code></li>`).join("");
+        result.innerHTML = `<strong>Distance ${D[s.length][t.length]}</strong> (bottom-right cell). One optimal path is outlined; its edits in forward order:` +
+            (edits ? `<ol style="margin: 6px 0;">${edits}</ol>` : " none, the words are equal.");
+    }
+
+    function play() {
+        build();
+        const delay = 520 - 50 * $("ew-speed").value;
+        timer = setInterval(() => {
+            if (filled >= order.length) { finish(); return; }
+            fill(order[filled]);
+            explain(order[filled]);
+            filled++;
+        }, delay);
+    }
+
+    $("ew-play").addEventListener("click", play);
+    $("ew-all").addEventListener("click", () => { build(); finish(); });
+    ["ew-src", "ew-tgt", "ew-rule"].forEach(id => $(id).addEventListener("change", () => { build(); finish(); }));
+    build();
+    finish();
+});
+</script>

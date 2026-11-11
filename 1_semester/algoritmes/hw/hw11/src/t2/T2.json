@@ -1,0 +1,1185 @@
+{
+ "counts": {
+  "unit L1": {
+   "unique correct": 10
+  },
+  "unit L3": {
+   "unique correct": 9,
+   "tie including original": 1
+  },
+  "unit L6": {
+   "unique correct": 9,
+   "miss": 1
+  },
+  "weighted L1": {
+   "unique correct": 10
+  },
+  "weighted L3": {
+   "unique correct": 10
+  },
+  "weighted L6": {
+   "unique correct": 10
+  },
+  "weighted+strict swap L1": {
+   "unique correct": 10
+  },
+  "weighted+strict swap L3": {
+   "unique correct": 10
+  },
+  "weighted+strict swap L6": {
+   "unique correct": 10
+  },
+  "weighted+swap L1": {
+   "unique correct": 10
+  },
+  "weighted+swap L3": {
+   "unique correct": 10
+  },
+  "weighted+swap L6": {
+   "unique correct": 10
+  }
+ },
+ "queries": [
+  {
+   "level": 1,
+   "row": 0,
+   "query": "intaxrdishiplinary",
+   "truth": "interdisciplinary",
+   "unit": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 1,
+   "row": 10,
+   "query": "unfhabacteristicallcy",
+   "truth": "uncharacteristically",
+   "unit": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 1,
+   "row": 20,
+   "query": "intercomoymunicauion",
+   "truth": "intercommunication",
+   "unit": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 1,
+   "row": 30,
+   "query": "recombiatriolity",
+   "truth": "recombinatoriality",
+   "unit": {
+    "winners": [
+     "recombinatoriality"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "recombinatoriality"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "recombinatoriality"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "recombinatoriality"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 1,
+   "row": 40,
+   "query": "counterifuitivle",
+   "truth": "counterintuitive",
+   "unit": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 1,
+   "row": 50,
+   "query": "anticolonalitsm",
+   "truth": "anticolonialism",
+   "unit": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 2.0,
+    "truth_cost": 2.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 2.0,
+    "truth_cost": 2.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 2.0,
+    "truth_cost": 2.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 2.0,
+    "truth_cost": 2.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 1,
+   "row": 60,
+   "query": "geochrjologichl",
+   "truth": "geochronological",
+   "unit": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 1,
+   "row": 70,
+   "query": "semgiautobiographcalf",
+   "truth": "semiautobiographical",
+   "unit": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 1,
+   "row": 80,
+   "query": "hyercondtined",
+   "truth": "hyperconditioned",
+   "unit": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 1,
+   "row": 90,
+   "query": "neurocoputatrolnal",
+   "truth": "neurocomputational",
+   "unit": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 3,
+   "row": 0,
+   "query": "IniaxriDShipltnaRy",
+   "truth": "interdisciplinary",
+   "unit": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 10.0,
+    "truth_cost": 10.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 7.6,
+    "truth_cost": 7.6,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 7.6,
+    "truth_cost": 7.6,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 6.8,
+    "truth_cost": 6.8,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 3,
+   "row": 10,
+   "query": "uNFhabaCteristicalCly",
+   "truth": "uncharacteristically",
+   "unit": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 5.0,
+    "truth_cost": 5.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 3.4,
+    "truth_cost": 3.4,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 3.4,
+    "truth_cost": 3.4,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 3.4,
+    "truth_cost": 3.4,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 3,
+   "row": 20,
+   "query": "inTeRcoymmOunicauIon",
+   "truth": "intercommunication",
+   "unit": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 6.0,
+    "truth_cost": 6.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 3.6,
+    "truth_cost": 3.6,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 3.6,
+    "truth_cost": 3.6,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 3.6,
+    "truth_cost": 3.6,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 3,
+   "row": 30,
+   "query": "RecombiatRioliTY",
+   "truth": "recombinatoriality",
+   "unit": {
+    "winners": [
+     "recombinatorial",
+     "recombinatoriality"
+    ],
+    "cost": 7.0,
+    "truth_cost": 7.0,
+    "outcome": "tie including original"
+   },
+   "weighted": {
+    "winners": [
+     "recombinatoriality"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "recombinatoriality"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "recombinatoriality"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 3,
+   "row": 40,
+   "query": "counTerIfuiTiVle",
+   "truth": "counterintuitive",
+   "unit": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 7.0,
+    "truth_cost": 7.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 3,
+   "row": 50,
+   "query": "AnticolonALItsm",
+   "truth": "anticolonialism",
+   "unit": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 5.0,
+    "truth_cost": 5.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 2.8,
+    "truth_cost": 2.8,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 2.8,
+    "truth_cost": 2.8,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 2.8,
+    "truth_cost": 2.8,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 3,
+   "row": 60,
+   "query": "geocHrjOlogiChL",
+   "truth": "geochronological",
+   "unit": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 7.0,
+    "truth_cost": 7.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 3,
+   "row": 70,
+   "query": "FemgiautobiOgraphCaLs",
+   "truth": "semiautobiographical",
+   "unit": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 7.0,
+    "truth_cost": 7.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 4.6,
+    "truth_cost": 4.6,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 4.6,
+    "truth_cost": 4.6,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 4.6,
+    "truth_cost": 4.6,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 3,
+   "row": 80,
+   "query": "hyerCondtiNED",
+   "truth": "hyperconditioned",
+   "unit": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 7.0,
+    "truth_cost": 7.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 3.8,
+    "truth_cost": 3.8,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 3,
+   "row": 90,
+   "query": "LEucorOPutatrolnan",
+   "truth": "neurocomputational",
+   "unit": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 10.0,
+    "truth_cost": 10.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 7.6,
+    "truth_cost": 7.6,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 7.6,
+    "truth_cost": 7.6,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 7.6,
+    "truth_cost": 7.6,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 6,
+   "row": 0,
+   "query": "LniaxriDShipltnäRy",
+   "truth": "interdisciplinary",
+   "unit": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 11.0,
+    "truth_cost": 11.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 7.8,
+    "truth_cost": 7.8,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 7.8,
+    "truth_cost": 7.8,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "interdisciplinary"
+    ],
+    "cost": 7.0,
+    "truth_cost": 7.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 6,
+   "row": 10,
+   "query": "uNFhabaCteristicalCly",
+   "truth": "uncharacteristically",
+   "unit": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 5.0,
+    "truth_cost": 5.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 3.4,
+    "truth_cost": 3.4,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 3.4,
+    "truth_cost": 3.4,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "uncharacteristically"
+    ],
+    "cost": 3.4,
+    "truth_cost": 3.4,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 6,
+   "row": 20,
+   "query": "lnTeRcöymmOunicaüIon",
+   "truth": "intercommunication",
+   "unit": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 8.0,
+    "truth_cost": 8.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 4.0,
+    "truth_cost": 4.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 4.0,
+    "truth_cost": 4.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "intercommunication"
+    ],
+    "cost": 4.0,
+    "truth_cost": 4.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 6,
+   "row": 30,
+   "query": "RecombiatRioilTY",
+   "truth": "recombinatoriality",
+   "unit": {
+    "winners": [
+     "recombinationally"
+    ],
+    "cost": 7.0,
+    "truth_cost": 9.0,
+    "outcome": "miss"
+   },
+   "weighted": {
+    "winners": [
+     "recombinatoriality"
+    ],
+    "cost": 4.2,
+    "truth_cost": 4.2,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "recombinatoriality"
+    ],
+    "cost": 4.2,
+    "truth_cost": 4.2,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "recombinatoriality"
+    ],
+    "cost": 4.2,
+    "truth_cost": 4.2,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 6,
+   "row": 40,
+   "query": "coünTerIfuiTiVle",
+   "truth": "counterintuitive",
+   "unit": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 8.0,
+    "truth_cost": 8.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 4.0,
+    "truth_cost": 4.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 4.0,
+    "truth_cost": 4.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "counterintuitive"
+    ],
+    "cost": 4.0,
+    "truth_cost": 4.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 6,
+   "row": 50,
+   "query": "AntlcolonÄLItsm",
+   "truth": "anticolonialism",
+   "unit": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 6.0,
+    "truth_cost": 6.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "anticolonialism"
+    ],
+    "cost": 3.0,
+    "truth_cost": 3.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 6,
+   "row": 60,
+   "query": "geocHrjOiögiChL",
+   "truth": "geochronological",
+   "unit": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 9.0,
+    "truth_cost": 9.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 4.2,
+    "truth_cost": 4.2,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 4.2,
+    "truth_cost": 4.2,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "geochronological"
+    ],
+    "cost": 4.2,
+    "truth_cost": 4.2,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 6,
+   "row": 70,
+   "query": "FemgiäutöbiOgraphCaLs",
+   "truth": "semiautobiographical",
+   "unit": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 9.0,
+    "truth_cost": 9.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 5.0,
+    "truth_cost": 5.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 5.0,
+    "truth_cost": 5.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "semiautobiographical"
+    ],
+    "cost": 5.0,
+    "truth_cost": 5.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 6,
+   "row": 80,
+   "query": "hyerCöndtiNED",
+   "truth": "hyperconditioned",
+   "unit": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 8.0,
+    "truth_cost": 8.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 4.0,
+    "truth_cost": 4.0,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 4.0,
+    "truth_cost": 4.0,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "hyperconditioned"
+    ],
+    "cost": 4.0,
+    "truth_cost": 4.0,
+    "outcome": "unique correct"
+   }
+  },
+  {
+   "level": 6,
+   "row": 90,
+   "query": "IËucorÖPutatrolnan",
+   "truth": "neurocomputational",
+   "unit": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 10.0,
+    "truth_cost": 10.0,
+    "outcome": "unique correct"
+   },
+   "weighted": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 7.6,
+    "truth_cost": 7.6,
+    "outcome": "unique correct"
+   },
+   "weighted+strict swap": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 7.6,
+    "truth_cost": 7.6,
+    "outcome": "unique correct"
+   },
+   "weighted+swap": {
+    "winners": [
+     "neurocomputational"
+    ],
+    "cost": 7.6,
+    "truth_cost": 7.6,
+    "outcome": "unique correct"
+   }
+  }
+ ]
+}

@@ -1,0 +1,181 @@
+<div id="dw" style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin: 15px 0; background: #fff; color: #1e293b;">
+    <div style="display: flex; flex-wrap: wrap; gap: 18px; align-items: center; font-size: 14px;">
+        <label>Band width w <input id="dw-band" type="range" min="0" max="150" value="12" style="vertical-align: middle;"> <strong id="dw-band-v"></strong></label>
+        <label>Row of B shown <input id="dw-row" type="range" min="0" max="99" value="63" style="vertical-align: middle;"> <strong id="dw-row-v"></strong></label>
+        <span style="font-size: 13px; color: #475569;">Tip: click a row in the score plot.</span>
+    </div>
+    <div id="dw-stats" style="font-size: 14px; margin: 10px 0; padding: 6px 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;"></div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+        <div style="flex: 1 1 380px; min-width: 0;">
+            <div style="font-size: 13px; font-weight: bold; text-align: center;">DTW score of every row of B (log scale)</div>
+            <canvas id="dw-scores" width="560" height="300" style="width: 100%; height: auto; cursor: pointer;"></canvas>
+        </div>
+        <div style="flex: 1 1 300px; min-width: 0;">
+            <div id="dw-mat-title" style="font-size: 13px; font-weight: bold; text-align: center;"></div>
+            <canvas id="dw-matrix" width="320" height="320" style="width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto;"></canvas>
+        </div>
+    </div>
+    <div style="font-size: 13px; font-weight: bold; text-align: center; margin-top: 8px;" id="dw-sig-title"></div>
+    <canvas id="dw-signals" width="900" height="230" style="width: 100%; height: auto;"></canvas>
+</div>
+<script>
+window.addEventListener("load", function () {
+    const DATA = __DTW_DATA__;
+    const q = DATA.query, B = DATA.B, TRUTH = DATA.truth, n = q.length, m = B[0].length, FULL = n * m * B.length;
+    const $ = id => document.getElementById(id);
+    const viridis = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
+
+    function band(i, w) { return [Math.max(1, i - w), Math.min(m, i + w)]; }
+
+    function score(c, w) {
+        let prev = new Float64Array(m + 1).fill(Infinity), cur = new Float64Array(m + 1);
+        prev[0] = 0;
+        let cells = 0;
+        for (let i = 1; i <= n; i++) {
+            cur.fill(Infinity);
+            const [lo, hi] = band(i, w);
+            for (let j = lo; j <= hi; j++) {
+                const d = q[i - 1] - c[j - 1];
+                cur[j] = d * d + Math.min(prev[j], cur[j - 1], prev[j - 1]);
+                cells++;
+            }
+            [prev, cur] = [cur, prev];
+        }
+        return [prev[m], cells];
+    }
+
+    function matrix(c, w) {
+        const D = new Float64Array((n + 1) * (m + 1)).fill(Infinity);
+        D[0] = 0;
+        for (let i = 1; i <= n; i++) {
+            const [lo, hi] = band(i, w);
+            for (let j = lo; j <= hi; j++) {
+                const d = q[i - 1] - c[j - 1];
+                D[i * (m + 1) + j] = d * d + Math.min(D[(i - 1) * (m + 1) + j], D[i * (m + 1) + j - 1], D[(i - 1) * (m + 1) + j - 1]);
+            }
+        }
+        const path = [[n - 1, m - 1]];
+        let i = n, j = m;
+        while (isFinite(D[i * (m + 1) + j]) && (i > 1 || j > 1)) {
+            const moves = [[i - 1, j - 1], [i - 1, j], [i, j - 1]];
+            let best = moves[0];
+            for (const mv of moves) if (D[mv[0] * (m + 1) + mv[1]] < D[best[0] * (m + 1) + best[1]]) best = mv;
+            [i, j] = best;
+            path.push([i - 1, j - 1]);
+        }
+        return [D, path.reverse()];
+    }
+
+    function cmap(x) {
+        const k = Math.min(Math.max(x, 0), 1) * (viridis.length - 1), a = Math.floor(Math.min(k, viridis.length - 2)), f = k - a;
+        return viridis[a].map((v, z) => Math.round(v + f * (viridis[a + 1][z] - v)));
+    }
+
+    const point = B.map(c => score(c, 0)[0]);
+    let scores = [], cells = 0;
+
+    function rankOf(arr, row) {
+        const idx = arr.map((v, k) => k).sort((a, b) => arr[a] - arr[b] || a - b);
+        return [idx.indexOf(row) + 1, idx[0]];
+    }
+
+    function drawScores(row) {
+        const cv = $("dw-scores"), ctx = cv.getContext("2d"), W = cv.width, H = cv.height, L = 58, R = 10, T = 10, Bt = 34;
+        ctx.clearRect(0, 0, W, H);
+        const all = scores.concat(point).filter(v => isFinite(v) && v > 0);
+        const lo = Math.log10(Math.min(...all)), hi = Math.log10(Math.max(...all));
+        const X = k => L + (W - L - R) * k / 99, Y = v => T + (H - T - Bt) * (1 - (Math.log10(Math.max(v, 1)) - lo) / (hi - lo || 1));
+        ctx.strokeStyle = "#cbd5e1"; ctx.fillStyle = "#475569"; ctx.font = "11px sans-serif";
+        for (let e = Math.floor(lo); e <= Math.ceil(hi); e++) for (const f of [1, 2, 5]) {
+            const v = f * 10 ** e, l = Math.log10(v);
+            if (l < lo || l > hi) continue;
+            ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(W - R, Y(v)); ctx.stroke();
+            ctx.fillText(v.toLocaleString("en"), 4, Y(v) + 4);
+        }
+        for (let k = 0; k <= 100; k += 20) ctx.fillText(Math.min(k, 99), X(Math.min(k, 99)) - 6, H - 18);
+        ctx.fillText("Row in B", W / 2 - 20, H - 4);
+        const line = (arr, col, dash) => {
+            ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.setLineDash(dash); ctx.beginPath();
+            arr.forEach((v, k) => k ? ctx.lineTo(X(k), Y(v)) : ctx.moveTo(X(k), Y(v))); ctx.stroke(); ctx.setLineDash([]);
+        };
+        line(point, "#bd6413", [5, 4]);
+        line(scores, "#147486", []);
+        const mark = (k, col, label) => {
+            ctx.fillStyle = col; ctx.beginPath(); ctx.arc(X(k), Y(scores[k]), 5, 0, 7); ctx.fill();
+        };
+        ctx.strokeStyle = "#94a3b8"; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(X(row), T); ctx.lineTo(X(row), H - Bt); ctx.stroke(); ctx.setLineDash([]);
+        mark(TRUTH, "#b21a60");
+        const win = rankOf(scores, TRUTH)[1];
+        mark(win, "#147486");
+        ctx.font = "12px sans-serif";
+        [["#bd6413", "pointwise (w = 0)"], ["#147486", "DTW with band w"], ["#b21a60", "true row " + TRUTH]].forEach(([c, s], k) => {
+            ctx.fillStyle = c; ctx.fillRect(L + 10, H - Bt - 54 + 16 * k, 12, 3); ctx.fillStyle = "#1e293b"; ctx.fillText(s, L + 28, H - Bt - 49 + 16 * k);
+        });
+    }
+
+    function drawMatrix(row, w) {
+        const [D, path] = matrix(B[row], w);
+        const cv = $("dw-matrix"), ctx = cv.getContext("2d"), S = cv.width, img = ctx.createImageData(S, S);
+        let lo = Infinity, hi = 0;
+        for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) { const v = D[i * (m + 1) + j]; if (isFinite(v)) { lo = Math.min(lo, Math.log1p(v)); hi = Math.max(hi, Math.log1p(v)); } }
+        for (let py = 0; py < S; py++) for (let px = 0; px < S; px++) {
+            const i = n - Math.floor(py * n / S), j = 1 + Math.floor(px * m / S), v = D[i * (m + 1) + j], o = 4 * (py * S + px);
+            const c = isFinite(v) ? cmap((Math.log1p(v) - lo) / (hi - lo || 1)) : [226, 232, 240];
+            img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = 255;
+        }
+        ctx.putImageData(img, 0, 0);
+        const total = D[n * (m + 1) + m];
+        if (isFinite(total)) {
+            ctx.strokeStyle = "#ff3030"; ctx.lineWidth = 2; ctx.beginPath();
+            path.forEach(([i, j], k) => { const x = (j + 0.5) * S / m, y = S - (i + 0.5) * S / n; k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+            ctx.stroke();
+        }
+        $("dw-mat-title").textContent = `Accumulated cost, query vs B[${row}] (grey = outside the band)`;
+        drawSignals(row, path, total);
+    }
+
+    function drawSignals(row, path, total) {
+        const cv = $("dw-signals"), ctx = cv.getContext("2d"), W = cv.width, H = cv.height, L = 40, R = 10, T = 10, Bt = 24;
+        ctx.clearRect(0, 0, W, H);
+        const c = B[row], X = (k, len) => L + (W - L - R) * k / Math.max(len - 1, 1), Y = v => T + (H - T - Bt) * (1 - v / 255);
+        ctx.fillStyle = "#475569"; ctx.font = "11px sans-serif"; ctx.strokeStyle = "#e2e8f0";
+        [0, 64, 128, 192, 255].forEach(v => { ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(W - R, Y(v)); ctx.stroke(); ctx.fillText(v, 8, Y(v) + 4); });
+        const draw = (vals, col) => { ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.beginPath(); vals.forEach((v, k) => k ? ctx.lineTo(X(k, vals.length), Y(v)) : ctx.moveTo(X(k, vals.length), Y(v))); ctx.stroke(); };
+        if (isFinite(total)) {
+            draw(path.map(([i]) => q[i]), "#b21a60");
+            draw(path.map(([, j]) => c[j]), "#147486");
+            $("dw-sig-title").textContent = `Signals along the DTW path (${path.length} steps): query (magenta) and B[${row}] (teal)`;
+        } else {
+            draw(q, "#b21a60"); draw(c, "#147486");
+            $("dw-sig-title").textContent = "No path: query (magenta) and B[" + row + "] (teal) at equal columns";
+        }
+    }
+
+    function update(recompute) {
+        const w = +$("dw-band").value, row = +$("dw-row").value;
+        $("dw-band-v").textContent = w >= n - 1 ? `${w} (unrestricted)` : w;
+        $("dw-row-v").textContent = row;
+        if (recompute) {
+            const res = B.map(c => score(c, w));
+            scores = res.map(r => r[0]);
+            cells = res.reduce((a, r) => a + r[1], 0);
+        }
+        const [rank, win] = rankOf(scores, TRUTH);
+        $("dw-stats").innerHTML = `w = ${w}: winner <strong>row ${win}</strong> (cost ${Math.round(scores[win]).toLocaleString("en")}), ` +
+            `true row ${TRUTH} ranked <strong>${rank}</strong> (cost ${Math.round(scores[TRUTH]).toLocaleString("en")}), ` +
+            `${cells.toLocaleString("en")} cells evaluated = ${(100 * cells / FULL).toFixed(1)}% of unrestricted. ` +
+            `Selected row ${row}: cost ${Math.round(scores[row]).toLocaleString("en")}, rank ${rankOf(scores, row)[0]}.`;
+        drawScores(row);
+        drawMatrix(row, w);
+    }
+
+    $("dw-band").addEventListener("input", () => update(true));
+    $("dw-row").addEventListener("input", () => update(false));
+    $("dw-scores").addEventListener("click", e => {
+        const r = e.target.getBoundingClientRect(), x = (e.clientX - r.left) * e.target.width / r.width;
+        $("dw-row").value = Math.round(Math.min(Math.max((x - 58) / (e.target.width - 68) * 99, 0), 99));
+        update(false);
+    });
+    update(true);
+});
+</script>
