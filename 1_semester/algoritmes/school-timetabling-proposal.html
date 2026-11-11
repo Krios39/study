@@ -415,16 +415,5 @@ against the primary sources; the text was edited by hand.</p>
 </details>
 
 </main>
-<script>
-  let closedBeforePrint = [];
-  window.addEventListener("beforeprint", () => {
-    closedBeforePrint = [...document.querySelectorAll("details:not([open])")];
-    closedBeforePrint.forEach(d => d.open = true);
-  });
-  window.addEventListener("afterprint", () => {
-    closedBeforePrint.forEach(d => d.open = false);
-    closedBeforePrint = [];
-  });
-</script>
 </body>
 </html>
