@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homework 10 Report - Parallel Computing</title>
+        <style>
+            table.t { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: center; }
+            table.t th { background: #2d2d2d; color: #fff; padding: 8px; border: 1px solid #444; }
+            table.t td { padding: 6px; border: 1px solid #ddd; }
+            table.t tr:nth-child(even) td { background: #f9f9f9; }
+            pre.term { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0; max-height: 520px; overflow-y: auto; }
+        </style>
+    </head>
+    <body>
+<details>
+    <summary>Test environment and reproducibility</summary>
+    <div class="details-content">
+        <table class="t">
+            <tbody>
+                <tr><td>Cluster</td><td>UT HPC <strong>rocket</strong>, SLURM 25.11.7, partition <code>amd</code>. Nodes: <code>artemis*</code> (AMD EPYC 7763) and <code>ares*</code> (AMD EPYC 7702), 256 logical CPUs per node</td></tr>
+                <tr><td>Software</td><td><code>openmpi/4.1.0</code>, <code>py-mpi4py/3.1.4</code>, <code>py-numpy/1.23.5</code>, Python 3.9.12 (printed at the top of every <code>.out</code>)</td></tr>
+                <tr><td>Threads</td><td><code>OMP_NUM_THREADS=1</code>, <code>OPENBLAS_NUM_THREADS=1</code>, <code>MKL_NUM_THREADS=1</code>: one core per MPI process, so the speedup comes only from MPI</td></tr>
+                <tr><td>Repetitions</td><td>1 checked warm-up + 3 timed runs per configuration, median reported (min and max in <code>summary_*.csv</code>)</td></tr>
+                <tr><td>What is timed</td><td><code>MPI.Wtime()</code> after a <code>Barrier</code>, maximum over ranks: the whole ring multiplication including the final <code>Gather</code> of $C$ to rank 0. Matrix generation is not timed</td></tr>
+            </tbody>
+        </table>
+        <ul style="font-size: 14px;">
+            <li><strong>Modules:</strong> the assignment names <code>py-mpi4py/3.1.2</code>, which no longer exists on rocket. <code>py-mpi4py/3.1.3</code> is built against <code>mpich</code>, while <code>3.1.4</code> depends on exactly <code>openmpi/4.1.0</code>, so 3.1.4 was used. NumPy has to be loaded explicitly: the default <code>py-numpy</code> switches Python to 3.10 and breaks mpi4py (the first test job, <code>slurm-3628121.out</code>, shows exactly this <code>ImportError</code>). <code>py-numpy/1.23.5</code> is built for Python 3.9.12.</li>
+            <li><strong>Login node:</strong> the rocket banner forbids computations on the login node, so even the small correctness test was submitted through SLURM (partition <code>testing</code>, <code>slurm-3628129.out</code>, <code>test_results_3628129.csv</code>).</li>
+            <li><strong>Exclusive nodes:</strong> single-node runs used <code>--exclusive</code> as recommended. The multi-node bonus runs did not, to avoid occupying 16 whole nodes for 16 cores.</li>
+            <li><strong>Correctness on the cluster:</strong> every configuration is checked once before timing with a Freivalds test: $\lVert Cx - A(Bx) \rVert \le 10^{-10} \lVert A(Bx) \rVert$ for a random vector $x$. It costs $O(N^2)$, so it also works for $N = 9216$ where a full reference product would take minutes. All 16 cluster runs print <code>check OK</code>.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Screenshot: jobs on rocket</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;"><code>sacct</code> for the 9 measurement jobs (all <code>COMPLETED</code>), followed by the result lines of every <code>slurm-*.out</code>.</p>
+        <img src="screenshot.png" alt="sacct and job output on rocket" style="max-width: 100%;" />
+    </div>
+</details>
+
+<details>
+    <summary>Choice of program and files</summary>
+    <div class="details-content">
+        <h3>Why the ring algorithm from Assignment 7</h3>
+        <ul style="font-size: 14px;">
+            <li><strong>Every process computes.</strong> In the manager-worker version from Assignment 9 rank 0 only hands out tasks, so with $P$ processes only $P-1$ do arithmetic, and all blocks of $A$ and $B$ pass through one process.</li>
+            <li><strong>Relative speedup needs $T_1$.</strong> Manager-worker cannot run on one process at all, so $S = T_1/T_P$ is not even defined for it. The ring version runs unchanged on $P = 1$.</li>
+            <li><strong>Non-blocking variant.</strong> <code>ring_matrix_multiplication_nb</code> (Ex 7.2) posts <code>Isend/Irecv</code> of the next block of $B$ before multiplying the current one, so communication overlaps with computation. In Assignment 7 it was the fastest or equal-fastest variant.</li>
+        </ul>
+        <h3>Files</h3>
+        <table class="t">
+            <thead><tr><th>File</th><th>Content</th></tr></thead>
+            <tbody>
+                <tr><td><code>task7_1.py</code>, <code>task7_2.py</code></td><td>Ring multiplication from Assignment 7, unchanged (7.2 is the one being measured)</td></tr>
+                <tr><td><code>task10_bench.py</code></td><td>Benchmark: each rank generates its own row block of $A$ and column block of $B$, Freivalds check, 3 timed runs, one CSV per job</td></tr>
+                <tr><td><code>task10.sbatch</code></td><td>SLURM job script (modules, thread pinning, <code>mpirun</code>)</td></tr>
+                <tr><td><code>submit_all.sh</code></td><td>Submits the 9 measurement jobs</td></tr>
+                <tr><td><code>task10_plot.py</code></td><td>Tables <code>summary_*.csv</code> and the four figures in <code>plots/</code></td></tr>
+                <tr><td><code>cluster/</code></td><td>All <code>slurm-*.out</code> files and raw <code>results_*.csv</code> copied from rocket</td></tr>
+            </tbody>
+        </table>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 10.1: Relative speedup</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;">Fixed $N = 7200$ (divisible by 1, 4, 9, 16, 25 and 36), one node, $P$ MPI processes. $S = T_1 / T_P$, where $T_1$ is the same ring program on one process.</p>
+        <table class="t">
+            <thead><tr><th>P</th><th>Node (CPU)</th><th>Job</th><th>median T, s</th><th>min / max, s</th><th>S = T₁/T_P</th><th>E = S/P</th><th>GFLOP/s</th></tr></thead>
+            <tbody>
+                <tr><td>1</td><td>artemis14 (7763)</td><td>3628134</td><td>14.781</td><td>14.602 / 14.787</td><td>1.00</td><td>1.00</td><td>50.5</td></tr>
+                <tr><td>4</td><td>ares14 (7702)</td><td>3628135</td><td>4.099</td><td>4.092 / 4.107</td><td>3.61</td><td>0.90</td><td>182.1</td></tr>
+                <tr><td>9</td><td>artemis14 (7763)</td><td>3628136</td><td>2.992</td><td>2.940 / 3.256</td><td>4.94</td><td>0.55</td><td>249.5</td></tr>
+                <tr><td>16</td><td>ares14 (7702)</td><td>3628137</td><td>1.235</td><td>1.234 / 1.237</td><td>11.97</td><td>0.75</td><td>604.4</td></tr>
+                <tr><td>25</td><td>artemis14 (7763)</td><td>3628138</td><td>1.020</td><td>1.015 / 1.252</td><td>14.49</td><td>0.58</td><td>731.8</td></tr>
+                <tr><td>36</td><td>artemis16 (7763)</td><td>3628139</td><td>1.067</td><td>0.919 / 1.152</td><td>13.85</td><td>0.38</td><td>699.6</td></tr>
+            </tbody>
+        </table>
+        <img src="plots/speedup.png" alt="Relative speedup" style="max-width: 100%;" />
+        <h3>Discussion</h3>
+        <ul style="font-size: 14px;">
+            <li><strong>Up to 16 processes</strong> the speedup grows almost linearly (3.6 at $P=4$, 12.0 at $P=16$).</li>
+            <li><strong>After 25 it saturates</strong> (14.5 at 25, 13.9 at 36). Here $T_P$ is only about 1 s, of which the ideal computing part $T_1/P$ is 0.41 s at $P = 36$.</li>
+            <li><strong>Why it saturates.</strong> In the ring every process sends $P-1$ blocks of size $N \times N/P$. That is about $N^2 \cdot 8$ bytes = 415 MB per process, <em>independent of $P$</em>. On top of that, the final <code>Gather</code> of the whole $C$ (another 415 MB) lands on rank 0. Computing time falls as $1/P$, but this communication part does not. Fitting $T_P \approx T_1/P + c$ to the last points gives $c \approx 0.4$–$0.7$ s, i.e. about half of the measured time at $P = 25$ and $36$ is this fixed part.</li>
+            <li><strong>The dip at $P = 9$ is partly hardware.</strong> SLURM placed the runs on two node types. $P = 4$ and $16$ landed on <code>ares14</code> (EPYC 7702), the others on <code>artemis</code> (EPYC 7763), and the 7702 runs are the best points of the curve. I could not choose the node, so the curve mixes two machines. To be fully clean, all runs should be repeated with <code>--nodelist</code> or <code>--constraint</code> fixed to one node type. With one run per point, I cannot separate node effects from the algorithm at $P = 9$.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 10.2: Efficiency</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;">Same timings as 10.1, $E = S / P$ (values in the table above).</p>
+        <img src="plots/efficiency.png" alt="Parallel efficiency" style="max-width: 100%;" />
+        <ul style="font-size: 14px;">
+            <li>Efficiency is 0.90 at $P = 4$ and 0.75 at $P = 16$. It drops to 0.58 at $P = 25$ and 0.38 at $P = 36$: at 36 processes about 60% of the core time is spent waiting for communication, not computing.</li>
+            <li>For this program on one node, 16 processes is a reasonable size for $N = 7200$. Using more cores helps only if $N$ also grows, because the computing part ($\sim N^3/P$) has to stay large compared with the communication part ($\sim N^2$).</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 10.3: Weak scaling</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;">Block size fixed at $n = 256$, $N = n \cdot P$, so $N$ runs from 256 to 9216. Scaled efficiency $E_S(n, P) = T_1(n) / T_P(nP, P)$.</p>
+        <table class="t">
+            <thead><tr><th>P</th><th>N</th><th>median T, s</th><th>E_S (as defined)</th><th>work per process vs P = 1</th><th>E_S × P²</th><th>GFLOP/s</th></tr></thead>
+            <tbody>
+                <tr><td>1</td><td>256</td><td>0.00088</td><td>1.000</td><td>1</td><td>1.00</td><td>38</td></tr>
+                <tr><td>4</td><td>1024</td><td>0.0160</td><td>0.055</td><td>16</td><td>0.88</td><td>134</td></tr>
+                <tr><td>9</td><td>2304</td><td>0.0873</td><td>0.010</td><td>81</td><td>0.82</td><td>280</td></tr>
+                <tr><td>16</td><td>4096</td><td>0.2765</td><td>0.0032</td><td>256</td><td>0.81</td><td>497</td></tr>
+                <tr><td>25</td><td>6400</td><td>0.7904</td><td>0.0011</td><td>625</td><td>0.70</td><td>663</td></tr>
+                <tr><td>36</td><td>9216</td><td>1.4030</td><td>0.00063</td><td>1296</td><td>0.81</td><td>1116</td></tr>
+            </tbody>
+        </table>
+        <img src="plots/weak_scaled_efficiency.png" alt="Weak scaling scaled efficiency" style="max-width: 100%;" />
+        <h3>Discussion</h3>
+        <ul style="font-size: 14px;">
+            <li><strong>$E_S$ computed exactly as defined collapses to $6 \cdot 10^{-4}$.</strong> This is not a failure of the program but of the scaling rule for matrix multiplication. With $N = nP$ the total work is $2N^3 = 2n^3P^3$, so each process gets $2n^3P^2$ flops, i.e. $P^2$ times more than the single process at $P = 1$. The work per processor does <em>not</em> stay constant, so $E_S \approx 1/P^2$ even for a perfect program.</li>
+            <li><strong>Normalised by work</strong> ($E_S \cdot P^2$, the blue curve), the efficiency stays between 0.70 and 0.88 for all $P$. Weak scaling holds much better than strong scaling, because here the computing part grows faster ($\sim n^3P^2$ per process) than the communication part ($\sim n^2P^2$ bytes per process).</li>
+            <li>To keep the work per process truly constant for matmul, $N$ should grow as $n \cdot P^{1/3}$, not $n \cdot P$. That needs $N$ divisible by $P$ for the ring algorithm, which is awkward for $P = 4, 9, 25, 36$. So I kept the rule from the assignment and normalised the result instead.</li>
+            <li>$T_1(n = 256)$ is only 0.9 ms, so $E_S$ depends on a very short reference time. Three repetitions agreed within 2.5%.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Bonus 10: one node with K cores vs K nodes with one core</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;">Option 2 of the bonus. Same program, $N = 7200$, $K = 4, 9, 16$ processes placed either as <code>-N 1 --ntasks-per-node=K</code> or as <code>-N K --ntasks-per-node=1</code>.</p>
+        <table class="t">
+            <thead><tr><th>K</th><th>1 node × K cores</th><th>K nodes × 1 core</th><th>Slowdown of K nodes</th><th>Nodes used (K × 1)</th></tr></thead>
+            <tbody>
+                <tr><td>4</td><td>4.099 s (ares14, 7702)</td><td>4.250 s</td><td>+4%</td><td>artemis[1-4] (7763)</td></tr>
+                <tr><td>9</td><td>2.992 s (artemis14, 7763)</td><td>3.178 s</td><td>+6%</td><td>ares[3-10], artemis17 (mostly 7702)</td></tr>
+                <tr><td>16</td><td>1.235 s (ares14, 7702)</td><td>2.206 s</td><td>+79%</td><td>ares[2-10,13-19] (7702)</td></tr>
+            </tbody>
+        </table>
+        <img src="plots/bonus_placement.png" alt="Placement comparison" style="max-width: 100%;" />
+        <ul style="font-size: 14px;">
+            <li><strong>Small K: almost no difference.</strong> With 4 or 9 processes the blocks are large and computing dominates, so whether the ring messages go through shared memory or the network barely matters (4–6%).</li>
+            <li><strong>K = 16: K nodes is 1.8 times slower.</strong> This is the cleanest comparison, since both runs used the same CPU type (EPYC 7702). Each process still moves about 415 MB around the ring, but now every step goes over the inter-node network instead of memory. In addition, the final <code>Gather</code> of $C$ to rank 0 crosses the network. The <code>.out</code> files also show that OpenMPI could not load its <code>openib</code> transport (<code>libosmcomp.so.3</code> missing), so the inter-node path may not be the fastest one available on the cluster.</li>
+            <li><strong>Conclusion:</strong> for this communication-heavy algorithm, pack processes onto as few nodes as possible. Spreading over nodes pays off only when one node has too few cores or too little memory.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Limitations</summary>
+    <div class="details-content">
+        <ul style="font-size: 14px;">
+            <li>Three timed runs per configuration on a shared production cluster. Multi-node runs were not exclusive, so neighbours on those nodes may have affected them.</li>
+            <li>Two CPU types (EPYC 7763 and 7702) appear in the strong-scaling series, because SLURM picked the nodes. This mostly affects the shape of the curve between $P = 4$ and $P = 16$.</li>
+            <li>The timing includes the final <code>Gather</code> of $C$ to rank 0, as in Assignment 7. Without it, speedup at large $P$ would be somewhat higher.</li>
+            <li>Process binding was left to the <code>mpirun</code> defaults.</li>
+        </ul>
+    </div>
+</details>
+
+    </body>
+    <script>
+        function loadKaTeXAndRender() {
+            const katexCSS = document.createElement("link");
+            katexCSS.rel = "stylesheet";
+            katexCSS.href =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(katexCSS);
+
+            const katexScript = document.createElement("script");
+            katexScript.src =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+            katexScript.defer = true;
+
+            katexScript.onload = () => {
+                const autoRenderScript = document.createElement("script");
+                autoRenderScript.src =
+                    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                autoRenderScript.defer = true;
+
+                autoRenderScript.onload = () => {
+                    if (window.renderMathInElement) {
+                        window.renderMathInElement(document.body, {
+                            delimiters: [
+                                { left: "$$", right: "$$", display: true },
+                                { left: "$", right: "$", display: false },
+                            ],
+                            throwOnError: false,
+                        });
+                    }
+                };
+                document.head.appendChild(autoRenderScript);
+            };
+
+            document.head.appendChild(katexScript);
+        }
+        loadKaTeXAndRender();
+    </script>
+</html>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.6;
+        color: #111;
+        background-color: #fff;
+        max-width: 1280px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 8px 0;
+    }
+
+    .math {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 17px;
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+
+    ul {
+        margin: 8px 0 16px 20px;
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    .report-header {
+        margin-bottom: 28px;
+    }
+
+    .report-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #111;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table th {
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        width: 15%;
+        padding: 3px 6px 3px 0;
+        white-space: nowrap;
+    }
+
+    .report-meta-table td {
+        color: #111;
+        width: 35%;
+        padding: 3px 12px 3px 0;
+    }
+
+    .report-meta-table a {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .report-meta-table a:hover {
+        text-decoration: underline;
+    }
+
+    .report-divider {
+        border: 0;
+        border-top: 1px solid #d1d5db;
+        margin-top: 8px;
+    }
+
+    .math-left .katex-display {
+        text-align: left !important;
+    }
+
+    .math-left .katex-display > .katex {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    /* Сноски в тексте */
+    a.ref-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0 1px;
+    }
+
+    a.ref-link:hover {
+        text-decoration: underline;
+    }
+
+    .report-references {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .report-references h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .report-references ol {
+        padding-left: 20px;
+    }
+
+    .report-references li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
+
+    .report-references .ref-title {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .report-references a {
+        color: #1a73e8 !important;
+        text-decoration: underline !important;
+        word-break: break-all;
+        cursor: pointer;
+    }
+
+    details {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin: 16px 0;
+        background-color: #fff;
+        transition: all 0.2s ease;
+    }
+
+    details[open] {
+        border-color: #cbd5e1;
+    }
+
+    details > :not(summary) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    summary {
+        cursor: pointer;
+        padding: 10px 14px;
+        user-select: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    summary:hover {
+        background-color: #f8fafc;
+    }
+
+    summary h2 {
+        display: inline;
+        font-size: 16px;
+        margin: 0 0 0 6px;
+    }
+
+    .details-content {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 16px auto;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    img + p {
+        text-align: center;
+        font-size: 13px;
+        color: #57606a;
+        margin-top: -8px;
+        margin-bottom: 20px;
+    }
+</style>
