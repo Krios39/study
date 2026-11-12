@@ -1,19 +1,19 @@
 {
-  "source": "Баллы трудности: приложение 4 к ДСМ-76 в маппинге приложения B плана (justedu/docs/research/school-timetabling-plan.md). Коды предметов: justedu/src/i18n/locales/*/constants/subject-name.json, для отсутствующих там предметов коды заведены по тому же образцу",
+  "source": "Баллы трудности: приложение 4 к ДСМ-76 в маппинге приложения B плана (justedu/docs/research/school-timetabling-plan.md). Коды предметов: justedu/src/i18n/locales/*/constants/subject-name.json, для отсутствующих там предметов коды заведены по тому же образцу. Деление на подгруппы (split): ГОСО, приказ № 348, п. 43 приложения 3 (5-9 классы) и п. 33 приложения 4 (10-11 классы), редакция приказа от 16.09.2026 № 258-НҚ",
   "subjects": [
     { "id": "math", "difficulty": 11, "inJustEdu": true },
     { "id": "algebra", "difficulty": 11, "inJustEdu": true },
     { "id": "geometry", "difficulty": 11, "inJustEdu": true },
-    { "id": "kazakh_language", "difficulty": { "ru": 11, "kk": 7 }, "split": { "ru": true, "kk": false }, "inJustEdu": true },
-    { "id": "english_language", "difficulty": 10, "split": true, "inJustEdu": true },
+    { "id": "kazakh_language", "difficulty": { "ru": 11, "kk": 7 }, "split": { "ru": "required" }, "inJustEdu": true },
+    { "id": "english_language", "difficulty": 10, "split": "required", "inJustEdu": true },
     { "id": "physics", "difficulty": 9, "inJustEdu": true },
     { "id": "chemistry", "difficulty": 9, "inJustEdu": true },
     { "id": "biology", "difficulty": 9, "inJustEdu": true },
-    { "id": "informatics", "difficulty": 9, "split": true, "inJustEdu": true },
+    { "id": "informatics", "difficulty": 9, "split": "required", "inJustEdu": true },
     { "id": "kazakh_history", "difficulty": 8, "inJustEdu": true },
     { "id": "worldwide_history", "difficulty": 8, "inJustEdu": true },
     { "id": "law_basics", "difficulty": 8, "inJustEdu": false },
-    { "id": "russian_language", "difficulty": { "ru": 7, "kk": 11 }, "split": { "ru": false, "kk": true }, "inJustEdu": true },
+    { "id": "russian_language", "difficulty": { "ru": 7, "kk": 11 }, "split": { "kk": "allowed" }, "inJustEdu": true },
     { "id": "russian_literature", "difficulty": 7, "inJustEdu": false },
     { "id": "natural_science", "difficulty": 6, "inJustEdu": false },
     { "id": "geography", "difficulty": 6, "inJustEdu": true },
@@ -21,7 +21,7 @@
     { "id": "global_competencies", "difficulty": 6, "inJustEdu": false, "difficultyAssumed": true },
     { "id": "electives", "difficulty": 6, "inJustEdu": false, "difficultyAssumed": true },
     { "id": "physical_education", "difficulty": 5, "inJustEdu": false },
-    { "id": "art_labour", "difficulty": 4, "split": true, "inJustEdu": false },
+    { "id": "art_labour", "difficulty": 4, "split": "allowed", "inJustEdu": false },
     { "id": "music", "difficulty": 1, "inJustEdu": false }
   ]
 }

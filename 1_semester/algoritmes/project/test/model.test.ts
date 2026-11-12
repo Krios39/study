@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
 import { compile } from "../src/compile.ts";
 import { hardViolations } from "../src/hard.ts";
-import { loadCurriculum, loadInstance, loadSubjectDictionary, subjectsFor, subjectSplits, UNASSIGNED, validateInstance, type Instance } from "../src/model.ts";
+import { Loader } from "../src/loader.ts";
+import { UNASSIGNED, type Instance, type LanguageOfInstruction, type SplitRule } from "../src/model.ts";
+import { SubjectCatalog } from "../src/subject-catalog.ts";
 
-const mini = loadInstance(fileURLToPath(new URL("../instances/mini.json", import.meta.url)));
+const mini = Loader.instance(fileURLToPath(new URL("../instances/mini.json", import.meta.url)));
 
 const tiny: Instance = {
   name: "tiny",
@@ -97,12 +99,12 @@ describe("tiny instance", () => {
 describe("validation", () => {
   it("rejects unknown references", () => {
     const bad: Instance = { ...tiny, requirements: [{ class: "Z", subject: "math", teachers: ["t9"], hours: 1 }] };
-    expect(() => validateInstance(bad)).toThrow(/unknown class[\s\S]*unknown teacher/);
+    expect(() => Loader.validateInstance(bad)).toThrow(/unknown class[\s\S]*unknown teacher/);
   });
 
   it("rejects a class whose lessons do not fit the week", () => {
     const bad: Instance = { ...tiny, requirements: [{ class: "A", subject: "math", teachers: ["t1"], hours: 4 }] };
-    expect(() => validateInstance(bad)).toThrow(/do not fit/);
+    expect(() => Loader.validateInstance(bad)).toThrow(/do not fit/);
   });
 });
 
@@ -110,23 +112,23 @@ describe("dictionaries", () => {
   const path = (name: string) => fileURLToPath(new URL(`../instances/${name}`, import.meta.url));
 
   it("loads subjects and the curriculum that refers to them", () => {
-    const subjects = loadSubjectDictionary(path("subjects.json"));
-    const curriculum = loadCurriculum(path("curriculum.json"), subjects);
+    const subjects = Loader.subjects(path("subjects.json"));
+    const curriculum = Loader.curriculum(path("curriculum.json"), subjects);
     expect(subjects.subjects).toHaveLength(22);
     const total = (grade: string) => Object.values(curriculum.hours[grade]).reduce((a, b) => a + b, 0);
     expect(["5", "6", "7", "8", "9", "10", "11"].map(total)).toEqual([29, 29, 32, 33, 34, 34, 34]);
   });
 
   it("rejects a curriculum with subjects missing from the dictionary", () => {
-    const subjects = loadSubjectDictionary(path("subjects.json"));
+    const subjects = Loader.subjects(path("subjects.json"));
     const few = { ...subjects, subjects: subjects.subjects.filter((s) => s.id !== "math") };
-    expect(() => loadCurriculum(path("curriculum.json"), few)).toThrow(/unknown subject "math"/);
+    expect(() => Loader.curriculum(path("curriculum.json"), few)).toThrow(/unknown subject "math"/);
   });
 });
 
 describe("difficulty by language of instruction", () => {
-  const dict = loadSubjectDictionary(fileURLToPath(new URL("../instances/subjects.json", import.meta.url)));
-  const score = (lang: "ru" | "kk", id: string) => subjectsFor(dict, lang, [id])[0].difficulty;
+  const dict = Loader.subjects(fileURLToPath(new URL("../instances/subjects.json", import.meta.url)));
+  const score = (lang: LanguageOfInstruction, id: string) => new SubjectCatalog(dict, lang).difficulty(id);
 
   it("swaps Kazakh and Russian language scores", () => {
     expect([score("ru", "kazakh_language"), score("ru", "russian_language")]).toEqual([11, 7]);
@@ -138,25 +140,27 @@ describe("difficulty by language of instruction", () => {
   });
 
   it("matches the mini instance, which is a Russian-language school", () => {
-    expect(subjectsFor(dict, "ru", mini.subjects.map((s) => s.id))).toEqual(
-      expect.arrayContaining(mini.subjects),
+    expect(new SubjectCatalog(dict, "ru").subjects(mini.subjects.map((s) => s.id))).toEqual(
+      mini.subjects,
     );
   });
 });
 
 describe("subgroups", () => {
-  const dict = loadSubjectDictionary(fileURLToPath(new URL("../instances/subjects.json", import.meta.url)));
-  const split = (lang: "ru" | "kk") => dict.subjects.filter((s) => subjectSplits(s, lang)).map((s) => s.id).sort();
+  const dict = Loader.subjects(fileURLToPath(new URL("../instances/subjects.json", import.meta.url)));
+  const split = (lang: LanguageOfInstruction, rule: SplitRule) => new SubjectCatalog(dict, lang).idsWithSplit(rule).sort();
 
   it("lists split subjects by language of instruction", () => {
-    expect(split("ru")).toEqual(["art_labour", "english_language", "informatics", "kazakh_language"]);
-    expect(split("kk")).toEqual(["art_labour", "english_language", "informatics", "russian_language"]);
+    expect(split("ru", "required")).toEqual(["english_language", "informatics", "kazakh_language"]);
+    expect(split("ru", "allowed")).toEqual(["art_labour"]);
+    expect(split("kk", "required")).toEqual(["english_language", "informatics"]);
+    expect(split("kk", "allowed")).toEqual(["art_labour", "russian_language"]);
   });
 
   it("splits exactly these subjects in the large class of the mini instance", () => {
     const twoTeachers = (cls: string) =>
       mini.requirements.filter((r) => r.class === cls && r.teachers.length === 2).map((r) => r.subject).sort();
-    expect(twoTeachers("5A")).toEqual(split("ru"));
+    expect(twoTeachers("5A")).toEqual([...split("ru", "required"), ...split("ru", "allowed")].sort());
     expect(twoTeachers("5B")).toEqual([]);
     expect(twoTeachers("7A")).toEqual([]);
   });
