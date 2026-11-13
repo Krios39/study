@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate": "node scripts/generate.ts",
+    "render": "node scripts/render.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

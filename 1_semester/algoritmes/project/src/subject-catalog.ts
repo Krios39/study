@@ -1,12 +1,13 @@
 import type { DictionarySubject, LanguageOfInstruction, SplitRule, Subject, SubjectDictionary } from "./model.ts";
 
 export class SubjectCatalog {
+  readonly dictionary: SubjectDictionary;
+  readonly language: LanguageOfInstruction;
   private readonly byId: Map<string, DictionarySubject>;
 
-  constructor(
-    readonly dictionary: SubjectDictionary,
-    readonly language: LanguageOfInstruction,
-  ) {
+  constructor(dictionary: SubjectDictionary, language: LanguageOfInstruction) {
+    this.dictionary = dictionary;
+    this.language = language;
     this.byId = new Map(dictionary.subjects.map((s) => [s.id, s]));
   }
 

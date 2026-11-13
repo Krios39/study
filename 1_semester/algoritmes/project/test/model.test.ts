@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
-import { compile } from "../src/compile.ts";
+import { Problem } from "../src/problem.ts";
 import { hardViolations } from "../src/hard.ts";
 import { Loader } from "../src/loader.ts";
 import { UNASSIGNED, type Instance, type LanguageOfInstruction, type SplitRule } from "../src/model.ts";
@@ -25,12 +25,12 @@ const tiny: Instance = {
   ],
 };
 
-function neighbours(c: ReturnType<typeof compile>, l: number): number[] {
-  return Array.from(c.adjList.subarray(c.adjStart[l], c.adjStart[l + 1])).sort((a, b) => a - b);
+function neighbours(c: Problem, l: number): number[] {
+  return Array.from(c.neighbours(l)).sort((a, b) => a - b);
 }
 
 describe("mini instance", () => {
-  const c = compile(mini);
+  const c = Problem.from(mini);
 
   it("expands requirements into lessons", () => {
     expect(c.nLessons).toBe(29 + 29 + 32);
@@ -39,7 +39,7 @@ describe("mini instance", () => {
 
   it("keeps both teachers on a subgroup lesson", () => {
     const l = c.lessonReq.indexOf(mini.requirements.findIndex((r) => r.subject === "kazakh_language"));
-    expect(c.teacherStart[l + 1] - c.teacherStart[l]).toBe(2);
+    expect(c.teachersOf(l)).toHaveLength(2);
   });
 
   it("builds a symmetric conflict graph without loops or duplicates", () => {
@@ -53,8 +53,8 @@ describe("mini instance", () => {
 
   it("blocks slots of unavailable teachers", () => {
     const l = c.lessonReq.indexOf(mini.requirements.findIndex((r) => r.subject === "physics"));
-    for (let p = 0; p < c.periods; p++) expect(c.lessonAllowed[l * c.nSlots + p]).toBe(0);
-    expect(c.lessonAllowed[l * c.nSlots + c.periods]).toBe(1);
+    for (let p = 0; p < c.periods; p++) expect(c.isAllowed(l, c.slot(0, p))).toBe(false);
+    expect(c.isAllowed(l, c.slot(1, 0))).toBe(true);
   });
 
   it("counts every lesson of an empty solution as unassigned", () => {
@@ -65,7 +65,7 @@ describe("mini instance", () => {
 });
 
 describe("tiny instance", () => {
-  const c = compile(tiny);
+  const c = Problem.from(tiny);
 
   it("links lessons by class and by teacher", () => {
     expect(neighbours(c, 0)).toEqual([1, 2, 3]);

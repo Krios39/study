@@ -1,4 +1,4 @@
-import type { Compiled } from "./compile.ts";
+import type { Problem } from "./problem.ts";
 import type { Solution } from "./model.ts";
 
 export interface HardViolations {
@@ -11,7 +11,7 @@ export interface HardViolations {
   total: number;
 }
 
-export function hardViolations(c: Compiled, slotOf: Solution): HardViolations {
+export function hardViolations(c: Problem, slotOf: Solution): HardViolations {
   const { nSlots, nClasses, nTeachers, nLessons, days, periods } = c;
   const classLoad = new Int32Array(nClasses * nSlots);
   const teacherLoad = new Int32Array(nTeachers * nSlots);
