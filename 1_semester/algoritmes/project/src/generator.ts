@@ -38,7 +38,7 @@ const GRADES = [5, 6, 7, 8, 9, 10, 11];
 const SECOND_SHIFT_GRADES = new Set([6, 7, 8]);
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-const TEACHER_GROUPS: Record<string, string[]> = {
+export const TEACHER_GROUPS: Record<string, string[]> = {
   math: ["math", "algebra", "geometry"],
   rus: ["russian_language", "russian_literature"],
   kaz: ["kazakh_language"],

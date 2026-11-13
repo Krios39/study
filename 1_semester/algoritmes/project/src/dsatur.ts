@@ -23,7 +23,7 @@ export interface DsaturResult {
   order: Int32Array;
 }
 
-export const DEFAULT_SLOT_WEIGHTS: SlotWeights = { gap: 100, sameSubjectInDay: 10, dayLoad: 1 };
+export const DEFAULT_SLOT_WEIGHTS: SlotWeights = { gap: 100, sameSubjectInDay: 1000, dayLoad: 1 };
 
 export class Dsatur {
   private readonly slotOf: Int32Array;
