@@ -1,6 +1,8 @@
 import { UNASSIGNED, type Solution } from "./model.ts";
 import type { Problem } from "./problem.ts";
 
+export type LessonRule = "saturation" | "freeSlots";
+
 export type SlotRule = "first" | "leastPenalty";
 
 export interface SlotWeights {
@@ -11,6 +13,7 @@ export interface SlotWeights {
 
 export interface DsaturOptions {
   respectAllowed?: boolean;
+  lessonRule?: LessonRule;
   slotRule?: SlotRule;
   weights?: Partial<SlotWeights>;
 }
@@ -29,10 +32,12 @@ export class Dsatur {
   private readonly neighboursInSlot: Uint16Array;
   private readonly saturation: Int32Array;
   private readonly openDegree: Int32Array;
+  private readonly freeSlots: Int32Array;
   private readonly classBusy: Uint8Array;
   private readonly subjectInDay: Uint8Array;
   private readonly firstPeriod: Int32Array;
   private readonly respectAllowed: boolean;
+  private readonly lessonRule: LessonRule;
   private readonly slotRule: SlotRule;
   private readonly weights: SlotWeights;
   private readonly problem: Problem;
@@ -41,6 +46,7 @@ export class Dsatur {
     const { nLessons, nSlots, nClasses, nSubjects, days } = problem;
     this.problem = problem;
     this.respectAllowed = options.respectAllowed ?? false;
+    this.lessonRule = options.lessonRule ?? "saturation";
     this.slotRule = options.slotRule ?? "first";
     this.weights = { ...DEFAULT_SLOT_WEIGHTS, ...options.weights };
     this.slotOf = new Int32Array(nLessons).fill(UNASSIGNED);
@@ -49,7 +55,11 @@ export class Dsatur {
     this.neighboursInSlot = new Uint16Array(nLessons * nSlots);
     this.saturation = new Int32Array(nLessons);
     this.openDegree = new Int32Array(nLessons);
-    for (let l = 0; l < nLessons; l++) this.openDegree[l] = problem.degree(l);
+    this.freeSlots = new Int32Array(nLessons);
+    for (let l = 0; l < nLessons; l++) {
+      this.openDegree[l] = problem.degree(l);
+      for (let s = 0; s < nSlots; s++) if (this.usable(l, s)) this.freeSlots[l]++;
+    }
     this.classBusy = new Uint8Array(nClasses * nSlots);
     this.subjectInDay = new Uint8Array(nClasses * days * nSubjects);
     this.firstPeriod = Int32Array.from(problem.instance.classes, (c) => c.firstPeriod);
@@ -65,17 +75,22 @@ export class Dsatur {
     return { slotOf: run.slotOf, order: run.order };
   }
 
+  private usable(lesson: number, slot: number): boolean {
+    return !this.respectAllowed || this.problem.isAllowed(lesson, slot);
+  }
+
   private pickLesson(): number {
-    const { done, saturation, openDegree } = this;
+    const { done, openDegree } = this;
+    const byFreeSlots = this.lessonRule === "freeSlots";
     let best = -1;
+    let bestTightness = 0;
     for (let l = 0; l < done.length; l++) {
       if (done[l]) continue;
-      if (
-        best < 0 ||
-        saturation[l] > saturation[best] ||
-        (saturation[l] === saturation[best] && openDegree[l] > openDegree[best])
-      )
+      const tightness = byFreeSlots ? -this.freeSlots[l] : this.saturation[l];
+      if (best < 0 || tightness > bestTightness || (tightness === bestTightness && openDegree[l] > openDegree[best])) {
         best = l;
+        bestTightness = tightness;
+      }
     }
     return best;
   }
@@ -87,7 +102,7 @@ export class Dsatur {
     let bestPenalty = Infinity;
     for (let s = 0; s < problem.nSlots; s++) {
       if (this.neighboursInSlot[base + s] > 0) continue;
-      if (this.respectAllowed && !problem.isAllowed(lesson, s)) continue;
+      if (!this.usable(lesson, s)) continue;
       if (this.slotRule === "first") return s;
       const penalty = this.penalty(lesson, s);
       if (penalty < bestPenalty) {
@@ -132,7 +147,10 @@ export class Dsatur {
     }
     for (const n of problem.neighbours(lesson)) {
       this.openDegree[n]--;
-      if (slot !== UNASSIGNED && this.neighboursInSlot[n * problem.nSlots + slot]++ === 0) this.saturation[n]++;
+      if (slot !== UNASSIGNED && this.neighboursInSlot[n * problem.nSlots + slot]++ === 0) {
+        this.saturation[n]++;
+        if (this.usable(n, slot)) this.freeSlots[n]--;
+      }
     }
   }
 }

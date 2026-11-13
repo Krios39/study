@@ -83,3 +83,30 @@ describe("DSATUR with least-penalty slots", () => {
     expect(least.dayImbalance).toBeLessThan(first.dayImbalance);
   });
 });
+
+describe("DSATUR ordered by really free slots", () => {
+  it("places the lesson with a restricted teacher before freer ones", () => {
+    const school: Instance = {
+      ...tiny,
+      teachers: [{ id: "t1" }, { id: "t2", unavailable: [[0, 0], [0, 1], [0, 2]] }],
+    };
+    const problem = Problem.from(school);
+    expect(Dsatur.solve(problem, { respectAllowed: true }).order[0]).toBe(0);
+    const { order, slotOf } = Dsatur.solve(problem, { respectAllowed: true, lessonRule: "freeSlots" });
+    expect(order[0]).toBe(2);
+    expect(slotOf[2]).toBe(3);
+  });
+
+  it("leaves no music lesson without a slot on the mini instance", () => {
+    const first = Dsatur.solve(mini, { respectAllowed: true });
+    const free = Dsatur.solve(mini, { respectAllowed: true, lessonRule: "freeSlots" });
+    expect(hardViolations(mini, first.slotOf).unassigned).toBe(2);
+    expect(hardViolations(mini, free.slotOf)).toMatchObject({ unassigned: 0, classClash: 0, teacherClash: 0 });
+  });
+
+  it("matches saturation order when no slot is forbidden", () => {
+    const a = Dsatur.solve(mini, { lessonRule: "saturation" });
+    const b = Dsatur.solve(mini, { lessonRule: "freeSlots" });
+    expect(Array.from(b.order)).toEqual(Array.from(a.order));
+  });
+});

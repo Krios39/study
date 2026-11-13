@@ -15,6 +15,13 @@ const data = names.map((name) => {
 
   const solutions: { label: string; note: string; slotOf: number[] }[] = [
     {
+      label: "DSATUR по свободным слотам",
+      note: "Следующим ставится урок, у которого осталось меньше всего реально свободных слотов (допустимых и не занятых соседями). Слот берётся с наименьшим штрафом.",
+      slotOf: Array.from(
+        Dsatur.solve(problem, { respectAllowed: true, lessonRule: "freeSlots", slotRule: "leastPenalty" }).slotOf,
+      ),
+    },
+    {
       label: "DSATUR с выбором слота",
       note: "Порядок уроков классический, а слот берётся с наименьшим штрафом: окно у класса, повтор предмета в этот день, загруженность дня.",
       slotOf: Array.from(Dsatur.solve(problem, { respectAllowed: true, slotRule: "leastPenalty" }).slotOf),
