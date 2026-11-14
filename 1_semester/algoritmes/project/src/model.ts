@@ -3,9 +3,19 @@ export interface Subject {
   difficulty: number;
 }
 
+export type TeacherWishKind = "noFirstShift" | "noSecondShift" | "freePeriods";
+
+export const TEACHER_WISH_KINDS: readonly TeacherWishKind[] = ["noFirstShift", "noSecondShift", "freePeriods"];
+
+export interface TeacherWish {
+  kind: TeacherWishKind;
+  periods: [from: number, to: number];
+}
+
 export interface Teacher {
   id: string;
   unavailable?: [day: number, period: number][];
+  wish?: TeacherWish;
 }
 
 export interface SchoolClass {

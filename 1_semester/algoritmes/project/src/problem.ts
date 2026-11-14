@@ -27,6 +27,8 @@ export class Problem {
   readonly nTeachers: number;
   readonly nSubjects: number;
   readonly nLessons: number;
+  readonly periodShift: Int32Array;
+  readonly teacherWished: Uint8Array;
 
   readonly lessonReq: Int32Array;
   readonly lessonClass: Int32Array;
@@ -50,6 +52,13 @@ export class Problem {
     this.nTeachers = data.instance.teachers.length;
     this.nSubjects = data.instance.subjects.length;
     this.nLessons = data.nLessons;
+    this.teacherWished = new Uint8Array(this.nTeachers * this.periods);
+    data.instance.teachers.forEach((t, ti) => {
+      if (!t.wish) return;
+      for (let p = t.wish.periods[0]; p <= t.wish.periods[1]; p++) this.teacherWished[ti * this.periods + p] = 1;
+    });
+    const shiftStarts = [...new Set(data.instance.classes.map((c) => c.firstPeriod))];
+    this.periodShift = Int32Array.from({ length: this.periods }, (_, p) => shiftStarts.filter((s) => s <= p).length);
     this.lessonReq = data.lessonReq;
     this.lessonClass = data.lessonClass;
     this.lessonSubject = data.lessonSubject;

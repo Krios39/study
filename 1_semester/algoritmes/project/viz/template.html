@@ -9,13 +9,16 @@
     --bg: #ffffff; --panel: #f5f4ef; --ink: #1c1c1c; --muted: #6b6a65; --line: #d6d4cc;
     --cell: #eef1f6; --cell-ink: #1d2a3a; --split: #e6f1ea; --split-ink: #173d2a;
     --bad: #fbe3e1; --bad-ink: #8a1f1b; --bad-line: #d9534f; --off: #ecebe6; --accent: #2f5fb3;
+    --heat: #24509c; --heat-split: #1f6b45; --on-heavy: #ffffff; --on-easy: #1c1c1c;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #17171a; --panel: #212125; --ink: #ececec; --muted: #9d9c97; --line: #3a3a40;
       --cell: #26303f; --cell-ink: #d6e2f3; --split: #22382d; --split-ink: #c9ead6;
       --bad: #4a2423; --bad-ink: #ffc9c5; --bad-line: #e0655f; --off: #1e1e21; --accent: #8ab0f0;
+      --heat: #a9c6f5; --heat-split: #a5dcbd; --on-heavy: #ececec; --on-easy: #17171a;
     }
+    td.l, td.s { --mix: calc(84% - var(--k) * 72%); }
   }
   * { box-sizing: border-box; }
   body { margin: 0; padding: 24px 16px 64px; background: var(--bg); color: var(--ink);
@@ -46,12 +49,20 @@
   th.p { width: 20px; text-align: right; padding-right: 5px; }
   td { border: 1px solid var(--line); height: 34px; padding: 1px 3px; font-size: 12px; line-height: 1.2;
        text-align: center; overflow: hidden; }
-  td.l { background: var(--cell); color: var(--cell-ink); }
-  td.s { background: var(--split); color: var(--split-ink); }
+  td.l, td.s { --k: 0; --mix: calc(10% + var(--k) * 72%); }
+  td.l { background: color-mix(in srgb, var(--heat) var(--mix), var(--bg)); }
+  td.s { background: color-mix(in srgb, var(--heat-split) var(--mix), var(--bg)); }
+  td.hi { color: var(--on-heavy); }
+  td.lo { color: var(--on-easy); }
   td.bad { background: var(--bad); color: var(--bad-ink); border: 2px solid var(--bad-line); }
   td.gap { background: repeating-linear-gradient(45deg, var(--bad), var(--bad) 5px, transparent 5px, transparent 10px); border: 2px solid var(--bad-line); }
   td.off { background: var(--off); }
+  td.wish { background-image: radial-gradient(var(--muted) 1px, transparent 1.5px); background-size: 7px 7px; }
+  td.unwanted { outline: 2px dashed var(--bad-line); outline-offset: -3px; }
   td small { display: block; color: inherit; opacity: .75; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  td b.d, .legend b.d { font-weight: 600; font-size: 10px; opacity: .7; margin-left: 3px; }
+  tr.sum td { height: 30px; border-color: transparent; border-top: 1px solid var(--line); color: var(--muted); font-weight: 600; }
+  tr.sum td small { font-weight: 400; }
   .shift td { border-top: 2px solid var(--muted); }
   .unassigned { margin-top: 6px; font-size: 12px; color: var(--bad-ink); background: var(--bad); border-radius: 6px; padding: 4px 8px; }
 </style>
@@ -70,11 +81,14 @@
   <div class="stats" id="stats"></div>
   <p class="note" id="note"></p>
   <div class="legend">
-    <span><i style="background:var(--cell)"></i>урок</span>
-    <span><i style="background:var(--split)"></i>урок по подгруппам</span>
+    <span><i style="background:color-mix(in srgb,var(--heat) 45%,var(--bg))"></i>урок</span>
+    <span><i style="background:color-mix(in srgb,var(--heat-split) 45%,var(--bg))"></i>урок по подгруппам</span>
+    <span>чем темнее клетка, тем сложнее предмет</span>
     <span><i style="background:var(--bad);border-color:var(--bad-line)"></i>накладка или закрытый слот</span>
     <span><i style="background:repeating-linear-gradient(45deg,var(--bad),var(--bad) 3px,transparent 3px,transparent 6px);border-color:var(--bad-line)"></i>окно у класса</span>
     <span><i style="background:var(--off)"></i>учитель недоступен или слот вне смены класса</span>
+    <span><i style="background-image:radial-gradient(var(--muted) 1px,transparent 1.5px);background-size:5px 5px"></i>учитель просил не ставить уроки (пунктирная рамка — урок стоит вопреки пожеланию)</span>
+    <span>число у урока — балл сложности предмета, под днём — сумма баллов и отклонение от среднего дня класса</span>
   </div>
   <div class="grids" id="grids"></div>
 </main>
@@ -126,6 +140,13 @@ function render() {
     ["Вне смены класса", v.classSlot, true],
     ["Повторы предмета в день", sol.soft.sameSubjectInDay, false],
     ["Перекос уроков по дням", sol.soft.dayImbalance, false],
+    ["Окна у учителей внутри смены", sol.soft.teacherGaps, false],
+    ["Больше всего окон у одного учителя", sol.soft.worstTeacherGaps, false],
+    ["Дней с переходом учителя между сменами", sol.soft.shiftBreaks, false],
+    ["Уроков простоя между сменами", sol.soft.shiftIdle, false],
+    ["Разброс сложности по дням", Math.round(sol.soft.difficultySpread), false],
+    ["Лёгкий в первой половине дня или тяжёлый во второй", sol.soft.misplaced, false],
+    ["Уроков вопреки пожеланиям учителей", sol.soft.wishesBroken, false],
   ];
   $("stats").innerHTML = stats.map(([label, value, hard]) =>
     `<div class="stat${hard && value > 0 ? " bad" : ""}"><b>${value}</b><span>${label}</span></div>`).join("");
@@ -149,11 +170,21 @@ function render() {
     return l[2].some((t) => byTeacher[t][s].length > 1 || off[t].has(s));
   };
 
+  const scores = Object.values(inst.difficulty);
+  const minScore = Math.min(...scores), maxScore = Math.max(...scores);
+  const heat = (i) => {
+    const k = maxScore > minScore ? (inst.difficulty[inst.lessons[i][1]] - minScore) / (maxScore - minScore) : 0.5;
+    return [k > 0.55 ? "hi" : "lo", ` style="--k:${k.toFixed(2)}"`];
+  };
   const head = `<tr><th class="p"></th>${DAYS.slice(0, inst.days).map((d) => `<th>${d}</th>`).join("")}</tr>`;
   let html = "";
   if (state.view === "classes") {
     inst.classes.forEach((c, ci) => {
       let rows = "", lo = c.first, hi = c.first + c.max - 1;
+      const dayScore = Array.from({ length: inst.days }, () => 0);
+      let classScore = 0;
+      inst.lessons.forEach((l) => { if (l[0] === ci) classScore += inst.difficulty[l[1]]; });
+      const mean = classScore / inst.days;
       for (let s = 0; s < nSlots; s++) {
         if (byClass[ci][s].length === 0) continue;
         lo = Math.min(lo, s % P);
@@ -174,38 +205,48 @@ function render() {
             const split = inst.lessons[here[0]][2].length > 1;
             const text = here.map((i) => {
               const l = inst.lessons[i];
-              return `${esc(SUBJECT[l[1]] ?? l[1])}<small>${l[2].map((t) => esc(inst.teachers[t])).join(" + ")}</small>`;
+              dayScore[d] += inst.difficulty[l[1]];
+              return `${esc(SUBJECT[l[1]] ?? l[1])}<b class="d">${inst.difficulty[l[1]]}</b><small>${l[2].map((t) => esc(inst.teachers[t])).join(" + ")}</small>`;
             }).join("");
-            rows += `<td class="${bad ? "bad" : split ? "s" : "l"}">${text}</td>`;
+            const [tone, style] = heat(here[0]);
+            rows += bad ? `<td class="bad">${text}</td>` : `<td class="${split ? "s" : "l"} ${tone}"${style}>${text}</td>`;
           }
         }
         rows += "</tr>";
       }
+      rows += `<tr class="sum"><th class="p">Σ</th>${dayScore.map((x) => {
+        const dev = Math.round(x - mean);
+        return `<td>${x}<small>${dev > 0 ? "+" : dev < 0 ? "−" : ""}${Math.abs(dev)}</small></td>`;
+      }).join("")}</tr>`;
       const lost = lostByClass[ci].map((i) => SUBJECT[inst.lessons[i][1]] ?? inst.lessons[i][1]);
-      html += `<div class="card"><h2>${esc(c.id)}<small>${c.first > 0 ? "вторая смена" : ""}</small></h2><table>${head}${rows}</table>` +
+      html += `<div class="card"><h2>${esc(c.id)}<small>${c.first > 0 ? "вторая смена, " : ""}в среднем ${mean.toFixed(1)} балла в день</small></h2><table>${head}${rows}</table>` +
         (lost.length ? `<div class="unassigned">Не поместилось: ${lost.map(esc).join(", ")}</div>` : "") + "</div>";
     });
   } else {
     inst.teachers.forEach((name, ti) => {
       let rows = "", load = 0;
+      const wish = inst.teacherWish[ti];
+      const wished = (p) => wish && p >= wish.periods[0] && p <= wish.periods[1];
+      const wishText = !wish ? "" : wish.kind === "noFirstShift" ? ", просит не ставить в первую смену" : wish.kind === "noSecondShift" ? ", просит не ставить во вторую смену" : `, просит свободные уроки ${wish.periods[0] + 1}–${wish.periods[1] + 1}`;
       for (let p = 0; p < P; p++) {
         rows += `<tr class="${p > 0 && p % 8 === 0 && P > 8 ? "shift" : ""}"><th class="p">${p + 1}</th>`;
         for (let d = 0; d < inst.days; d++) {
           const s = d * P + p, here = byTeacher[ti][s];
           load += here.length;
-          if (here.length === 0) rows += `<td class="${off[ti].has(s) ? "off" : ""}"></td>`;
+          if (here.length === 0) rows += `<td class="${off[ti].has(s) ? "off" : wished(p) ? "wish" : ""}"></td>`;
           else {
             const bad = here.length > 1 || off[ti].has(s);
             const text = here.map((i) => {
               const l = inst.lessons[i];
-              return `${esc(inst.classes[l[0]].id)}<small>${esc(SUBJECT[l[1]] ?? l[1])}</small>`;
+              return `${esc(inst.classes[l[0]].id)}<small>${esc(SUBJECT[l[1]] ?? l[1])} ${inst.difficulty[l[1]]}</small>`;
             }).join("");
-            rows += `<td class="${bad ? "bad" : inst.lessons[here[0]][2].length > 1 ? "s" : "l"}">${text}</td>`;
+            const [tone, style] = heat(here[0]);
+            rows += bad ? `<td class="bad">${text}</td>` : `<td class="${inst.lessons[here[0]][2].length > 1 ? "s" : "l"} ${tone}${wished(p) ? " unwanted" : ""}"${style}>${text}</td>`;
           }
         }
         rows += "</tr>";
       }
-      html += `<div class="card"><h2>${esc(name)}<small>${load} ур. в неделю</small></h2><table>${head}${rows}</table></div>`;
+      html += `<div class="card"><h2>${esc(name)}<small>${load} ур. в неделю${wishText}</small></h2><table>${head}${rows}</table></div>`;
     });
   }
   $("grids").innerHTML = html;

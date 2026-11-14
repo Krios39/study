@@ -7,7 +7,7 @@ import { Problem } from "../src/problem.ts";
 import { softStats } from "../src/soft.ts";
 
 const file = (relative: string) => fileURLToPath(new URL(`../${relative}`, import.meta.url));
-const names = ["mini", "small-7", "small-10", "medium-20", "medium-30", "large-60"];
+const names = ["mini", "small-7", "small-10", "medium-20", "medium-30", "large-60", "heavy-1", "heavy-2", "heavy-4"];
 
 const data = names.map((name) => {
   const instance = Loader.instance(file(`instances/${name}.json`));
@@ -37,6 +37,14 @@ const data = names.map((name) => {
       slotOf: Array.from(Dsatur.solve(problem).slotOf),
     },
   ];
+  const annealedPath = file(`instances/${name}.annealed.json`);
+  if (existsSync(annealedPath)) {
+    solutions.unshift({
+      label: "Отжиг",
+      note: "Расписание DSATUR по свободным слотам, улучшенное отжигом (перенос и обмен уроков). В цене: жёсткие нарушения, сложность по дням, повторы, окна учителей, перекос дней.",
+      slotOf: (JSON.parse(readFileSync(annealedPath, "utf8")) as { slotOf: number[] }).slotOf,
+    });
+  }
   const hiddenPath = file(`instances/${name}.hidden.json`);
   if (existsSync(hiddenPath)) {
     solutions.push({
@@ -52,6 +60,8 @@ const data = names.map((name) => {
     periods: problem.periods,
     classes: instance.classes.map((c) => ({ id: c.id, first: c.firstPeriod, max: c.maxPerDay })),
     teachers: instance.teachers.map((t) => t.id),
+    teacherWish: instance.teachers.map((t) => t.wish ?? null),
+    difficulty: Object.fromEntries(instance.subjects.map((s) => [s.id, s.difficulty])),
     teacherOff: instance.teachers.map((t) => (t.unavailable ?? []).map(([d, p]) => problem.slot(d, p))),
     lessons: Array.from({ length: problem.nLessons }, (_, l) => [
       problem.lessonClass[l],

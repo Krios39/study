@@ -10,6 +10,7 @@ import type {
 } from "./model.ts";
 import { Rng } from "./rng.ts";
 import { SubjectCatalog } from "./subject-catalog.ts";
+import { drawWish } from "./wishes.ts";
 
 export type InstanceSize = "small" | "medium" | "large";
 
@@ -22,6 +23,7 @@ export interface RandomParams {
   largeClassShare?: number;
   unavailableShare?: number;
   daysOff?: number;
+  wishShare?: number;
   daySlack?: number;
   language?: LanguageOfInstruction;
 }
@@ -157,6 +159,13 @@ export class RandomGenerator {
       classes,
       requirements,
     };
+
+    const wishShare = params.wishShare ?? 0.3;
+    for (const teacher of teachers) {
+      if (!rng.chance(wishShare)) continue;
+      const wish = drawWish(() => rng.next(), instance, teacher);
+      if (wish) teacher.wish = wish;
+    }
 
     return {
       instance,

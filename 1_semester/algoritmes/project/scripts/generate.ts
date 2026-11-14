@@ -6,6 +6,7 @@ import { hardViolations } from "../src/hard.ts";
 import { Loader } from "../src/loader.ts";
 import type { Instance } from "../src/model.ts";
 import { Problem } from "../src/problem.ts";
+import { RandomGenerator } from "../src/random-generator.ts";
 
 const path = (name: string) => fileURLToPath(new URL(`../instances/${name}`, import.meta.url));
 
@@ -17,6 +18,7 @@ const sets: GeneratorParams[] = [
   { name: "medium-30", seed: 4, classes: 30, shifts: 2, ...common },
   { name: "large-60", seed: 5, classes: 60, shifts: 2, ...common },
 ];
+const heavySeeds = [1, 2, 4];
 
 function format(inst: Instance): string {
   const list = (items: unknown[]) => "[\n" + items.map((x) => "    " + JSON.stringify(x)).join(",\n") + "\n  ]";
@@ -62,6 +64,32 @@ for (const params of sets) {
       `edges ${problem.adjList.length / 2}`,
       `mean load ${meanLoad.toFixed(1)}`,
       `dsatur: unassigned ${dsatur.unassigned}, gaps ${dsatur.classGap}, other ${dsatur.total - dsatur.unassigned - dsatur.classGap}, ${ms.toFixed(1)} ms`,
+    ].join(" | "),
+  );
+}
+
+for (const seed of heavySeeds) {
+  const name = `heavy-${seed}`;
+  const { instance, meta } = RandomGenerator.generate(
+    { seed, name, size: "medium", shifts: 1, loadRange: [24, 24], unavailableShare: 0 },
+    subjects,
+    curriculum,
+  );
+  Loader.validateInstance(instance);
+  writeFileSync(path(`${name}.json`), format(instance));
+  const problem = Problem.from(instance);
+  const dsatur = hardViolations(
+    problem,
+    Dsatur.solve(problem, { respectAllowed: true, lessonRule: "freeSlots", slotRule: "leastPenalty" }).slotOf,
+  );
+  console.log(
+    [
+      name.padEnd(10),
+      `classes ${instance.classes.length}`,
+      `teachers ${instance.teachers.length}`,
+      `lessons ${problem.nLessons}`,
+      `mean load ${meta.meanLoad.toFixed(1)}`,
+      `best dsatur: unassigned ${dsatur.unassigned}, gaps ${dsatur.classGap}`,
     ].join(" | "),
   );
 }

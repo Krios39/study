@@ -8,6 +8,7 @@ import type {
   Teacher,
 } from "./model.ts";
 import { SubjectCatalog } from "./subject-catalog.ts";
+import { drawWish } from "./wishes.ts";
 
 export interface GeneratorParams {
   name: string;
@@ -17,6 +18,7 @@ export interface GeneratorParams {
   largeClassShare: number;
   teacherMaxLoad: number;
   unavailableShare: number;
+  wishShare?: number;
   language?: LanguageOfInstruction;
 }
 
@@ -146,6 +148,12 @@ export class Generator {
       classes,
       requirements,
     };
+    const wishShare = params.wishShare ?? 0.3;
+    for (const teacher of instance.teachers) {
+      if (random() >= wishShare) continue;
+      const wish = drawWish(random, instance, teacher);
+      if (wish) teacher.wish = wish;
+    }
     return { instance, hidden };
   }
 

@@ -1,5 +1,11 @@
 import { readFileSync } from "node:fs";
-import { LANGUAGES_OF_INSTRUCTION, type Curriculum, type Instance, type SubjectDictionary } from "./model.ts";
+import {
+  LANGUAGES_OF_INSTRUCTION,
+  TEACHER_WISH_KINDS,
+  type Curriculum,
+  type Instance,
+  type SubjectDictionary,
+} from "./model.ts";
 
 export class Loader {
   static instance(path: string): Instance {
@@ -44,6 +50,12 @@ export class Loader {
       for (const [d, p] of t.unavailable ?? []) {
         if (d < 0 || d >= inst.days || p < 0 || p >= inst.periodsPerDay)
           errors.push(`teacher "${t.id}": unavailable slot [${d}, ${p}] is outside the grid`);
+      }
+      if (t.wish) {
+        const [from, to] = t.wish.periods;
+        if (!TEACHER_WISH_KINDS.includes(t.wish.kind)) errors.push(`teacher "${t.id}": unknown wish "${t.wish.kind}"`);
+        if (!(from >= 0 && from <= to && to < inst.periodsPerDay))
+          errors.push(`teacher "${t.id}": wish periods ${from}..${to} are outside the day`);
       }
     }
     const hoursByClass = new Map<string, number>();
