@@ -18,7 +18,7 @@ for (let i = 2; i < process.argv.length; i++) {
 const seeds = Number(args.get("seeds") ?? 3);
 const perLesson = Number(args.get("per-lesson") ?? 1000);
 const startTemperature = Number(args.get("t0") ?? 20);
-const endTemperature = Number(args.get("t1") ?? 0.1);
+const endTemperature = Number(args.get("t1") ?? 1);
 
 const NAMES = ["mini", "small-7", "small-10", "medium-20", "medium-30", "large-60", "heavy-1", "heavy-2", "heavy-4"];
 const start = { respectAllowed: true, lessonRule: "freeSlots", slotRule: "leastPenalty" } as const;

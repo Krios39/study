@@ -9,10 +9,14 @@
     "generate": "node scripts/generate.ts",
     "render": "node scripts/render.ts",
     "stress": "node scripts/stress.ts",
-    "anneal": "node scripts/anneal.ts"
+    "anneal": "node scripts/anneal.ts",
+    "experiment": "node scripts/experiment.ts",
+    "reference": "node scripts/reference.ts",
+    "parts": "node scripts/parts.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "highs": "^1.15.4",
     "typescript": "^5.6.0",
     "vitest": "^3.0.0"
   }

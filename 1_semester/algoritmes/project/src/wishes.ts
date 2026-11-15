@@ -32,24 +32,26 @@ export function isWishFeasible(instance: Instance, teacher: Teacher, wish: Teach
   if (ownHours.size === 0) return false;
 
   const blocked = new Set((teacher.unavailable ?? []).map(([d, p]) => d * periodsPerDay + p));
-  const usable = new Set<number>();
-  let load = 0;
+  const shifts = new Map<number, { hours: number; usable: Set<number> }>();
   for (const [classId, hours] of ownHours) {
     const cls = instance.classes.find((c) => c.id === classId)!;
     const used = Math.min(cls.maxPerDay, Math.ceil(classHours.get(classId)! / days));
+    const shift = shifts.get(cls.firstPeriod) ?? { hours: 0, usable: new Set<number>() };
+    shifts.set(cls.firstPeriod, shift);
+    shift.hours += hours;
     let own = 0;
     for (let d = 0; d < days; d++) {
       for (let p = cls.firstPeriod; p < cls.firstPeriod + used; p++) {
         if (p >= wish.periods[0] && p <= wish.periods[1]) continue;
         if (blocked.has(d * periodsPerDay + p)) continue;
-        usable.add(d * periodsPerDay + p);
+        shift.usable.add(d * periodsPerDay + p);
         own++;
       }
     }
     if (own * MAX_OCCUPANCY < hours) return false;
-    load += hours;
   }
-  return load <= usable.size * MAX_OCCUPANCY;
+  for (const shift of shifts.values()) if (shift.hours > shift.usable.size * MAX_OCCUPANCY) return false;
+  return true;
 }
 
 export function drawWish(random: () => number, instance: Instance, teacher: Teacher): TeacherWish | undefined {

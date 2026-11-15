@@ -42,20 +42,22 @@ describe("teacher wishes", () => {
         const free = (teacher: number, slot: number) => !problem.teacherWished[teacher * problem.periods + problem.periodOf(slot)];
         instance.teachers.forEach((t, ti) => {
           if (!t.wish) return;
-          const usable = new Set<number>();
-          let load = 0;
+          const shifts = new Map<number, { load: number; usable: Set<number> }>();
           for (let l = 0; l < problem.nLessons; l++) {
             if (!problem.teachersOf(l).includes(ti)) continue;
-            load++;
+            const first = instance.classes[problem.lessonClass[l]].firstPeriod;
+            const shift = shifts.get(first) ?? { load: 0, usable: new Set<number>() };
+            shifts.set(first, shift);
+            shift.load++;
             let own = 0;
             for (let s = 0; s < problem.nSlots; s++) {
               if (!problem.isAllowed(l, s) || !free(ti, s)) continue;
-              usable.add(s);
+              shift.usable.add(s);
               own++;
             }
             expect(own).toBeGreaterThan(0);
           }
-          expect(load).toBeLessThanOrEqual(usable.size);
+          for (const shift of shifts.values()) expect(shift.load).toBeLessThanOrEqual(shift.usable.size);
         });
       }
     }

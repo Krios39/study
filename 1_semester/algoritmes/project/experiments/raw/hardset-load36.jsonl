@@ -1,0 +1,8 @@
+{"load":36,"seed":2,"classes":25,"teachers":31,"lessons":800,"maxLoadShare":0.9,"exactSeconds":0.39,"dsaturHard":14,"annealingHard":2,"kempeHard":0,"annealingSoftPer100":841.3,"kempeSoftPer100":595.4}
+{"load":36,"seed":3,"classes":25,"teachers":32,"lessons":828,"maxLoadShare":0.9,"exactSeconds":0.24,"dsaturHard":4,"annealingHard":0,"kempeHard":0,"annealingSoftPer100":690,"kempeSoftPer100":405.3}
+{"load":36,"seed":4,"classes":29,"teachers":38,"lessons":982,"maxLoadShare":0.9,"exactSeconds":0.31,"dsaturHard":3,"annealingHard":0,"kempeHard":0,"annealingSoftPer100":541.9,"kempeSoftPer100":364.7}
+{"load":36,"seed":5,"classes":25,"teachers":35,"lessons":813,"maxLoadShare":0.93,"exactSeconds":0.3,"dsaturHard":0,"annealingHard":0,"kempeHard":0,"annealingSoftPer100":600.5,"kempeSoftPer100":359.5}
+{"load":36,"seed":6,"classes":21,"teachers":28,"lessons":714,"maxLoadShare":0.82,"exactSeconds":0.15,"dsaturHard":5,"annealingHard":0,"kempeHard":0,"annealingSoftPer100":501.5,"kempeSoftPer100":347.1}
+{"load":36,"seed":7,"classes":12,"teachers":20,"lessons":378,"maxLoadShare":0.9,"exactSeconds":0.07,"dsaturHard":0,"annealingHard":0,"kempeHard":0,"annealingSoftPer100":596,"kempeSoftPer100":396.3}
+{"load":36,"seed":8,"classes":14,"teachers":24,"lessons":442,"maxLoadShare":0.82,"exactSeconds":0.08,"dsaturHard":0,"annealingHard":0,"kempeHard":0,"annealingSoftPer100":356.6,"kempeSoftPer100":250.7}
+{"load":36,"seed":9,"classes":15,"teachers":24,"lessons":485,"maxLoadShare":0.9,"exactSeconds":0.11,"dsaturHard":0,"annealingHard":0,"kempeHard":0,"annealingSoftPer100":552.6,"kempeSoftPer100":268}

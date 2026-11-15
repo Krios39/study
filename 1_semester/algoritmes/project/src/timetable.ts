@@ -11,6 +11,7 @@ export interface CostWeights {
   shiftBreak: number;
   shiftIdle: number;
   dayImbalance: number;
+  dayLoadSquare: number;
   misplaced: number;
   teacherWish: number;
 }
@@ -23,8 +24,9 @@ export const DEFAULT_COST_WEIGHTS: CostWeights = {
   shiftBreak: 10,
   shiftIdle: 2,
   dayImbalance: 2,
+  dayLoadSquare: 0,
   misplaced: 10,
-  teacherWish: 20,
+  teacherWish: 50,
 };
 
 export class Timetable {
@@ -44,6 +46,12 @@ export class Timetable {
   private readonly firstPeriod: Int32Array;
   private readonly maxPerDay: Int32Array;
   private readonly teacherWeek: Int32Array;
+  private readonly gapOfClassDay: Int32Array;
+  private readonly misplacedOfClassDay: Int32Array;
+  private readonly imbalanceOfClass: Int32Array;
+  private readonly gapOfTeacherDay: Int32Array;
+  private readonly breakOfTeacherDay: Int32Array;
+  private readonly idleOfTeacherDay: Int32Array;
 
   private classClash = 0;
   private teacherClash = 0;
@@ -57,6 +65,8 @@ export class Timetable {
   private shiftBreaks = 0;
   private shiftIdle = 0;
   private imbalance = 0;
+  private loadSquares = 0;
+  private loadSquaresFloor = 0;
   private spread = 0;
   private misplaced = 0;
   private wishesBroken = 0;
@@ -79,6 +89,15 @@ export class Timetable {
     this.firstPeriod = Int32Array.from(problem.instance.classes, (c) => c.firstPeriod);
     this.maxPerDay = Int32Array.from(problem.instance.classes, (c) => c.maxPerDay);
     this.teacherWeek = new Int32Array(nTeachers);
+    this.gapOfClassDay = new Int32Array(nClasses * days);
+    this.misplacedOfClassDay = new Int32Array(nClasses * days);
+    this.imbalanceOfClass = new Int32Array(nClasses);
+    this.gapOfTeacherDay = new Int32Array(nTeachers * days);
+    this.breakOfTeacherDay = new Int32Array(nTeachers * days);
+    this.idleOfTeacherDay = new Int32Array(nTeachers * days);
+    const classHours = new Int32Array(nClasses);
+    for (let l = 0; l < nLessons; l++) classHours[problem.lessonClass[l]]++;
+    for (const hours of classHours) this.loadSquaresFloor += (hours * hours) / days;
     this.unassigned = nLessons;
     for (let c = 0; c < nClasses; c++) for (let d = 0; d < days; d++) this.spread += this.spreadOf(c, d);
   }
@@ -105,6 +124,7 @@ export class Timetable {
       w.shiftBreak * this.shiftBreaks +
       w.shiftIdle * this.shiftIdle +
       w.dayImbalance * this.imbalance +
+      w.dayLoadSquare * (this.loadSquares - this.loadSquaresFloor) +
       w.misplaced * this.misplaced +
       w.teacherWish * this.wishesBroken
     );
@@ -134,6 +154,22 @@ export class Timetable {
       misplaced: this.misplaced,
       wishesBroken: this.wishesBroken,
     };
+  }
+
+  badness(lesson: number): number {
+    const { problem, weights } = this;
+    const slot = this.slotOf[lesson];
+    if (slot === UNASSIGNED) return weights.hard;
+    const cls = problem.lessonClass[lesson];
+    const period = problem.periodOf(slot);
+    let total = (weights.difficulty * this.spreadOf(cls, problem.dayOf(slot))) / problem.days;
+    for (const t of problem.teachersOf(lesson)) {
+      const week = this.teacherWeek[t];
+      total += weights.teacherGap * week * week;
+      if (problem.teacherWished[t * problem.periods + period]) total += weights.teacherWish;
+      if (!problem.teacherAllowed[t * problem.nSlots + slot]) total += weights.hard;
+    }
+    return total;
   }
 
   move(lesson: number, slot: number) {
@@ -184,6 +220,7 @@ export class Timetable {
       if (!problem.teacherAllowed[cell]) this.teacherUnavailable += sign;
       if (problem.teacherWished[t * problem.periods + problem.periodOf(slot)]) this.wishesBroken += sign;
     }
+    this.loadSquares += sign === 1 ? 2 * this.dayLoad[classDay] + 1 : 1 - 2 * this.dayLoad[classDay];
     this.dayLoad[classDay] += sign;
     this.dayScore[classDay] += sign * score;
 
@@ -191,14 +228,43 @@ export class Timetable {
   }
 
   private local(cls: number, day: number, teachers: Int32Array, sign: 1 | -1) {
-    this.classGap += sign * this.classGapOf(cls, day);
-    this.spread += sign * this.spreadOf(cls, day);
-    this.imbalance += sign * this.imbalanceOf(cls);
-    this.order(cls, day, sign);
-    for (const t of teachers) this.teacherDay(t, day, sign);
+    const { days } = this.problem;
+    const classDay = cls * days + day;
+    if (sign === -1) {
+      this.classGap -= this.gapOfClassDay[classDay];
+      this.spread -= this.spreadOf(cls, day);
+      this.imbalance -= this.imbalanceOfClass[cls];
+      this.misplaced -= this.misplacedOfClassDay[classDay];
+      for (const t of teachers) {
+        const teacherDay = t * days + day;
+        this.addTeacherGaps(t, -this.gapOfTeacherDay[teacherDay]);
+        this.shiftBreaks -= this.breakOfTeacherDay[teacherDay];
+        this.shiftIdle -= this.idleOfTeacherDay[teacherDay];
+      }
+      return;
+    }
+    const gap = this.classGapOf(cls, day);
+    this.gapOfClassDay[classDay] = gap;
+    this.classGap += gap;
+    this.spread += this.spreadOf(cls, day);
+    const imbalance = this.imbalanceOf(cls);
+    this.imbalanceOfClass[cls] = imbalance;
+    this.imbalance += imbalance;
+    const misplaced = this.misplacedOf(cls, day);
+    this.misplacedOfClassDay[classDay] = misplaced;
+    this.misplaced += misplaced;
+    for (const t of teachers) this.scanTeacherDay(t, day);
   }
 
-  private order(cls: number, day: number, sign: 1 | -1) {
+  private addTeacherGaps(teacher: number, gaps: number) {
+    const before = this.teacherWeek[teacher];
+    const after = before + gaps;
+    this.teacherWeek[teacher] = after;
+    this.gapSquares += after * after - before * before;
+    this.teacherGaps += gaps;
+  }
+
+  private misplacedOf(cls: number, day: number): number {
     const { periods } = this.problem;
     const base = cls * this.problem.nSlots + day * periods;
     let load = 0;
@@ -207,13 +273,13 @@ export class Timetable {
     const secondHalf = Math.ceil(load / 2);
     let index = 0;
     let misplaced = 0;
-    for (let p = 0; p < periods; p++) {
+    for (let p = 0; p < periods && index < load; p++) {
       if (this.classCount[base + p] === 0) continue;
       if (index < firstHalf && this.easyAt[base + p] > 0) misplaced++;
       if (index >= secondHalf && this.heavyAt[base + p] > 0) misplaced++;
       index++;
     }
-    this.misplaced += sign * misplaced;
+    return misplaced;
   }
 
   private classGapOf(cls: number, day: number): number {
@@ -230,8 +296,8 @@ export class Timetable {
     return last < 0 ? 0 : last - first + 1 - busy;
   }
 
-  private teacherDay(teacher: number, day: number, sign: 1 | -1) {
-    const { periods, periodShift } = this.problem;
+  private scanTeacherDay(teacher: number, day: number) {
+    const { periods, periodShift, days } = this.problem;
     const base = teacher * this.problem.nSlots + day * periods;
     let gaps = 0;
     let idle = 0;
@@ -256,13 +322,14 @@ export class Timetable {
       busy++;
     }
     if (shift >= 0) gaps += last - first + 1 - busy;
-    const before = this.teacherWeek[teacher];
-    const after = before + sign * gaps;
-    this.teacherWeek[teacher] = after;
-    this.gapSquares += after * after - before * before;
-    this.teacherGaps += sign * gaps;
-    if (shifts > 1) this.shiftBreaks += sign * (shifts - 1);
-    this.shiftIdle += sign * idle;
+    const breaks = shifts > 1 ? shifts - 1 : 0;
+    const teacherDay = teacher * days + day;
+    this.gapOfTeacherDay[teacherDay] = gaps;
+    this.breakOfTeacherDay[teacherDay] = breaks;
+    this.idleOfTeacherDay[teacherDay] = idle;
+    this.addTeacherGaps(teacher, gaps);
+    this.shiftBreaks += breaks;
+    this.shiftIdle += idle;
   }
 
   private imbalanceOf(cls: number): number {

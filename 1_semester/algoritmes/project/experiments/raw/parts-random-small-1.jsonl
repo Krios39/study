@@ -1,0 +1,6 @@
+{"school":"random-small-1","classes":8,"lessons":238,"part":"сложность по дням","status":"optimal","exact":96,"bound":96,"annealingAloneMean":110,"annealingAloneBest":96,"inFullCostMean":208.67,"seconds":56.1}
+{"school":"random-small-1","classes":8,"lessons":238,"part":"повторы","status":"optimal","exact":100,"bound":100,"annealingAloneMean":100,"annealingAloneBest":100,"inFullCostMean":100,"seconds":13.9}
+{"school":"random-small-1","classes":8,"lessons":238,"part":"перекос дней","status":"optimal","exact":16,"bound":16,"annealingAloneMean":29.33,"annealingAloneBest":26,"inFullCostMean":23.33,"seconds":71.2}
+{"school":"random-small-1","classes":8,"lessons":238,"part":"половины дня","status":"feasible","exact":20,"bound":0,"annealingAloneMean":36.67,"annealingAloneBest":20,"inFullCostMean":303.33,"seconds":75.1}
+{"school":"random-small-1","classes":8,"lessons":238,"part":"окна и смены учителей","status":"feasible","exact":6,"bound":0,"annealingAloneMean":10,"annealingAloneBest":6,"inFullCostMean":62,"seconds":75.7}
+{"school":"random-small-1","classes":8,"lessons":238,"part":"пожелания","status":"optimal","exact":0,"bound":0,"annealingAloneMean":0,"annealingAloneBest":0,"inFullCostMean":0,"seconds":0.6}
