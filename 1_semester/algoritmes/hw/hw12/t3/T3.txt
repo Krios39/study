@@ -1,0 +1,76 @@
+text bananabananabandanas$ (n = 21, zero-based positions, intervals are half-open [start, end))
+suffix trie: 175 nodes, 174 edges, 21 leaves, 13 branching nodes, deepest node depth 21
+  check: nodes = distinct nonempty substrings (174) + root
+suffix tree: 34 nodes (13 internal including the root, 21 leaves), 33 edges
+
+suffix tree edges (child: interval -> label)
+     root -> leaf 20 [20,21)  $
+     root -> v1      [ 1, 2)  a
+       v1 -> v2      [ 6, 9)  ban
+       v2 -> leaf 5  [ 9,21)  anabandanas$
+       v2 -> leaf 11 [15,21)  danas$
+       v1 -> v3      [ 2, 3)  n
+       v3 -> v4      [ 3, 4)  a
+       v4 -> v5      [ 6, 9)  ban
+       v5 -> leaf 3  [ 9,21)  anabandanas$
+       v5 -> leaf 9  [15,21)  danas$
+       v4 -> v6      [ 4, 9)  naban
+       v6 -> leaf 1  [ 9,21)  anabandanas$
+       v6 -> leaf 7  [15,21)  danas$
+       v4 -> leaf 16 [19,21)  s$
+       v3 -> leaf 13 [15,21)  danas$
+       v1 -> leaf 18 [19,21)  s$
+     root -> v7      [ 0, 3)  ban
+       v7 -> v8      [ 3, 9)  anaban
+       v8 -> leaf 0  [ 9,21)  anabandanas$
+       v8 -> leaf 6  [15,21)  danas$
+       v7 -> leaf 12 [15,21)  danas$
+     root -> leaf 15 [15,21)  danas$
+     root -> v9      [ 2, 3)  n
+       v9 -> v10     [ 3, 4)  a
+      v10 -> v11     [ 6, 9)  ban
+      v11 -> leaf 4  [ 9,21)  anabandanas$
+      v11 -> leaf 10 [15,21)  danas$
+      v10 -> v12     [ 4, 9)  naban
+      v12 -> leaf 2  [ 9,21)  anabandanas$
+      v12 -> leaf 8  [15,21)  danas$
+      v10 -> leaf 17 [19,21)  s$
+       v9 -> leaf 14 [15,21)  danas$
+     root -> leaf 19 [19,21)  s$
+
+pattern ana: occurrences [1, 3, 7, 9, 16]
+  trie:
+    at root, edges {$abdns}: follow 'a' to "a"
+    at "a", edges {bns}: follow 'n' to "an"
+    at "an", edges {ad}: follow 'a' to "ana"
+    3 character steps
+  tree:
+    at root, edge [1,2) "a": a=a, arrive at v1
+    at v1, edge [2,3) "n": n=n, arrive at v3
+    at v3, edge [3,4) "a": a=a, arrive at v4
+    3 character comparisons on edges; leaves below the locus: [1, 3, 7, 9, 16]
+
+pattern band: occurrences [12]
+  trie:
+    at root, edges {$abdns}: follow 'b' to "b"
+    at "b", edges {a}: follow 'a' to "ba"
+    at "ba", edges {n}: follow 'n' to "ban"
+    at "ban", edges {ad}: follow 'd' to "band"
+    4 character steps
+  tree:
+    at root, edge [0,3) "ban": b=b a=a n=n, arrive at v7
+    at v7, edge [15,21) "danas$": d=d, the pattern ends after 1 of 6 letters, the locus lies on this edge above leaf 12
+    4 character comparisons on edges; leaves below the locus: [12]
+
+pattern nabx: occurrences []
+  trie:
+    at root, edges {$abdns}: follow 'n' to "n"
+    at "n", edges {ad}: follow 'a' to "na"
+    at "na", edges {bns}: follow 'b' to "nab"
+    at "nab", edges {a}: no 'x', the pattern does not occur
+    4 character steps
+  tree:
+    at root, edge [2,3) "n": n=n, arrive at v9
+    at v9, edge [3,4) "a": a=a, arrive at v10
+    at v10, edge [6,9) "ban": b=b x≠a, mismatch inside the edge, the pattern does not occur
+    4 character comparisons on edges; leaves below the locus: []

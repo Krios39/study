@@ -1,0 +1,105 @@
+self-check: 2000 random texts with $: suffix-array BWT equals sorted-rotation BWT and decodes back
+
+text bananabananabandanas$ (n = 21)
+row  SA  F | middle              | L   rank of L among equal letters
+  0  20  $ | bananabananabandana | s   0
+  1   5  a | bananabandanas$bana | n   0
+  2  11  a | bandanas$bananabana | n   1
+  3   3  a | nabananabandanas$ba | n   2
+  4   9  a | nabandanas$bananaba | n   3
+  5   1  a | nanabananabandanas$ | b   0
+  6   7  a | nanabandanas$banana | b   1
+  7  16  a | nas$bananabananaban | d   0
+  8  13  a | ndanas$bananabanana | b   2
+  9  18  a | s$bananabananabanda | n   4
+ 10   0  b | ananabananabandanas | $   0   <- original text
+ 11   6  b | ananabandanas$banan | a   0
+ 12  12  b | andanas$bananabanan | a   1
+ 13  15  d | anas$bananabananaba | n   5
+ 14   4  n | abananabandanas$ban | a   2
+ 15  10  n | abandanas$bananaban | a   3
+ 16   2  n | anabananabandanas$b | a   4
+ 17   8  n | anabandanas$bananab | a   5
+ 18  17  n | as$bananabananaband | a   6
+ 19  14  n | danas$bananabananab | a   7
+ 20  19  s | $bananabananabandan | a   8
+F   = $aaaaaaaaabbbdnnnnnns
+BWT = snnnnbbdbn$aanaaaaaaa   (L column; equal to text[SA[i] - 1], with the $ row wrapping around)
+runs: text 21 (longest 1) -> BWT 10 (longest 7)
+  text runs: b1 a1 n1 a1 n1 a1 b1 a1 n1 a1 n1 a1 b1 a1 n1 d1 a1 n1 a1 s1 $1
+  BWT runs:  s1 n4 b2 d1 b1 n1 $1 a2 n1 a7
+decoding with the LF mapping: start in row 0 (the rotation that begins with $), read L[row],
+the k-th copy of a letter in L is the k-th copy of it in F, so next row = first row of that letter in F + k
+  step  1: row  0, L = 's' (copy #0 of it in L) -> row 20; text so far s$
+  step  2: row 20, L = 'a' (copy #8 of it in L) -> row  9; text so far as$
+  step  3: row  9, L = 'n' (copy #4 of it in L) -> row 18; text so far nas$
+  step  4: row 18, L = 'a' (copy #6 of it in L) -> row  7; text so far anas$
+  step  5: row  7, L = 'd' (copy #0 of it in L) -> row 13; text so far danas$
+  step  6: row 13, L = 'n' (copy #5 of it in L) -> row 19; text so far ndanas$
+  step  7: row 19, L = 'a' (copy #7 of it in L) -> row  8; text so far andanas$
+  step  8: row  8, L = 'b' (copy #2 of it in L) -> row 12; text so far bandanas$
+  step  9: row 12, L = 'a' (copy #1 of it in L) -> row  2; text so far abandanas$
+  step 10: row  2, L = 'n' (copy #1 of it in L) -> row 15; text so far nabandanas$
+  step 11: row 15, L = 'a' (copy #3 of it in L) -> row  4; text so far anabandanas$
+  step 12: row  4, L = 'n' (copy #3 of it in L) -> row 17; text so far nanabandanas$
+  step 13: row 17, L = 'a' (copy #5 of it in L) -> row  6; text so far ananabandanas$
+  step 14: row  6, L = 'b' (copy #1 of it in L) -> row 11; text so far bananabandanas$
+  step 15: row 11, L = 'a' (copy #0 of it in L) -> row  1; text so far abananabandanas$
+  step 16: row  1, L = 'n' (copy #0 of it in L) -> row 14; text so far nabananabandanas$
+  step 17: row 14, L = 'a' (copy #2 of it in L) -> row  3; text so far anabananabandanas$
+  step 18: row  3, L = 'n' (copy #2 of it in L) -> row 16; text so far nanabananabandanas$
+  step 19: row 16, L = 'a' (copy #4 of it in L) -> row  5; text so far ananabananabandanas$
+  step 20: row  5, L = 'b' (copy #0 of it in L) -> row 10; text so far bananabananabandanas$
+decoded bananabananabandanas$ == original: true
+
+text lollipoplollipoplol$ (n = 20)
+row  SA  F | middle             | L   rank of L among equal letters
+  0  19  $ | lollipoplollipoplo | l   0
+  1  12  i | poplol$lollipoplol | l   1
+  2   4  i | poplollipoplol$lol | l   2
+  3  18  l | $lollipoplollipopl | o   0
+  4  11  l | ipoplol$lollipoplo | l   3
+  5   3  l | ipoplollipoplol$lo | l   4
+  6  10  l | lipoplol$lollipopl | o   1
+  7   2  l | lipoplollipoplol$l | o   2
+  8  16  l | ol$lollipoplollipo | p   0
+  9   8  l | ollipoplol$lollipo | p   1
+ 10   0  l | ollipoplollipoplol | $   0   <- original text
+ 11  17  o | l$lollipoplollipop | l   5
+ 12   9  o | llipoplol$lollipop | l   6
+ 13   1  o | llipoplollipoplol$ | l   7
+ 14  14  o | plol$lollipoplolli | p   2
+ 15   6  o | plollipoplol$lolli | p   3
+ 16  15  p | lol$lollipoplollip | o   3
+ 17   7  p | lollipoplol$lollip | o   4
+ 18  13  p | oplol$lollipoploll | i   0
+ 19   5  p | oplollipoplol$loll | i   1
+F   = $iillllllllooooopppp
+BWT = lllolloopp$lllppooii   (L column; equal to text[SA[i] - 1], with the $ row wrapping around)
+runs: text 18 (longest 2) -> BWT 10 (longest 3)
+  text runs: l1 o1 l2 i1 p1 o1 p1 l1 o1 l2 i1 p1 o1 p1 l1 o1 l1 $1
+  BWT runs:  l3 o1 l2 o2 p2 $1 l3 p2 o2 i2
+decoding with the LF mapping: start in row 0 (the rotation that begins with $), read L[row],
+the k-th copy of a letter in L is the k-th copy of it in F, so next row = first row of that letter in F + k
+  step  1: row  0, L = 'l' (copy #0 of it in L) -> row  3; text so far l$
+  step  2: row  3, L = 'o' (copy #0 of it in L) -> row 11; text so far ol$
+  step  3: row 11, L = 'l' (copy #5 of it in L) -> row  8; text so far lol$
+  step  4: row  8, L = 'p' (copy #0 of it in L) -> row 16; text so far plol$
+  step  5: row 16, L = 'o' (copy #3 of it in L) -> row 14; text so far oplol$
+  step  6: row 14, L = 'p' (copy #2 of it in L) -> row 18; text so far poplol$
+  step  7: row 18, L = 'i' (copy #0 of it in L) -> row  1; text so far ipoplol$
+  step  8: row  1, L = 'l' (copy #1 of it in L) -> row  4; text so far lipoplol$
+  step  9: row  4, L = 'l' (copy #3 of it in L) -> row  6; text so far llipoplol$
+  step 10: row  6, L = 'o' (copy #1 of it in L) -> row 12; text so far ollipoplol$
+  step 11: row 12, L = 'l' (copy #6 of it in L) -> row  9; text so far lollipoplol$
+  step 12: row  9, L = 'p' (copy #1 of it in L) -> row 17; text so far plollipoplol$
+  step 13: row 17, L = 'o' (copy #4 of it in L) -> row 15; text so far oplollipoplol$
+  step 14: row 15, L = 'p' (copy #3 of it in L) -> row 19; text so far poplollipoplol$
+  step 15: row 19, L = 'i' (copy #1 of it in L) -> row  2; text so far ipoplollipoplol$
+  step 16: row  2, L = 'l' (copy #2 of it in L) -> row  5; text so far lipoplollipoplol$
+  step 17: row  5, L = 'l' (copy #4 of it in L) -> row  7; text so far llipoplollipoplol$
+  step 18: row  7, L = 'o' (copy #2 of it in L) -> row 13; text so far ollipoplollipoplol$
+  step 19: row 13, L = 'l' (copy #7 of it in L) -> row 10; text so far lollipoplollipoplol$
+decoded lollipoplollipoplol$ == original: true
+
+without $: BWT(banana) = nnbaaa and BWT(ananab) = nnbaaa are equal, so the start row cannot be recovered

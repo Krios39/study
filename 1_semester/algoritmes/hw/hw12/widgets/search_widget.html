@@ -1,0 +1,185 @@
+<div id="sw" style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin: 15px 0; background: #fff; color: #1e293b;">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 14px;">
+        <label>Example <select id="sw-preset" style="padding: 3px;">
+            <option value="abracadabra|abra">abracadabra / abra</option>
+            <option value="aaaaaaaabaaaaaaaaaabaaaa|aaaab">nearly periodic / a…ab</option>
+            <option value="aaaaaaaabaaaaaaaaaabaaaa|baaaa">nearly periodic / b a…a</option>
+            <option value="aaaaaaaaaaaaaaaaaaaa|aaaaa">periodic / a^5</option>
+            <option value="abbabaabbababbaabab|abab">binary / abab</option>
+            <option value="thequickbrownfoxjumpsoverthelazydog|lazy">26 letters / lazy</option>
+        </select></label>
+        <label>Method <select id="sw-method" style="padding: 3px;">
+            <option value="naive">naive</option>
+            <option value="kmp">KMP</option>
+            <option value="hor">Horspool</option>
+        </select></label>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 14px; margin-top: 8px;">
+        <label>Text <input id="sw-text" maxlength="48" style="width: 300px; font-family: monospace; padding: 3px;"></label>
+        <label>Pattern <input id="sw-pat" maxlength="12" style="width: 110px; font-family: monospace; padding: 3px;"></label>
+        <button id="sw-back" style="padding: 4px 10px;">◀ Back</button>
+        <button id="sw-step" style="padding: 4px 10px;">Step ▶</button>
+        <button id="sw-play" style="padding: 4px 10px;">Play</button>
+        <button id="sw-end" style="padding: 4px 10px;">To end</button>
+        <label>Speed <input id="sw-speed" type="range" min="1" max="10" value="6"></label>
+    </div>
+    <div style="overflow-x: auto; margin: 14px 0 6px;"><div id="sw-grid" style="font-family: monospace; font-size: 15px; display: inline-block;"></div></div>
+    <div id="sw-table" style="font-family: monospace; font-size: 13px; color: #475569; margin-bottom: 8px;"></div>
+    <div id="sw-info" style="font-family: monospace; font-size: 13px; min-height: 36px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 8px; white-space: pre-wrap;"></div>
+    <div id="sw-stats" style="font-size: 14px; margin-top: 8px;"></div>
+    <div id="sw-compare" style="font-size: 13px; margin-top: 6px; color: #475569;"></div>
+</div>
+<script>
+window.addEventListener("load", function () {
+    const $ = id => document.getElementById(id);
+    let events = [], at = 0, timer = null, T = "", P = "", method = "naive";
+
+    function kmpFail(p) {
+        const f = new Array(p.length).fill(0);
+        let k = 0;
+        for (let i = 1; i < p.length; i++) {
+            while (true) {
+                if (p[i] === p[k]) { k++; break; }
+                if (k === 0) break;
+                k = f[k - 1];
+            }
+            f[i] = k;
+        }
+        return f;
+    }
+
+    function horShift(p) {
+        const s = {};
+        for (let i = 0; i < p.length - 1; i++) s[p[i]] = p.length - 1 - i;
+        return s;
+    }
+
+    function run(m, t, p) {
+        const ev = [], n = t.length, len = p.length;
+        let count = 0;
+        const matches = [];
+        const push = (pos, known, cmp, msg, kind) => ev.push({ pos, known, cmp: cmp.slice(), msg, count, matches: matches.slice(), kind });
+        if (len === 0 || len > n) return ev;
+        if (m === "naive") {
+            for (let pos = 0; pos + len <= n; pos++) {
+                const cmp = [];
+                let j = 0;
+                for (; j < len; j++) {
+                    count++;
+                    const ok = t[pos + j] === p[j];
+                    cmp.push({ j, ok });
+                    if (!ok) { push(pos, 0, cmp, `pos ${pos}: text[${pos + j}]='${t[pos + j]}' ≠ pattern[${j}]='${p[j]}' after ${j} equal letters -> move the window by 1`, "miss"); break; }
+                    if (j < len - 1) push(pos, 0, cmp, `pos ${pos}: text[${pos + j}]='${t[pos + j]}' = pattern[${j}]`, "ok");
+                }
+                if (j === len) { matches.push(pos); push(pos, 0, cmp, `pos ${pos}: all ${len} letters equal -> MATCH at ${pos}; move by 1`, "match"); }
+            }
+        } else if (m === "kmp") {
+            const f = kmpFail(p);
+            let k = 0;
+            for (let i = 0; i < n; i++) {
+                while (true) {
+                    count++;
+                    const ok = t[i] === p[k];
+                    const pos = i - k;
+                    if (ok) {
+                        k++;
+                        if (k === len) {
+                            matches.push(i + 1 - len);
+                            push(pos, len - 1, [{ j: len - 1, ok: true }], `text[${i}]='${t[i]}' = pattern[${len - 1}] -> MATCH at ${i + 1 - len}; keep the border: k = fail[${len - 1}] = ${f[len - 1]}`, "match");
+                            k = f[len - 1];
+                        } else {
+                            push(pos, k - 1, [{ j: k - 1, ok: true }], `text[${i}]='${t[i]}' = pattern[${k - 1}] -> k = ${k}; read the next text letter`, "ok");
+                        }
+                        break;
+                    }
+                    if (k === 0) { push(pos, 0, [{ j: 0, ok: false }], `text[${i}]='${t[i]}' ≠ pattern[0]='${p[0]}' -> k stays 0, read the next text letter`, "miss"); break; }
+                    const nk = f[k - 1];
+                    push(pos, k, [{ j: k, ok: false }], `text[${i}]='${t[i]}' ≠ pattern[${k}]='${p[k]}' -> k = fail[${k - 1}] = ${nk}: the first ${nk} letters still match, the text is NOT re-read`, "miss");
+                    k = nk;
+                }
+            }
+        } else {
+            const s = horShift(p);
+            let pos = 0;
+            while (pos + len <= n) {
+                const cmp = [];
+                let j = len - 1;
+                for (; j >= 0; j--) {
+                    count++;
+                    const ok = t[pos + j] === p[j];
+                    cmp.push({ j, ok });
+                    if (!ok) break;
+                    if (j > 0) push(pos, 0, cmp, `pos ${pos}: right to left, text[${pos + j}]='${t[pos + j]}' = pattern[${j}]`, "ok");
+                }
+                const c = t[pos + len - 1], sh = s[c] || len;
+                const why = s[c] ? `its last occurrence before the end of the pattern is ${s[c]} from the end` : `'${c}' is not in pattern[0..${len - 1}), jump over it`;
+                if (j < 0) { matches.push(pos); push(pos, 0, cmp, `pos ${pos}: all letters equal -> MATCH at ${pos}. Window ends with '${c}': ${why} -> shift ${sh}`, "match"); }
+                else push(pos, 0, cmp, `pos ${pos}: text[${pos + j}]='${t[pos + j]}' ≠ pattern[${j}]='${p[j]}'. Window ends with '${c}': ${why} -> shift ${sh}`, "miss");
+                pos += sh;
+            }
+        }
+        return ev;
+    }
+
+    function cell(ch, style) {
+        return `<span style="display: inline-block; box-sizing: border-box; width: 22px; height: 24px; line-height: 24px; text-align: center; border: 1px solid #e2e8f0; margin-right: -1px; ${style}">${ch}</span>`;
+    }
+
+    function draw() {
+        const e = events[at - 1];
+        const len = P.length;
+        let top = "", mid = "", idx = "";
+        for (let i = 0; i < T.length; i++) {
+            let st = "";
+            if (e && i >= e.pos && i < e.pos + len) st = "background: #f1f5f9;";
+            if (e && e.matches.some(p => i >= p && i < p + len)) st += "border-bottom: 3px solid #15803d;";
+            idx += `<span style="display: inline-block; width: 22px; text-align: center; font-size: 9px; color: #94a3b8; margin-right: -1px;">${i}</span>`;
+            top += cell(T[i], st);
+        }
+        if (e) {
+            mid =`<span style="display: inline-block; width: ${21 * e.pos}px;"></span>`;
+            for (let j = 0; j < len; j++) {
+                const c = e.cmp.find(x => x.j === j);
+                let st = "background: #fff;";
+                if (j < e.known) st = "background: #dcfce7; color: #166534;";
+                if (c) st = c.ok ? "background: #86efac; font-weight: bold;" : "background: #fca5a5; font-weight: bold;";
+                mid += cell(P[j], st);
+            }
+        }
+        $("sw-grid").innerHTML = `<div>${idx}</div><div>${top}</div><div style="margin-top: 4px;">${mid}</div>`;
+        $("sw-info").textContent = e ? e.msg : "Press Step or Play. Grey: current window; green / red: compared letters (equal / different); light green: letters KMP knows to match without re-reading; underlined: matches found.";
+        const total = events.length ? events[events.length - 1].count : 0;
+        $("sw-stats").innerHTML = `Step ${at} of ${events.length} &nbsp;|&nbsp; comparisons so far <strong>${e ? e.count : 0}</strong> (total ${total}) &nbsp;|&nbsp; matches ${e && e.matches.length ? e.matches.join(", ") : "none yet"}`;
+    }
+
+    function rebuild() {
+        clearInterval(timer); timer = null; $("sw-play").textContent = "Play";
+        T = $("sw-text").value.replace(/\s/g, ""); P = $("sw-pat").value.replace(/\s/g, ""); method = $("sw-method").value;
+        if (!P) { events = []; at = 0; $("sw-info").textContent = "The pattern is empty: rejected."; return; }
+        events = run(method, T, P);
+        at = 0;
+        if (method === "kmp") $("sw-table").textContent = "fail = [" + kmpFail(P).join(", ") + "]  (longest proper border of pattern[0..i])";
+        else if (method === "hor") { const s = horShift(P); $("sw-table").textContent = "shift: " + Object.keys(s).sort().map(c => `${c}→${s[c]}`).join("  ") + `  others→${P.length}`; }
+        else $("sw-table").textContent = "no preprocessing";
+        const totals = ["naive", "kmp", "hor"].map(m => { const ev = run(m, T, P); return `${m === "kmp" ? "KMP" : m === "hor" ? "Horspool" : "naive"} ${ev.length ? ev[ev.length - 1].count : 0}`; });
+        $("sw-compare").textContent = `Total comparisons on this input: ${totals.join(", ")}  (text length ${T.length})`;
+        draw();
+    }
+
+    function step() { if (at < events.length) { at++; draw(); } else { clearInterval(timer); timer = null; $("sw-play").textContent = "Play"; } }
+
+    $("sw-preset").addEventListener("change", () => { const [t, p] = $("sw-preset").value.split("|"); $("sw-text").value = t; $("sw-pat").value = p; rebuild(); });
+    ["sw-method", "sw-text", "sw-pat"].forEach(id => $(id).addEventListener("change", rebuild));
+    $("sw-step").addEventListener("click", () => { clearInterval(timer); timer = null; $("sw-play").textContent = "Play"; step(); });
+    $("sw-back").addEventListener("click", () => { if (at > 0) { at--; draw(); } });
+    $("sw-end").addEventListener("click", () => { at = events.length; draw(); });
+    $("sw-play").addEventListener("click", () => {
+        if (timer) { clearInterval(timer); timer = null; $("sw-play").textContent = "Play"; return; }
+        if (at >= events.length) at = 0;
+        $("sw-play").textContent = "Pause";
+        timer = setInterval(step, 1100 - 100 * $("sw-speed").value);
+    });
+    $("sw-text").value = "abracadabra"; $("sw-pat").value = "abra";
+    rebuild();
+});
+</script>

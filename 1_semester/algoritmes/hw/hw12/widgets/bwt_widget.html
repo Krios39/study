@@ -1,0 +1,88 @@
+<div id="bw" style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin: 15px 0; background: #fff; color: #1e293b;">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 14px;">
+        <label>Text <input id="bw-text" value="bananabananabandanas" maxlength="24" style="width: 220px; font-family: monospace; padding: 3px;"></label>
+        <span style="font-size: 13px; color: #475569;">($ is appended)</span>
+        <button id="bw-back" style="padding: 4px 10px;">◀ Back</button>
+        <button id="bw-step" style="padding: 4px 10px;">Decode step ▶</button>
+        <button id="bw-play" style="padding: 4px 10px;">Play</button>
+        <button id="bw-end" style="padding: 4px 10px;">To end</button>
+        <label>Speed <input id="bw-speed" type="range" min="1" max="10" value="5"></label>
+    </div>
+    <div id="bw-out" style="font-family: monospace; font-size: 14px; margin-top: 10px;"></div>
+    <div style="overflow-x: auto;"><table id="bw-table" style="border-collapse: collapse; margin: 10px 0; font-family: monospace; font-size: 14px;"></table></div>
+    <div id="bw-info" style="font-family: monospace; font-size: 13px; min-height: 40px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 8px; white-space: pre-wrap;"></div>
+    <div id="bw-result" style="font-size: 14px; margin-top: 8px;"></div>
+</div>
+<script>
+window.addEventListener("load", function () {
+    const $ = id => document.getElementById(id);
+    let s = "", n = 0, rows = [], L = [], F = [], rankL = [], rankF = [], C = {}, steps = [], at = 0, timer = null;
+    const sub = k => `<sub style="font-size: 9px; color: #64748b;">${k}</sub>`;
+
+    function build() {
+        clearInterval(timer); timer = null; $("bw-play").textContent = "Play";
+        s = $("bw-text").value.replace(/[\s$]/g, "") + "$";
+        n = s.length;
+        rows = [...Array(n).keys()].map(i => s.slice(i) + s.slice(0, i)).map((r, i) => ({ r, i }));
+        rows.sort((a, b) => (a.r < b.r ? -1 : a.r > b.r ? 1 : 0));
+        L = rows.map(x => x.r[n - 1]); F = rows.map(x => x.r[0]);
+        const seenL = {}, seenF = {};
+        rankL = L.map(c => (seenL[c] = (seenL[c] || 0) + 1) - 1);
+        rankF = F.map(c => (seenF[c] = (seenF[c] || 0) + 1) - 1);
+        C = {};
+        F.forEach((c, r) => { if (!(c in C)) C[c] = r; });
+        steps = [];
+        let row = 0, known = "$";
+        for (let k = 1; k < n; k++) {
+            const c = L[row], next = C[c] + rankL[row];
+            known = c + known;
+            steps.push({ row, c, copy: rankL[row], next, known });
+            row = next;
+        }
+        at = 0;
+        const runs = t => t.split("").filter((c, i) => i === 0 || c !== t[i - 1]).length;
+        $("bw-out").innerHTML = `text = <strong>${s}</strong> &nbsp; BWT = <strong style="color: #b91c1c;">${L.join("")}</strong> &nbsp; runs: ${runs(s)} → ${runs(L.join(""))}` +
+            `<br><span style="font-size: 12px; color: #475569;">C (first row of each letter in F): ${Object.keys(C).map(c => `${c}:${C[c]}`).join("  ")}</span>`;
+        draw();
+    }
+
+    function draw() {
+        const st = steps[at - 1];
+        const td = "padding: 3px 7px; border: 1px solid #e2e8f0;";
+        let html = `<tr style="background: #e2e8f0;"><th style="${td}">row</th><th style="${td}">F</th><th style="${td}">middle</th><th style="${td}">L</th><th style="${td}"></th></tr>`;
+        rows.forEach((x, r) => {
+            let bg = x.i === 0 ? "background: #fef3c7;" : "";
+            let fStyle = "background: #dbeafe; font-weight: bold;", lStyle = "background: #fee2e2; font-weight: bold;";
+            let note = x.i === 0 ? "original text" : "";
+            if (st && r === st.row) { bg = "background: #e0e7ff;"; lStyle = "background: #f97316; color: white; font-weight: bold;"; note = `read L = ${st.c}${sub(st.copy)}`; }
+            if (st && r === st.next) { fStyle = "background: #f97316; color: white; font-weight: bold;"; note = `same copy ${st.c}${sub(st.copy)} in F → next row`; }
+            html += `<tr style="${bg}"><td style="${td}">${r}</td><td style="${td} ${fStyle}">${F[r]}${sub(rankF[r])}</td>` +
+                `<td style="${td} color: #94a3b8;">${x.r.slice(1, n - 1)}</td><td style="${td} ${lStyle}">${L[r]}${sub(rankL[r])}</td><td style="${td} font-size: 12px; color: #9a3412;">${note}</td></tr>`;
+        });
+        $("bw-table").innerHTML = html;
+        if (!st) {
+            $("bw-info").textContent = "Rows are the sorted rotations; yellow is the original text. Subscripts number the copies of each letter from the top, separately in F and in L: the k-th copy in L is the same letter occurrence as the k-th copy in F. Decoding starts in row 0, which begins with $.";
+            $("bw-result").innerHTML = "recovered: <code>$</code>";
+            return;
+        }
+        $("bw-info").textContent = `step ${at}: row ${st.row} ends with ${st.c} (copy #${st.copy} of '${st.c}' in L). This letter stands just before the row's first letter in the text.\n` +
+            `The same occurrence is copy #${st.copy} of '${st.c}' in F, i.e. row C[${st.c}] + ${st.copy} = ${C[st.c]} + ${st.copy} = ${st.next}. Continue there.`;
+        const done = at === steps.length;
+        $("bw-result").innerHTML = `recovered (${st.known.length} of ${n}): <code><strong>${st.known.slice(0, 1)}</strong>${st.known.slice(1)}</code>` +
+            (done ? (st.known === s ? " &nbsp;<strong style=\"color: #15803d;\">exact round trip ✓</strong>" : " &nbsp;<strong style=\"color: #b91c1c;\">mismatch</strong>") : "");
+    }
+
+    function step() { if (at < steps.length) { at++; draw(); } else { clearInterval(timer); timer = null; $("bw-play").textContent = "Play"; } }
+    $("bw-text").addEventListener("change", build);
+    $("bw-step").addEventListener("click", () => { clearInterval(timer); timer = null; $("bw-play").textContent = "Play"; step(); });
+    $("bw-back").addEventListener("click", () => { if (at > 0) { at--; draw(); } });
+    $("bw-end").addEventListener("click", () => { at = steps.length; draw(); });
+    $("bw-play").addEventListener("click", () => {
+        if (timer) { clearInterval(timer); timer = null; $("bw-play").textContent = "Play"; return; }
+        if (at >= steps.length) at = 0;
+        $("bw-play").textContent = "Pause";
+        timer = setInterval(step, 1300 - 110 * $("bw-speed").value);
+    });
+    build();
+});
+</script>

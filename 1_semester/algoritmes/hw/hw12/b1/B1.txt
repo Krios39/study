@@ -1,0 +1,20 @@
+text bananabananabandanas$ , L = BWT = snnnnbbdbn$aanaaaaaaa
+C[c] = number of letters smaller than c: $:0 a:1 b:10 d:13 n:14 s:20
+occ(c, i) = copies of c in L[0..i). Backward step with letter c: lo = C[c] + occ(c, lo), hi = C[c] + occ(c, hi); intervals are half-open SA rank ranges
+
+pattern ana: start with the whole range [0, 21)
+  read 'a': [0,21) -> C[a] + occ = 1 + 0 .. 1 + 9 = [1,10)  size 9  "a"  SA [5, 11, 3, 9, 1, 7, 16, 13, 18]  locus at v1
+  read 'n': [1,10) -> C[n] + occ = 14 + 0 .. 14 + 5 = [14,19)  size 5  "na"  SA [4, 10, 2, 8, 17]  locus at v10
+  read 'a': [14,19) -> C[a] + occ = 1 + 2 .. 1 + 7 = [3,8)  size 5  "ana"  SA [3, 9, 1, 7, 16]  locus at v4
+  result [3,8) = T4 binary-search interval; positions [1, 3, 7, 9, 16]
+
+pattern band: start with the whole range [0, 21)
+  read 'd': [0,21) -> C[d] + occ = 13 + 0 .. 13 + 1 = [13,14)  size 1  "d"  SA [15]  locus 1 of 6 letters along the edge [15,21) into leaf 15
+  read 'n': [13,14) -> C[n] + occ = 14 + 5 .. 14 + 6 = [19,20)  size 1  "nd"  SA [14]  locus 1 of 6 letters along the edge [15,21) into leaf 14
+  read 'a': [19,20) -> C[a] + occ = 1 + 7 .. 1 + 8 = [8,9)  size 1  "and"  SA [13]  locus 1 of 6 letters along the edge [15,21) into leaf 13
+  read 'b': [8,9) -> C[b] + occ = 10 + 2 .. 10 + 3 = [12,13)  size 1  "band"  SA [12]  locus 1 of 6 letters along the edge [15,21) into leaf 12
+  result [12,13) = T4 binary-search interval; positions [12]
+
+pattern nabx: start with the whole range [0, 21)
+  read 'x': [0,21) -> C[x] + occ = 21 + 0 .. 21 + 0 = [21,21)  size 0  "x"  SA []  locus none
+  the interval is empty, stop: nabx does not occur

@@ -1,0 +1,187 @@
+{
+  "alphabet": "a-z",
+  "pattern_position": 500000,
+  "prep_repeat": 10000,
+  "rows": [
+    {
+      "m": 5,
+      "matches": 1,
+      "method": "naive",
+      "pattern": "cemav",
+      "prep_comparisons": 0,
+      "prep_ns": 39.669999999999995,
+      "search_comparisons": 1039971,
+      "search_ms": 0.91
+    },
+    {
+      "m": 5,
+      "matches": 1,
+      "method": "KMP",
+      "pattern": "cemav",
+      "prep_comparisons": 4,
+      "prep_ns": 64.51,
+      "search_comparisons": 1038434,
+      "search_ms": 0.8441
+    },
+    {
+      "m": 5,
+      "matches": 1,
+      "method": "Horspool",
+      "pattern": "cemav",
+      "prep_comparisons": 0,
+      "prep_ns": 53.83,
+      "search_comparisons": 225662,
+      "search_ms": 0.6073
+    },
+    {
+      "m": 10,
+      "matches": 1,
+      "method": "naive",
+      "pattern": "cemavdiiqk",
+      "prep_comparisons": 0,
+      "prep_ns": 39.51,
+      "search_comparisons": 1039971,
+      "search_ms": 0.9124
+    },
+    {
+      "m": 10,
+      "matches": 1,
+      "method": "KMP",
+      "pattern": "cemavdiiqk",
+      "prep_comparisons": 9,
+      "prep_ns": 65.22999999999999,
+      "search_comparisons": 1038434,
+      "search_ms": 0.8406
+    },
+    {
+      "m": 10,
+      "matches": 1,
+      "method": "Horspool",
+      "pattern": "cemavdiiqk",
+      "prep_comparisons": 0,
+      "prep_ns": 54.690000000000005,
+      "search_comparisons": 121943,
+      "search_ms": 0.3199
+    },
+    {
+      "m": 20,
+      "matches": 1,
+      "method": "naive",
+      "pattern": "cemavdiiqklineijqxtb",
+      "prep_comparisons": 0,
+      "prep_ns": 39.599999999999994,
+      "search_comparisons": 1039969,
+      "search_ms": 0.9185000000000001
+    },
+    {
+      "m": 20,
+      "matches": 1,
+      "method": "KMP",
+      "pattern": "cemavdiiqklineijqxtb",
+      "prep_comparisons": 19,
+      "prep_ns": 75.71000000000001,
+      "search_comparisons": 1038434,
+      "search_ms": 0.8492000000000001
+    },
+    {
+      "m": 20,
+      "matches": 1,
+      "method": "Horspool",
+      "pattern": "cemavdiiqklineijqxtb",
+      "prep_comparisons": 0,
+      "prep_ns": 56.74,
+      "search_comparisons": 73476,
+      "search_ms": 0.19349999999999998
+    }
+  ],
+  "runs": 7,
+  "seed": 2026,
+  "size": 1000000,
+  "tests": [
+    {
+      "case": "overlapping matches",
+      "expected": [
+        0,
+        2,
+        4
+      ],
+      "pattern": "aba",
+      "text": "abababa"
+    },
+    {
+      "case": "overlapping, one letter",
+      "expected": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "pattern": "aa",
+      "text": "aaaaa"
+    },
+    {
+      "case": "no match",
+      "expected": [],
+      "pattern": "xyz",
+      "text": "abcdef"
+    },
+    {
+      "case": "matches at both ends",
+      "expected": [
+        0,
+        3
+      ],
+      "pattern": "ab",
+      "text": "abcab"
+    },
+    {
+      "case": "pattern longer than text",
+      "expected": [],
+      "pattern": "abc",
+      "text": "ab"
+    },
+    {
+      "case": "pattern equals text",
+      "expected": [
+        0
+      ],
+      "pattern": "abc",
+      "text": "abc"
+    },
+    {
+      "case": "prefix repeats inside pattern",
+      "expected": [
+        0,
+        3,
+        7
+      ],
+      "pattern": "aab",
+      "text": "aabaabaaab"
+    },
+    {
+      "case": "classic",
+      "expected": [
+        0,
+        7
+      ],
+      "pattern": "abra",
+      "text": "abracadabra"
+    },
+    {
+      "case": "single letter",
+      "expected": [
+        1,
+        3,
+        5
+      ],
+      "pattern": "a",
+      "text": "banana"
+    }
+  ],
+  "trace": [
+    "text    abracadabra",
+    "pos  0  abra   compared right to left: a=a r=r b=b a=a   MATCH; window ends with 'a', shift 3",
+    "pos  3     abra   compared right to left: d≠a   mismatch; window ends with 'd', shift 4",
+    "pos  7         abra   compared right to left: a=a r=r b=b a=a   MATCH; window ends with 'a', shift 3"
+  ]
+}

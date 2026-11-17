@@ -1,0 +1,82 @@
+{
+  "bwt": "snnnnbbdbn$aanaaaaaaa",
+  "searches": [
+    {
+      "hi": 8,
+      "lo": 3,
+      "pattern": "ana",
+      "steps": [
+        {
+          "hi": 10,
+          "letter": "a",
+          "lo": 1,
+          "locus": "at v1",
+          "suffix": "a"
+        },
+        {
+          "hi": 19,
+          "letter": "n",
+          "lo": 14,
+          "locus": "at v10",
+          "suffix": "na"
+        },
+        {
+          "hi": 8,
+          "letter": "a",
+          "lo": 3,
+          "locus": "at v4",
+          "suffix": "ana"
+        }
+      ]
+    },
+    {
+      "hi": 13,
+      "lo": 12,
+      "pattern": "band",
+      "steps": [
+        {
+          "hi": 14,
+          "letter": "d",
+          "lo": 13,
+          "locus": "1 of 6 letters along the edge [15,21) into leaf 15",
+          "suffix": "d"
+        },
+        {
+          "hi": 20,
+          "letter": "n",
+          "lo": 19,
+          "locus": "1 of 6 letters along the edge [15,21) into leaf 14",
+          "suffix": "nd"
+        },
+        {
+          "hi": 9,
+          "letter": "a",
+          "lo": 8,
+          "locus": "1 of 6 letters along the edge [15,21) into leaf 13",
+          "suffix": "and"
+        },
+        {
+          "hi": 13,
+          "letter": "b",
+          "lo": 12,
+          "locus": "1 of 6 letters along the edge [15,21) into leaf 12",
+          "suffix": "band"
+        }
+      ]
+    },
+    {
+      "hi": 21,
+      "lo": 21,
+      "pattern": "nabx",
+      "steps": [
+        {
+          "hi": 21,
+          "letter": "x",
+          "lo": 21,
+          "locus": "none",
+          "suffix": "x"
+        }
+      ]
+    }
+  ]
+}

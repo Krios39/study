@@ -32,6 +32,7 @@
 
   <properties>
     <mr.examples.basedir>${basedir}</mr.examples.basedir>
+    <javac.version>1.8</javac.version>
   </properties>
 
   <dependencies>

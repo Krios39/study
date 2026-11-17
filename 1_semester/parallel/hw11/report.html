@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homework 11 Report - Parallel Computing</title>
+        <style>
+            table.t { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: center; }
+            table.t th { background: #2d2d2d; color: #fff; padding: 8px; border: 1px solid #444; }
+            table.t td { padding: 6px; border: 1px solid #ddd; }
+            table.t tr:nth-child(even) td { background: #f9f9f9; }
+            pre.term { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0; max-height: 520px; overflow-y: auto; }
+        </style>
+    </head>
+    <body>
+<details>
+    <summary>Environment and how the jobs were run</summary>
+    <div class="details-content">
+        <table class="t">
+            <tbody>
+                <tr><td>Project</td><td><code>hadoop-mapreduce-examples</code> 2.9.2 (Maven), opened in IntelliJ IDEA</td></tr>
+                <tr><td>Run target</td><td>IntelliJ <strong>Application</strong> run configuration with a <strong>Docker run target</strong>: image <code>apache/hadoop:2.10.2</code>, Java 1.8.0_212, option "Add dependencies with provided scope to classpath"</td></tr>
+                <tr><td>Hadoop mode</td><td>Local mode (<code>LocalJobRunner</code>, local file system), log4j configured in <code>main</code> with <code>BasicConfigurator</code> as in the assignment</td></tr>
+                <tr><td>Host</td><td>Windows 11, JDK 21 for compiling, Docker Desktop</td></tr>
+            </tbody>
+        </table>
+        <ul style="font-size: 14px;">
+            <li><strong>Why a Docker target.</strong> Hadoop on Windows needs <code>winutils.exe</code> and a Java 8 runtime. The container already has Hadoop and Java 8 on Linux, so IntelliJ compiles locally and runs the class inside the container. The output folder is copied back into the project after the run.</li>
+            <li><strong>Java target 7.</strong> The parent POM <code>hadoop-project-2.9.2</code> sets <code>javac.version</code> to 1.7, which JDK 21 cannot produce. I added <code>&lt;javac.version&gt;1.8&lt;/javac.version&gt;</code> to <code>pom.xml</code>, so the bytecode runs on the Java 8 in the container.</li>
+            <li><strong>Non-ASCII path.</strong> The IntelliJ build process failed with <code>InvalidPathException</code> because the project path contained Cyrillic characters. The project was opened through an ASCII junction (<code>C:\study</code>) pointing to the same folder.</li>
+            <li><strong>Input.</strong> Five English books picked by random ID from Project Gutenberg. The main site rejected automated downloads (HTTP 503), so the plain-text files were taken from the official mirror <code>gutenberg.pglaf.org</code>. Only files over 150 KB marked "Language: English" were kept.</li>
+        </ul>
+        <table class="t">
+            <thead><tr><th>File in <code>in/</code></th><th>Title</th><th>Author</th><th>Size</th></tr></thead>
+            <tbody>
+                <tr><td>pg25754.txt</td><td>The Range Boss</td><td>Charles Alden Seltzer</td><td>415 KB</td></tr>
+                <tr><td>pg27962.txt</td><td>One Snowy Night</td><td>Emily Sarah Holt</td><td>505 KB</td></tr>
+                <tr><td>pg38455.txt</td><td>The Water-Works and Sewerage of Monterrey, N. L., Mexico</td><td>George Robert Graham Conway</td><td>299 KB</td></tr>
+                <tr><td>pg38978.txt</td><td>Mildred's New Daughter</td><td>Martha Finley</td><td>383 KB</td></tr>
+                <tr><td>pg57512.txt</td><td>John Bull's Womankind</td><td>Max O'Rell</td><td>396 KB</td></tr>
+            </tbody>
+        </table>
+    </div>
+</details>
+
+<details>
+    <summary>Files</summary>
+    <div class="details-content">
+        <table class="t">
+            <thead><tr><th>Path</th><th>Content</th></tr></thead>
+            <tbody>
+                <tr><td><code>src/main/java/org/apache/hadoop/examples/WordCount.java</code></td><td>WordCount with the cleaned-up mapper (11.4)</td></tr>
+                <tr><td><code>src/main/java/org/apache/hadoop/examples/MatrixVector.java</code></td><td>Matrix-vector multiplication (11.5)</td></tr>
+                <tr><td><code>src/main/java/org/apache/hadoop/examples/WordMedian.java</code></td><td>Improved WordMedian (bonus)</td></tr>
+                <tr><td><code>original/WordMedian.java</code></td><td>The unmodified WordMedian, for comparison</td></tr>
+                <tr><td><code>pom.xml</code></td><td>Project POM, with <code>javac.version</code> set to 1.8</td></tr>
+                <tr><td><code>in/</code></td><td>The five books</td></tr>
+                <tr><td><code>output_wordcount_original/</code></td><td>Output of the unmodified WordCount (11.3)</td></tr>
+                <tr><td><code>output_wordcount_clean/</code></td><td>Output of WordCount after 11.4</td></tr>
+                <tr><td><code>matrix_small/</code>, <code>vector_small.txt</code>, <code>expected_small.txt</code></td><td>The mathinsight example and its known answer</td></tr>
+                <tr><td><code>matrix_large/</code>, <code>vector_large.txt</code>, <code>expected_large.txt</code></td><td>2000 &times; 500 matrix in 4 files, vector of length 500, NumPy reference result</td></tr>
+                <tr><td><code>output_mv_small/</code>, <code>output_mv_large/</code></td><td>Outputs of MatrixVector</td></tr>
+                <tr><td><code>task11_5_gen.py</code>, <code>task11_5_check.py</code></td><td>Generator of the large test (NumPy, seed 11) and the checker that compares a Hadoop output with the reference</td></tr>
+                <tr><td><code>median_demo/</code>, <code>output_median_demo/</code>, <code>output_median_books/</code></td><td>Bonus inputs and outputs</td></tr>
+                <tr><td><code>task11_bonus_ref.py</code></td><td>Reference median of word lengths in Python, tokenised the same way as <code>StringTokenizer</code></td></tr>
+            </tbody>
+        </table>
+    </div>
+</details>
+
+<details>
+    <summary>Exercises 11.1&ndash;11.3: running WordCount</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;">The unmodified WordCount was run with the arguments <code>in output</code>. Log4j was enabled at the start of <code>main</code>, as the assignment requires. The job finished with exit code 0. The output is in <code>output_wordcount_original/part-r-00000</code>.</p>
+        <table class="t">
+            <thead><tr><th>Counter</th><th>Value</th></tr></thead>
+            <tbody>
+                <tr><td>Input files / splits</td><td>5 / 5</td></tr>
+                <tr><td>Map input records (lines)</td><td>41 086</td></tr>
+                <tr><td>Map output records (words)</td><td>337 321</td></tr>
+                <tr><td>Combine input &rarr; output records</td><td>337 321 &rarr; 60 321</td></tr>
+                <tr><td>Map output bytes &rarr; shuffle bytes</td><td>3 250 087 &rarr; 867 539</td></tr>
+                <tr><td>Reduce output records (distinct "words")</td><td>41 176</td></tr>
+            </tbody>
+        </table>
+        <p style="font-size: 14px;">The first lines of the output show the problem that 11.4 fixes: tokens are split only on whitespace, so punctuation and case stay part of the "word".</p>
+<pre class="term">"	136
+"'But,	1
+"'I	2
+"'No?--never	1
+"'There	1
+"'Xtraordinary."]	1
+...
+the	16738
+The	1468
+THE	158
+cat	12
+cat,	4
+Cat	1</pre>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 11.4: words without punctuation, in lowercase</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;">Only the <code>map</code> method of <code>TokenizerMapper</code> was changed. The reducer, the combiner and <code>main</code> are as before.</p>
+<pre class="term">private static final Pattern SEPARATORS = Pattern.compile("[^\\p{L}\\p{N}']+");
+private static final Pattern EDGE_APOSTROPHES = Pattern.compile("^'+|'+$");
+
+public void map(Object key, Text value, Context context
+                ) throws IOException, InterruptedException {
+  String line = value.toString().toLowerCase(Locale.ROOT).replace('\u2019', '\'');
+  for (String token : SEPARATORS.split(line)) {
+    String clean = EDGE_APOSTROPHES.matcher(token).replaceAll("");
+    if (!clean.isEmpty()) {
+      word.set(clean);
+      context.write(word, one);
+    }
+  }
+}</pre>
+        <ul style="font-size: 14px;">
+            <li><strong>Lowercase.</strong> <code>toLowerCase(Locale.ROOT)</code>, so the result does not depend on the system locale.</li>
+            <li><strong>Splitting.</strong> Everything that is not a letter or a digit (<code>\p{L}</code>, <code>\p{N}</code>) separates words. This also splits <code>No?--never</code> into two words, which plain whitespace tokenisation did not.</li>
+            <li><strong>Apostrophes.</strong> They are kept inside a word, so <code>don't</code> and <code>it's</code> stay one word instead of becoming <code>don</code> + <code>t</code>. The typographic apostrophe <code>&rsquo;</code> is first replaced by <code>'</code>. Apostrophes at the start or end, which are single quotation marks, are removed.</li>
+            <li><strong>Empty tokens</strong> (a line that is only punctuation) are not emitted.</li>
+            <li>Both patterns are compiled once per class, not once per line.</li>
+        </ul>
+        <table class="t">
+            <thead><tr><th></th><th>Original (11.3)</th><th>After 11.4</th></tr></thead>
+            <tbody>
+                <tr><td>Map output records</td><td>337 321</td><td>340 196</td></tr>
+                <tr><td>Combine output records</td><td>60 321</td><td>33 128</td></tr>
+                <tr><td>Shuffle bytes</td><td>867 539</td><td>460 579</td></tr>
+                <tr><td>Distinct words in the output</td><td>41 176</td><td>17 985</td></tr>
+                <tr><td><code>the</code></td><td>16 738</td><td>18 701</td></tr>
+                <tr><td><code>cat</code></td><td>12</td><td>28</td></tr>
+                <tr><td><code>don't</code></td><td>331</td><td>514</td></tr>
+            </tbody>
+        </table>
+        <ul style="font-size: 14px;">
+            <li>The number of words grew slightly (+2 875), because tokens joined by punctuation such as <code>--</code> are now split.</li>
+            <li>The number of distinct words more than halved, because <code>The</code>, <code>THE</code>, <code>the,</code>, <code>the.</code> and similar tokens now merge into one key. With fewer distinct keys per split, the combiner also works better: shuffle traffic dropped from 868 KB to 461 KB.</li>
+            <li>In the new output, every key consists only of lowercase letters, digits and inner apostrophes. The only tokens that are not ordinary words are numbers such as <code>1&frac12;d</code> (old British prices), because <code>&frac12;</code> is a Unicode digit. I kept them as valid tokens.</li>
+        </ul>
+        <p style="font-size: 14px;">The 12 most frequent words, before and after:</p>
+<pre class="term">original:  the 16738, of 9296, to 9283, and 9038, a 6551, in 4880, that 3580, I 3258, was 3038, you 3031, for 2924, with 2567
+11.4:      the 18701, and 9991, to 9607, of 9585, a 7050, in 5475, i 4350, you 4266, that 4144, it 3564, he 3270, for 3252</pre>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 11.5: matrix-vector multiplication $b = Ax$</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;">Class <code>MatrixVector</code>, arguments <code>matrix_folder vector_file output</code>. Every line of every file in the matrix folder is one row in the form <code>i,A(i,0),A(i,1),...</code>.</p>
+        <h3>Design</h3>
+        <ul style="font-size: 14px;">
+            <li><strong>Vector.</strong> <code>main</code> reads the vector file through the Hadoop <code>FileSystem</code> API. Values may be separated by commas, spaces or newlines. It stores them as one comma-separated string with <code>conf.set("vector_values", ...)</code> <em>before</em> <code>Job.getInstance(conf, ...)</code>. The job takes a copy of the configuration, so a value set afterwards would not reach the tasks.</li>
+            <li><strong>Mapper</strong> <code>Mapper&lt;Object, Text, IntWritable, DoubleWritable&gt;</code>. <code>setup()</code> parses the vector into a <code>double[]</code> once per task. <code>map()</code> parses one row, computes the dot product $b_i = \sum_j A_{ij} x_j$ and emits <code>(i, b_i)</code>. If the row length differs from the vector length, the task fails with a message that names the row.</li>
+            <li><strong>Reducer</strong> <code>Reducer&lt;IntWritable, DoubleWritable, IntWritable, DoubleWritable&gt;</code> sums the values of a key. Each row appears once, so this is effectively the identity. Summing also keeps the job correct if one row were ever split into several partial products.</li>
+            <li>Rows are independent, so the map step is fully parallel. Hadoop gives each matrix file (and each block of a large file) its own map task. The output is sorted by row index because <code>IntWritable</code> keys are sorted in the shuffle.</li>
+        </ul>
+        <h3>Small test: the mathinsight example</h3>
+        <p style="font-size: 14px;">$A = \begin{pmatrix} 1 & -1 & 2 \\ 0 & -3 & 1 \end{pmatrix}$, $x = (2, 1, 0)^T$, expected $Ax = (1, -3)^T$.</p>
+<pre class="term">matrix_small/A.csv          vector_small.txt     output_mv_small/part-r-00000
+0,1,-1,2                    2                    0	1.0
+1,0,-3,1                    1                    1	-3.0
+                            0</pre>
+        <h3>Larger test</h3>
+        <p style="font-size: 14px;"><code>task11_5_gen.py</code> creates a 2000 &times; 500 matrix of random integers in $[-9, 9]$, split into 4 files (4 map tasks), and a vector of random values in $[-1, 1]$ with 3 decimals. It also writes the NumPy result <code>A @ x</code> to <code>expected_large.txt</code>. <code>task11_5_check.py</code> compares a Hadoop output with the reference row by row.</p>
+<pre class="term">$ python3 task11_5_check.py output_mv_small/part-r-00000 expected_small.txt
+rows=2 max_abs_error=0.000e+00
+$ python3 task11_5_check.py output_mv_large/part-r-00000 expected_large.txt
+rows=2000 max_abs_error=3.979e-13</pre>
+        <p style="font-size: 14px;">All 2000 rows are present. The largest difference, $4 \cdot 10^{-13}$, is floating-point rounding: Java and NumPy add the 500 terms in a different order.</p>
+    </div>
+</details>
+
+<details>
+    <summary>Bonus: improving WordMedian</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;"><code>WordMedian</code> computes the median length of the words in the input. The mapper emits <code>(length, 1)</code> for every token, and the reducer (also used as the combiner) sums them into a histogram. After the job, <code>main</code> reads the histogram and walks it to the middle. While testing it, I found several real bugs. This is a different kind of change from 11.4: 11.4 changed what counts as a word, while here the tokenisation is unchanged and the computation itself is fixed. The original file is kept in <code>original/WordMedian.java</code>.</p>
+        <h3>Problems in the original</h3>
+        <table class="t">
+            <thead><tr><th>#</th><th>Problem</th><th>Effect</th></tr></thead>
+            <tbody>
+                <tr><td>1</td><td style="text-align:left">For an even number of words, both "middle" indices are set to $N/2$. The branch that averages two values (<code>medianIndex2 &gt;= prevNum &amp;&amp; medianIndex1 &lt; num</code>) is a special case of the branch before it, so it can never run. It would also have failed, because it reads a third token from a two-column line.</td><td style="text-align:left">Wrong median for an even number of words. For <code>a bb</code> it prints <strong>1</strong> instead of <strong>1.5</strong></td></tr>
+                <tr><td>2</td><td style="text-align:left"><code>run()</code> calls <code>setConf(new Configuration())</code> and throws away the configuration built by <code>ToolRunner</code>.</td><td style="text-align:left">All <code>-D</code> options are silently ignored. With <code>-D mapreduce.job.reduces=3</code>, the original still ran one reducer.</td></tr>
+                <tr><td>3</td><td style="text-align:left">Only <code>part-r-00000</code> is read.</td><td style="text-align:left">With more than one reducer, the rest of the histogram would be lost (hidden today only by problem 2)</td></tr>
+                <tr><td>4</td><td style="text-align:left">Counts are <code>IntWritable</code>, and the median indices are <code>int</code>.</td><td style="text-align:left">Overflow for inputs with more than $2^{31}$ words</td></tr>
+                <tr><td>5</td><td style="text-align:left">Wrong arguments return 0, and <code>main</code> ignores the result of <code>ToolRunner.run</code>.</td><td style="text-align:left">A failed run looks like a success to scripts</td></tr>
+            </tbody>
+        </table>
+        <h3>Changes</h3>
+        <ul style="font-size: 14px;">
+            <li><code>run()</code> uses <code>getConf()</code>, so the generic options are respected.</li>
+            <li><code>readHistogram</code> reads <strong>all</strong> <code>part-r-*</code> files with <code>globStatus</code> and merges them into a <code>TreeMap&lt;Integer, Long&gt;</code>. Each reducer's file is sorted only within itself, and the map restores the global order of lengths.</li>
+            <li><code>medianOf</code> computes the total $N$ from the histogram itself and takes the values at ranks $\lfloor (N+1)/2 \rfloor$ and $\lfloor N/2 \rfloor + 1$, which are the same rank for odd $N$. It returns their average. This is the textbook definition and needs no special cases.</li>
+            <li>Counts are <code>LongWritable</code>/<code>long</code>.</li>
+            <li>Exit codes: 2 for usage errors, 1 if the job fails, 0 on success. <code>main</code> passes the code to <code>System.exit</code>.</li>
+        </ul>
+        <h3>Verification</h3>
+        <p style="font-size: 14px;">The reference is <code>task11_bonus_ref.py</code>: it splits on the same whitespace characters as <code>StringTokenizer</code>, measures length in UTF-16 units as <code>String.length()</code> does, and uses <code>statistics.median</code>. It reports 337 321 words for the books, the same as the <code>Map output records</code> counter.</p>
+        <table class="t">
+            <thead><tr><th>Input</th><th>Reference</th><th>Original</th><th>Improved</th></tr></thead>
+            <tbody>
+                <tr><td><code>a bb</code> (<code>median_demo/</code>)</td><td>1.5</td><td><strong>1</strong> (wrong)</td><td>1.5</td></tr>
+                <tr><td><code>a bb ccc</code></td><td>2</td><td>&ndash;</td><td>2.0</td></tr>
+                <tr><td><code>a a bb bb</code></td><td>1.5</td><td>&ndash;</td><td>1.5</td></tr>
+                <tr><td>5 books</td><td>4</td><td>4</td><td>4.0</td></tr>
+                <tr><td>5 books, <code>-D mapreduce.job.reduces=3</code></td><td>4</td><td>4, but 1 reducer (option ignored)</td><td>4.0, 3 output files merged</td></tr>
+            </tbody>
+        </table>
+        <p style="font-size: 14px;">The two runs saved in the project are <code>median_demo output_median_demo</code> and <code>-D mapreduce.job.reduces=3 in output_median_books</code>. In the books, 140 894 words are at most 3 characters long and 199 361 at most 4, so rank 168 661 (the middle of 337 321) falls into length 4.</p>
+<pre class="term">output_median_books (3 files, merged and sorted)
+1	13834
+2	53819
+3	73241
+4	58467
+5	39642
+6	29770
+...</pre>
+    </div>
+</details>
+
+<details>
+    <summary>Questions about the combiner</summary>
+    <div class="details-content">
+        <h3>Why is <code>IntSumReducer</code> also used as the combiner?</h3>
+        <p style="font-size: 14px;">A combiner runs on the output of one map task, before the shuffle, and sees only the pairs of that task. <code>IntSumReducer</code> can play this role because of two properties:</p>
+        <ul style="font-size: 14px;">
+            <li><strong>Addition is associative and commutative.</strong> Summing the 1s of each map task first and then summing the partial sums gives the same total as summing all the 1s at once: $\sum_{\text{all}} 1 = \sum_{\text{tasks}} \sum_{\text{task}} 1$. The grouping and the order do not matter.</li>
+            <li><strong>Its input and output types are the same</strong> (<code>Text, IntWritable</code> in and out). These are also the map output types, so the reducer cannot tell whether a value is an original 1 or a partial sum produced by the combiner.</li>
+        </ul>
+        <h3>What are the advantages?</h3>
+        <ul style="font-size: 14px;">
+            <li><strong>Less data in the shuffle.</strong> This is the most expensive phase: data is written to local disk, sent over the network and merged. In the run on the books, the combiner reduced 337 321 map output records to 60 321 (5.6&times; fewer), and 3.25 MB of map output to 0.87 MB of shuffle data. After 11.4 the reduction was 340 196 &rarr; 33 128 records (10&times;).</li>
+            <li><strong>Less work and memory for the reducers.</strong> The reducer of <code>the</code> receives 5 partial sums (one per map task) instead of 18 701 ones.</li>
+            <li><strong>Less skew.</strong> Frequent words would otherwise send far more data to their reducer than rare words. With a combiner, every key sends at most one record per map task (per spill).</li>
+            <li>Spills and merges on the map side are smaller.</li>
+        </ul>
+        <h3>Can every reducer be used as a combiner?</h3>
+        <p style="font-size: 14px;"><strong>No.</strong> Hadoop treats the combiner as an optional optimisation. It may run it 0, 1 or several times on any subset of the values of a key: per spill, and again during merges. The final result must not depend on that. A reducer is a valid combiner only if:</p>
+        <ul style="font-size: 14px;">
+            <li>its output key/value types equal its input types, which are the map output types;</li>
+            <li>the operation gives the same result when applied to partial groups and then to the partial results. In practice this means it is commutative and associative, like sum, max, min, set union or counting by summing counts;</li>
+            <li>it has no side effects that must happen exactly once.</li>
+        </ul>
+        <p style="font-size: 14px;">Counterexamples:</p>
+        <ul style="font-size: 14px;">
+            <li><strong>Average.</strong> A reducer that outputs the mean of its values cannot be a combiner: the mean of partial means is wrong when the groups have different sizes. For $(1, 2)$ and $(3)$, the mean of the means is $(1.5 + 3)/2 = 2.25$, but the true mean is 2. WordMean avoids this by emitting sums and counts, which can be added, and divides only at the end.</li>
+            <li><strong>Median, or the number of distinct values.</strong> These cannot be computed from partial results at all.</li>
+            <li><strong>A reducer that changes types.</strong> Example: one that writes <code>Text</code> such as <code>"the: 18701"</code>.</li>
+            <li><strong>A reducer that counts how many values it received</strong> instead of adding them. As a combiner, it would turn 100 ones into 1.</li>
+        </ul>
+        <p style="font-size: 14px;">A side note on 11.5: <code>MatrixVector</code> also sets its summing reducer as the combiner, and this is correct for the same reasons as in WordCount. But every row index occurs only once, so there is nothing to combine (combine input = combine output). A combiner only helps when keys repeat within one map task.</p>
+    </div>
+</details>
+
+<details>
+    <summary>Limitations</summary>
+    <div class="details-content">
+        <ul style="font-size: 14px;">
+            <li>All runs used Hadoop local mode (one JVM, <code>LocalJobRunner</code>) in a container, not a real cluster. The number of map tasks is real, but they do not run on separate machines.</li>
+            <li>The vector in 11.5 is sent through the job configuration, as the assignment requires. That is fine for thousands of elements, but for very long vectors the distributed cache (<code>job.addCacheFile</code>) would be the right tool.</li>
+            <li>The 11.4 tokeniser is a reasonable heuristic, not a full English tokeniser. Hyphenated words such as <code>well-known</code> become two words, and the possessive <code>'s</code> stays part of the word (<code>adam's</code>).</li>
+        </ul>
+    </div>
+</details>
+
+    </body>
+    <script>
+        function loadKaTeXAndRender() {
+            const katexCSS = document.createElement("link");
+            katexCSS.rel = "stylesheet";
+            katexCSS.href =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(katexCSS);
+
+            const katexScript = document.createElement("script");
+            katexScript.src =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+            katexScript.defer = true;
+
+            katexScript.onload = () => {
+                const autoRenderScript = document.createElement("script");
+                autoRenderScript.src =
+                    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                autoRenderScript.defer = true;
+
+                autoRenderScript.onload = () => {
+                    if (window.renderMathInElement) {
+                        window.renderMathInElement(document.body, {
+                            delimiters: [
+                                { left: "$$", right: "$$", display: true },
+                                { left: "$", right: "$", display: false },
+                            ],
+                            throwOnError: false,
+                        });
+                    }
+                };
+                document.head.appendChild(autoRenderScript);
+            };
+
+            document.head.appendChild(katexScript);
+        }
+        loadKaTeXAndRender();
+    </script>
+</html>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.6;
+        color: #111;
+        background-color: #fff;
+        max-width: 1280px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 8px 0;
+    }
+
+    .math {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 17px;
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+
+    ul {
+        margin: 8px 0 16px 20px;
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    .report-header {
+        margin-bottom: 28px;
+    }
+
+    .report-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #111;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table th {
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        width: 15%;
+        padding: 3px 6px 3px 0;
+        white-space: nowrap;
+    }
+
+    .report-meta-table td {
+        color: #111;
+        width: 35%;
+        padding: 3px 12px 3px 0;
+    }
+
+    .report-meta-table a {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .report-meta-table a:hover {
+        text-decoration: underline;
+    }
+
+    .report-divider {
+        border: 0;
+        border-top: 1px solid #d1d5db;
+        margin-top: 8px;
+    }
+
+    .math-left .katex-display {
+        text-align: left !important;
+    }
+
+    .math-left .katex-display > .katex {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    /* Сноски в тексте */
+    a.ref-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0 1px;
+    }
+
+    a.ref-link:hover {
+        text-decoration: underline;
+    }
+
+    .report-references {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .report-references h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .report-references ol {
+        padding-left: 20px;
+    }
+
+    .report-references li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
+
+    .report-references .ref-title {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .report-references a {
+        color: #1a73e8 !important;
+        text-decoration: underline !important;
+        word-break: break-all;
+        cursor: pointer;
+    }
+
+    details {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin: 16px 0;
+        background-color: #fff;
+        transition: all 0.2s ease;
+    }
+
+    details[open] {
+        border-color: #cbd5e1;
+    }
+
+    details > :not(summary) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    summary {
+        cursor: pointer;
+        padding: 10px 14px;
+        user-select: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    summary:hover {
+        background-color: #f8fafc;
+    }
+
+    summary h2 {
+        display: inline;
+        font-size: 16px;
+        margin: 0 0 0 6px;
+    }
+
+    .details-content {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 16px auto;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    img + p {
+        text-align: center;
+        font-size: 13px;
+        color: #57606a;
+        margin-top: -8px;
+        margin-bottom: 20px;
+    }
+</style>

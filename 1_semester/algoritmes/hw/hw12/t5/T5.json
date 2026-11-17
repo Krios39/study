@@ -1,0 +1,672 @@
+{
+  "main": {
+    "bwt": "snnnnbbdbn$aanaaaaaaa",
+    "decode": [
+      {
+        "known": "s$",
+        "letter": "s",
+        "next": 20,
+        "rank": 0,
+        "row": 0,
+        "step": 1
+      },
+      {
+        "known": "as$",
+        "letter": "a",
+        "next": 9,
+        "rank": 8,
+        "row": 20,
+        "step": 2
+      },
+      {
+        "known": "nas$",
+        "letter": "n",
+        "next": 18,
+        "rank": 4,
+        "row": 9,
+        "step": 3
+      },
+      {
+        "known": "anas$",
+        "letter": "a",
+        "next": 7,
+        "rank": 6,
+        "row": 18,
+        "step": 4
+      },
+      {
+        "known": "danas$",
+        "letter": "d",
+        "next": 13,
+        "rank": 0,
+        "row": 7,
+        "step": 5
+      },
+      {
+        "known": "ndanas$",
+        "letter": "n",
+        "next": 19,
+        "rank": 5,
+        "row": 13,
+        "step": 6
+      },
+      {
+        "known": "andanas$",
+        "letter": "a",
+        "next": 8,
+        "rank": 7,
+        "row": 19,
+        "step": 7
+      },
+      {
+        "known": "bandanas$",
+        "letter": "b",
+        "next": 12,
+        "rank": 2,
+        "row": 8,
+        "step": 8
+      },
+      {
+        "known": "abandanas$",
+        "letter": "a",
+        "next": 2,
+        "rank": 1,
+        "row": 12,
+        "step": 9
+      },
+      {
+        "known": "nabandanas$",
+        "letter": "n",
+        "next": 15,
+        "rank": 1,
+        "row": 2,
+        "step": 10
+      },
+      {
+        "known": "anabandanas$",
+        "letter": "a",
+        "next": 4,
+        "rank": 3,
+        "row": 15,
+        "step": 11
+      },
+      {
+        "known": "nanabandanas$",
+        "letter": "n",
+        "next": 17,
+        "rank": 3,
+        "row": 4,
+        "step": 12
+      },
+      {
+        "known": "ananabandanas$",
+        "letter": "a",
+        "next": 6,
+        "rank": 5,
+        "row": 17,
+        "step": 13
+      },
+      {
+        "known": "bananabandanas$",
+        "letter": "b",
+        "next": 11,
+        "rank": 1,
+        "row": 6,
+        "step": 14
+      },
+      {
+        "known": "abananabandanas$",
+        "letter": "a",
+        "next": 1,
+        "rank": 0,
+        "row": 11,
+        "step": 15
+      },
+      {
+        "known": "nabananabandanas$",
+        "letter": "n",
+        "next": 14,
+        "rank": 0,
+        "row": 1,
+        "step": 16
+      },
+      {
+        "known": "anabananabandanas$",
+        "letter": "a",
+        "next": 3,
+        "rank": 2,
+        "row": 14,
+        "step": 17
+      },
+      {
+        "known": "nanabananabandanas$",
+        "letter": "n",
+        "next": 16,
+        "rank": 2,
+        "row": 3,
+        "step": 18
+      },
+      {
+        "known": "ananabananabandanas$",
+        "letter": "a",
+        "next": 5,
+        "rank": 4,
+        "row": 16,
+        "step": 19
+      },
+      {
+        "known": "bananabananabandanas$",
+        "letter": "b",
+        "next": 10,
+        "rank": 0,
+        "row": 5,
+        "step": 20
+      }
+    ],
+    "first": "$aaaaaaaaabbbdnnnnnns",
+    "rotations": [
+      {
+        "original": false,
+        "rank": 0,
+        "rotation": "$bananabananabandanas",
+        "row": 0,
+        "start": 20
+      },
+      {
+        "original": false,
+        "rank": 0,
+        "rotation": "abananabandanas$banan",
+        "row": 1,
+        "start": 5
+      },
+      {
+        "original": false,
+        "rank": 1,
+        "rotation": "abandanas$bananabanan",
+        "row": 2,
+        "start": 11
+      },
+      {
+        "original": false,
+        "rank": 2,
+        "rotation": "anabananabandanas$ban",
+        "row": 3,
+        "start": 3
+      },
+      {
+        "original": false,
+        "rank": 3,
+        "rotation": "anabandanas$bananaban",
+        "row": 4,
+        "start": 9
+      },
+      {
+        "original": false,
+        "rank": 0,
+        "rotation": "ananabananabandanas$b",
+        "row": 5,
+        "start": 1
+      },
+      {
+        "original": false,
+        "rank": 1,
+        "rotation": "ananabandanas$bananab",
+        "row": 6,
+        "start": 7
+      },
+      {
+        "original": false,
+        "rank": 0,
+        "rotation": "anas$bananabananaband",
+        "row": 7,
+        "start": 16
+      },
+      {
+        "original": false,
+        "rank": 2,
+        "rotation": "andanas$bananabananab",
+        "row": 8,
+        "start": 13
+      },
+      {
+        "original": false,
+        "rank": 4,
+        "rotation": "as$bananabananabandan",
+        "row": 9,
+        "start": 18
+      },
+      {
+        "original": true,
+        "rank": 0,
+        "rotation": "bananabananabandanas$",
+        "row": 10,
+        "start": 0
+      },
+      {
+        "original": false,
+        "rank": 0,
+        "rotation": "bananabandanas$banana",
+        "row": 11,
+        "start": 6
+      },
+      {
+        "original": false,
+        "rank": 1,
+        "rotation": "bandanas$bananabanana",
+        "row": 12,
+        "start": 12
+      },
+      {
+        "original": false,
+        "rank": 5,
+        "rotation": "danas$bananabananaban",
+        "row": 13,
+        "start": 15
+      },
+      {
+        "original": false,
+        "rank": 2,
+        "rotation": "nabananabandanas$bana",
+        "row": 14,
+        "start": 4
+      },
+      {
+        "original": false,
+        "rank": 3,
+        "rotation": "nabandanas$bananabana",
+        "row": 15,
+        "start": 10
+      },
+      {
+        "original": false,
+        "rank": 4,
+        "rotation": "nanabananabandanas$ba",
+        "row": 16,
+        "start": 2
+      },
+      {
+        "original": false,
+        "rank": 5,
+        "rotation": "nanabandanas$bananaba",
+        "row": 17,
+        "start": 8
+      },
+      {
+        "original": false,
+        "rank": 6,
+        "rotation": "nas$bananabananabanda",
+        "row": 18,
+        "start": 17
+      },
+      {
+        "original": false,
+        "rank": 7,
+        "rotation": "ndanas$bananabananaba",
+        "row": 19,
+        "start": 14
+      },
+      {
+        "original": false,
+        "rank": 8,
+        "rotation": "s$bananabananabandana",
+        "row": 20,
+        "start": 19
+      }
+    ],
+    "runs_bwt": 10,
+    "runs_text": 21,
+    "suffix_array": [
+      20,
+      5,
+      11,
+      3,
+      9,
+      1,
+      7,
+      16,
+      13,
+      18,
+      0,
+      6,
+      12,
+      15,
+      4,
+      10,
+      2,
+      8,
+      17,
+      14,
+      19
+    ],
+    "text": "bananabananabandanas$"
+  },
+  "own": {
+    "bwt": "lllolloopp$lllppooii",
+    "decode": [
+      {
+        "known": "l$",
+        "letter": "l",
+        "next": 3,
+        "rank": 0,
+        "row": 0,
+        "step": 1
+      },
+      {
+        "known": "ol$",
+        "letter": "o",
+        "next": 11,
+        "rank": 0,
+        "row": 3,
+        "step": 2
+      },
+      {
+        "known": "lol$",
+        "letter": "l",
+        "next": 8,
+        "rank": 5,
+        "row": 11,
+        "step": 3
+      },
+      {
+        "known": "plol$",
+        "letter": "p",
+        "next": 16,
+        "rank": 0,
+        "row": 8,
+        "step": 4
+      },
+      {
+        "known": "oplol$",
+        "letter": "o",
+        "next": 14,
+        "rank": 3,
+        "row": 16,
+        "step": 5
+      },
+      {
+        "known": "poplol$",
+        "letter": "p",
+        "next": 18,
+        "rank": 2,
+        "row": 14,
+        "step": 6
+      },
+      {
+        "known": "ipoplol$",
+        "letter": "i",
+        "next": 1,
+        "rank": 0,
+        "row": 18,
+        "step": 7
+      },
+      {
+        "known": "lipoplol$",
+        "letter": "l",
+        "next": 4,
+        "rank": 1,
+        "row": 1,
+        "step": 8
+      },
+      {
+        "known": "llipoplol$",
+        "letter": "l",
+        "next": 6,
+        "rank": 3,
+        "row": 4,
+        "step": 9
+      },
+      {
+        "known": "ollipoplol$",
+        "letter": "o",
+        "next": 12,
+        "rank": 1,
+        "row": 6,
+        "step": 10
+      },
+      {
+        "known": "lollipoplol$",
+        "letter": "l",
+        "next": 9,
+        "rank": 6,
+        "row": 12,
+        "step": 11
+      },
+      {
+        "known": "plollipoplol$",
+        "letter": "p",
+        "next": 17,
+        "rank": 1,
+        "row": 9,
+        "step": 12
+      },
+      {
+        "known": "oplollipoplol$",
+        "letter": "o",
+        "next": 15,
+        "rank": 4,
+        "row": 17,
+        "step": 13
+      },
+      {
+        "known": "poplollipoplol$",
+        "letter": "p",
+        "next": 19,
+        "rank": 3,
+        "row": 15,
+        "step": 14
+      },
+      {
+        "known": "ipoplollipoplol$",
+        "letter": "i",
+        "next": 2,
+        "rank": 1,
+        "row": 19,
+        "step": 15
+      },
+      {
+        "known": "lipoplollipoplol$",
+        "letter": "l",
+        "next": 5,
+        "rank": 2,
+        "row": 2,
+        "step": 16
+      },
+      {
+        "known": "llipoplollipoplol$",
+        "letter": "l",
+        "next": 7,
+        "rank": 4,
+        "row": 5,
+        "step": 17
+      },
+      {
+        "known": "ollipoplollipoplol$",
+        "letter": "o",
+        "next": 13,
+        "rank": 2,
+        "row": 7,
+        "step": 18
+      },
+      {
+        "known": "lollipoplollipoplol$",
+        "letter": "l",
+        "next": 10,
+        "rank": 7,
+        "row": 13,
+        "step": 19
+      }
+    ],
+    "first": "$iillllllllooooopppp",
+    "rotations": [
+      {
+        "original": false,
+        "rank": 0,
+        "rotation": "$lollipoplollipoplol",
+        "row": 0,
+        "start": 19
+      },
+      {
+        "original": false,
+        "rank": 1,
+        "rotation": "ipoplol$lollipoploll",
+        "row": 1,
+        "start": 12
+      },
+      {
+        "original": false,
+        "rank": 2,
+        "rotation": "ipoplollipoplol$loll",
+        "row": 2,
+        "start": 4
+      },
+      {
+        "original": false,
+        "rank": 0,
+        "rotation": "l$lollipoplollipoplo",
+        "row": 3,
+        "start": 18
+      },
+      {
+        "original": false,
+        "rank": 3,
+        "rotation": "lipoplol$lollipoplol",
+        "row": 4,
+        "start": 11
+      },
+      {
+        "original": false,
+        "rank": 4,
+        "rotation": "lipoplollipoplol$lol",
+        "row": 5,
+        "start": 3
+      },
+      {
+        "original": false,
+        "rank": 1,
+        "rotation": "llipoplol$lollipoplo",
+        "row": 6,
+        "start": 10
+      },
+      {
+        "original": false,
+        "rank": 2,
+        "rotation": "llipoplollipoplol$lo",
+        "row": 7,
+        "start": 2
+      },
+      {
+        "original": false,
+        "rank": 0,
+        "rotation": "lol$lollipoplollipop",
+        "row": 8,
+        "start": 16
+      },
+      {
+        "original": false,
+        "rank": 1,
+        "rotation": "lollipoplol$lollipop",
+        "row": 9,
+        "start": 8
+      },
+      {
+        "original": true,
+        "rank": 0,
+        "rotation": "lollipoplollipoplol$",
+        "row": 10,
+        "start": 0
+      },
+      {
+        "original": false,
+        "rank": 5,
+        "rotation": "ol$lollipoplollipopl",
+        "row": 11,
+        "start": 17
+      },
+      {
+        "original": false,
+        "rank": 6,
+        "rotation": "ollipoplol$lollipopl",
+        "row": 12,
+        "start": 9
+      },
+      {
+        "original": false,
+        "rank": 7,
+        "rotation": "ollipoplollipoplol$l",
+        "row": 13,
+        "start": 1
+      },
+      {
+        "original": false,
+        "rank": 2,
+        "rotation": "oplol$lollipoplollip",
+        "row": 14,
+        "start": 14
+      },
+      {
+        "original": false,
+        "rank": 3,
+        "rotation": "oplollipoplol$lollip",
+        "row": 15,
+        "start": 6
+      },
+      {
+        "original": false,
+        "rank": 3,
+        "rotation": "plol$lollipoplollipo",
+        "row": 16,
+        "start": 15
+      },
+      {
+        "original": false,
+        "rank": 4,
+        "rotation": "plollipoplol$lollipo",
+        "row": 17,
+        "start": 7
+      },
+      {
+        "original": false,
+        "rank": 0,
+        "rotation": "poplol$lollipoplolli",
+        "row": 18,
+        "start": 13
+      },
+      {
+        "original": false,
+        "rank": 1,
+        "rotation": "poplollipoplol$lolli",
+        "row": 19,
+        "start": 5
+      }
+    ],
+    "runs_bwt": 10,
+    "runs_text": 18,
+    "suffix_array": [
+      19,
+      12,
+      4,
+      18,
+      11,
+      3,
+      10,
+      2,
+      16,
+      8,
+      0,
+      17,
+      9,
+      1,
+      14,
+      6,
+      15,
+      7,
+      13,
+      5
+    ],
+    "text": "lollipoplollipoplol$"
+  },
+  "without_end_marker": {
+    "ananab": "nnbaaa",
+    "banana": "nnbaaa"
+  }
+}

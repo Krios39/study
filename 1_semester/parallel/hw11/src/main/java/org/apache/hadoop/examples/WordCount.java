@@ -18,7 +18,8 @@
 package org.apache.hadoop.examples;
 
 import java.io.IOException;
-import java.util.StringTokenizer;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -38,13 +39,18 @@ public class WordCount {
     
     private final static IntWritable one = new IntWritable(1);
     private Text word = new Text();
-      
+    private static final Pattern SEPARATORS = Pattern.compile("[^\\p{L}\\p{N}']+");
+    private static final Pattern EDGE_APOSTROPHES = Pattern.compile("^'+|'+$");
+
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
-      StringTokenizer itr = new StringTokenizer(value.toString());
-      while (itr.hasMoreTokens()) {
-        word.set(itr.nextToken());
-        context.write(word, one);
+      String line = value.toString().toLowerCase(Locale.ROOT).replace('’', '\'');
+      for (String token : SEPARATORS.split(line)) {
+        String clean = EDGE_APOSTROPHES.matcher(token).replaceAll("");
+        if (!clean.isEmpty()) {
+          word.set(clean);
+          context.write(word, one);
+        }
       }
     }
   }
@@ -66,6 +72,8 @@ public class WordCount {
   }
 
   public static void main(String[] args) throws Exception {
+    org.apache.log4j.BasicConfigurator.configure();
+    org.apache.log4j.Logger.getRootLogger().setLevel(org.apache.log4j.Level.INFO);
     Configuration conf = new Configuration();
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
     if (otherArgs.length < 2) {

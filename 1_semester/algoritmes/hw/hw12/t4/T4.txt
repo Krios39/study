@@ -1,0 +1,85 @@
+self-check: 2000 random texts over {a,b} and {a,b,c} and a^5000 agree with sorting suffix slices; intervals agree with a scan
+
+suffix array of bananabananabandanas$
+rank   SA  suffix
+   0   20  $
+   1    5  abananabandanas$
+   2   11  abandanas$
+   3    3  anabananabandanas$
+   4    9  anabandanas$
+   5    1  ananabananabandanas$
+   6    7  ananabandanas$
+   7   16  anas$
+   8   13  andanas$
+   9   18  as$
+  10    0  bananabananabandanas$
+  11    6  bananabandanas$
+  12   12  bandanas$
+  13   15  danas$
+  14    4  nabananabandanas$
+  15   10  nabandanas$
+  16    2  nanabananabandanas$
+  17    8  nanabandanas$
+  18   17  nas$
+  19   14  ndanas$
+  20   19  s$
+
+pattern ana: interval [3, 8) of size 5, SA values [3, 9, 1, 7, 16], sorted [1, 3, 7, 9, 16], same as the suffix tree leaves; 22 character comparisons
+  lower bound: first rank whose suffix is not smaller than the pattern
+    lo  0 hi 21 mid 10 SA  0 suffix banana   Greater -> hi = 10
+    lo  0 hi 10 mid  5 SA  1 suffix ananab   Equal -> hi = 5
+    lo  0 hi  5 mid  2 SA 11 suffix abanda   Less -> lo = 3
+    lo  3 hi  5 mid  4 SA  9 suffix anaban   Equal -> hi = 4
+    lo  3 hi  4 mid  3 SA  3 suffix anaban   Equal -> hi = 3
+    result 3
+  upper bound: first rank whose suffix is greater than the pattern (prefix of length m compared)
+    lo  0 hi 21 mid 10 SA  0 suffix banana   Greater -> hi = 10
+    lo  0 hi 10 mid  5 SA  1 suffix ananab   Equal -> lo = 6
+    lo  6 hi 10 mid  8 SA 13 suffix andana   Greater -> hi = 8
+    lo  6 hi  8 mid  7 SA 16 suffix anas$    Equal -> lo = 8
+    result 8
+
+pattern band: interval [12, 13) of size 1, SA values [12], sorted [12], same as the suffix tree leaves; 24 character comparisons
+  lower bound: first rank whose suffix is not smaller than the pattern
+    lo  0 hi 21 mid 10 SA  0 suffix bananab  Less -> lo = 11
+    lo 11 hi 21 mid 16 SA  2 suffix nanaban  Greater -> hi = 16
+    lo 11 hi 16 mid 13 SA 15 suffix danas$   Greater -> hi = 13
+    lo 11 hi 13 mid 12 SA 12 suffix bandana  Equal -> hi = 12
+    lo 11 hi 12 mid 11 SA  6 suffix bananab  Less -> lo = 12
+    result 12
+  upper bound: first rank whose suffix is greater than the pattern (prefix of length m compared)
+    lo  0 hi 21 mid 10 SA  0 suffix bananab  Less -> lo = 11
+    lo 11 hi 21 mid 16 SA  2 suffix nanaban  Greater -> hi = 16
+    lo 11 hi 16 mid 13 SA 15 suffix danas$   Greater -> hi = 13
+    lo 11 hi 13 mid 12 SA 12 suffix bandana  Equal -> lo = 13
+    result 13
+
+pattern nabx: interval [16, 16) of size 0, SA values [], sorted [], same as the suffix tree leaves; 18 character comparisons
+  lower bound: first rank whose suffix is not smaller than the pattern
+    lo  0 hi 21 mid 10 SA  0 suffix bananab  Less -> lo = 11
+    lo 11 hi 21 mid 16 SA  2 suffix nanaban  Greater -> hi = 16
+    lo 11 hi 16 mid 13 SA 15 suffix danas$   Less -> lo = 14
+    lo 14 hi 16 mid 15 SA 10 suffix nabanda  Less -> lo = 16
+    result 16
+  upper bound: first rank whose suffix is greater than the pattern (prefix of length m compared)
+    lo  0 hi 21 mid 10 SA  0 suffix bananab  Less -> lo = 11
+    lo 11 hi 21 mid 16 SA  2 suffix nanaban  Greater -> hi = 16
+    lo 11 hi 16 mid 13 SA 15 suffix danas$   Less -> lo = 14
+    lo 14 hi 16 mid 15 SA 10 suffix nabanda  Less -> lo = 16
+    result 16
+
+T1 text (26 letters, seed 2026): n = 1000000, construction 193.9 ms (median of 3), suffix array 4000000 bytes (u32 per suffix) plus the text 1000000 bytes, construction working memory about 12000000 bytes (SA, rank, next)
+  m  avg occ   SA cmp    SA us  naive cmp   naive us    KMP cmp     KMP us   Hors cmp    Hors us k vs Hors
+  5      1.1    111.3    0.218    1039983     1010.6    1038455     1129.3     225388      631.2       307
+ 10      1.0    120.5    0.216    1039985      943.7    1038466      887.8     123825      324.7       598
+ 20      1.0    140.9    0.234    1039979     1040.3    1038456     1353.1      73889      219.8       883
+check m = 10, 299 queries: build + queries 288.7 ms, Horspool scans 117.3 ms -> scanning is faster
+check m = 10, 1195 queries: build + queries 285.3 ms, Horspool scans 532.8 ms -> the index is faster
+
+T2 text (DNA {a,c,g,t}, seed 2026): n = 1000000, construction 391.6 ms (median of 3), suffix array 4000000 bytes (u32 per suffix) plus the text 1000000 bytes, construction working memory about 12000000 bytes (SA, rank, next)
+  m  avg occ   SA cmp    SA us  naive cmp   naive us    KMP cmp     KMP us   Hors cmp    Hors us k vs Hors
+  5    981.0    164.4    0.340    1332000     3779.7    1246715     3733.0     463462     1954.5       200
+ 10      2.0    232.6    0.386    1333278     3671.1    1247062     3644.7     398674     1626.4       241
+ 20      1.0    252.6    0.384    1333238     4061.3    1247291     4008.0     390178     1755.4       223
+check m = 10, 120 queries: build + queries 436.7 ms, Horspool scans 214.2 ms -> scanning is faster
+check m = 10, 482 queries: build + queries 399.5 ms, Horspool scans 792.4 ms -> the index is faster

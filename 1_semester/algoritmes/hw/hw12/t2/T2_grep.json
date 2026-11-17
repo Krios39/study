@@ -1,0 +1,83 @@
+{
+  "command": "grep -F -q PATTERN FILE",
+  "grep_startup_empty_file_ms": 9.7689,
+  "grep_version": "grep (GNU grep) 3.0",
+  "note": "grep time is wall-clock of the whole process: start-up, file reading and search; our times are search only on text already in memory, file_read_ms is reported separately",
+  "rows": [
+    {
+      "file_read_ms": 0.3024,
+      "first_match": null,
+      "found": false,
+      "grep_ms": 12.5524,
+      "horspool_ms": 0.2786,
+      "kind": "absent",
+      "kmp_ms": 0.8944,
+      "naive_ms": 1.0058999999999998,
+      "pattern": "qqqqqzzzzz",
+      "text": "letters"
+    },
+    {
+      "file_read_ms": 0.0996,
+      "first_match": null,
+      "found": false,
+      "grep_ms": 12.104099999999999,
+      "horspool_ms": 0.2037,
+      "kind": "absent",
+      "kmp_ms": 0.8392000000000001,
+      "naive_ms": 1.042,
+      "pattern": "zyxwvutsrqponmlkjihg",
+      "text": "letters"
+    },
+    {
+      "file_read_ms": 0.0903,
+      "first_match": 999980,
+      "found": true,
+      "grep_ms": 13.0735,
+      "horspool_ms": 0.1931,
+      "kind": "near end",
+      "kmp_ms": 0.823,
+      "naive_ms": 1.0279,
+      "pattern": "mewhcbvsdkcffvaymopo",
+      "text": "letters"
+    },
+    {
+      "file_read_ms": 0.0994,
+      "first_match": 1000,
+      "found": true,
+      "grep_ms": 11.745800000000001,
+      "horspool_ms": 0.00019999999999999998,
+      "kind": "near start",
+      "kmp_ms": 0.0007,
+      "naive_ms": 0.001,
+      "pattern": "ztpmpzbmmi",
+      "text": "letters"
+    },
+    {
+      "file_read_ms": 0.1287,
+      "first_match": null,
+      "found": false,
+      "grep_ms": 12.5165,
+      "horspool_ms": 2.4334000000000002,
+      "kind": "absent",
+      "kmp_ms": 1.191,
+      "naive_ms": 6.853,
+      "pattern": "aaaaaaaaaaaaaaaaaaab",
+      "text": "periodic"
+    },
+    {
+      "file_read_ms": 0.3231,
+      "first_match": null,
+      "found": false,
+      "grep_ms": 12.9313,
+      "horspool_ms": 7.263999999999999,
+      "kind": "absent",
+      "kmp_ms": 0.4911,
+      "naive_ms": 0.7205999999999999,
+      "pattern": "baaaaaaaaaaaaaaaaaaa",
+      "text": "periodic"
+    }
+  ],
+  "runs": 7,
+  "seed": 2026,
+  "size": 1000000
+}

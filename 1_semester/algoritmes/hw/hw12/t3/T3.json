@@ -1,0 +1,65 @@
+{
+  "text": "bananabananabandanas$",
+  "traces": [
+    {
+      "occurrences": [
+        1,
+        3,
+        7,
+        9,
+        16
+      ],
+      "pattern": "ana",
+      "tree_comparisons": 3,
+      "tree_steps": [
+        "at root, edge [1,2) \"a\": a=a, arrive at v1",
+        "at v1, edge [2,3) \"n\": n=n, arrive at v3",
+        "at v3, edge [3,4) \"a\": a=a, arrive at v4"
+      ],
+      "trie_steps": [
+        "at root, edges {$abdns}: follow 'a' to \"a\"",
+        "at \"a\", edges {bns}: follow 'n' to \"an\"",
+        "at \"an\", edges {ad}: follow 'a' to \"ana\""
+      ]
+    },
+    {
+      "occurrences": [
+        12
+      ],
+      "pattern": "band",
+      "tree_comparisons": 4,
+      "tree_steps": [
+        "at root, edge [0,3) \"ban\": b=b a=a n=n, arrive at v7",
+        "at v7, edge [15,21) \"danas$\": d=d, the pattern ends after 1 of 6 letters, the locus lies on this edge above leaf 12"
+      ],
+      "trie_steps": [
+        "at root, edges {$abdns}: follow 'b' to \"b\"",
+        "at \"b\", edges {a}: follow 'a' to \"ba\"",
+        "at \"ba\", edges {n}: follow 'n' to \"ban\"",
+        "at \"ban\", edges {ad}: follow 'd' to \"band\""
+      ]
+    },
+    {
+      "occurrences": [],
+      "pattern": "nabx",
+      "tree_comparisons": 4,
+      "tree_steps": [
+        "at root, edge [2,3) \"n\": n=n, arrive at v9",
+        "at v9, edge [3,4) \"a\": a=a, arrive at v10",
+        "at v10, edge [6,9) \"ban\": b=b x≠a, mismatch inside the edge, the pattern does not occur"
+      ],
+      "trie_steps": [
+        "at root, edges {$abdns}: follow 'n' to \"n\"",
+        "at \"n\", edges {ad}: follow 'a' to \"na\"",
+        "at \"na\", edges {bns}: follow 'b' to \"nab\"",
+        "at \"nab\", edges {a}: no 'x', the pattern does not occur"
+      ]
+    }
+  ],
+  "tree_edges": 33,
+  "tree_internal": 13,
+  "tree_leaves": 21,
+  "tree_nodes": 34,
+  "trie_edges": 174,
+  "trie_nodes": 175
+}
