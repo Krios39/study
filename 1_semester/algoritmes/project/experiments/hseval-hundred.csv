@@ -1,0 +1,13 @@
+school,solution,ourHard,hsevalInfeasibility,ourSoft,hsevalObjective,match
+large-100-1shift-1,DSATUR,30,30,18219,18219,да
+large-100-1shift-1,annealing,0,0,612,612,да
+large-100-1shift-2,DSATUR,23,23,15694,15694,да
+large-100-1shift-2,annealing,0,0,483,483,да
+large-100-1shift-3,DSATUR,26,26,17173,17173,да
+large-100-1shift-3,annealing,0,0,558,558,да
+large-100-2shift-1,DSATUR,0,0,35440,35440,да
+large-100-2shift-1,annealing,0,0,2535,2535,да
+large-100-2shift-2,DSATUR,1,1,37668,37668,да
+large-100-2shift-2,annealing,0,0,2456,2456,да
+large-100-2shift-3,DSATUR,1,1,34225,34225,да
+large-100-2shift-3,annealing,0,0,2605,2605,да

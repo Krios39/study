@@ -12,7 +12,10 @@
     "anneal": "node scripts/anneal.ts",
     "experiment": "node scripts/experiment.ts",
     "reference": "node scripts/reference.ts",
-    "parts": "node scripts/parts.ts"
+    "parts": "node scripts/parts.ts",
+    "compare": "node scripts/compare.ts",
+    "xhstt": "node scripts/xhstt.ts",
+    "export-xhstt": "node scripts/export-xhstt.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
