@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
-import { Annealing } from "../src/annealing.ts";
-import { Dsatur } from "../src/dsatur.ts";
-import { hardViolations } from "../src/hard.ts";
-import { Loader } from "../src/loader.ts";
+import { Annealing } from "../src/solvers/annealing.ts";
+import { Dsatur } from "../src/solvers/dsatur.ts";
+import { hardViolations } from "./support/hard.ts";
+import { Loader } from "../src/io/loader.ts";
 import { UNASSIGNED } from "../src/model.ts";
-import { Problem } from "../src/problem.ts";
-import { Rng } from "../src/rng.ts";
-import { softStats } from "../src/soft.ts";
-import { Timetable } from "../src/timetable.ts";
+import { Problem } from "../src/core/problem.ts";
+import { Rng } from "../src/core/rng.ts";
+import { softStats } from "./support/soft.ts";
+import { Timetable } from "../src/core/timetable.ts";
 
 const load = (name: string) =>
   Problem.from(Loader.instance(fileURLToPath(new URL(`../instances/${name}.json`, import.meta.url))));
@@ -20,7 +20,7 @@ describe("Timetable", () => {
   it("matches the full evaluation on a DSATUR timetable", () => {
     for (const problem of [mini, medium]) {
       for (const options of [best, {}]) {
-        const slotOf = Dsatur.solve(problem, options).slotOf;
+        const slotOf = new Dsatur(options).solve(problem).slotOf;
         const timetable = Timetable.from(problem, slotOf);
         expect(timetable.violations()).toEqual(hardViolations(problem, slotOf));
         expect(timetable.soft()).toEqual(softStats(problem, slotOf));
@@ -30,7 +30,7 @@ describe("Timetable", () => {
 
   it("stays consistent after random moves and swaps, including clashes and unassigned lessons", () => {
     const rng = new Rng(7);
-    const timetable = Timetable.from(medium, Dsatur.solve(medium, best).slotOf);
+    const timetable = Timetable.from(medium, new Dsatur(best).solve(medium).slotOf);
     for (let i = 0; i < 5000; i++) {
       const lesson = rng.int(0, medium.nLessons - 1);
       if (rng.chance(0.5)) timetable.move(lesson, rng.int(UNASSIGNED, medium.nSlots - 1));
@@ -45,7 +45,7 @@ describe("Timetable", () => {
   });
 
   it("returns to the same cost when a move is undone", () => {
-    const slotOf = Dsatur.solve(mini, best).slotOf;
+    const slotOf = new Dsatur(best).solve(mini).slotOf;
     const timetable = Timetable.from(mini, slotOf);
     const cost = timetable.cost;
     timetable.move(0, (slotOf[0] + 3) % mini.nSlots);
@@ -57,29 +57,34 @@ describe("Timetable", () => {
 });
 
 describe("Annealing", () => {
-  const start = Dsatur.solve(mini, best).slotOf;
+  const start = new Dsatur(best).solve(mini).slotOf;
 
-  it.each(["move", "swap", "both"] as const)("never returns a worse timetable with %s", (moves) => {
-    const result = Annealing.run(mini, start, { moves, iterations: 20000, seed: 3 });
+  it.each([
+    ["moves only", { kempeShare: 0, swapShare: 0 }],
+    ["swaps only", { kempeShare: 0, swapShare: 1 }],
+    ["chains only", { kempeShare: 1 }],
+    ["the default mix", {}],
+  ])("never returns a worse timetable with %s", (_, mix) => {
+    const result = new Annealing({ ...mix, evaluations: 20000, seed: 3 }).solve(mini, start);
     expect(result.cost).toBeLessThanOrEqual(result.startCost);
     expect(Timetable.from(mini, result.slotOf).cost).toBe(result.cost);
     expect(hardViolations(mini, result.slotOf).total).toBe(0);
   });
 
   it("improves the soft cost of the DSATUR timetable", () => {
-    const result = Annealing.run(mini, start, { iterations: 50000, seed: 3 });
+    const result = new Annealing({ evaluations: 50000, seed: 3 }).solve(mini, start);
     expect(result.cost).toBeLessThan(result.startCost);
   });
 
   it("is reproducible for a fixed seed", () => {
-    const a = Annealing.run(mini, start, { iterations: 5000, seed: 11 });
-    const b = Annealing.run(mini, start, { iterations: 5000, seed: 11 });
+    const a = new Annealing({ evaluations: 5000, seed: 11 }).solve(mini, start);
+    const b = new Annealing({ evaluations: 5000, seed: 11 }).solve(mini, start);
     expect(Array.from(a.slotOf)).toEqual(Array.from(b.slotOf));
   });
 
   it("places lessons that the start left unassigned", () => {
     const empty = new Int32Array(mini.nLessons).fill(UNASSIGNED);
-    const result = Annealing.run(mini, empty, { moves: "move", iterations: 200000, seed: 5 });
+    const result = new Annealing({ kempeShare: 0, swapShare: 0, evaluations: 200000, seed: 5 }).solve(mini, empty);
     expect(hardViolations(mini, result.slotOf).unassigned).toBe(0);
   });
 });

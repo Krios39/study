@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { hardViolations } from "../src/hard.ts";
-import { Loader } from "../src/loader.ts";
-import { Problem } from "../src/problem.ts";
+import { hardViolations } from "./support/hard.ts";
+import { Loader } from "../src/io/loader.ts";
+import { Problem } from "../src/core/problem.ts";
 
 const path = (name: string) => fileURLToPath(new URL(`../instances/${name}`, import.meta.url));
 

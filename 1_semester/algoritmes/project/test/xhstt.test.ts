@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { Loader } from "../src/loader.ts";
-import { Problem } from "../src/problem.ts";
-import { Xhstt } from "../src/xhstt.ts";
+import { Loader } from "../src/io/loader.ts";
+import { Problem } from "../src/core/problem.ts";
+import { XhsttReader } from "../src/io/xhstt-reader.ts";
+import { Xml } from "../src/io/xml.ts";
 
 const sample = `﻿<?xml version="1.0"?>
 <HighSchoolTimetableArchive Id="sample">
@@ -56,8 +57,8 @@ const sample = `﻿<?xml version="1.0"?>
 </HighSchoolTimetableArchive>`;
 
 describe("XHSTT reader", () => {
-  const [node] = Xhstt.instanceNodes(Xhstt.parseXml(sample));
-  const { instance, report } = Xhstt.convert(node);
+  const [node] = XhsttReader.instanceNodes(Xml.parse(sample));
+  const { instance, report } = XhsttReader.convert(node);
 
   it("reads times, resources and events into the model", () => {
     expect(report.id).toBe("TINY");
@@ -83,14 +84,14 @@ describe("XHSTT reader", () => {
   });
 
   it("rejects broken XML", () => {
-    expect(() => Xhstt.parseXml("<a><b></a>")).toThrow(/unexpected/);
+    expect(() => Xml.parse("<a><b></a>")).toThrow(/unexpected/);
   });
 
   const archive = fileURLToPath(new URL("../instances/xhstt/XHSTT-2014.xml", import.meta.url));
   it.skipIf(!existsSync(archive))("reads the public archive", () => {
-    const nodes = Xhstt.instanceNodes(Xhstt.parseXml(readFileSync(archive, "utf8")));
+    const nodes = XhsttReader.instanceNodes(Xml.parse(readFileSync(archive, "utf8")));
     expect(nodes.length).toBe(25);
-    const brazil = Xhstt.convert(nodes.find((n) => n.attributes.Id === "BR-SA-00")!);
+    const brazil = XhsttReader.convert(nodes.find((n) => n.attributes.Id === "BR-SA-00")!);
     expect([brazil.report.times, brazil.report.classes, brazil.report.teachers, brazil.report.events, brazil.report.lessons]).toEqual([
       25, 6, 14, 63, 150,
     ]);

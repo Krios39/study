@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
-import { Loader } from "../src/loader.ts";
-import { Problem } from "../src/problem.ts";
-import { RandomGenerator } from "../src/random-generator.ts";
-import { wishOptions } from "../src/wishes.ts";
+import { Loader } from "../src/io/loader.ts";
+import { Problem } from "../src/core/problem.ts";
+import { RandomGenerator } from "../src/generators/random-generator.ts";
+import { Wishes } from "../src/generators/wishes.ts";
 
 const file = (name: string) => fileURLToPath(new URL(`../instances/${name}`, import.meta.url));
 const subjects = Loader.subjects(file("subjects.json"));
 const curriculum = Loader.curriculum(file("curriculum.json"), subjects);
 const school = (seed: number, shifts: 1 | 2, wishShare: number) =>
-  RandomGenerator.generate({ seed, size: "medium", shifts, wishShare }, subjects, curriculum).instance;
+  new RandomGenerator(subjects, curriculum).generate({ seed, size: "medium", shifts, wishShare }).instance;
 const label = (wish: { kind: string; periods: number[] }) => `${wish.kind} ${wish.periods.join("-")}`;
 
 describe("teacher wishes", () => {
   it("offers both shift wishes and three free windows in a two-shift day", () => {
-    expect(wishOptions(16).map(label)).toEqual([
+    expect(Wishes.options(16).map(label)).toEqual([
       "noFirstShift 0-7",
       "noSecondShift 8-15",
       "freePeriods 0-4",
@@ -24,7 +24,7 @@ describe("teacher wishes", () => {
   });
 
   it("offers only the free windows that fit a single-shift day", () => {
-    expect(wishOptions(8).map(label)).toEqual(["freePeriods 0-4", "freePeriods 4-7"]);
+    expect(Wishes.options(8).map(label)).toEqual(["freePeriods 0-4", "freePeriods 4-7"]);
   });
 
   it("draws all three kinds across two-shift schools", () => {

@@ -4,18 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "tools": "node experiments/tools/main.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "generate": "node scripts/generate.ts",
-    "render": "node scripts/render.ts",
-    "stress": "node scripts/stress.ts",
-    "anneal": "node scripts/anneal.ts",
-    "experiment": "node scripts/experiment.ts",
-    "reference": "node scripts/reference.ts",
-    "parts": "node scripts/parts.ts",
-    "compare": "node scripts/compare.ts",
-    "xhstt": "node scripts/xhstt.ts",
-    "export-xhstt": "node scripts/export-xhstt.ts"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

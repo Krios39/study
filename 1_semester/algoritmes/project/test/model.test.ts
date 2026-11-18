@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
-import { Problem } from "../src/problem.ts";
-import { hardViolations } from "../src/hard.ts";
-import { Loader } from "../src/loader.ts";
+import { Problem } from "../src/core/problem.ts";
+import { hardViolations } from "./support/hard.ts";
+import { Loader } from "../src/io/loader.ts";
 import { UNASSIGNED, type Instance, type LanguageOfInstruction, type SplitRule } from "../src/model.ts";
-import { SubjectCatalog } from "../src/subject-catalog.ts";
+import { SubjectCatalog } from "../src/io/subject-catalog.ts";
 
 const mini = Loader.instance(fileURLToPath(new URL("../instances/mini.json", import.meta.url)));
 

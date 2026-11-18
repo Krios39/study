@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
-import { Annealing } from "../src/annealing.ts";
-import { Dsatur } from "../src/dsatur.ts";
-import { hardViolations } from "../src/hard.ts";
-import { KempeChain } from "../src/kempe.ts";
-import { Loader } from "../src/loader.ts";
-import { Problem } from "../src/problem.ts";
-import { Rng } from "../src/rng.ts";
-import { Timetable } from "../src/timetable.ts";
+import { Annealing } from "../src/solvers/annealing.ts";
+import { Dsatur } from "../src/solvers/dsatur.ts";
+import { hardViolations } from "./support/hard.ts";
+import { KempeChain } from "../src/solvers/kempe.ts";
+import { Loader } from "../src/io/loader.ts";
+import { Problem } from "../src/core/problem.ts";
+import { Rng } from "../src/core/rng.ts";
+import { Timetable } from "../src/core/timetable.ts";
 
 const load = (name: string) =>
   Problem.from(Loader.instance(fileURLToPath(new URL(`../instances/${name}.json`, import.meta.url))));
@@ -16,7 +16,7 @@ const best = { respectAllowed: true, lessonRule: "freeSlots", slotRule: "leastPe
 describe("Kempe chain", () => {
   it.each(["mini", "medium-30"])("never creates a class or teacher clash on %s", (name) => {
     const problem = load(name);
-    const slotOf = Dsatur.solve(problem, best).slotOf;
+    const slotOf = new Dsatur(best).solve(problem).slotOf;
     const chain = new KempeChain(problem);
     const rng = new Rng(5);
     for (let i = 0; i < 2000; i++) {
@@ -41,7 +41,7 @@ describe("Kempe chain", () => {
 
   it("is a plain move when nothing stands in the way", () => {
     const problem = load("mini");
-    const slotOf = Dsatur.solve(problem, best).slotOf;
+    const slotOf = new Dsatur(best).solve(problem).slotOf;
     const chain = new KempeChain(problem);
     const cls = problem.lessonClass[0];
     const busy = new Set<number>();
@@ -57,10 +57,10 @@ describe("Kempe chain", () => {
 
 describe("Annealing with Kempe chains", () => {
   const problem = load("mini");
-  const start = Dsatur.solve(problem, best).slotOf;
+  const start = new Dsatur(best).solve(problem).slotOf;
 
-  it.each(["any", "sameDay", "otherDay"] as const)("keeps the timetable valid and consistent with %s slots", (kempeSlots) => {
-    const result = Annealing.run(problem, start, { iterations: 30000, seed: 2, kempeShare: 0.5, kempeSlots });
+  it("keeps the timetable valid and consistent", () => {
+    const result = new Annealing({ evaluations: 30000, seed: 2, kempeShare: 0.5 }).solve(problem, start);
     expect(result.cost).toBeLessThanOrEqual(result.startCost);
     expect(Timetable.from(problem, result.slotOf).cost).toBe(result.cost);
     expect(hardViolations(problem, result.slotOf).total).toBe(0);
@@ -69,14 +69,14 @@ describe("Annealing with Kempe chains", () => {
   });
 
   it("rejects chains longer than the limit", () => {
-    const result = Annealing.run(problem, start, { iterations: 20000, seed: 2, kempeShare: 1, kempeMaxLength: 1 });
+    const result = new Annealing({ evaluations: 20000, seed: 2, kempeShare: 1, kempeMaxLength: 1 }).solve(problem, start);
     expect(result.kempe.tooLong).toBeGreaterThan(0);
     expect(result.kempe.acceptedLengthSum).toBe(result.kempe.accepted);
   });
 
   it("uses a half share of chains by default", () => {
-    const plain = Annealing.run(problem, start, { iterations: 5000, seed: 4 });
-    const zero = Annealing.run(problem, start, { iterations: 5000, seed: 4, kempeShare: 0.5 });
+    const plain = new Annealing({ evaluations: 5000, seed: 4 }).solve(problem, start);
+    const zero = new Annealing({ evaluations: 5000, seed: 4, kempeShare: 0.5 }).solve(problem, start);
     expect(Array.from(zero.slotOf)).toEqual(Array.from(plain.slotOf));
   });
 });

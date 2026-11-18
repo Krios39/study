@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
-import { Dsatur } from "../src/dsatur.ts";
-import { hardViolations } from "../src/hard.ts";
-import { Loader } from "../src/loader.ts";
+import { Dsatur } from "../src/solvers/dsatur.ts";
+import { hardViolations } from "./support/hard.ts";
+import { Loader } from "../src/io/loader.ts";
 import { UNASSIGNED, type Instance } from "../src/model.ts";
-import { Problem } from "../src/problem.ts";
-import { softStats } from "../src/soft.ts";
+import { Problem } from "../src/core/problem.ts";
+import { softStats } from "./support/soft.ts";
 
 const mini = Problem.from(Loader.instance(fileURLToPath(new URL("../instances/mini.json", import.meta.url))));
 
@@ -28,24 +28,24 @@ const tiny: Instance = {
 
 describe("classic DSATUR", () => {
   it("follows saturation, then degree, then index, and takes the first free slot", () => {
-    const { slotOf, order } = Dsatur.solve(Problem.from(tiny));
+    const { slotOf, order } = new Dsatur().solve(Problem.from(tiny));
     expect(Array.from(order)).toEqual([0, 1, 2, 3]);
     expect(Array.from(slotOf)).toEqual([0, 1, 2, 2]);
   });
 
   it("skips forbidden slots only when asked to", () => {
-    const { slotOf } = Dsatur.solve(Problem.from(tiny), { respectAllowed: true });
+    const { slotOf } = new Dsatur({ respectAllowed: true }).solve(Problem.from(tiny));
     expect(Array.from(slotOf)).toEqual([1, 2, 0, 3]);
   });
 
   it("places every lesson exactly once", () => {
-    const { order } = Dsatur.solve(mini);
+    const { order } = new Dsatur().solve(mini);
     expect(Array.from(order).sort((a, b) => a - b)).toEqual(Array.from({ length: mini.nLessons }, (_, i) => i));
   });
 
   it("gives neighbours different slots on the mini instance", () => {
     for (const respectAllowed of [false, true]) {
-      const { slotOf } = Dsatur.solve(mini, { respectAllowed });
+      const { slotOf } = new Dsatur({ respectAllowed }).solve(mini);
       for (let l = 0; l < mini.nLessons; l++) {
         if (slotOf[l] === UNASSIGNED) continue;
         for (const n of mini.neighbours(l)) expect(slotOf[n]).not.toBe(slotOf[l]);
@@ -55,7 +55,7 @@ describe("classic DSATUR", () => {
   });
 
   it("keeps teachers out of unavailable slots when asked to", () => {
-    const { slotOf } = Dsatur.solve(mini, { respectAllowed: true });
+    const { slotOf } = new Dsatur({ respectAllowed: true }).solve(mini);
     expect(hardViolations(mini, slotOf)).toMatchObject({ classSlot: 0, teacherUnavailable: 0 });
   });
 });
@@ -66,19 +66,19 @@ describe("DSATUR with least-penalty slots", () => {
   it("puts two lessons of one subject on different days when it can", () => {
     const week: Instance = { ...tiny, days: 2, teachers: [{ id: "t1" }, { id: "t2" }] };
     const problem = Problem.from(week);
-    const { slotOf } = Dsatur.solve(problem, options);
+    const { slotOf } = new Dsatur(options).solve(problem);
     expect(problem.dayOf(slotOf[0])).not.toBe(problem.dayOf(slotOf[1]));
     expect(hardViolations(problem, slotOf)).toMatchObject({ classClash: 0, teacherClash: 0, unassigned: 0 });
   });
 
   it("keeps the graph colouring valid on the mini instance", () => {
-    const { slotOf } = Dsatur.solve(mini, options);
+    const { slotOf } = new Dsatur(options).solve(mini);
     expect(hardViolations(mini, slotOf)).toMatchObject({ classClash: 0, teacherClash: 0, classSlot: 0, teacherUnavailable: 0 });
   });
 
   it("repeats subjects less and balances days better than the first-free rule", () => {
-    const first = softStats(mini, Dsatur.solve(mini, { respectAllowed: true }).slotOf);
-    const least = softStats(mini, Dsatur.solve(mini, options).slotOf);
+    const first = softStats(mini, new Dsatur({ respectAllowed: true }).solve(mini).slotOf);
+    const least = softStats(mini, new Dsatur(options).solve(mini).slotOf);
     expect(least.sameSubjectInDay).toBeLessThan(first.sameSubjectInDay);
     expect(least.dayImbalance).toBeLessThan(first.dayImbalance);
   });
@@ -91,22 +91,22 @@ describe("DSATUR ordered by really free slots", () => {
       teachers: [{ id: "t1" }, { id: "t2", unavailable: [[0, 0], [0, 1], [0, 2]] }],
     };
     const problem = Problem.from(school);
-    expect(Dsatur.solve(problem, { respectAllowed: true }).order[0]).toBe(0);
-    const { order, slotOf } = Dsatur.solve(problem, { respectAllowed: true, lessonRule: "freeSlots" });
+    expect(new Dsatur({ respectAllowed: true }).solve(problem).order[0]).toBe(0);
+    const { order, slotOf } = new Dsatur({ respectAllowed: true, lessonRule: "freeSlots" }).solve(problem);
     expect(order[0]).toBe(2);
     expect(slotOf[2]).toBe(3);
   });
 
   it("leaves no music lesson without a slot on the mini instance", () => {
-    const first = Dsatur.solve(mini, { respectAllowed: true });
-    const free = Dsatur.solve(mini, { respectAllowed: true, lessonRule: "freeSlots" });
+    const first = new Dsatur({ respectAllowed: true }).solve(mini);
+    const free = new Dsatur({ respectAllowed: true, lessonRule: "freeSlots" }).solve(mini);
     expect(hardViolations(mini, first.slotOf).unassigned).toBe(2);
     expect(hardViolations(mini, free.slotOf)).toMatchObject({ unassigned: 0, classClash: 0, teacherClash: 0 });
   });
 
   it("matches saturation order when no slot is forbidden", () => {
-    const a = Dsatur.solve(mini, { lessonRule: "saturation" });
-    const b = Dsatur.solve(mini, { lessonRule: "freeSlots" });
+    const a = new Dsatur({ lessonRule: "saturation" }).solve(mini);
+    const b = new Dsatur({ lessonRule: "freeSlots" }).solve(mini);
     expect(Array.from(b.order)).toEqual(Array.from(a.order));
   });
 });
