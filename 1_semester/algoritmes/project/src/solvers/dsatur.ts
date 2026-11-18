@@ -28,6 +28,12 @@ export interface DsaturStep {
   slot: number;
 }
 
+export interface SlotReasons {
+  gaps: number;
+  repeats: number;
+  load: number;
+}
+
 export const DEFAULT_SLOT_WEIGHTS: SlotWeights = { gap: 100, sameSubjectInDay: 1000, dayLoad: 1 };
 
 export class Dsatur extends Solver<DsaturResult> {
@@ -59,6 +65,7 @@ export class Dsatur extends Solver<DsaturResult> {
 }
 
 export class DsaturRun {
+  readonly reasons: SlotReasons = { gaps: 0, repeats: 0, load: 0 };
   private readonly problem: Problem;
   private readonly slotOf: Int32Array;
   private readonly order: Int32Array;
@@ -107,6 +114,26 @@ export class DsaturRun {
     return this.slotOf;
   }
 
+  peek(): number | undefined {
+    return this.finished ? undefined : this.pickLesson();
+  }
+
+  freeSlotsOf(lesson: number): number {
+    return this.freeSlots[lesson];
+  }
+
+  openDegreeOf(lesson: number): number {
+    return this.openDegree[lesson];
+  }
+
+  isPlaced(lesson: number): boolean {
+    return this.done[lesson] === 1;
+  }
+
+  isFree(lesson: number, slot: number): boolean {
+    return this.neighboursInSlot[lesson * this.problem.nSlots + slot] === 0 && this.usable(lesson, slot);
+  }
+
   step(): DsaturStep | undefined {
     if (this.finished) return undefined;
     const lesson = this.pickLesson();
@@ -142,12 +169,10 @@ export class DsaturRun {
 
   private pickSlot(lesson: number): number {
     const { problem } = this;
-    const base = lesson * problem.nSlots;
     let best = UNASSIGNED;
     let bestPenalty = Infinity;
     for (let s = 0; s < problem.nSlots; s++) {
-      if (this.neighboursInSlot[base + s] > 0) continue;
-      if (!this.usable(lesson, s)) continue;
+      if (!this.isFree(lesson, s)) continue;
       if (this.slotRule === "first") return s;
       const penalty = this.penalty(lesson, s);
       if (penalty < bestPenalty) {
@@ -158,8 +183,8 @@ export class DsaturRun {
     return best;
   }
 
-  private penalty(lesson: number, slot: number): number {
-    const { problem, weights } = this;
+  penalty(lesson: number, slot: number): number {
+    const { problem, weights, reasons } = this;
     const cls = problem.lessonClass[lesson];
     const day = problem.dayOf(slot);
     const period = problem.periodOf(slot);
@@ -176,9 +201,10 @@ export class DsaturRun {
     }
     const gapsBefore = last < 0 ? 0 : last - first + 1 - load;
     const gapsAfter = Math.max(last, period) - first + 1 - (load + 1);
-    const repeats = this.subjectInDay[(cls * problem.days + day) * problem.nSubjects + problem.lessonSubject[lesson]];
-
-    return weights.gap * (gapsAfter - gapsBefore) + weights.sameSubjectInDay * repeats + weights.dayLoad * load;
+    reasons.gaps = gapsAfter - gapsBefore;
+    reasons.repeats = this.subjectInDay[(cls * problem.days + day) * problem.nSubjects + problem.lessonSubject[lesson]];
+    reasons.load = load;
+    return weights.gap * reasons.gaps + weights.sameSubjectInDay * reasons.repeats + weights.dayLoad * reasons.load;
   }
 
   private place(lesson: number, slot: number) {

@@ -24,9 +24,9 @@ export interface SearchResult extends SolveResult {
 export abstract class SearchRun<R extends SearchResult = SearchResult> {
   readonly timetable: Timetable;
   readonly startCost: number;
+  readonly sampler: MoveSampler;
+  readonly budget: number;
   protected readonly rng: Rng;
-  protected readonly sampler: MoveSampler;
-  protected readonly budget: number;
   protected used = 0;
   private bestCost: number;
   private readonly best: Int32Array;
@@ -47,6 +47,10 @@ export abstract class SearchRun<R extends SearchResult = SearchResult> {
 
   get cost(): number {
     return this.bestCost;
+  }
+
+  get evaluations(): number {
+    return this.used;
   }
 
   abstract advance(): void;

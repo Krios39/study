@@ -2,7 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Problem } from "../../src/core/problem.ts";
 import { Loader } from "../../src/io/loader.ts";
-import type { Curriculum, Instance, Solution, SubjectDictionary } from "../../src/model.ts";
+import type { Curriculum, Instance, LanguageOfInstruction, Solution, SubjectDictionary } from "../../src/model.ts";
+
+const CURRICULUM_FILES: Record<LanguageOfInstruction, string> = { ru: "instances/curriculum.json", kk: "instances/curriculum-kk.json" };
 
 export const BASE_SCHOOLS = ["mini", "small-7", "small-10", "medium-20", "medium-30", "large-60", "heavy-1", "heavy-2", "heavy-4"];
 
@@ -11,9 +13,9 @@ export class Workspace {
     return fileURLToPath(new URL(`../../${relative}`, import.meta.url));
   }
 
-  static dictionaries(): { subjects: SubjectDictionary; curriculum: Curriculum } {
+  static dictionaries(language: LanguageOfInstruction = "ru"): { subjects: SubjectDictionary; curriculum: Curriculum } {
     const subjects = Loader.subjects(Workspace.path("instances/subjects.json"));
-    const curriculum = Loader.curriculum(Workspace.path("instances/curriculum.json"), subjects);
+    const curriculum = Loader.curriculum(Workspace.path(CURRICULUM_FILES[language]), subjects);
     return { subjects, curriculum };
   }
 

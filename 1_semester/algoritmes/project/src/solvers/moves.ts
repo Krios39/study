@@ -20,6 +20,8 @@ export interface KempeStats {
   acceptedByLength: number[];
 }
 
+export type MoveKind = "none" | "move" | "swap" | "kempe";
+
 export const KEMPE_LENGTH_BUCKETS = 128;
 
 export class MoveSampler {
@@ -37,6 +39,7 @@ export class MoveSampler {
     acceptedByLength: new Array<number>(KEMPE_LENGTH_BUCKETS + 1).fill(0),
   };
   length = 0;
+  kind: MoveKind = "none";
 
   private readonly problem: Problem;
   private readonly rng: Rng;
@@ -48,7 +51,6 @@ export class MoveSampler {
   private readonly allowedList: Int32Array;
   private readonly classStart: Int32Array;
   private readonly classLessons: Int32Array;
-  private lastWasKempe = false;
 
   constructor(problem: Problem, rng: Rng, options: MoveSamplerOptions = {}) {
     const { nLessons, nSlots, nClasses } = problem;
@@ -80,13 +82,13 @@ export class MoveSampler {
   }
 
   sample(slotOf: Int32Array): boolean {
-    this.lastWasKempe = false;
+    this.kind = "none";
     if (this.kempeShare > 0 && this.rng.next() < this.kempeShare) return this.sampleKempe(slotOf);
     return this.rng.next() < this.swapShare ? this.sampleSwap(slotOf) : this.sampleMove(slotOf);
   }
 
   noteAccepted() {
-    if (!this.lastWasKempe) return;
+    if (this.kind !== "kempe") return;
     this.kempe.accepted++;
     this.kempe.acceptedLengthSum += this.length;
     this.kempe.acceptedByLength[Math.min(this.length, KEMPE_LENGTH_BUCKETS)]++;
@@ -110,6 +112,7 @@ export class MoveSampler {
     this.from[0] = slotOf[lesson];
     this.to[0] = slot;
     this.length = 1;
+    this.kind = "move";
     return true;
   }
 
@@ -127,6 +130,7 @@ export class MoveSampler {
     this.from[1] = slotOf[b];
     this.to[1] = slotOf[a];
     this.length = 2;
+    this.kind = "swap";
     return true;
   }
 
@@ -153,7 +157,7 @@ export class MoveSampler {
       this.to[i] = this.chain.from[i] === home ? slot : home;
     }
     this.length = length;
-    this.lastWasKempe = true;
+    this.kind = "kempe";
     return true;
   }
 }

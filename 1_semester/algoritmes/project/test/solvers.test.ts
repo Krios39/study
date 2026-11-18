@@ -33,6 +33,40 @@ describe("solver hierarchy", () => {
     expect(Array.from(run.result().slotOf)).toEqual(Array.from(whole.slotOf));
   });
 
+  it("announces the next DSATUR lesson and puts it into a free slot", () => {
+    const run = Dsatur.recommended().start(problem);
+    while (!run.finished) {
+      const lesson = run.peek()!;
+      const free = Array.from({ length: problem.nSlots }, (_, slot) => slot).filter((slot) => run.isFree(lesson, slot));
+      expect(free.length).toBe(run.freeSlotsOf(lesson));
+      const step = run.step()!;
+      expect(step.lesson).toBe(lesson);
+      expect(free).toContain(step.slot);
+      expect(run.isPlaced(lesson)).toBe(true);
+    }
+    expect(run.peek()).toBeUndefined();
+  });
+
+  it("reports every annealing attempt", () => {
+    const start = Dsatur.recommended().solve(problem).slotOf;
+    const run = new Annealing({ evaluations: 3000, seed: 3 }).start(problem, start);
+    let accepted = 0;
+    while (!run.finished) {
+      const before = run.timetable.cost;
+      run.advance();
+      const { last } = run;
+      if (last.sampled && last.accepted) {
+        accepted++;
+        expect(run.timetable.cost).toBeCloseTo(before + last.delta, 6);
+        expect(run.sampler.kind).not.toBe("none");
+      } else {
+        expect(run.timetable.cost).toBe(before);
+      }
+    }
+    expect(run.evaluations).toBe(run.budget);
+    expect(run.result().accepted).toBe(accepted);
+  });
+
   it.each([
     ["annealing", new Annealing({ evaluations: 5000, seed: 7 })],
     ["tabu search", new Tabu({ evaluations: 5000, seed: 7 })],

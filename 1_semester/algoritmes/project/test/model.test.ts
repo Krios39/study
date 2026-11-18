@@ -114,9 +114,16 @@ describe("dictionaries", () => {
   it("loads subjects and the curriculum that refers to them", () => {
     const subjects = Loader.subjects(path("subjects.json"));
     const curriculum = Loader.curriculum(path("curriculum.json"), subjects);
-    expect(subjects.subjects).toHaveLength(22);
+    expect(subjects.subjects).toHaveLength(23);
     const total = (grade: string) => Object.values(curriculum.hours[grade]).reduce((a, b) => a + b, 0);
     expect(["5", "6", "7", "8", "9", "10", "11"].map(total)).toEqual([29, 29, 32, 33, 34, 34, 34]);
+  });
+
+  it("loads the curriculum of classes taught in Kazakh", () => {
+    const curriculum = Loader.curriculum(path("curriculum-kk.json"), Loader.subjects(path("subjects.json")));
+    const total = (grade: string) => Object.values(curriculum.hours[grade]).reduce((a, b) => a + b, 0);
+    expect(curriculum.languageOfInstruction).toBe("kk");
+    expect(["5", "6", "7", "8", "9", "10", "11"].map(total)).toEqual([28, 28, 31, 32, 33, 32, 32]);
   });
 
   it("rejects a curriculum with subjects missing from the dictionary", () => {

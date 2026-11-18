@@ -1,4 +1,5 @@
 import { GenerateCommand } from "./commands/generate.ts";
+import { GenerateKkCommand } from "./commands/generate-kk.ts";
 import { RenderCommand } from "./commands/render.ts";
 import { AnnealCommand } from "./commands/anneal.ts";
 import { StressCommand } from "./commands/stress.ts";
@@ -21,6 +22,7 @@ import type { Command } from "./command.ts";
 export const COMMANDS: Command[] = [
   new SolveCommand(),
   new GenerateCommand(),
+  new GenerateKkCommand(),
   new RenderCommand(),
   new AnnealCommand(),
   new StressCommand(),

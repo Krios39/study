@@ -5,6 +5,7 @@
     { "id": "algebra", "difficulty": 11, "inJustEdu": true },
     { "id": "geometry", "difficulty": 11, "inJustEdu": true },
     { "id": "kazakh_language", "difficulty": { "ru": 11, "kk": 7 }, "split": { "ru": "required" }, "inJustEdu": true },
+    { "id": "kazakh_literature", "difficulty": 7, "inJustEdu": false },
     { "id": "english_language", "difficulty": 10, "split": "required", "inJustEdu": true },
     { "id": "physics", "difficulty": 9, "inJustEdu": true },
     { "id": "chemistry", "difficulty": 9, "inJustEdu": true },

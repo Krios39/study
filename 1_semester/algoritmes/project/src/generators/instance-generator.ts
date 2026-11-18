@@ -19,7 +19,7 @@ export const DEFAULT_WISH_SHARE = 0.3;
 export const TEACHER_GROUPS: Record<string, string[]> = {
   math: ["math", "algebra", "geometry"],
   rus: ["russian_language", "russian_literature"],
-  kaz: ["kazakh_language"],
+  kaz: ["kazakh_language", "kazakh_literature"],
   eng: ["english_language"],
   inf: ["informatics"],
   phys: ["physics"],
