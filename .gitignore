@@ -31,3 +31,6 @@ parcomp_key*
 
 # ML project: licensed Forest Register extract and derived tables from the partner, must not be pushed
 1_semester/machine_learning/project/data/
+1_semester/distributed_systems_seminar/paper/stand-results/**/requests.csv.gz
+1_semester/distributed_systems_seminar/paper/stand-results/**/opmon.csv.gz
+1_semester/distributed_systems_seminar/paper/stand-results/**/stats.csv
