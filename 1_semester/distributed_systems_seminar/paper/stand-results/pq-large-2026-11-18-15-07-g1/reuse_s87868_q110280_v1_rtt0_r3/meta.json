@@ -1,0 +1,81 @@
+{
+  "run": "reuse_s87868_q110280_v1_rtt0_r3",
+  "rep": 3,
+  "config": "reuse",
+  "target": "xroad",
+  "size": 87868,
+  "vus": 1,
+  "req": 110280,
+  "rtt": 0,
+  "n": 150,
+  "warmup": 100,
+  "wall_s": 13.185,
+  "started": "2026-11-18T17:35:39.349Z",
+  "finished": "2026-11-18T17:35:54.879Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 53707220,
+      "tx": 53776124
+    },
+    "ss2": {
+      "rx": 53513218,
+      "tx": 53885150
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 34201600,
+    "ss2": 34209792
+  },
+  "link_bytes": {
+    "xroad_rx": 25748402,
+    "link_rx": 25748402,
+    "xroad_tx": 31302676,
+    "link_tx": 31302676
+  },
+  "timestamping": {
+    "completed": true,
+    "wait_s": 29,
+    "ss1": {
+      "unstamped_after_run": 500,
+      "unstamped_final": 0
+    },
+    "ss2": {
+      "unstamped_after_run": 500,
+      "unstamped_final": 0
+    },
+    "ca_calls_while_waiting": {
+      "ocsp": 0,
+      "tsa": 2,
+      "sign": 0,
+      "ocsp_rt_mean_s": null,
+      "tsa_rt_mean_s": 0.0115
+    }
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 0,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": null
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]\npool-enable-connection-reuse = true\nserver-support-clients-pooled-connections = true\nserver-connector-max-idle-time = 120000",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]\npool-enable-connection-reuse = true\nserver-support-clients-pooled-connections = true\nserver-connector-max-idle-time = 120000"
+  },
+  "k6_stdout": "reuse\txroad\tsize=87868\tvus=1\trep=3\tp50=42.4\tp90=50.4\tp99=68.6\terrors=0",
+  "tsa_probe_after": "200",
+  "flow_rtt": {
+    "sockets": 5,
+    "minrtt_ms": 0.007,
+    "minrtt_min_ms": 0.007,
+    "srtt_ms": 4.47
+  },
+  "tsa_restarted_before": false,
+  "rtt_ms": 0,
+  "netem_qdisc": false,
+  "netem_mode": "egress",
+  "netem": {
+    "ss1": null,
+    "ss2": null
+  }
+}

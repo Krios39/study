@@ -1,0 +1,81 @@
+{
+  "run": "full_s40594_q40648_v1_rtt50_r3",
+  "rep": 3,
+  "config": "full",
+  "target": "xroad",
+  "size": 40594,
+  "vus": 1,
+  "req": 40648,
+  "rtt": 50,
+  "n": 150,
+  "warmup": 100,
+  "wall_s": 99.18,
+  "started": "2026-11-16T23:37:51.555Z",
+  "finished": "2026-11-16T23:39:32.858Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 24773835,
+      "tx": 25097125
+    },
+    "ss2": {
+      "rx": 25043209,
+      "tx": 24926421
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 20373504,
+    "ss2": 20529152
+  },
+  "link_bytes": {
+    "xroad_rx": 14273708,
+    "link_rx": 14273708,
+    "xroad_tx": 14520384,
+    "link_tx": 14520384
+  },
+  "timestamping": {
+    "completed": true,
+    "wait_s": 6,
+    "ss1": {
+      "unstamped_after_run": 286,
+      "unstamped_final": 0
+    },
+    "ss2": {
+      "unstamped_after_run": 264,
+      "unstamped_final": 0
+    },
+    "ca_calls_while_waiting": {
+      "ocsp": 0,
+      "tsa": 2,
+      "sign": 0,
+      "ocsp_rt_mean_s": null,
+      "tsa_rt_mean_s": 0.0085
+    }
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 2,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 0.009999999999999998
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]"
+  },
+  "k6_stdout": "full\txroad\tsize=40594\tvus=1\trep=3\tp50=390.6\tp90=394.5\tp99=399.9\terrors=0",
+  "tsa_probe_after": "200",
+  "flow_rtt": {
+    "sockets": 4,
+    "minrtt_ms": 50.1275,
+    "minrtt_min_ms": 50.082,
+    "srtt_ms": 50.3825
+  },
+  "tsa_restarted_before": false,
+  "rtt_ms": 50,
+  "netem_qdisc": true,
+  "netem_mode": "egress",
+  "netem": {
+    "ss1": "netem 40: dev eth0 parent 1:4 limit 100000 delay 25ms seed 1710460538725174456",
+    "ss2": "netem 40: dev eth0 parent 1:4 limit 100000 delay 25ms seed 12859017295786262438"
+  }
+}

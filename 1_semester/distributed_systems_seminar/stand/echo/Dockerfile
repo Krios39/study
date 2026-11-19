@@ -5,7 +5,8 @@ WORKDIR /src
 COPY Cargo.toml ./
 RUN mkdir src && echo 'fn main(){}' > src/main.rs && cargo build --release && rm -rf src target/release/deps/echo*
 COPY src ./src
-RUN cargo build --release
+# touch: иначе cargo считает заглушку свежее скопированного main.rs и в образ попадает пустой fn main
+RUN touch src/main.rs && cargo build --release
 
 FROM alpine:3.20
 COPY --from=build /src/target/release/echo /echo

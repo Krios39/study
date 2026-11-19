@@ -1,0 +1,63 @@
+{
+  "_comment": "Точки у границ пачек модели (paper/pqbench/sizemodel.js, results/sizemodel.csv): до границы меньше ~2 сегментов, сетками pq-sizes/pq-large не проверены. [size, vus, req], ответ = 10 КБ + прирост ответа, тело запроса = прирост запроса: base POST (привязка), B Falcon-1024 (ответ 20.4 сегм.), B ML-DSA-65+P-256 (запрос 28.5), D ML-DSA-44 (ответ 20.8), D ML-DSA-44+P-256 (ответ 21.0), D ML-DSA-87 (запрос 30.1). D — только CA и OCSP на новой схеме, участники RSA-2048.",
+  "reps": 3,
+  "warmup_first": 1000,
+  "warmup_next": 100,
+  "n": 150,
+  "n_large": 150,
+  "large_from": 1048576,
+  "configs": [
+    "full",
+    "reuse"
+  ],
+  "points": [
+    [
+      10240,
+      1,
+      1
+    ],
+    [
+      19007,
+      1,
+      11558
+    ],
+    [
+      31767,
+      1,
+      28753
+    ],
+    [
+      19602,
+      1,
+      13962
+    ],
+    [
+      20005,
+      1,
+      14573
+    ],
+    [
+      30969,
+      1,
+      31023
+    ]
+  ],
+  "rtts": [
+    0,
+    50
+  ],
+  "direct": false,
+  "control": {
+    "config": "full",
+    "size": 10240,
+    "vus": 1,
+    "per_rep": true
+  },
+  "stamping_timeout_s": 300,
+  "burnin": {
+    "size": 10240,
+    "vus": 4,
+    "n": 1000,
+    "warmup": 500
+  }
+}

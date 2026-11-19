@@ -1,0 +1,50 @@
+{
+  "source": "op-monitor",
+  "found_consumer": 250,
+  "expected": 250,
+  "measured": 150,
+  "joined": 150,
+  "failed": 0,
+  "stages": {
+    "c_req": {
+      "mean": 0.17,
+      "p50": 0,
+      "p90": 1
+    },
+    "net_req": {
+      "mean": 1.8,
+      "p50": 2,
+      "p90": 2
+    },
+    "p_req": {
+      "mean": 14.93,
+      "p50": 14,
+      "p90": 18
+    },
+    "is": {
+      "mean": 0.34,
+      "p50": 0,
+      "p90": 1
+    },
+    "p_resp": {
+      "mean": 9.71,
+      "p50": 9,
+      "p90": 13
+    },
+    "c_resp": {
+      "mean": 6.79,
+      "p50": 6.5,
+      "p90": 8
+    },
+    "resp_start": {
+      "mean": 0.3,
+      "p50": 0,
+      "p90": 1
+    },
+    "total": {
+      "mean": 33.75,
+      "p50": 32,
+      "p90": 42
+    }
+  }
+}

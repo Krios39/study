@@ -1,0 +1,63 @@
+{
+  "_comment": "RTT 0 / 20 мс (третий прогон ночи 18.11; ступени должны быть кратны RTT). Продолжение matrix-pq.json за пределы проверенного диапазона (paper/pqbench/sizemodel.js, results/sizemodel.csv). [size, vus, req], ответ = 10 КБ + прирост ответа, тело запроса = прирост запроса: base POST и B ML-DSA-87 — привязка к pq-sizes; B composite ML-DSA-87 + RSA-4096; C — участники ML-DSA-65, CA и OCSP на SLH-DSA-128s / 128f / 256s.",
+  "reps": 3,
+  "warmup_first": 1000,
+  "warmup_next": 100,
+  "n": 150,
+  "n_large": 150,
+  "large_from": 1048576,
+  "configs": [
+    "full",
+    "reuse"
+  ],
+  "points": [
+    [
+      10240,
+      1,
+      1
+    ],
+    [
+      40594,
+      1,
+      40648
+    ],
+    [
+      45051,
+      1,
+      46654
+    ],
+    [
+      48025,
+      1,
+      51973
+    ],
+    [
+      87868,
+      1,
+      110280
+    ],
+    [
+      142742,
+      1,
+      190594
+    ]
+  ],
+  "rtts": [
+    0,
+    20
+  ],
+  "direct": false,
+  "control": {
+    "config": "full",
+    "size": 10240,
+    "vus": 1,
+    "per_rep": true
+  },
+  "stamping_timeout_s": 300,
+  "burnin": {
+    "size": 10240,
+    "vus": 4,
+    "n": 1000,
+    "warmup": 500
+  }
+}

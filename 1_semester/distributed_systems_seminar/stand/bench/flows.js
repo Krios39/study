@@ -6,6 +6,7 @@
 // в запись не попадает) → разбор tshark. Запускать на машине с ss1 (на трёх машинах — l2).
 //   node bench/flows.js                                   # full,reuse × RTT 0,20 × 20 запросов по 10 КБ
 //   node bench/flows.js --rtt 0,5,20,50 --n 30 --size 10240 --configs full,reuse --out results/flows-X
+//   node bench/flows.js --rtt 50 --size 17049 --req 6809      # POST: тело запроса 6809 Б, ответ 17049 Б
 // Результат: <out>/<config>_rtt<R>.pcap (заголовки, snaplen 256), flows.json, flows.md (сводка + хронология
 // медианного запроса с паузами). В конце задержка снимается, конфигурация возвращается к full.
 'use strict';
@@ -22,12 +23,15 @@ const CONFIGS = opt('--configs', 'full,reuse').split(',');
 const N = Number(opt('--n', '20'));
 const MODE = opt('--mode', 'egress');                       // egress | ingress — где стоит netem (см. lib.js netemScript)
 const SIZE = Number(opt('--size', '10240'));
+const REQ = Number(opt('--req', '0'));                      // >0: POST с телом REQ байт, ответ SIZE байт (как точка [size, vus, req] в run.js)
 const OUT = path.resolve(opt('--out', path.join(L.STAND, 'results', `flows-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}`)));
 if (L.THIS_HOST && L.hostOf('ss1') !== L.THIS_HOST) { console.error('run on the ss1 host'); process.exit(2); }
 
 const URL = `http://127.0.0.1:8080/r1/${L.PROVIDERS.ss2}/echo?size=${SIZE}&fill=random`;
+const POST = REQ ? `head -c ${REQ} /dev/zero | tr '\\0' x > /tmp/body; ` : '';
+const POSTARGS = REQ ? `-X POST --data-binary @/tmp/body -H 'Content-Type: application/octet-stream' ` : '';
 const curlLoop = (n) => ['run', '--rm', '--net', 'container:ss1', 'curlimages/curl', 'sh', '-c',
-  `for i in $(seq 1 ${n}); do curl -s -o /dev/null -w '%{time_total}\\n' -H 'X-Road-Client: ${L.CLIENT}' '${URL}'; done`];
+  `${POST}for i in $(seq 1 ${n}); do curl -s -o /dev/null -w '%{time_total}\\n' ${POSTARGS}-H 'X-Road-Client: ${L.CLIENT}' '${URL}'; done`];
 
 // ---------- разбор pcap ----------
 const FIELDS = ['frame.time_epoch', 'tcp.stream', 'ip.src', 'tcp.srcport', 'tcp.dstport', 'tcp.len', 'tcp.flags.syn', 'tcp.flags.ack',
@@ -85,8 +89,8 @@ function analyse(req, rtt) {
   L.setLogFile(path.join(OUT, 'run.log'));
   const ss1ip = L.dexec('ss1', 'getent', 'hosts', 'ss1').split(/\s+/)[0];
   const ss2ip = L.dexec('ss1', 'getent', 'hosts', 'ss2').split(/\s+/)[0];
-  L.log(`flows → ${OUT}; ss1 ${ss1ip}, ss2 ${ss2ip}; configs ${CONFIGS}, RTT ${RTTS}, n ${N}, size ${SIZE}, netem ${MODE}`);
-  const result = { size: SIZE, n: N, ss1: ss1ip, ss2: ss2ip, cases: [] };
+  L.log(`flows → ${OUT}; ss1 ${ss1ip}, ss2 ${ss2ip}; configs ${CONFIGS}, RTT ${RTTS}, n ${N}, size ${SIZE}, req ${REQ}, netem ${MODE}`);
+  const result = { size: SIZE, req: REQ, n: N, ss1: ss1ip, ss2: ss2ip, cases: [] };
   try {
     for (const config of CONFIGS) {
       await applyConfig(config);

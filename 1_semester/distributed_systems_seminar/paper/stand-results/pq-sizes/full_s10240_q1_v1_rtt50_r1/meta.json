@@ -1,0 +1,81 @@
+{
+  "run": "full_s10240_q1_v1_rtt50_r1",
+  "rep": 1,
+  "config": "full",
+  "target": "xroad",
+  "size": 10240,
+  "vus": 1,
+  "req": 1,
+  "rtt": 50,
+  "n": 150,
+  "warmup": 100,
+  "wall_s": 77.9,
+  "started": "2026-11-16T21:23:05.871Z",
+  "finished": "2026-11-16T21:24:25.900Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 6698153,
+      "tx": 6919183
+    },
+    "ss2": {
+      "rx": 6843701,
+      "tx": 6801049
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 9601024,
+    "ss2": 9895936
+  },
+  "link_bytes": {
+    "xroad_rx": 6488344,
+    "link_rx": 6488344,
+    "xroad_tx": 4089988,
+    "link_tx": 4089988
+  },
+  "timestamping": {
+    "completed": true,
+    "wait_s": 23,
+    "ss1": {
+      "unstamped_after_run": 265,
+      "unstamped_final": 0
+    },
+    "ss2": {
+      "unstamped_after_run": 236,
+      "unstamped_final": 0
+    },
+    "ca_calls_while_waiting": {
+      "ocsp": 0,
+      "tsa": 2,
+      "sign": 0,
+      "ocsp_rt_mean_s": null,
+      "tsa_rt_mean_s": 0.01
+    }
+  },
+  "ca_calls": {
+    "ocsp": 6,
+    "tsa": 2,
+    "sign": 0,
+    "ocsp_rt_mean_s": 0.012499999999999999,
+    "tsa_rt_mean_s": 0.0095
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]"
+  },
+  "k6_stdout": "full\txroad\tsize=10240\tvus=1\trep=1\tp50=305.7\tp90=310.6\tp99=315.8\terrors=0",
+  "tsa_probe_after": "200",
+  "flow_rtt": {
+    "sockets": 4,
+    "minrtt_ms": 50.123,
+    "minrtt_min_ms": 50.116,
+    "srtt_ms": 53.1195
+  },
+  "tsa_restarted_before": false,
+  "rtt_ms": 50,
+  "netem_qdisc": true,
+  "netem_mode": "egress",
+  "netem": {
+    "ss1": "netem 40: dev eth0 parent 1:4 limit 100000 delay 25ms seed 9728442882415091412",
+    "ss2": "netem 40: dev eth0 parent 1:4 limit 100000 delay 25ms seed 7819435274524111873"
+  }
+}

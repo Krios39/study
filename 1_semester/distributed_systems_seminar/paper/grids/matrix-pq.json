@@ -1,0 +1,38 @@
+{
+  "_comment": "Проверка модели размеров при ML-DSA (paper/pqbench/sizemodel.js): ответ 10 КБ + прирост, тело запроса = прирост запроса. [size, vus, req]: base GET, base-post (тело 1 Б), A44/A65/A87 — только ключи членов, B44/B65/B87 — ещё CA и OCSP.",
+  "reps": 3,
+  "warmup_first": 1000,
+  "warmup_next": 100,
+  "n": 150,
+  "n_large": 150,
+  "large_from": 1048576,
+  "configs": [
+    "full",
+    "reuse"
+  ],
+  "points": [
+    [10240, 1],
+    [10240, 1, 1],
+    [14849, 1, 4609],
+    [17049, 1, 6809],
+    [19866, 1, 9626],
+    [24212, 1, 18572],
+    [31169, 1, 27947],
+    [40594, 1, 40648]
+  ],
+  "rtts": [0, 50],
+  "direct": false,
+  "control": {
+    "config": "full",
+    "size": 10240,
+    "vus": 1,
+    "per_rep": true
+  },
+  "stamping_timeout_s": 300,
+  "burnin": {
+    "size": 10240,
+    "vus": 4,
+    "n": 1000,
+    "warmup": 500
+  }
+}

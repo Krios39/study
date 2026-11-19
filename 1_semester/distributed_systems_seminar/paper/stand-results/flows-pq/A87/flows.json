@@ -1,0 +1,5607 @@
+{
+  "size": 19866,
+  "req": 9626,
+  "n": 20,
+  "ss1": "172.18.0.8",
+  "ss2": "172.18.0.5",
+  "cases": [
+    {
+      "config": "full",
+      "rtt": 50,
+      "netem": {
+        "ss1": "netem 40: dev eth0 parent 1:4 limit 100000 delay 25ms seed 2903487966287020626",
+        "ss2": "netem 40: dev eth0 parent 1:4 limit 100000 delay 25ms seed 11061231311119823892"
+      },
+      "requests": 20,
+      "curl_ms_median": 361.91499999999996,
+      "total_ms_median": 312.5450439453125,
+      "syn_rtt_ms_median": 25.1568603515625,
+      "flow_rtt": {
+        "sockets": 3,
+        "minrtt_ms": 50.192,
+        "minrtt_min_ms": 50.152,
+        "srtt_ms": 51.3
+      },
+      "conn": {
+        "new TCP + resumed TLS": 20
+      },
+      "gaps_median": 10,
+      "gap_ms_sum_median": 249.8865966796875,
+      "other_ports": [],
+      "example": {
+        "conn": "new TCP + resumed TLS",
+        "total_ms": 312.822021484375,
+        "syn_rtt_ms": 25.111083984375,
+        "gaps": [
+          {
+            "ms": 22.097900390625,
+            "after": "← ss2 ACK",
+            "before": "← ss2 SYN-ACK"
+          },
+          {
+            "ms": 25.10791015625,
+            "after": "← ss2 SYN-ACK",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 25.09423828125,
+            "after": "ss1 → ClientHello 2800 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 25.025146484375,
+            "after": "← ss2 Finished (enc.) 45 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 25.123046875,
+            "after": "ss1 → data (cont.) 502 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 23.543212890625,
+            "after": "← ss2 ACK",
+            "before": "← ss2 data 224 B"
+          },
+          {
+            "ms": 25.719970703125,
+            "after": "← ss2 data 63 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 25.131103515625,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data 2896 B"
+          },
+          {
+            "ms": 25.04296875,
+            "after": "← ss2 data (cont.) 2896 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 25.19091796875,
+            "after": "ss1 → ACK",
+            "before": "← ss2 FIN 1411 B"
+          }
+        ],
+        "timeline": [
+          {
+            "ms": 0,
+            "what": "ss1 → SYN"
+          },
+          {
+            "ms": 3.006103515625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 3.01318359375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 25.111083984375,
+            "what": "← ss2 SYN-ACK"
+          },
+          {
+            "ms": 50.218994140625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 51.19189453125,
+            "what": "ss1 → ClientHello 2800 B"
+          },
+          {
+            "ms": 76.2861328125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 77.73193359375,
+            "what": "← ss2 TLS hs 2+4 2660 B"
+          },
+          {
+            "ms": 77.771240234375,
+            "what": "← ss2 ChangeCipherSpec 6 B"
+          },
+          {
+            "ms": 77.77490234375,
+            "what": "← ss2 Finished (enc.) 45 B"
+          },
+          {
+            "ms": 102.800048828125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 102.802978515625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 102.80419921875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 103.822021484375,
+            "what": "ss1 → ChangeCipherSpec 6 B"
+          },
+          {
+            "ms": 112.38720703125,
+            "what": "ss1 → Finished (enc.) 2896 B"
+          },
+          {
+            "ms": 112.390869140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 130.865966796875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 130.8701171875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 130.87109375,
+            "what": "ss1 → data (cont.) 1448 B"
+          },
+          {
+            "ms": 137.52099609375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 137.550048828125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 156.060302734375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 156.067138671875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 162.59619140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 162.59912109375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 162.59912109375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 162.59912109375,
+            "what": "ss1 → data (cont.) 502 B"
+          },
+          {
+            "ms": 187.72216796875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 187.952880859375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 211.49609375,
+            "what": "← ss2 data 224 B"
+          },
+          {
+            "ms": 211.52294921875,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 211.52392578125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 211.525146484375,
+            "what": "← ss2 data 75 B"
+          },
+          {
+            "ms": 211.525146484375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 211.53125,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 211.531982421875,
+            "what": "← ss2 data 419 B"
+          },
+          {
+            "ms": 211.68603515625,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 211.68896484375,
+            "what": "← ss2 data 31 B"
+          },
+          {
+            "ms": 211.692138671875,
+            "what": "← ss2 data 63 B"
+          },
+          {
+            "ms": 237.412109375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 262.543212890625,
+            "what": "← ss2 data 2896 B"
+          },
+          {
+            "ms": 262.572021484375,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 262.5751953125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 262.576904296875,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 262.5791015625,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 262.580078125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 262.5810546875,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 262.58203125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 262.5830078125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 262.584228515625,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 287.627197265625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 287.630126953125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 287.631103515625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 287.631103515625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 312.822021484375,
+            "what": "← ss2 FIN 1411 B"
+          }
+        ]
+      }
+    },
+    {
+      "config": "reuse",
+      "rtt": 50,
+      "netem": {
+        "ss1": "netem 40: dev eth0 parent 1:4 limit 100000 delay 25ms seed 18214779392445498585",
+        "ss2": "netem 40: dev eth0 parent 1:4 limit 100000 delay 25ms seed 264615130325944248"
+      },
+      "requests": 1,
+      "curl_ms_median": 168.0215,
+      "total_ms_median": 3509.496826171875,
+      "syn_rtt_ms_median": null,
+      "flow_rtt": {
+        "sockets": 4,
+        "minrtt_ms": 50.073,
+        "minrtt_min_ms": 50.073,
+        "srtt_ms": 59.0695
+      },
+      "conn": {
+        "reused connection": 1
+      },
+      "gaps_median": 54,
+      "gap_ms_sum_median": 1816.4619140625,
+      "other_ports": [],
+      "example": {
+        "conn": "reused connection",
+        "total_ms": 3509.496826171875,
+        "syn_rtt_ms": null,
+        "gaps": [
+          {
+            "ms": 21.14404296875,
+            "after": "ss1 → data (cont.) 1374 B",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 21.1611328125,
+            "after": "← ss2 ACK",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 25.4189453125,
+            "after": "ss1 → data (cont.) 1979 B",
+            "before": "← ss2 ACK"
+          },
+          {
+            "ms": 33.138916015625,
+            "after": "← ss2 ACK",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 24.90283203125,
+            "after": "← ss2 data 69 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 24.9287109375,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data 2896 B"
+          },
+          {
+            "ms": 25.033935546875,
+            "after": "← ss2 data (cont.) 2896 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 25.1533203125,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data (cont.) 1619 B"
+          },
+          {
+            "ms": 25.115966796875,
+            "after": "← ss2 data (cont.) 1619 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 36.917724609375,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 52.3388671875,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 24.39404296875,
+            "after": "← ss2 data (cont.) 1694 B",
+            "before": "← ss2 data 36 B"
+          },
+          {
+            "ms": 25.133056640625,
+            "after": "ss1 → ACK",
+            "before": "← ss2 data 2896 B"
+          },
+          {
+            "ms": 25.115966796875,
+            "after": "ss1 → ACK",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 26.931884765625,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 41.0791015625,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 28.48388671875,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 50.099853515625,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 24.534912109375,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 50.109130859375,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 31.257080078125,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 49.4150390625,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 50.16796875,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 25.87109375,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 50.123046875,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 30.01708984375,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 50.151123046875,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 28.0029296875,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 52.18896484375,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 25.036865234375,
+            "after": "← ss2 data 3637 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 24.97607421875,
+            "after": "← ss2 data 36 B",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 52.984130859375,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 20.47216796875,
+            "after": "← ss2 data 4590 B",
+            "before": "← ss2 data 36 B"
+          },
+          {
+            "ms": 20.56201171875,
+            "after": "ss1 → ACK",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 27.157958984375,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 50.162109375,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 25.97998046875,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 50.1689453125,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 20.24609375,
+            "after": "← ss2 data 4590 B",
+            "before": "← ss2 data 36 B"
+          },
+          {
+            "ms": 20.10400390625,
+            "after": "ss1 → ACK",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 25.123779296875,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 49.747802734375,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 40.532958984375,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 49.39892578125,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 24.244873046875,
+            "after": "← ss2 data 4590 B",
+            "before": "← ss2 data 36 B"
+          },
+          {
+            "ms": 24.364013671875,
+            "after": "ss1 → ACK",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 50.3330078125,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 21.281005859375,
+            "after": "← ss2 data 3637 B",
+            "before": "← ss2 data 36 B"
+          },
+          {
+            "ms": 21.283935546875,
+            "after": "ss1 → ACK",
+            "before": "ss1 → ACK"
+          },
+          {
+            "ms": 49.30908203125,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 49.18701171875,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 23.587890625,
+            "after": "ss1 → ACK",
+            "before": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 49.091796875,
+            "after": "ss1 → data (cont.) 531 B",
+            "before": "← ss2 data 236 B"
+          },
+          {
+            "ms": 22.794921875,
+            "after": "← ss2 data 4590 B",
+            "before": "← ss2 data 36 B"
+          }
+        ],
+        "timeline": [
+          {
+            "ms": 0,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 0.005859375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 0.0068359375,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 21.15087890625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 21.157958984375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 21.158935546875,
+            "what": "ss1 → data (cont.) 1448 B"
+          },
+          {
+            "ms": 25.548828125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 46.7099609375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 50.60791015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 50.612060546875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 50.612060546875,
+            "what": "ss1 → data (cont.) 1979 B"
+          },
+          {
+            "ms": 76.031005859375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 109.169921875,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 109.2470703125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 109.284912109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 109.31298828125,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 109.326904296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 109.33984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 109.35595703125,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 109.910888671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 109.928955078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 109.987060546875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 134.889892578125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 135.08203125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 160.0107421875,
+            "what": "← ss2 data 2896 B"
+          },
+          {
+            "ms": 160.053955078125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 160.061767578125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 160.06396484375,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 160.06591796875,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 160.06689453125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 160.06787109375,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 160.122802734375,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 160.1279296875,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 160.130126953125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 185.1640625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 185.167724609375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 210.321044921875,
+            "what": "← ss2 data (cont.) 1619 B"
+          },
+          {
+            "ms": 235.43701171875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 272.354736328125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 272.35888671875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 272.35888671875,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 291.48291015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 291.486083984375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 291.487060546875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 291.487060546875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 291.488037109375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 297.79296875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 316.90966796875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 322.921875,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 375.2607421875,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 375.302734375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 375.303955078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 375.303955078125,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 375.306884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 375.306884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 375.307861328125,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 375.8798828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 375.89697265625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 375.934814453125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 375.94482421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 375.953857421875,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 375.962890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 375.967041015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 376.0947265625,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 376.10205078125,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 376.103759765625,
+            "what": "← ss2 data (cont.) 1366 B"
+          },
+          {
+            "ms": 376.1630859375,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 376.165771484375,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 376.166748046875,
+            "what": "← ss2 data (cont.) 2437 B"
+          },
+          {
+            "ms": 376.1748046875,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 376.17578125,
+            "what": "← ss2 data (cont.) 1694 B"
+          },
+          {
+            "ms": 400.56982421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 400.60693359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 400.621826171875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 400.622802734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 400.623779296875,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 400.626953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 400.6279296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 400.6279296875,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 400.62890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 400.6298828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 400.6298828125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 400.6298828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 400.6328125,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 401.245849609375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 426.37890625,
+            "what": "← ss2 data 2896 B"
+          },
+          {
+            "ms": 426.39990234375,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 426.40087890625,
+            "what": "← ss2 data (cont.) 2896 B"
+          },
+          {
+            "ms": 426.40185546875,
+            "what": "← ss2 data (cont.) 714 B"
+          },
+          {
+            "ms": 426.411865234375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 451.52783203125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 478.459716796875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 478.4619140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 478.462890625,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 496.361083984375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 496.366943359375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 496.368896484375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 496.369873046875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 496.370849609375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 503.840087890625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 521.724853515625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 528.90576171875,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 569.98486328125,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 570.02001953125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 570.02099609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 570.02197265625,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 570.02392578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 570.02392578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 570.02490234375,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 570.39990234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 570.405029296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 570.41796875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 570.4189453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 570.419921875,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 570.419921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 570.4208984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 570.541015625,
+            "what": "← ss2 data (cont.) 4344 B"
+          },
+          {
+            "ms": 570.541748046875,
+            "what": "← ss2 data (cont.) 2814 B"
+          },
+          {
+            "ms": 570.599853515625,
+            "what": "← ss2 data (cont.) 4344 B"
+          },
+          {
+            "ms": 570.60595703125,
+            "what": "← ss2 data (cont.) 3885 B"
+          },
+          {
+            "ms": 570.60791015625,
+            "what": "← ss2 data (cont.) 4344 B"
+          },
+          {
+            "ms": 570.60888671875,
+            "what": "← ss2 data (cont.) 246 B"
+          },
+          {
+            "ms": 589.428955078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.4609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.472900390625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 589.475830078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.475830078125,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 589.476806640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.47802734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.48291015625,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 589.49267578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.493896484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.5,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 589.512939453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.512939453125,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 589.517822265625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.51904296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.52587890625,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 589.5537109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.554931640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.56103515625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 589.5810546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.58203125,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 589.58984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.591064453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.665771484375,
+            "what": "← ss2 data (cont.) 4344 B"
+          },
+          {
+            "ms": 589.674072265625,
+            "what": "← ss2 data (cont.) 3695 B"
+          },
+          {
+            "ms": 589.675048828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.67578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.6767578125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 589.68408203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.68505859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 589.685791015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 595.723876953125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 614.576904296875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 614.7099609375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 643.19384765625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 643.197998046875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 643.198974609375,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 660.39501953125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 660.39892578125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 660.4609375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 660.4619140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 660.4619140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 668.64306640625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 685.843017578125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 693.73193359375,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 743.831787109375,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 743.852783203125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 743.86083984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 743.8701171875,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 743.881103515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 743.8837890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 743.887939453125,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 744.154052734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 744.162841796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 744.171875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 744.1767578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 744.182861328125,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 744.18896484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 744.19677734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 744.433837890625,
+            "what": "← ss2 data 7158 B"
+          },
+          {
+            "ms": 744.52783203125,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 744.529052734375,
+            "what": "← ss2 data (cont.) 989 B"
+          },
+          {
+            "ms": 744.56103515625,
+            "what": "← ss2 data 4590 B"
+          },
+          {
+            "ms": 762.6728515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.68701171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.68798828125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 762.68896484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.68896484375,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 762.68994140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.68994140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.68994140625,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 762.69091796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.69189453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.69189453125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 762.70703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.7080078125,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 762.708984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.708984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.7099609375,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 762.718017578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.718017578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.72900390625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 762.72998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.72998046875,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 762.730712890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.730712890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.764892578125,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 762.765869140625,
+            "what": "← ss2 data (cont.) 799 B"
+          },
+          {
+            "ms": 762.772705078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.781005859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.786865234375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 762.7939453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.794921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 762.81103515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 769.470947265625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 769.583984375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 787.755859375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 787.81494140625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 812.349853515625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 812.35791015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 812.35791015625,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 830.8388671875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 830.842041015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 830.843017578125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 830.843017578125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 830.843017578125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 837.803955078125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 856.161865234375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 862.847900390625,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 912.95703125,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 912.993896484375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 912.994873046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 912.995849609375,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 912.998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 913.0029296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 913.0029296875,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 913.251953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 913.260986328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 913.268798828125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 913.27294921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 913.281005859375,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 913.288818359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 913.2900390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 913.48779296875,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 913.48974609375,
+            "what": "← ss2 data (cont.) 1366 B"
+          },
+          {
+            "ms": 913.56396484375,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 913.56591796875,
+            "what": "← ss2 data (cont.) 2437 B"
+          },
+          {
+            "ms": 913.596923828125,
+            "what": "← ss2 data 4590 B"
+          },
+          {
+            "ms": 930.517822265625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.554931640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.555908203125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 930.555908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.55712890625,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 930.557861328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.557861328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.558837890625,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 930.56396484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.56396484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.574951171875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 930.580810546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.5859375,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 930.600830078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.60498046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.61083984375,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 930.64697265625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.64794921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.648681640625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 930.648681640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.64990234375,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 930.64990234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.65283203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.696044921875,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 930.697021484375,
+            "what": "← ss2 data (cont.) 2247 B"
+          },
+          {
+            "ms": 930.70703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.7119140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.718994140625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 930.724853515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.72998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 930.750732421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 938.6640625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 955.6689453125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 955.798828125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 987.055908203125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 987.059814453125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 987.059814453125,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 1006.19189453125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1006.19384765625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1006.246826171875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1006.248046875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1006.248046875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1012.514892578125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1031.470947265625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1037.557861328125,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 1086.972900390625,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 1087.014892578125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1087.01904296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1087.03271484375,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 1087.035888671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1087.036865234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1087.037841796875,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 1087.31884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1087.325927734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1087.327880859375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1087.328857421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1087.329833984375,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 1087.330810546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1087.33203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1087.39990234375,
+            "what": "← ss2 data 7158 B"
+          },
+          {
+            "ms": 1087.451904296875,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1087.459716796875,
+            "what": "← ss2 data (cont.) 989 B"
+          },
+          {
+            "ms": 1087.46484375,
+            "what": "← ss2 data 4590 B"
+          },
+          {
+            "ms": 1105.001953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.0439453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.0458984375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1105.0458984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.046875,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 1105.0478515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.052001953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.052978515625,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 1105.076904296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.079833984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.083984375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1105.10302734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.10400390625,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 1105.18701171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.197021484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.198974609375,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 1105.2138671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.21484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.216064453125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1105.217041015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.218017578125,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 1105.218017578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.218994140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.230712890625,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1105.23291015625,
+            "what": "← ss2 data (cont.) 799 B"
+          },
+          {
+            "ms": 1105.23388671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.23388671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.23486328125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1105.306884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.31005859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1105.312744140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1112.6318359375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1130.246826171875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1130.301025390625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1136.699951171875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1155.385009765625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1155.387939453125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1155.388916015625,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 1172.75390625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1172.761962890625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1172.763916015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1172.765869140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1172.766845703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1180.812744140625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1198.059814453125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1205.89990234375,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 1256.06787109375,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 1256.0849609375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1256.0869140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1256.100830078125,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 1256.10400390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1256.10498046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1256.177001953125,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 1256.428955078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1256.464111328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1256.47412109375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1256.477783203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1256.48486328125,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 1256.490966796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1256.494873046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1256.601806640625,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1256.60302734375,
+            "what": "← ss2 data (cont.) 870 B"
+          },
+          {
+            "ms": 1256.656982421875,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1256.65869140625,
+            "what": "← ss2 data (cont.) 989 B"
+          },
+          {
+            "ms": 1256.704833984375,
+            "what": "← ss2 data 3637 B"
+          },
+          {
+            "ms": 1274.51171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.53271484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.5517578125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1274.553955078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.553955078125,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 1274.554931640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.554931640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.555908203125,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 1274.556884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.556884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.562744140625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1274.563720703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.563720703125,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 1274.578857421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.580078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.582763671875,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 1274.60693359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.60791015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.60791015625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1274.60791015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.61474609375,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 1274.615966796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.618896484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.65087890625,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1274.652099609375,
+            "what": "← ss2 data (cont.) 799 B"
+          },
+          {
+            "ms": 1274.659912109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.665771484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.671875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1274.679931640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.679931640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1274.698974609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1281.89990234375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1299.633056640625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1299.728759765625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1325.599853515625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1325.60302734375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1325.60302734375,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 1343.186767578125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1343.18994140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1343.18994140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1343.19091796875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1343.19091796875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1350.924072265625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1368.565673828125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1375.9619140625,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 1426.0849609375,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 1426.11279296875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1426.11376953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1426.11474609375,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 1426.116943359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1426.116943359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1426.117919921875,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 1426.303955078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1426.305908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1426.306884765625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1426.306884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1426.31591796875,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 1426.31689453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1426.31689453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1426.421875,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1426.4228515625,
+            "what": "← ss2 data (cont.) 870 B"
+          },
+          {
+            "ms": 1426.486083984375,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1426.487060546875,
+            "what": "← ss2 data (cont.) 989 B"
+          },
+          {
+            "ms": 1426.5087890625,
+            "what": "← ss2 data 3637 B"
+          },
+          {
+            "ms": 1442.90283203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.932861328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.93505859375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1442.93603515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.93603515625,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 1442.93701171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.93701171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.937744140625,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 1442.95703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.957763671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.958740234375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1442.958740234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.9599609375,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 1442.9599609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.9599609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.9609375,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 1442.972900390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.972900390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.973876953125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1442.973876953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.974853515625,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 1442.974853515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1442.974853515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1443.014892578125,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1443.015869140625,
+            "what": "← ss2 data (cont.) 799 B"
+          },
+          {
+            "ms": 1443.02197265625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1443.02880859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1443.034912109375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1443.04296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1443.04296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1443.06494140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1451.7138671875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1468.06591796875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1468.246826171875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1498.263916015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1498.265869140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1498.265869140625,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 1514.352783203125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1514.35498046875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1514.387939453125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1514.388916015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1514.388916015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1523.60986328125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1539.606689453125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1548.643798828125,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 1598.794921875,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 1598.819091796875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1598.820068359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1598.82080078125,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 1598.82177734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1598.82275390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1598.82275390625,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 1599.100830078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1599.114990234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1599.118896484375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1599.135009765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1599.141845703125,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 1599.14990234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1599.154052734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1599.229736328125,
+            "what": "← ss2 data 7158 B"
+          },
+          {
+            "ms": 1599.294921875,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1599.2958984375,
+            "what": "← ss2 data (cont.) 989 B"
+          },
+          {
+            "ms": 1599.325927734375,
+            "what": "← ss2 data 4590 B"
+          },
+          {
+            "ms": 1616.98486328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.005859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.007080078125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1617.007080078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.028076171875,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 1617.029052734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.02978515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.02978515625,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 1617.03076171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.03173828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.03173828125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1617.03173828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.032958984375,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 1617.032958984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.033935546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.033935546875,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 1617.05078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.05908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.06591796875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1617.070068359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.076904296875,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 1617.081787109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.087890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.1279296875,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1617.1298828125,
+            "what": "← ss2 data (cont.) 799 B"
+          },
+          {
+            "ms": 1617.136962890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.141845703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.14892578125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1617.161865234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.162841796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1617.17578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1624.47509765625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1642.093017578125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1642.19287109375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1670.19580078125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1670.199951171875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1670.200927734375,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 1687.971923828125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1687.976806640625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1687.97900390625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1687.97998046875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1687.98095703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1695.726806640625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1713.31884765625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1720.7958984375,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 1772.98486328125,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 1773.010986328125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1773.011962890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1773.117919921875,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 1773.121826171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1773.123046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1773.125,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 1773.501953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1773.516845703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1773.518798828125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1773.52587890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1773.532958984375,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 1773.536865234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1773.5419921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1773.658935546875,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 1773.660888671875,
+            "what": "← ss2 data (cont.) 2318 B"
+          },
+          {
+            "ms": 1773.747802734375,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 1773.7548828125,
+            "what": "← ss2 data (cont.) 2437 B"
+          },
+          {
+            "ms": 1773.77197265625,
+            "what": "← ss2 data 3637 B"
+          },
+          {
+            "ms": 1798.808837890625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1798.813720703125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1799.137939453125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1802.376953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.415771484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.428955078125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1802.434814453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.449951171875,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 1802.457763671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.46484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.471923828125,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 1802.47998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.48583984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.489990234375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1802.505126953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.52392578125,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 1802.52490234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.52587890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.531005859375,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 1802.539794921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.5478515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.548828125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1802.553955078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.559814453125,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 1802.56591796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.572021484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.656982421875,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 1802.663818359375,
+            "what": "← ss2 data (cont.) 2247 B"
+          },
+          {
+            "ms": 1802.6650390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.666015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.6669921875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1802.673828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.675048828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1802.680908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1827.656982421875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1827.71484375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1833.669921875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 1853.157958984375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1853.160888671875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1853.160888671875,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 1868.81787109375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1868.824951171875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1868.891845703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1868.892822265625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1868.892822265625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 1878.743896484375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1894.312744140625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 1903.785888671875,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 1956.77001953125,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 1956.798828125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1956.800048828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1956.800048828125,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 1956.807861328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1956.808837890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1956.81201171875,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 1957.127685546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1957.140869140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1957.141845703125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1957.142822265625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1957.14697265625,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 1957.14794921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1957.15380859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1957.239013671875,
+            "what": "← ss2 data 7158 B"
+          },
+          {
+            "ms": 1957.35009765625,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1957.352783203125,
+            "what": "← ss2 data (cont.) 989 B"
+          },
+          {
+            "ms": 1957.352783203125,
+            "what": "← ss2 data 4590 B"
+          },
+          {
+            "ms": 1977.824951171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.85791015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.85986328125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1977.85986328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.864990234375,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 1977.867919921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.870849609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.87890625,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 1977.8828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.906005859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.916015625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1977.9169921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.927001953125,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 1977.927978515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.933837890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.972900390625,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 1977.98388671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.98486328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.98486328125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1977.98583984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1977.98583984375,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 1977.98583984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1978.0009765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1978.009033203125,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 1978.011962890625,
+            "what": "← ss2 data (cont.) 799 B"
+          },
+          {
+            "ms": 1978.017822265625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1978.02587890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1978.02685546875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 1978.034912109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1978.037841796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1978.055908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 1982.513916015625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2003.075927734375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2003.0859375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2030.243896484375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2030.2470703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2030.247802734375,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 2049.081787109375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2049.10693359375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2049.107666015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2049.107666015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2049.10888671875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2055.684814453125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2074.43603515625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2080.81298828125,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 2130.97509765625,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 2130.998779296875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2131.0009765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2131.0009765625,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 2131.00390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2131.00390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2131.0048828125,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 2131.266845703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2131.272705078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2131.27783203125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2131.279052734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2131.291015625,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 2131.291748046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2131.292724609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2131.380859375,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2131.3837890625,
+            "what": "← ss2 data (cont.) 2318 B"
+          },
+          {
+            "ms": 2131.44189453125,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2131.44482421875,
+            "what": "← ss2 data (cont.) 2437 B"
+          },
+          {
+            "ms": 2131.466796875,
+            "what": "← ss2 data 3637 B"
+          },
+          {
+            "ms": 2149.8388671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2149.880859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2149.8818359375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2149.8828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2149.8828125,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 2149.884033203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2149.8876953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2149.954833984375,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 2149.9580078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2149.9619140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2149.968017578125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2150.054931640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.060791015625,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 2150.061767578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.062744140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.06494140625,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 2150.081787109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.083984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.0849609375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2150.0849609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.0859375,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 2150.0869140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.087890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.101806640625,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2150.10498046875,
+            "what": "← ss2 data (cont.) 2247 B"
+          },
+          {
+            "ms": 2150.10595703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.10595703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.10693359375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2150.11279296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.11376953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2150.160888671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2156.602783203125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2175.117919921875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2175.18994140625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2201.169921875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2201.1728515625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2201.1728515625,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 2216.642822265625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2216.64501953125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2216.64599609375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2216.64599609375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2216.64697265625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2226.5029296875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2241.89404296875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2251.5478515625,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 2301.716796875,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 2301.739990234375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2301.740966796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2301.90185546875,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 2301.931884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2301.932861328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2301.98388671875,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 2302.19384765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2302.202880859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2302.204833984375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2302.2099609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2302.220703125,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 2302.221923828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2302.225830078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2302.31787109375,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2302.31884765625,
+            "what": "← ss2 data (cont.) 1366 B"
+          },
+          {
+            "ms": 2302.3837890625,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2302.384765625,
+            "what": "← ss2 data (cont.) 2437 B"
+          },
+          {
+            "ms": 2302.416748046875,
+            "what": "← ss2 data 4590 B"
+          },
+          {
+            "ms": 2322.662841796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.6787109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.6787109375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2322.679931640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.679931640625,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 2322.680908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.680908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.681884765625,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 2322.682861328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.682861328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.7060546875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2322.70703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.7080078125,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 2322.7080078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.7080078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.708740234375,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 2322.71875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.71875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.7197265625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2322.7197265625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.720947265625,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 2322.720947265625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.723876953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.738037109375,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2322.73876953125,
+            "what": "← ss2 data (cont.) 2247 B"
+          },
+          {
+            "ms": 2322.7470703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.757080078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.758056640625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2322.763916015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.764892578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2322.831787109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2327.64794921875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2347.751953125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2347.7900390625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2372.913818359375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2372.9189453125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2372.919677734375,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 2390.02294921875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2390.028076171875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2390.02978515625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2390.03076171875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2390.03076171875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2398.26806640625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2415.423828125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2423.35400390625,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 2473.101806640625,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 2473.120849609375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2473.122802734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2473.122802734375,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 2473.1259765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2473.1259765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2473.126953125,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 2473.48193359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2473.48291015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2473.48388671875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2473.48388671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2473.485107421875,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 2473.485107421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2473.48583984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2473.615966796875,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2473.616943359375,
+            "what": "← ss2 data (cont.) 2318 B"
+          },
+          {
+            "ms": 2473.680908203125,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2473.681884765625,
+            "what": "← ss2 data (cont.) 2437 B"
+          },
+          {
+            "ms": 2473.700927734375,
+            "what": "← ss2 data 3637 B"
+          },
+          {
+            "ms": 2490.435791015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.476806640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.477783203125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2490.47900390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.47900390625,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 2490.47998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.47998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.48095703125,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 2490.48095703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.48193359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.490966796875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2490.491943359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.491943359375,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 2490.492919921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.4990234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.5,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 2490.52001953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.52001953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.52099609375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2490.52099609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.531982421875,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 2490.532958984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.532958984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.587890625,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2490.5888671875,
+            "what": "← ss2 data (cont.) 2247 B"
+          },
+          {
+            "ms": 2490.619873046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.619873046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.6279296875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2490.62890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.633056640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2490.655029296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2498.6748046875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2498.798828125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2515.635986328125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2515.638916015625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2526.37890625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2544.010009765625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2544.013916015625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2544.014892578125,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 2559.637939453125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2559.640869140625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2559.641845703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2559.641845703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2559.641845703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2569.406982421875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2585.06396484375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2594.512939453125,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 2635.0458984375,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 2635.0859375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2635.0869140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2635.0869140625,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 2635.08984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2635.08984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2635.0908203125,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 2635.3291015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2635.3349609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2635.3369140625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2635.337890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2635.337890625,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 2635.339111328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2635.360107421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2635.47802734375,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2635.47998046875,
+            "what": "← ss2 data (cont.) 2318 B"
+          },
+          {
+            "ms": 2635.537841796875,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2635.54296875,
+            "what": "← ss2 data (cont.) 2437 B"
+          },
+          {
+            "ms": 2635.5478515625,
+            "what": "← ss2 data 3637 B"
+          },
+          {
+            "ms": 2652.43896484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.489013671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.492919921875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2652.493896484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.494873046875,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 2652.495849609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.496826171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.498046875,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 2652.4990234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.5,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.5009765625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2652.5419921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.5439453125,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 2652.544921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.544921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.5458984375,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 2652.56103515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.56201171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.56201171875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2652.562744140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.563720703125,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 2652.56494140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.56494140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.56591796875,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2652.56689453125,
+            "what": "← ss2 data (cont.) 2247 B"
+          },
+          {
+            "ms": 2652.56787109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.56884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.570068359375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2652.570068359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.571044921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2652.57373046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2660.739013671875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2677.60888671875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2677.613037109375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2684.06396484375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2703.89697265625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2703.90087890625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2703.90087890625,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 2720.35595703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2720.35986328125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2720.4169921875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2720.4189453125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2720.4189453125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2729.437744140625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2745.720947265625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2754.544921875,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 2803.94384765625,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 2803.97900390625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2803.97998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2803.980712890625,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 2803.98486328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2803.99169921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2803.992919921875,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 2804.22998046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2804.23193359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2804.23193359375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2804.23876953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2804.239990234375,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 2804.246826171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2804.247802734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2804.380859375,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2804.3828125,
+            "what": "← ss2 data (cont.) 1366 B"
+          },
+          {
+            "ms": 2804.388916015625,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2804.389892578125,
+            "what": "← ss2 data (cont.) 2437 B"
+          },
+          {
+            "ms": 2804.4560546875,
+            "what": "← ss2 data 4590 B"
+          },
+          {
+            "ms": 2828.700927734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.745849609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.746826171875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2828.748046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.748046875,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 2828.7490234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.7490234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.75,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 2828.750732421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.760009765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.7607421875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2828.76171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.76171875,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 2828.76904296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.77001953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.77685546875,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 2828.787841796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.801025390625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.8017578125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2828.8017578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.802734375,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 2828.806884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.807861328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.845947265625,
+            "what": "← ss2 data (cont.) 5792 B"
+          },
+          {
+            "ms": 2828.846923828125,
+            "what": "← ss2 data (cont.) 2247 B"
+          },
+          {
+            "ms": 2828.874755859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.8779296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.8837890625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2828.890869140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.89208984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2828.915771484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2829.489013671875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2853.85302734375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2853.892822265625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2860.848876953125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 2879.705810546875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2879.708984375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2879.708984375,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 2896.324951171875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2896.327880859375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2896.328857421875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2896.328857421875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2896.328857421875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 2905.031005859375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2921.740966796875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 2930.095947265625,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 2980.428955078125,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 2980.489013671875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2980.491943359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2980.492919921875,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 2980.495849609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2980.496826171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2980.497802734375,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 2980.728759765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2980.751953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2980.757080078125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 2980.758056640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2980.7587890625,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 2980.7587890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2980.831787109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 2980.93701171875,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 2980.94482421875,
+            "what": "← ss2 data (cont.) 870 B"
+          },
+          {
+            "ms": 2981,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 2981.0048828125,
+            "what": "← ss2 data (cont.) 989 B"
+          },
+          {
+            "ms": 2981.005859375,
+            "what": "← ss2 data 3637 B"
+          },
+          {
+            "ms": 3002.286865234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.327880859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.329833984375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3002.329833984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.3310546875,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 3002.3310546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.33203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.33203125,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 3002.3330078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.333984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.333984375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3002.380859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.3818359375,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 3002.388916015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.389892578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.395751953125,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 3002.409912109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.431884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.432861328125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3002.432861328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.44189453125,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 3002.44287109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.44384765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.511962890625,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 3002.52392578125,
+            "what": "← ss2 data (cont.) 799 B"
+          },
+          {
+            "ms": 3002.52490234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.537109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.537841796875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3002.538818359375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.539794921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3002.57177734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3006.156005859375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3027.43994140625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3027.584716796875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3033.97900390625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3053.078857421875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3053.08203125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3053.0830078125,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 3071.955810546875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3071.9599609375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3072.016845703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3072.017822265625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3072.017822265625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3078.538818359375,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 3097.416015625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 3103.60693359375,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 3152.916015625,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 3152.946044921875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3152.947021484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3152.947998046875,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 3152.94970703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3152.94970703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3152.950927734375,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 3153.180908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3153.183837890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3153.184814453125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3153.19189453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3153.193115234375,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 3153.19384765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3153.19384765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3153.408935546875,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 3153.410888671875,
+            "what": "← ss2 data (cont.) 870 B"
+          },
+          {
+            "ms": 3153.577880859375,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 3153.5791015625,
+            "what": "← ss2 data (cont.) 989 B"
+          },
+          {
+            "ms": 3153.60498046875,
+            "what": "← ss2 data 3637 B"
+          },
+          {
+            "ms": 3170.837890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.880859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.882080078125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3170.883056640625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.883056640625,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 3170.8837890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.884765625,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 3170.893798828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.893798828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.894775390625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3170.89892578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.903076171875,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 3170.9130859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.9130859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.923828125,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 3170.936767578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.936767578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.943115234375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3170.944091796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3170.944091796875,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 3171.001953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3171.005859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3171.031982421875,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 3171.034912109375,
+            "what": "← ss2 data (cont.) 799 B"
+          },
+          {
+            "ms": 3171.034912109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3171.041015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3171.0439453125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3171.044921875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3171.048828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3171.072021484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3178.505859375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3178.583740234375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3178.720947265625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3195.966064453125,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3196.074951171875,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3202.07275390625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3220.14990234375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3220.15283203125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3220.15283203125,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 3236.1328125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3236.135986328125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3236.136962890625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3236.136962890625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3236.137939453125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3245.473876953125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 3261.53173828125,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 3270.514892578125,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 3319.701904296875,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 3319.736083984375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3319.737060546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3319.73779296875,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 3319.73974609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3319.740966796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3319.740966796875,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 3319.9638671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3319.96484375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3319.9716796875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3319.98583984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3319.98583984375,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 3320.001953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3320.002685546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3320.083740234375,
+            "what": "← ss2 data 7158 B"
+          },
+          {
+            "ms": 3320.1708984375,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 3320.171875,
+            "what": "← ss2 data (cont.) 989 B"
+          },
+          {
+            "ms": 3320.27978515625,
+            "what": "← ss2 data 4590 B"
+          },
+          {
+            "ms": 3337.12890625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.15478515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.15576171875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3337.156982421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.157958984375,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 3337.157958984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.158935546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.158935546875,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 3337.159912109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.160888671875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.160888671875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3337.162109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.162109375,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 3337.17578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.1767578125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.1767578125,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 3337.19091796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.19189453125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.19189453125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3337.193115234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.19384765625,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 3337.19482421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.19482421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.208984375,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 3337.2099609375,
+            "what": "← ss2 data (cont.) 799 B"
+          },
+          {
+            "ms": 3337.2109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.2109375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.2119140625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3337.2158203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.216796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3337.239990234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3345.4208984375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3362.200927734375,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3362.304931640625,
+            "what": "ss1 → ACK"
+          },
+          {
+            "ms": 3385.892822265625,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3385.89794921875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3385.89794921875,
+            "what": "ss1 → data (cont.) 1374 B"
+          },
+          {
+            "ms": 3401.040771484375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3401.044921875,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3401.10595703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3401.10595703125,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3401.10693359375,
+            "what": "ss1 → data (cont.) 2896 B"
+          },
+          {
+            "ms": 3411.44384765625,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 3426.39404296875,
+            "what": "← ss2 ACK"
+          },
+          {
+            "ms": 3436.49609375,
+            "what": "ss1 → data (cont.) 531 B"
+          },
+          {
+            "ms": 3485.587890625,
+            "what": "← ss2 data 236 B"
+          },
+          {
+            "ms": 3485.6259765625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3485.626953125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3485.6279296875,
+            "what": "← ss2 data 81 B"
+          },
+          {
+            "ms": 3485.631103515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3485.631103515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3485.6318359375,
+            "what": "← ss2 data 426 B"
+          },
+          {
+            "ms": 3486.06884765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3486.075927734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3486.078125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3486.078857421875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3486.079833984375,
+            "what": "← ss2 data 77 B"
+          },
+          {
+            "ms": 3486.079833984375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3486.080810546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3486.0927734375,
+            "what": "← ss2 data 7158 B"
+          },
+          {
+            "ms": 3486.2626953125,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 3486.26904296875,
+            "what": "← ss2 data (cont.) 989 B"
+          },
+          {
+            "ms": 3486.27099609375,
+            "what": "← ss2 data 4590 B"
+          },
+          {
+            "ms": 3509.06591796875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.120849609375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.121826171875,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3509.122802734375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.122802734375,
+            "what": "← ss2 data 78 B"
+          },
+          {
+            "ms": 3509.123779296875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.1298828125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.130859375,
+            "what": "← ss2 data 441 B"
+          },
+          {
+            "ms": 3509.135009765625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.14990234375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.15380859375,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3509.166015625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.182861328125,
+            "what": "← ss2 data 71 B"
+          },
+          {
+            "ms": 3509.182861328125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.19580078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.2080078125,
+            "what": "← ss2 data 723 B"
+          },
+          {
+            "ms": 3509.224853515625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.225830078125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.267822265625,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3509.283935546875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.2958984375,
+            "what": "← ss2 data 70 B"
+          },
+          {
+            "ms": 3509.31005859375,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.313720703125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.395751953125,
+            "what": "← ss2 data (cont.) 7240 B"
+          },
+          {
+            "ms": 3509.39794921875,
+            "what": "← ss2 data (cont.) 799 B"
+          },
+          {
+            "ms": 3509.416748046875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.430908203125,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.44580078125,
+            "what": "← ss2 data 69 B"
+          },
+          {
+            "ms": 3509.449951171875,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.4619140625,
+            "what": "← ss2 data 36 B"
+          },
+          {
+            "ms": 3509.496826171875,
+            "what": "← ss2 data 36 B"
+          }
+        ]
+      }
+    }
+  ]
+}

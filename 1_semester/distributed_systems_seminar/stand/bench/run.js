@@ -3,7 +3,7 @@
 //   node bench/run.js                      # контроль (одна конфигурация дважды) и сразу сетка, ~4 ч
 //   node bench/run.js --control            # только контроль, ~5 мин
 //   node bench/run.js --grid               # только сетка, без контроля
-//   node bench/run.js --resume results/X   # продолжить: прогоны с готовым summary.json пропускаются
+//   node bench/run.js --resume results/X   # продолжить: прогоны с готовым meta.json пропускаются, остальные (в т. ч. прерванные) повторяются
 //   node bench/run.js --only full,nobody   # подмножество конфигураций
 //   node bench/run.js --dry                # показать порядок прогонов, ничего не запускать
 //   node bench/run.js --out results/X      # писать в заданный каталог (для night.js)
@@ -74,7 +74,8 @@ function buildPlan() {
       const two = TWO && TWO.configs.includes(config) ? TWO.points.map(([size, vus]) => ({ rep, config, target: 'xroad2', size, vus })) : [];
       // M.rtts: каждая точка при каждой задержке ss1 <-> ss2 (эмуляция WAN), вперемешку внутри блока конфигурации
       const rtts = M.rtts || [undefined];
-      const pts = xroadPoints.flatMap(([size, vus]) => rtts.map((rtt) => ({ rep, config, target: 'xroad', size, vus, ...(rtt != null ? { rtt } : {}) })));
+      // третий элемент точки — тело запроса в байтах (POST с REQ_SIZE, ответ по-прежнему size байт)
+      const pts = xroadPoints.flatMap(([size, vus, req]) => rtts.map((rtt) => ({ rep, config, target: 'xroad', size, vus, ...(req ? { req } : {}), ...(rtt != null ? { rtt } : {}) })));
       plan.push(...shuffle([...pts, ...two]));
     }
   }
@@ -82,7 +83,7 @@ function buildPlan() {
   return plan;
 }
 
-const runName = (r) => `${r.config}${r.target === 'xroad2' ? '-2p' : ''}_s${r.size}_v${r.vus}${r.rtt != null ? '_rtt' + r.rtt : ''}_r${r.rep}${r.tag ? '_' + r.tag : ''}`;
+const runName = (r) => `${r.config}${r.target === 'xroad2' ? '-2p' : ''}_s${r.size}${r.req ? '_q' + r.req : ''}_v${r.vus}${r.rtt != null ? '_rtt' + r.rtt : ''}_r${r.rep}${r.tag ? '_' + r.tag : ''}`;
 
 // spawn с ожиданием: k6 нельзя запускать через spawnSync — он блокирует цикл событий, и docker stats в фоне не пишется
 function run(cmd, args) {
@@ -119,6 +120,8 @@ function startStats(file) {
 async function runOne(r, dir, warmup, extra = {}) {
   const n = r.tag === 'burnin' ? M.burnin.n : r.size >= M.large_from ? M.n_large : M.n;
   fs.mkdirSync(dir, { recursive: true });
+  // повтор прерванного прогона (--resume): старые файлы не должны сойти за результат этого запуска
+  for (const f of ['summary.json', 'meta.json', 'opmon.json']) fs.rmSync(path.join(dir, f), { force: true });
   const xroad = r.target !== 'direct';
   const two = r.target === 'xroad2';                 // два провайдера: метки и байты ещё и для ss3
   const logged = two ? [...L.MEASURED_SS, 'ss3'] : L.MEASURED_SS;
@@ -135,6 +138,7 @@ async function runOne(r, dir, warmup, extra = {}) {
     '-v', `${path.join(L.STAND, 'k6')}:/k6:ro`, '-v', `${dir}:/out`,
     'grafana/k6:latest', 'run', '--quiet', '--out', 'csv=/out/requests.csv.gz',
     '-e', `CONFIG=${r.config}`, '-e', `TARGET=${r.target}`, '-e', `SIZE=${r.size}`, '-e', `VUS=${r.vus}`,
+    ...(r.req ? ['-e', 'METHOD=POST', '-e', `REQ_SIZE=${r.req}`] : []),
     '-e', `N=${n}`, '-e', `WARMUP=${warmup}`, '-e', `REP=${r.rep}`, '-e', 'OUT=/out', '/k6/grid.js'];
   const t0 = Date.now();
   // фактический RTT соединений ss1 → ss2:5500 (ss -tin в namespace ss1) — параллельно с k6
@@ -202,7 +206,8 @@ function controlVerdict() {
 // ---------- главный цикл ----------
 (async () => {
   const plan = buildPlan();
-  const todo = plan.filter((r) => !fs.existsSync(path.join(RESULTS, runName(r), 'summary.json')));
+  // готов = есть meta.json: его пишут после k6 и ожидания меток; summary.json k6 пишет и при прерывании (неполный прогон)
+  const todo = plan.filter((r) => !fs.existsSync(path.join(RESULTS, runName(r), 'meta.json')));
   L.log(`results → ${RESULTS}`);
   L.log(`${plan.length} runs planned, ${todo.length} to do`);
   if (flag('--dry')) { todo.forEach((r) => console.log('  ' + runName(r))); return; }

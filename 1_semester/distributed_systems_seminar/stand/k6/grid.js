@@ -17,12 +17,15 @@ const PROVIDER = __ENV.PROVIDER || 'DEV/MEMBER/SS2-CODE/ECHO';
 const OUT = __ENV.OUT || '/out';
 const FILL = __ENV.FILL || 'random';     // random — несжимаемое тело: размер message log не занижается TOAST-сжатием
 
-const QS = METHOD === 'GET' ? `?size=${SIZE}&fill=${FILL}` : '';
+// REQ_SIZE (только POST): тело запроса отдельно от ответа; ответ тогда SIZE байт, как у GET
+const REQ_SIZE = Number(__ENV.REQ_SIZE || 0);
+
+const QS = METHOD === 'GET' || REQ_SIZE ? `?size=${SIZE}&fill=${FILL}` : '';
 // xroad2 — два провайдера: запросы по очереди на ss2 и ss3 (по номеру итерации, поровну при любом числе VU)
 const PROVIDERS = TARGET === 'xroad2' ? ['DEV/MEMBER/SS2-CODE/ECHO', 'DEV/MEMBER/SS3-CODE/ECHO'] : [PROVIDER];
 const urlFor = (i) => (TARGET === 'direct' ? `http://is-provider:8080/echo${QS}` : `http://ss1:8080/r1/${PROVIDERS[i % PROVIDERS.length]}/echo${QS}`);
 const HEADERS = { 'X-Road-Client': 'DEV/MEMBER/SS1-CODE/CLIENT' };
-const BODY = METHOD === 'POST' ? 'x'.repeat(SIZE) : null;
+const BODY = METHOD === 'POST' ? 'x'.repeat(REQ_SIZE || SIZE) : null;
 
 const measured = new Trend('measured', true);
 const errors = new Counter('errors');
@@ -55,7 +58,7 @@ export function handleSummary(data) {
   const v = m ? m.values : {};
   const e = data.metrics.errors ? data.metrics.errors.values.count : 0;
   const summary = {
-    config: CONFIG, target: TARGET, method: METHOD, size: SIZE, vus: VUS, rep: REP, n: N, warmup: WARMUP,
+    config: CONFIG, target: TARGET, method: METHOD, size: SIZE, req_size: REQ_SIZE, vus: VUS, rep: REP, n: N, warmup: WARMUP,
     min: v.min, avg: v.avg, p50: v.med, p90: v['p(90)'], p95: v['p(95)'], p99: v['p(99)'], max: v.max,
     errors: e, count: v.count,
     duration_s: data.state.testRunDurationMs / 1000,           // весь прогон, включая прогрев

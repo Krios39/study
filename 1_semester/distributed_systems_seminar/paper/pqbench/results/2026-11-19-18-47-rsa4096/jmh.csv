@@ -1,0 +1,3 @@
+"Benchmark","Mode","Threads","Samples","Score","Score Error (99.9%)","Unit","Param: alg","Param: input"
+"pqbench.SignBench.sign","avgt",1,50,4505.970016,64.292181,"us/op",RSA-4096-SHA512-BC,1024
+"pqbench.SignBench.verify","avgt",1,50,84.562371,1.530154,"us/op",RSA-4096-SHA512-BC,1024

@@ -66,7 +66,11 @@ async fn echo_get(Query(p): Query<Params>) -> Response {
         .into_response()
 }
 
+// POST с ?size=N отвечает N байт, как GET: размер запроса (тело) и ответа задаются отдельно
 async fn echo_post(Query(p): Query<Params>, headers: HeaderMap, body: Bytes) -> Response {
+    if p.size.is_some() {
+        return echo_get(Query(p)).await;
+    }
     delay(&p).await;
     let mut resp = body.into_response();
     if let Some(ct) = headers.get(header::CONTENT_TYPE) {

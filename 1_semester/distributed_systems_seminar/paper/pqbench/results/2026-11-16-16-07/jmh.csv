@@ -1,0 +1,25 @@
+"Benchmark","Mode","Threads","Samples","Score","Score Error (99.9%)","Unit","Param: alg","Param: digest","Param: input","Param: provider","Param: size"
+"pqbench.HashBench.hash","avgt",1,50,42.285867,0.173953,"us/op",,SHA-256,,BC,10240
+"pqbench.HashBench.hash","avgt",1,50,4379.605869,32.437438,"us/op",,SHA-256,,BC,1048576
+"pqbench.HashBench.hash","avgt",1,50,4.407490,0.010424,"us/op",,SHA-256,,JDK,10240
+"pqbench.HashBench.hash","avgt",1,50,459.335621,14.834005,"us/op",,SHA-256,,JDK,1048576
+"pqbench.HashBench.hash","avgt",1,50,30.711559,0.247585,"us/op",,SHA-512,,BC,10240
+"pqbench.HashBench.hash","avgt",1,50,3045.378371,42.825763,"us/op",,SHA-512,,BC,1048576
+"pqbench.HashBench.hash","avgt",1,50,13.916854,0.512269,"us/op",,SHA-512,,JDK,10240
+"pqbench.HashBench.hash","avgt",1,50,1361.658525,26.323029,"us/op",,SHA-512,,JDK,1048576
+"pqbench.SignBench.sign","avgt",1,50,819.605695,20.033483,"us/op",RSA-2048-SHA256-BC,,1024,,
+"pqbench.SignBench.sign","avgt",1,50,835.167698,21.030026,"us/op",RSA-2048-SHA512-BC,,1024,,
+"pqbench.SignBench.sign","avgt",1,50,2381.330548,55.922708,"us/op",RSA-3072-SHA512-BC,,1024,,
+"pqbench.SignBench.sign","avgt",1,50,774.811502,23.476959,"us/op",RSA-2048-SHA512-JDK,,1024,,
+"pqbench.SignBench.sign","avgt",1,50,66.441654,0.966921,"us/op",ECDSA-P256-SHA256-BC,,1024,,
+"pqbench.SignBench.sign","avgt",1,50,298.913128,61.437393,"us/op",ML-DSA-44-BC,,1024,,
+"pqbench.SignBench.sign","avgt",1,50,353.635446,58.206126,"us/op",ML-DSA-65-BC,,1024,,
+"pqbench.SignBench.sign","avgt",1,50,1005.397080,224.732578,"us/op",ML-DSA-87-BC,,1024,,
+"pqbench.SignBench.verify","avgt",1,50,33.057253,0.957715,"us/op",RSA-2048-SHA256-BC,,1024,,
+"pqbench.SignBench.verify","avgt",1,50,30.930666,0.738126,"us/op",RSA-2048-SHA512-BC,,1024,,
+"pqbench.SignBench.verify","avgt",1,50,59.141058,1.385942,"us/op",RSA-3072-SHA512-BC,,1024,,
+"pqbench.SignBench.verify","avgt",1,50,29.233290,0.499487,"us/op",RSA-2048-SHA512-JDK,,1024,,
+"pqbench.SignBench.verify","avgt",1,50,67.827402,9.841696,"us/op",ECDSA-P256-SHA256-BC,,1024,,
+"pqbench.SignBench.verify","avgt",1,50,66.779698,0.501451,"us/op",ML-DSA-44-BC,,1024,,
+"pqbench.SignBench.verify","avgt",1,50,106.747296,1.139337,"us/op",ML-DSA-65-BC,,1024,,
+"pqbench.SignBench.verify","avgt",1,50,176.488447,4.565082,"us/op",ML-DSA-87-BC,,1024,,
