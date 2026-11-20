@@ -99,11 +99,11 @@ public class SignBench {
             if (s.startsWith("ML-DSA-") || s.startsWith("FALCON-")) {
                 return new Algo(s, n, null, n, p);
             }
-            if (s.startsWith("SLH-DSA-")) {                      // FIPS 205, pure (no pre-hash)
-                return new Algo(s, n, null, "SLH-DSA", p);
+            if (s.startsWith("SLH-DSA-")) {                      // FIPS 205: pure, or HashSLH-DSA for "...-WITH-SHAxxx"
+                return new Algo(s, n, null, n.contains("-WITH-") ? n : "SLH-DSA", p);
             }
             if (s.startsWith("MLDSA")) {                         // composite ML-DSA, RFC 10073 (BC 1.84: pre-RFC draft)
-                return new Algo(s, n, null, n, p);
+                return new Algo(s, n.replace("-PREHASH", ""), null, n, p);   // pre-hash variant uses the same keys
             }
             throw new IllegalArgumentException(s);
         }

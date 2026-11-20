@@ -69,7 +69,10 @@ for (const infra of [...MEMBERS, 'SLH-DSA-128S', 'SLH-DSA-128F', 'SLH-DSA-256S']
 // ---------- round trips: count TCP flights (packets), not bytes ----------
 // From the captures paper/stand-results/flows-pq (full, new TCP + resumed TLS, RTT 50 ms), MSS 1448 B, initial window 10 segments:
 // - request ss1 -> ss2, TLS bytes on the wire: 12562 B at base (1-byte body); the first flight after the handshake
-//   carried at most 8 full segments plus ChangeCipherSpec (base: 11584 B, the 978 B tail waited for an ACK), then 20 segments;
+//   carried ChangeCipherSpec plus 9 full segments (B87, C128F, C256S: 13032 B), then 20 segments;
+//   at base the request fits into the first flight, but its last partial segment (978 B after 8 full ones) waited for an ACK
+//   (Nagle), so the request always takes at least 2 flights. The first version counted 8 segments from the base capture and
+//   predicted one round trip too many for B MLDSA65-P256 (41315 B on the wire), found by the grid matrix-pq-edge.json;
 // - response ss2 -> ss1: the first flight is ~1 KB of small TLS records (MIME start, chunk delimiters), one packet each,
 //   which takes the whole initial window; the rest (20700 B at base with a 10 KB body) follows in flights of 20 and 40 segments.
 // The grid (paper/grids/matrix-pq.json) emulates the growth by padding: request body = request_extra, response body = 10 KB + response_extra.
@@ -78,14 +81,14 @@ const WIRE = { req: 12562, respBody: 20700 };
 // From flight 4 on, the request is limited by the receive window of ss2, not by cwnd (flows-pq/C256S, 19.11: flight 4
 // ends exactly at the advertised right edge, ~95 KB window, 36 segments; flight 5 had 41 segments to the edge).
 // Receive-window autotuning depends on the receiver and the RTT, so 36/41 hold for this testbed; beyond 5 flights untested.
-const REQ_FLIGHTS = [8, 20, 40, 36, 41];             // segments per flight
+const REQ_FLIGHTS = [9, 20, 40, 36, 41];             // segments per flight
 const RESP_BODY_FLIGHTS = [20, 40, 80, 160];
 function flights(bytes, caps) {
   let left = bytes, n = 0;
   for (const c of caps) { n++; left -= c * MSS; if (left <= 0) return n; }
   return n + 1;
 }
-const reqFl = (extra) => flights(WIRE.req + extra, REQ_FLIGHTS);
+const reqFl = (extra) => Math.max(2, flights(WIRE.req + extra, REQ_FLIGHTS));
 const respFl = (extra) => 1 + flights(WIRE.respBody + extra, RESP_BODY_FLIGHTS);
 const base = reqFl(0) + respFl(0);
 for (const r of rows) {
@@ -93,7 +96,7 @@ for (const r of rows) {
   r.response_flights = respFl(r.response_extra);
   r.extra_round_trips_full = r.request_flights + r.response_flights - base;
   r.extra_round_trips_reuse = 0;               // window already open on a pooled connection (grid: no step in any scenario)
-  // the grids (matrix-pq.json, matrix-pq-large*.json) checked the model up to the C ML-DSA-65 + SLH-DSA-256s point: 190594 B extra in the request, 132502 B in the response
+  // the grids (matrix-pq.json, matrix-pq-large*.json, matrix-pq-edge.json) checked the model up to the C ML-DSA-65 + SLH-DSA-256s point: 190594 B extra in the request, 132502 B in the response
   r.within_checked_range = r.request_extra <= 190594 && r.response_extra <= 132502;
 }
 

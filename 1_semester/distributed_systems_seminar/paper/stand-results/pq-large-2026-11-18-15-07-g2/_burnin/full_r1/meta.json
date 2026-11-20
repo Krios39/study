@@ -8,38 +8,38 @@
   "tag": "burnin",
   "n": 1000,
   "warmup": 500,
-  "wall_s": 64.761,
-  "started": "2026-11-18T21:38:18.472Z",
-  "finished": "2026-11-18T21:39:25.616Z",
+  "wall_s": 47.207,
+  "started": "2026-11-19T22:05:11.161Z",
+  "finished": "2026-11-19T22:06:00.386Z",
   "net_bytes": {
     "ss1": {
-      "rx": 42555383,
-      "tx": 39829914
+      "rx": 42397196,
+      "tx": 39777449
     },
     "ss2": {
-      "rx": 39110590,
-      "tx": 42864165
+      "rx": 39032381,
+      "tx": 42669872
     }
   },
   "messagelog_growth_bytes": {
-    "ss1": 52871168,
-    "ss2": 53059584
+    "ss1": 55214080,
+    "ss2": 56426496
   },
   "link_bytes": {
-    "xroad_rx": 40921614,
-    "link_rx": 40921614,
-    "xroad_tx": 22922097,
-    "link_tx": 22922097
+    "xroad_rx": 40813985,
+    "link_rx": 40813985,
+    "xroad_tx": 22922650,
+    "link_tx": 22922650
   },
   "timestamping": {
     "completed": true,
-    "wait_s": 34,
+    "wait_s": 44,
     "ss1": {
-      "unstamped_after_run": 1913,
+      "unstamped_after_run": 1523,
       "unstamped_final": 0
     },
     "ss2": {
-      "unstamped_after_run": 1688,
+      "unstamped_after_run": 1204,
       "unstamped_final": 0
     },
     "ca_calls_while_waiting": {
@@ -47,7 +47,7 @@
       "tsa": 2,
       "sign": 0,
       "ocsp_rt_mean_s": null,
-      "tsa_rt_mean_s": 0.013999999999999999
+      "tsa_rt_mean_s": 0.008
     }
   },
   "ca_calls": {
@@ -55,18 +55,18 @@
     "tsa": 2,
     "sign": 0,
     "ocsp_rt_mean_s": null,
-    "tsa_rt_mean_s": 0.0245
+    "tsa_rt_mean_s": 0.0125
   },
   "local_ini": {
     "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]",
     "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]"
   },
-  "k6_stdout": "full\txroad\tsize=10240\tvus=4\trep=1\tp50=127.6\tp90=193.0\tp99=241.2\terrors=0",
+  "k6_stdout": "full\txroad\tsize=10240\tvus=4\trep=1\tp50=98.3\tp90=132.7\tp99=197.3\terrors=0",
   "tsa_probe_after": "200",
   "flow_rtt": {
-    "sockets": 14,
-    "minrtt_ms": 0.014499999999999999,
-    "minrtt_min_ms": 0.008,
-    "srtt_ms": 3.2305
+    "sockets": 12,
+    "minrtt_ms": 0.0375,
+    "minrtt_min_ms": 0.011,
+    "srtt_ms": 1.604
   }
 }
