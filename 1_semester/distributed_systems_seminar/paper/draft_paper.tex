@@ -35,15 +35,15 @@
 \newtext{X-Road secures data exchange between organisations with signatures, certificate status
 checks, time-stamps and a message log, and proposed changes to these mechanisms, such as post-quantum
 signatures, need a baseline for what they cost now. This study measures the per-message overhead of
-the trust mechanisms of X-Road 7.8.3 on one and on three laptops\newgreen{, on a faster development laptop} and with a round-trip time added
+the trust mechanisms of X-Road 7.8.3 on one and on three laptops\newtext{, on a faster development laptop} and with a round-trip time added
 between the Security Servers, using configuration changes, per-stage timings and packet captures. With one client the X-Road path
 adds about 28\,ms to a 10\,KB exchange. Signing and verification take only a few milliseconds of it; most
-is \newred{residual processing} of the Security Server, while logging the body takes almost half of a 1\,MB
+is \newtext{residual processing} of the Security Server, while logging the body takes almost half of a 1\,MB
 exchange and synchronous time-stamping adds about 90\,ms. With an added round-trip time, opening a
 new connection for every message, the default, has the largest effect: a message waits for about
-five round trips at 10\,KB and ten at 1\,MB, against two with reused connections.} \newred{An
+five round trips at 10\,KB and ten at 1\,MB, against two with reused connections.} \newtext{An
 estimate for post-quantum message signatures, from a benchmark on the platform of X-Road and from
-messages padded to their size, changes the computation by about a millisecond \newgreen{with the
+messages padded to their size, changes the computation by about a millisecond \newtext{with the
 lattice schemes and by up to 9\,ms with composites with RSA or SLH-DSA in the certification
 authority}, while the size adds up
 to two round trips with ML-DSA and five with SLH-DSA in the certification authority, only on new
@@ -97,7 +97,7 @@ Estonian instance now reports 3.74 billion~\cite{xteefactsheet}, so whatever is 
 multiplied by a much larger base. The second is a set of proposals that would make the trust
 mechanisms themselves more expensive. Post-quantum signatures are expected to enlarge certificates,
 signatures and handshakes~\cite{bakhtina2026pqc,snetkov2023}; a Dilithium5 signature, for example,
-takes 4595 bytes against the 256 bytes of RSA-2048~\cite{snetkov2023} \newgreen{(4627 bytes in its standardised version, ML-DSA-87~\cite{fips204})}, \newtext{and an analysis of the
+takes 4595 bytes against the 256 bytes of RSA-2048~\cite{snetkov2023} \newtext{(4627 bytes in its standardised version, ML-DSA-87~\cite{fips204})}, \newtext{and an analysis of the
 Estonian e-government systems argues that signatures for X-Road should be short because of how
 signing is used there~\cite{vakarjuk2024}}. Decentralised Public Key
 Infrastructure (PKI) built on verifiable credentials adds a presentation to every
@@ -110,7 +110,7 @@ The proposals above do not change X-Road as a whole but individual mechanisms, a
 change its cryptography. Post-quantum algorithms affect signing, verification and the TLS
 handshake~\cite{bakhtina2026pqc}, and threshold signatures change how messages are
 signed~\cite{bakhtina2026ijis}. Measurements of secure protocols, however, have found that the cost of such mechanisms is not
-set by the cryptography alone\newgreen{: a TLS web server with its RSA operations replaced by no-ops
+set by the cryptography alone\newtext{: a TLS web server with its RSA operations replaced by no-ops
 remained far slower than an unencrypted one~\cite{coarfa2006}, and the cost of HTTPS depends mostly
 on whether connections are reused~\cite{naylor2014}. For post-quantum TLS, the operations take well
 under a millisecond and a few per cent of the CPU time~\cite{abbasi2025,rahul2026,demir2026}, while
@@ -191,14 +191,14 @@ For this study the mechanisms divide by their position relative to the request p
 
 \newtext{Signing and verification are not one operation each. In X-Road~7.8.3 every exchange is
 signed twice with a member key, the request by the consumer and the response by the provider, and
-verified twice\newgreen{~\cite{xroadmesstransp}}. Each signed message carries, next to the signature value, the signing certificate
-and the OCSP response for it\newgreen{~\cite[\texttt{SignatureVerifier}]{xroadsrc}}, and the request also carries the OCSP response for the authentication
-certificate of the consumer\newgreen{~\cite{xroadmesstransp}}. The receiver validates the certificate chain of the signing certificate
-on every message without caching it\newgreen{~\cite[\texttt{CertChainVerifier}]{xroadsrc}}; the provider also validates the chain of the consumer's
-authentication certificate on every message\newgreen{~\cite[\texttt{ServerMessageProcessor}]{xroadsrc}}, and the consumer that of the provider only when it
-opens a connection\newgreen{~\cite{xroadmesstransp}}. With one level of CA each chain costs one verification of a CA signature. The
+verified twice\newtext{~\cite{xroadmesstransp}}. Each signed message carries, next to the signature value, the signing certificate
+and the OCSP response for it\newtext{~\cite[\texttt{SignatureVerifier}]{xroadsrc}}, and the request also carries the OCSP response for the authentication
+certificate of the consumer\newtext{~\cite{xroadmesstransp}}. The receiver validates the certificate chain of the signing certificate
+on every message without caching it\newtext{~\cite[\texttt{CertChainVerifier}]{xroadsrc}}; the provider also validates the chain of the consumer's
+authentication certificate on every message\newtext{~\cite[\texttt{ServerMessageProcessor}]{xroadsrc}}, and the consumer that of the provider only when it
+opens a connection\newtext{~\cite{xroadmesstransp}}. With one level of CA each chain costs one verification of a CA signature. The
 signature of an OCSP response and the certificate of its responder are verified once and the result
-is cached for 60\,s\newgreen{~\cite[\texttt{OcspVerifier}]{xroadsrc}}, and the CA and the OCSP responder sign outside the request path\newgreen{, as
+is cached for 60\,s\newtext{~\cite[\texttt{OcspVerifier}]{xroadsrc}}, and the CA and the OCSP responder sign outside the request path\newtext{, as
 described above}.}
 \newtext{Figure~\ref{fig:path} shows the steps of one exchange in the order in which the Security
 Servers perform them.}
@@ -215,7 +215,7 @@ Servers perform them.}
   msg/.style={->, thick},
   lbl/.style={above, fill=white, inner sep=1pt}]
 % lanes
-\foreach \x/\n in {0/Client, 3.4/Consumer \newgreen{Security Server}, 8.4/Provider \newgreen{Security Server}, 12.3/\newgreen{Service}} {
+\foreach \x/\n in {0/Client, 3.4/Consumer Security Server, 8.4/Provider Security Server, 12.3/Service} {
   \node[font=\footnotesize\bfseries] at (\x,0.5) {\n};
   \draw[densely dotted, black!50] (\x,0.3) -- (\x,-10.6);
 }
@@ -247,7 +247,7 @@ Servers perform them.}
 \draw[msg] (3.4,-10.6) -- node[lbl, pos=0.5]{response} (0,-10.6);
 % stages of operational monitoring
 \foreach \a/\b/\l in {0.05/-0.2/Consumer sending, -0.2/-3.1/To provider, -3.1/-5.65/Provider forwarding,
-  -5.65/-6.45/\newgreen{Service}, -6.45/-8.55/Provider response, -8.55/-10.6/Consumer finishing} {
+  -5.65/-6.45/Service, -6.45/-8.55/Provider response, -8.55/-10.6/Consumer finishing} {
   \draw[decorate, decoration={brace, amplitude=3pt}] (14.5,\a) -- (14.5,\b)
     node[midway, right=3pt, font=\scriptsize] {\l};
 }
@@ -255,16 +255,16 @@ Servers perform them.}
 \node[crypto, text width=3.2cm] at (1.6,-11.25) {cryptographic};
 \node[conn, text width=3.2cm] at (5.1,-11.25) {connection (configurable)};
 \node[cfg, text width=3.2cm] at (8.6,-11.25) {body logging (configurable)};
-\node[fix, text width=3.2cm] at (12.1,-11.25) {\newred{residual processing}};
+\node[fix, text width=3.2cm] at (12.1,-11.25) {residual processing};
 \node[draw, densely dotted, rounded corners=1pt, text width=16.3cm, align=left, inner sep=3pt]
   at (8.1,-11.9) {Background, not in the request path: OCSP responses refreshed every 20 minutes and
-  their verification cached for 60\,s; time stamps in batches once a minute (\newgreen{with synchronous time-stamping}: one per
+  their verification cached for 60\,s; time stamps in batches once a minute (with synchronous time-stamping: one per
   log record, in the path); refresh of the global configuration.};
 \end{tikzpicture}
 \caption{\newtext{One exchange through X-Road~7.8.3 with the default configuration, from the source
 code of the Security Server~\cite{xroadsrc}. Red: cryptographic operations; orange and green,
 dashed: steps that configuration changes (the connection policy and the logging of message bodies);
-blue: \newred{residual processing}, which also includes parsing, building and forwarding the messages. On a reused connection the first
+blue: \newtext{residual processing}, which also includes parsing, building and forwarding the messages. On a reused connection the first
 two steps of the consumer are skipped. Member: an operation with the member's signing key; CA: the
 verification of a CA signature in a certificate chain; auth.: authentication certificate. Braces:
 the stages into which the operational monitoring of X-Road divides an exchange.}}
@@ -277,9 +277,9 @@ latency source~\cite{ansper2013}. It carries a security price as well, since a c
 OCSP response leaves a window during which a revoked certificate is still
 accepted~\cite{bakhtina2023ares}. The performance side of that trade-off is the subject of this study.
 
-\newgreen{The cost of the trust mechanisms is thus the computation, storage and communication that
+\newtext{The cost of the trust mechanisms is thus the computation, storage and communication that
 the mechanisms described above add to every exchange to establish, validate and preserve evidence
-of its authenticity and integrity.} \newred{Not included in the measured cost are the availability of the trusted services, the issuing
+of its authenticity and integrity.} \newtext{Not included in the measured cost are the availability of the trusted services, the issuing
 and revocation of certificates, the maintenance of the OCSP cache when responses expire, are missing
 or the responder is unavailable, the refresh of the global configuration, full TLS handshakes that
 exchange certificates, and key management. Certificate status checking is therefore measured in the
@@ -387,7 +387,7 @@ Mechanism & Observed through \\
 The whole X-Road path & \emph{direct} compared with \emph{full} \\
 Inter-server connection policy & \emph{reuse} compared with \emph{full} \\
 Logging of message bodies & \emph{nobody} compared with \emph{full} \\
-Signing and verification & stages of the \newgreen{exchange (Figure~\ref{fig:path})} \\
+Signing and verification & stages of the \newtext{exchange (Figure~\ref{fig:path})} \\
 Time-stamping & requests to the time-stamping service; \emph{synctsa} as another policy \\
 Certificate status checking & requests to the OCSP responder \\
 \bottomrule
@@ -414,7 +414,7 @@ Where a setting removes or changes a mechanism, a configuration is compared with
 \end{itemize}
 
 Signing and verification cannot be switched off, so they are observed only in the stages of the
-\newgreen{exchange (Figure~\ref{fig:path})} in which they happen, together with the other work done in the same stages, rather than as
+\newtext{exchange (Figure~\ref{fig:path})} in which they happen, together with the other work done in the same stages, rather than as
 a difference between configurations.
 
 The two background mechanisms cannot be moved into the request path without changing what is
@@ -534,7 +534,7 @@ the per-message cost of X-Road is split into terms, and only the terms that depe
 scheme are replaced: the time of signing and verification by the benchmark times of the new scheme,
 and the size of the signature parts by their size with the new scheme, whose effect on the round
 trips is then measured on X-Road with messages of that size. All other terms, such as logging, the
-TLS channel and forwarding, keep the values measured with RSA.} \newviolet{Figure~\ref{fig:pqmodel}
+TLS channel and forwarding, keep the values measured with RSA.} \newtext{Figure~\ref{fig:pqmodel}
 shows the two parts of the estimate and its check.}
 
 \begin{figure*}[!tb]
@@ -573,7 +573,7 @@ shows the two parts of the estimate and its check.}
 \node[sw, fill=okSky!25, dashed] at (0,-0.76) {}; \node[anchor=west] at (0.35,-0.76) {measured on X-Road};
 \end{scope}
 \end{tikzpicture}
-\caption{\newviolet{How the cost of a post-quantum signature scheme per message is estimated. Time: the signing and verification times
+\caption{\newtext{How the cost of a post-quantum signature scheme per message is estimated. Time: the signing and verification times
 of each scheme from a benchmark outside X-Road, multiplied by the number of these operations in one
 exchange. Size: the signature parts of a message with the present
 keys, enlarged by the keys and signatures of the new scheme, give the number of TCP flights and so
@@ -582,11 +582,11 @@ messages padded to the same size. That the two parts add up is assumed, not chec
 \label{fig:pqmodel}
 \end{figure*}
 
-\newred{\paragraph{Scope.} The NIIS report names five areas in which X-Road has to migrate: TLS
+\newtext{\paragraph{Scope.} The NIIS report names five areas in which X-Road has to migrate: TLS
 between Security Servers and their clients, TLS between two Security Servers, the signing of
 messages, the signatures of the global configuration and the signing of time stamps~\cite{bakhtina2026pqc}.
 The estimate covers only the signing of messages, including the signatures of the CA and the OCSP
-responder that every message carries\newgreen{, with one level of CA. The TLS channel between the
+responder that every message carries\newtext{, with one level of CA. The TLS channel between the
 Security Servers is left out: X-Road~7.8.3 uses TLS~1.2 only~\cite{xroadsrc}, and the default
 configuration resumes its sessions without sending certificates (Figure~\ref{fig:path}). TLS to the
 clients is not part of the exchange between Security Servers, and the global configuration and the
@@ -596,7 +596,7 @@ time stamps are signed outside the request path (Section~\ref{sec:bg})}.}
 post-quantum TLS~\cite{bakhtina2026pqc,snetkov2023,paquin2020,sikeridis2020}: ML-DSA at its three
 security levels~\cite{fips204}; Falcon-512 and Falcon-1024, which NIST is standardising as FN-DSA; the
 composite signatures that combine ML-DSA with RSA or ECDSA~\cite{rfc10073}, the transition the NIIS
-report recommends~\cite{bakhtina2026pqc}; SLH-DSA~\cite{fips205}; and\newgreen{, for comparison, ECDSA, which is not
+report recommends~\cite{bakhtina2026pqc}; SLH-DSA~\cite{fips205}; and\newtext{, for comparison, ECDSA, which is not
 post-quantum but is the only alternative to RSA that X-Road already offers for signing keys (since
 version~7.6)~\cite{xroadsyspar}}. The present configuration, RSA-2048 member keys under an
 RSA-4096 CA, is the baseline. The parts of a message that depend on the signature scheme fall into
@@ -632,7 +632,7 @@ measured right after start is slower than in the steady state of a running Secur
 Server~\cite{georges2007}, so the benchmark uses JMH\newtext{~\cite{jmh}}, which repeats the operation after a warm-up in
 several fresh virtual machines: 5 of them with 10 one-second iterations after 5 warm-up iterations,
 and for SLH-DSA-128s and 256s, whose signing is slow~\cite{mueller2024}, 3 with 10 five-second
-iterations. \newgreen{The benchmark runs on the development laptop (Section~\ref{sec:env}); every
+iterations. \newtext{The benchmark runs on the development laptop (Section~\ref{sec:env}); every
 scheme is compared with RSA-2048 on the same CPU, so the comparison depends less on the machine than
 the absolute times do. The times of RSA-2048 also give the cost of signing and verification in
 X-Road on their own, which the breakdown cannot separate from the other work in its stages
@@ -647,7 +647,7 @@ of a CA signature with \emph{full} and three with \emph{reuse}; the verification
 is cached and not counted. The sum is also the CPU time that the signatures of an exchange take.
 Under load the Security Server signs several waiting messages with one signature over a hash
 chain~\cite{xroadarcss}, so the cost of signing per message falls; the estimate is made for one
-client.} \newviolet{Because the signer receives only a digest, while ML-DSA and SLH-DSA in their pure
+client.} \newtext{Because the signer receives only a digest, while ML-DSA and SLH-DSA in their pure
 form sign the data itself, X-Road would need their pre-hash variants, HashML-DSA and
 HashSLH-DSA~\cite{fips204,fips205} and the pre-hash composites, or a change of this interface. The
 pure and the pre-hash variants of ML-DSA, SLH-DSA-128f and three composites are therefore also
@@ -668,7 +668,7 @@ X-Road does.}
   \item the number of TCP flights that the larger messages need on a new connection is counted with a
   model whose flight sizes, how many segments the first flight of the request and of the response
   carries and how the following flights grow, are read from the captures of the delay grids
-  (Section~\ref{sec:delay}) \newgreen{and, where the check below disagrees with the model, from
+  (Section~\ref{sec:delay}) \newtext{and, where the check below disagrees with the model, from
   captures of the padded messages}.
 \end{enumerate}
 The model is checked on the testbed by padding the request body and the response to the sizes it
@@ -681,12 +681,12 @@ the growth of the request, and the echo service, which returns a body of the req
 (Section~\ref{sec:testbed}), answers with a response of the predicted size}, with an added
 round-trip time of 0 and 50\,ms and, for the largest sizes, 0 and 20\,ms,
 with three repetitions per point and 150 requests per run, and with traffic captures where the model
-and the testbed disagree. \newviolet{Since flight sizes read from a few captures can be off by a segment,
+and the testbed disagree. \newtext{Since flight sizes read from a few captures can be off by a segment,
 which matters only for a message close to the boundary of a flight, a further grid places points
 whose request or response lies within about two segments of a boundary of the model, among them
 points of scenario~D, at 0 and 50\,ms.} The delay is added between the two Security Servers in the same way as on
 the three machines (Section~\ref{sec:delay}), and the baseline exchange is measured in the same grid,
-so that its slope can be compared with that of the three machines. \newgreen{The additional round
+so that its slope can be compared with that of the three machines. \newtext{The additional round
 trips of a point are its median latency at the added round-trip time minus that of the baseline of
 the same grid, divided by the round-trip time, so that a shift of the whole machine between grids
 cancels. The check runs on the development laptop as well: a round trip counted in this way is set
@@ -782,7 +782,7 @@ finishing'' span two machines.}
 \label{tab:stages}
 \begin{tabular}{@{}lrrrrrrr@{}}
 \toprule
-& Consumer & To & Provider & \newgreen{Service} & Provider & Consumer & Total \\
+& Consumer & To & Provider & Service & Provider & Consumer & Total \\
 & sending & provider & forwarding & & response & finishing & \\
 \midrule
 \emph{full}, 10\,KB & 0.1 & 10.7 & 4.2 & 0.2 & 6.9 & 7.1 & 29.4 \\
@@ -798,7 +798,7 @@ finishing'' span two machines.}
 \end{tabular}
 \end{table*}
 
-{\color{blue}\newgreen{Figure~\ref{fig:division}} puts these results together as a division of the X-Road path. The costs that
+{\color{blue}\newtext{Figure~\ref{fig:division}} puts these results together as a division of the X-Road path. The costs that
 follow from architectural decisions and can be changed by configuration are small for a 10\,KB
 response, 8--11\,\% of the path, and 41--61\,\% of it for a 1\,MB response, mostly because of logging
 the body. What remains of the path after them is 22--27\,ms at 10\,KB and grows by 0.1--10.3\,ms
@@ -810,7 +810,7 @@ these cannot be separated by configuration. The stages that contain signing or v
 measure them alone; their cost alone is measured outside X-Road for RQ3
 (Section~\ref{sec:rq3}). The choice between batched and synchronous time-stamping is the largest
 architectural decision on the local network: the synchronous policy would add 62--98\,ms, at 10\,KB
-\newgreen{2.5 to 3.2} times the whole path of the default configuration.\par}
+\newtext{2.5 to 3.2} times the whole path of the default configuration.\par}
 
 \begin{figure}[!htb]
 \centering
@@ -844,7 +844,7 @@ architectural decision on the local network: the synchronous policy would add 62
 \node[right, font=\scriptsize, inner sep=2pt] at (axis cs:49.0,L) {49.0};
 \end{axis}
 \end{tikzpicture}
-\caption{\newgreen{Division of the X-Road path with one client, from Table~\ref{tab:onecl}. A bar is
+\caption{\newtext{Division of the X-Road path with one client, from Table~\ref{tab:onecl}. A bar is
 the whole path, \emph{full} $-$ \emph{direct}, with its length in ms; the remainder contains signing,
 verification and the other processing of the Security Servers. The scales of (a) and (b) differ.
 Synchronous time-stamping, not in the default, would add another 62--98\,ms
@@ -861,7 +861,7 @@ to 39.1\,ms, so most of the additional time at 1\,MB is writing the body to the 
 effect of the connection policy grows from 2.0 to 4.3\,ms, and the cost of synchronous time-stamping
 stays at about 90\,ms. \newtext{With size the division therefore shifts towards the architecture: the
 remainder of the path grows by at most 10\,ms, while logging the body grows to 17--35\,ms
-(\newgreen{Figure~\ref{fig:division}}).}
+(\newtext{Figure~\ref{fig:division}}).}
 
 Under load the spread between repetitions grows to 9--41\,\% of the throughput for \emph{full},
 \emph{nobody}, \emph{reuse} and the two-provider case across the environments (15--41\,\% on three
@@ -872,7 +872,7 @@ differences between \emph{full}, \emph{nobody}, \emph{reuse} and two providers a
 and are not assigned to individual mechanisms. Synchronous time-stamping halves the ceiling on three
 machines (50 against 106 requests per second)\newtext{, and lowers it to 37\,\% on one machine (28 against 75) and on the development laptop (41 against 112)}. A second provider does not raise the ceiling either:
 with two providers the stages of each provider become shorter, but the consumer's finishing stage
-becomes longer, so \newred{in this two-provider configuration} the consumer is the limit.
+becomes longer, so \newtext{in this two-provider configuration} the consumer is the limit.
 
 \begin{table}[!htb]
 \centering\footnotesize
@@ -929,7 +929,7 @@ slope is 5.1 for \emph{full} and 2.1 for \emph{reuse}, so the prediction underes
 Captures under delay showed two waits it did not include: the last part of the request (842 bytes
 after about 10\,KB) is held until the provider acknowledges the earlier data, which adds one round
 trip in both configurations, and on a new connection the response of about 26\,KB does not fit into
-the initial TCP window and needs a second flight, which adds one more round trip to \emph{full}\newgreen{:
+the initial TCP window and needs a second flight, which adds one more round trip to \emph{full}\newtext{:
 the response starts with small TLS records, the start of the MIME message and the delimiters of
 its chunks, sent as one packet each, which use up the initial window, and the body follows only
 after an acknowledgement}. With
@@ -1039,28 +1039,28 @@ with ML-DSA repeats a random number of attempts.}
 \newtext{With the present keys the XML signature of a request took 7969 bytes and that of a response
 8002 bytes, and the OCSP response for the authentication certificate 2052 bytes. In the captures of
 the delay grids a new connection started with a window of 10 segments,
-the first flight of the \newgreen{baseline} request after the handshake carried \newgreen{8} of them, the start of the response
+the first flight of the \newtext{baseline} request after the handshake carried \newtext{8} of them, the start of the response
 consisted of small TLS records that used up the initial window (Section~\ref{sec:rtt}), and each
-further flight doubled; the \newgreen{first version of the} model counts flights with these sizes. In the check of the round-trip
-model on the testbed one request of about \newgreen{60\,600} failed. The largest
-request needed one flight more than the first version of the model predicted. A capture \newgreen{of
+further flight doubled; the \newtext{first version of the} model counts flights with these sizes. In the check of the round-trip
+model on the testbed one request of about \newtext{60\,600} failed. The largest
+request needed one flight more than the first version of the model predicted. A capture \newtext{of
 this padded request} showed that
 from the fourth flight on the request is limited by the receive window of the provider (about
 95\,KB, so 36 and 41 segments instead of 80), not by the congestion window; the model was corrected
-accordingly\newviolet{. The grid near the flight boundaries showed one more disagreement: a request of
-41\,315 bytes on the wire (B, ML-DSA-65 + P-256) needed two flights, not three. \newgreen{In the
+accordingly\newtext{. The grid near the flight boundaries showed one more disagreement: a request of
+41\,315 bytes on the wire (B, ML-DSA-65 + P-256) needed two flights, not three. \newtext{In the
 captures of the padded requests the first flight carried 9 full segments. The baseline request fits
 into it, but its last, partial segment left only after an acknowledgement, like the last part of
 the request in Section~\ref{sec:rtt}, for a reason the captures do not show; this flight therefore held only 8 full
 segments.} The model now counts 9 segments in the
-first flight and at least two flights per request}, and \newgreen{Figure~\ref{fig:flights}b}
+first flight and at least two flights per request}, and \newtext{Figure~\ref{fig:flights}b}
 compares the corrected model with the testbed.}
 
 \begin{table*}[!tb]
 \centering\footnotesize
 \caption{Signature schemes on the development laptop and their estimated cost per message against the
 baseline (RSA-2048 members, RSA-4096 CA). Computation: change of the signing and verification time
-of one exchange with \emph{full} (baseline 1.7\,ms)\newgreen{, rounded to 0.1\,ms; the error of the
+of one exchange with \emph{full} (baseline 1.7\,ms)\newtext{, rounded to 0.1\,ms; the error of the
 mean of signing with ML-DSA and its composites (99.9\,\% interval) amounts to up to $\pm$0.4\,ms per
 exchange}. Size: bytes added to the request and the
 response. Round trips: additional round trips of one exchange with \emph{full}; with \emph{reuse} none
@@ -1076,21 +1076,21 @@ Scheme & Key (B) & Signature (B) & Sign ($\mu$s) & Verify ($\mu$s) & Comp.\ (ms)
 & Comp.\ (ms) & Size (KB) & RTT \\
 \midrule
 RSA-2048 (baseline) & 294 & 256 & 668 & 26 & --- & --- & --- & --- & --- & --- \\
-ECDSA P-256 & 91 & 70--72 & 54 & 52 & \newgreen{$-1.2$} & $-0.6$ / $-0.6$ & 0 & \newgreen{$-1.3$} & $-4.5$ / $-3.1$ & \newviolet{0} \\
-ML-DSA-44 & 1334 & 2420 & 202 & 61 & \newgreen{$-0.9$} & 4.6 / 4.6 & 0 & \newgreen{$-1.0$} & 18.6 / 14.0 & 1 \\
-ML-DSA-65 & 1974 & 3309 & 314 & 96 & \newgreen{$-0.6$} & 6.8 / 6.8 & 0 & \newgreen{$-0.5$} & 27.9 / 20.9 & 1 \\
-ML-DSA-87 & 2614 & 4627 & 462 & 158 & \newgreen{$-0.1$} & 9.6 / 9.6 & 1 & \newgreen{$+0.1$} & 40.6 / 30.4 & 2 \\
-Falcon-512 & 915 & 650--662 & 259 & 26 & \newgreen{$-0.8$} & 1.5 / 1.5 & 0 & \newgreen{$-1.1$} & \newgreen{3.3 / 2.7} & 0 \\
-Falcon-1024 & 1811 & 1261--1277 & 519 & 52 & \newgreen{$-0.2$} & 3.7 / 3.7 & 0 & \newgreen{$-0.4$} & 11.6 / 8.8 & 1 \\
-ML-DSA-44 + RSA-2048 & 1603 & 2676 & 881 & 90 & \newgreen{$+0.6$} & 5.4 / 5.4 & 0 & \newgreen{$+0.6$} & 21.6 / 16.2 & 1 \\
-ML-DSA-44 + P-256 & 1398 & 2489--2492 & 359 & 114 & \newgreen{$-0.4$} & 4.8 / 4.8 & 0 & \newgreen{$-0.3$} & 19.4 / 14.6 & 1 \\
-ML-DSA-65 + RSA-3072 & 2371 & 3693 & 2191 & 147 & \newgreen{$+3.3$} & 7.9 / 7.9 & 0 & \newgreen{$+3.5$} & 32.5 / 24.3 & 2 \\
-ML-DSA-65 + P-256 & 2038 & 3378--3381 & 302 & 150 & \newgreen{$-0.5$} & 7.0 / 7.0 & 0 & \newgreen{$-0.2$} & 28.8 / 21.5 & \newviolet{1} \\
-ML-DSA-87 + RSA-4096 & 3139 & 5139 & 4782 & 243 & \newgreen{$+8.7$} & 11.1 / 11.1 & 1 & \newgreen{$+9.3$} & 46.7 / 34.8 & 2 \\
-ML-DSA-87 + P-384 & 2710 & 4729--4731 & 662 & 325 & \newgreen{$+0.6$} & 9.9 / 9.9 & 1 & \newgreen{$+1.5$} & 41.8 / 31.2 & 2 \\
-SLH-DSA-128s & 50 & 7856 & 704\,547 & 619 & --- & --- & --- & \newgreen{$+1.6$} & 52.0 / 37.8 & 2 \\
-SLH-DSA-128f & 50 & 17\,088 & 31\,957 & 1819 & --- & --- & --- & \newgreen{$+6.4$} & 110.3 / 77.6 & 4 \\
-SLH-DSA-256s & 82 & 29\,792 & 1\,088\,102 & 1363 & --- & --- & --- & \newgreen{$+4.5$} & 190.6 / 132.5 & 5 \\
+ECDSA P-256 & 91 & 70--72 & 54 & 52 & \newtext{$-1.2$} & $-0.6$ / $-0.6$ & 0 & \newtext{$-1.3$} & $-4.5$ / $-3.1$ & \newtext{0} \\
+ML-DSA-44 & 1334 & 2420 & 202 & 61 & \newtext{$-0.9$} & 4.6 / 4.6 & 0 & \newtext{$-1.0$} & 18.6 / 14.0 & 1 \\
+ML-DSA-65 & 1974 & 3309 & 314 & 96 & \newtext{$-0.6$} & 6.8 / 6.8 & 0 & \newtext{$-0.5$} & 27.9 / 20.9 & 1 \\
+ML-DSA-87 & 2614 & 4627 & 462 & 158 & \newtext{$-0.1$} & 9.6 / 9.6 & 1 & \newtext{$+0.1$} & 40.6 / 30.4 & 2 \\
+Falcon-512 & 915 & 650--662 & 259 & 26 & \newtext{$-0.8$} & 1.5 / 1.5 & 0 & \newtext{$-1.1$} & \newtext{3.3 / 2.7} & 0 \\
+Falcon-1024 & 1811 & 1261--1277 & 519 & 52 & \newtext{$-0.2$} & 3.7 / 3.7 & 0 & \newtext{$-0.4$} & 11.6 / 8.8 & 1 \\
+ML-DSA-44 + RSA-2048 & 1603 & 2676 & 881 & 90 & \newtext{$+0.6$} & 5.4 / 5.4 & 0 & \newtext{$+0.6$} & 21.6 / 16.2 & 1 \\
+ML-DSA-44 + P-256 & 1398 & 2489--2492 & 359 & 114 & \newtext{$-0.4$} & 4.8 / 4.8 & 0 & \newtext{$-0.3$} & 19.4 / 14.6 & 1 \\
+ML-DSA-65 + RSA-3072 & 2371 & 3693 & 2191 & 147 & \newtext{$+3.3$} & 7.9 / 7.9 & 0 & \newtext{$+3.5$} & 32.5 / 24.3 & 2 \\
+ML-DSA-65 + P-256 & 2038 & 3378--3381 & 302 & 150 & \newtext{$-0.5$} & 7.0 / 7.0 & 0 & \newtext{$-0.2$} & 28.8 / 21.5 & \newtext{1} \\
+ML-DSA-87 + RSA-4096 & 3139 & 5139 & 4782 & 243 & \newtext{$+8.7$} & 11.1 / 11.1 & 1 & \newtext{$+9.3$} & 46.7 / 34.8 & 2 \\
+ML-DSA-87 + P-384 & 2710 & 4729--4731 & 662 & 325 & \newtext{$+0.6$} & 9.9 / 9.9 & 1 & \newtext{$+1.5$} & 41.8 / 31.2 & 2 \\
+SLH-DSA-128s & 50 & 7856 & 704\,547 & 619 & --- & --- & --- & \newtext{$+1.6$} & 52.0 / 37.8 & 2 \\
+SLH-DSA-128f & 50 & 17\,088 & 31\,957 & 1819 & --- & --- & --- & \newtext{$+6.4$} & 110.3 / 77.6 & 4 \\
+SLH-DSA-256s & 82 & 29\,792 & 1\,088\,102 & 1363 & --- & --- & --- & \newtext{$+4.5$} & 190.6 / 132.5 & 5 \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -1133,27 +1133,27 @@ SLH-DSA-256s & 82 & 29\,792 & 1\,088\,102 & 1363 & --- & --- & --- & \newgreen{$
 \addlegendentry{near flight boundaries, 50\,ms}
 \end{axis}
 \end{tikzpicture}
-\caption{\newviolet{The model of the TCP flights (Section~\ref{sec:pqmethod}) and its check, new
+\caption{\newtext{The model of the TCP flights (Section~\ref{sec:pqmethod}) and its check, new
 connection (\emph{full}). (a) Flights that the model counts for a request (TLS bytes after the
 handshake) and for a response (bytes after its first flight of small records; that flight is
 counted) of a given size; the points are the 16 sizes of the grids, each on its two lines. Point B
 ML-DSA-65 + P-256 lies 0.7\,KB below a boundary of the request; the first version of the model,
 with a first flight of 8 segments, put it above. (b) Additional round trips counted by the model
-against those measured, \newgreen{the median latency at the added round-trip time minus that of the
-baseline, divided by the round-trip time}\newgreen{, one value per grid}; 26 points.
+against those measured, \newtext{the median latency at the added round-trip time minus that of the
+baseline, divided by the round-trip time}\newtext{, one value per grid}; 26 points.
 Shaded: up to half a round trip below the model, the part of a round trip that the baseline already
 waits (Section~\ref{sec:rtt}).}}
 \label{fig:flights}
 \end{figure*}
 
-\newgreen{The computation changes little (Table~\ref{tab:pq}). Without RSA, the signatures of an
+\newtext{The computation changes little (Table~\ref{tab:pq}). Without RSA, the signatures of an
 exchange take from 1.3\,ms less than with RSA-2048 to about the same, because signing with RSA is
 the most expensive operation of the baseline; only ML-DSA-87 + P-384 adds up to 1.5\,ms. The
 composites with RSA keep the cost of their RSA half: about 0.6\,ms more with RSA-2048 and 3.3 to
 9.3\,ms with RSA-3072 and RSA-4096. SLH-DSA in the role of the CA adds 1.6 to 6.4\,ms, because its
 signature is verified in every message.} The whole signing and verification of the
 baseline, 1.7\,ms, is 7\,\% of the 24.7\,ms that the X-Road path takes on the same laptop
-(\newgreen{Figure~\ref{fig:division}}). \newtext{These times hold for the development laptop. On the three
+(\newtext{Figure~\ref{fig:division}}). \newtext{These times hold for the development laptop. On the three
 machines the costs that depend on the CPU were 1.4 to 2.1 times higher (synchronous time-stamping 89
 against 62\,ms, logging a 1\,MB body 35 against 17\,ms, Table~\ref{tab:onecl}). Scaled by these
 factors, the signatures of the baseline would take 2.4 to 3.5\,ms there, and the composites with
@@ -1161,7 +1161,7 @@ RSA-3072 and RSA-4096 and SLH-DSA in the CA would add up to 13 to 19\,ms instead
 comparable with the remainder of the path of 24.7\,ms on the same machines; for ML-DSA and Falcon
 the change stays within about 1\,ms.}
 
-\newviolet{The pre-hash variants take the same time as the pure ones. In the run that measured both
+\newtext{The pre-hash variants take the same time as the pure ones. In the run that measured both
 side by side, verification differed by at most 7\,$\mu$s (0.4\,\% with SLH-DSA-128f, 1 to 5\,\% with
 ML-DSA and the composites), signing with ML-DSA and the composites by at most 83\,$\mu$s, within the
 error of the mean of this signing, which repeats a random number of attempts, and signing with
@@ -1171,47 +1171,47 @@ estimates of Table~\ref{tab:pq}, made with the pure variants, hold for the pre-h
 interface of the signer of X-Road would need.}
 
 The size matters only on a new connection. When only the member keys change (A), the messages grow by
-1.5 to 11\,KB and need no additional round trip, except with ML-DSA-87 \newgreen{and its two composites}, where the response no longer
+1.5 to 11\,KB and need no additional round trip, except with ML-DSA-87 \newtext{and its two composites}, where the response no longer
 fits into its second flight. When the CA and the OCSP responder change as well (B), the certificates
 and the OCSP responses in every message grow too, and the messages grow by 3 to 47\,KB: one additional
-round trip with ML-DSA-44, ML-DSA-65, Falcon-1024\newviolet{,} the composites of ML-DSA-44 \newviolet{and
-ML-DSA-65 + P-256}, two with ML-DSA-87\newviolet{, ML-DSA-65 + RSA-3072} and the composites of
-ML-DSA-87\newviolet{; with ECDSA, which makes the messages smaller, the number of flights stays the same}. Falcon-512 is the only post-quantum scheme that needs none in \newtext{any} scenario. With SLH-DSA
+round trip with ML-DSA-44, ML-DSA-65, Falcon-1024\newtext{,} the composites of ML-DSA-44 \newtext{and
+ML-DSA-65 + P-256}, two with ML-DSA-87\newtext{, ML-DSA-65 + RSA-3072} and the composites of
+ML-DSA-87\newtext{; with ECDSA, which makes the messages smaller, the number of flights stays the same}. Falcon-512 is the only post-quantum scheme that needs none in \newtext{any} scenario. With SLH-DSA
 for the CA the messages grow by 52 to 191\,KB and need two to five additional round trips.
 \newtext{When only the CA and the OCSP responder change (D), the messages grow
 almost as much as in B: with ML-DSA by 14 to 31\,KB in the request, about three quarters of the
 growth in B, because the signature of the CA and of the OCSP responder appears three times in every
 message, in the signing certificate, in the OCSP response and in the certificate of the responder,
 while the key of the member appears only in its signature and certificate. The round trips are the
-same as in B except for Falcon-1024 and \newviolet{ML-DSA-65 + RSA-3072}, which need one fewer, and the
+same as in B except for Falcon-1024 and \newtext{ML-DSA-65 + RSA-3072}, which need one fewer, and the
 computation changes by less than 1\,ms except with SLH-DSA (2.1 to 6.9\,ms).} With
 \emph{reuse} the window is already open and no row needs an additional round trip.
 
-\newtext{All} \newviolet{26} \newtext{points} \newgreen{of the check} \newtext{agree with the corrected model} \newviolet{(Figure~\ref{fig:flights}\newgreen{b})} when rounded
+\newtext{All} \newtext{26} \newtext{points} \newtext{of the check} \newtext{agree with the corrected model} \newtext{(Figure~\ref{fig:flights}\newtext{b})} when rounded
 to whole round trips, at 50 and at 20\,ms, and the steps are multiples of the added round-trip time
 (SLH-DSA-256s against 128f: 45\,ms at 50\,ms and 19\,ms at 20\,ms). The measured values lie 0 to 0.5
 round trips below the model because the baseline exchange itself already waits part of a round trip
 for the acknowledgement of its first flight before it sends the last bytes of the request
-(Section~\ref{sec:rtt}). With \emph{reuse} \newgreen{no point was more than 0.41 round trips away
+(Section~\ref{sec:rtt}). With \emph{reuse} \newtext{no point was more than 0.41 round trips away
 from the baseline} in any scenario,
-and the two points repeated from the first night differed by 3 to 5\,ms. \newgreen{The latency of
+and the two points repeated from the first night differed by 3 to 5\,ms. \newtext{The latency of
 the development laptop without added delay was not stable across these grids: the control run took
 29 to 45\,ms depending on the grid and varied by up to 19.5\,\% within one grid. The values at 0\,ms
 are therefore not used for the check; a shift of the whole laptop affects the baseline and the point
 at the added round-trip time alike and cancels in their difference.}
 
-\newred{Of these results, the benchmark times and the latency of the padded messages on X-Road are
+\newtext{Of these results, the benchmark times and the latency of the padded messages on X-Road are
 measured; the computation per exchange, the size of post-quantum messages and the number of flights
 are computed from them with the model of Section~\ref{sec:pqmethod}. The share of the infrastructure
 in the growth of a message holds for one level of CA and for authentication certificates issued by
 the same CA as the signing certificates.}
 
-For RQ3 the division therefore carries over to post-quantum signatures\newred{, as an estimate}. Their computation per message
+For RQ3 the division therefore carries over to post-quantum signatures\newtext{, as an estimate}. Their computation per message
 changes by about a millisecond, less than the spread between repetitions and smaller than the
 architectural costs on the local network. Their size costs round trips, but only on a new
-connection\newred{: under the tested TCP configuration} at an added 50\,ms one or two additional
+connection\newtext{: under the tested TCP configuration} at an added 50\,ms one or two additional
 round trips are 50 to 100\,ms per message, against 153\,ms that reusing connections already saves at
-10\,KB\newred{. With reused connections the padded messages needed no additional round trip, and at an
+10\,KB\newtext{. With reused connections the padded messages needed no additional round trip, and at an
 added 50\,ms their median latency was 139 to 145\,ms against 148\,ms for messages of the present
 size}.\par}
 
@@ -1219,7 +1219,7 @@ size}.\par}
 
 \subsection{\newtext{Cryptography and the remainder of the path}}\label{sec:remainder}
 
-\newtext{\newgreen{Figure~\ref{fig:division}} divides the X-Road path into the costs that configuration can
+\newtext{\newtext{Figure~\ref{fig:division}} divides the X-Road path into the costs that configuration can
 change and a remainder of 22 to 27\,ms at 10\,KB. The benchmark of RQ3 shows how much of this
 remainder the signatures can be: signing and verifying an exchange took 1.7\,ms on the development
 laptop, where the remainder was 22.2\,ms, so the cryptographic operations are less than a tenth of
@@ -1230,7 +1230,7 @@ the messages and their signatures, and forwarding them. These parts cannot be se
 methods of this study, but together they are the largest part of the path on the local network. The
 division asked for in RQ1 is therefore threefold rather than twofold: the cryptographic operations,
 which are small; the architectural decisions that configuration can change, which are small on the
-local network but dominate with large bodies and with distance; and the \newred{residual processing} of the
+local network but dominate with large bodies and with distance; and the \newtext{residual processing} of the
 Security Server around the cryptography, which is the largest part of the latency of a small message
 on the local network.} \newtext{Figure~\ref{fig:summary} summarises where the time goes: on the
 local network (a) and with an added round-trip time of 50\,ms for messages of the size of
@@ -1249,7 +1249,7 @@ post-quantum messages (b).}
 \addplot[fill=okVermillion, draw=black] coordinates {(1.7,10\,KB response) (1.7,1\,MB response)};
 \addlegendentry{signing and verification}
 \addplot[fill=okSky!60, draw=black] coordinates {(20.5,10\,KB response) (27.4,1\,MB response)};
-\addlegendentry{\newred{residual processing}}
+\addlegendentry{residual processing}
 \addplot[fill=okOrange, draw=black] coordinates {(1.6,10\,KB response) (2.9,1\,MB response)};
 \addlegendentry{new connection}
 \addplot[fill=okGreen!70, draw=black] coordinates {(0.9,10\,KB response) (17.0,1\,MB response)};
@@ -1273,12 +1273,12 @@ post-quantum messages (b).}
 \end{axis}
 \end{tikzpicture}
 \caption{\newtext{Where the time of an exchange goes, development laptop, one client. (a) The X-Road
-path (\emph{full} $-$ \emph{direct}, \newgreen{Figure~\ref{fig:division}}) split into signing and verification
-(benchmark, Section~\ref{sec:rq3}), \newred{the residual processing of the Security Server (the remainder of the path minus the benchmark times, obtained by subtraction)}, opening a new connection (\emph{full} $-$ \emph{reuse}) and logging the body
+path (\emph{full} $-$ \emph{direct}, \newtext{Figure~\ref{fig:division}}) split into signing and verification
+(benchmark, Section~\ref{sec:rq3}), \newtext{the residual processing of the Security Server (the remainder of the path minus the benchmark times, obtained by subtraction)}, opening a new connection (\emph{full} $-$ \emph{reuse}) and logging the body
 (\emph{full} $-$ \emph{nobody}); synchronous time-stamping, not in the default, would add another
 62--68\,ms. (b) Median latency at an added round-trip time of 50\,ms for messages padded to the size
 of the present messages and of post-quantum messages in scenarios B and C (one grid,
-\newgreen{Section~\ref{sec:rq3}}); the post-quantum signing and verification would change it by 0.2 to
+\newtext{Section~\ref{sec:rq3}}); the post-quantum signing and verification would change it by 0.2 to
 6.4\,ms.}}
 \label{fig:summary}
 \end{figure*}
@@ -1298,7 +1298,7 @@ as that of the three machines up to about 19\,ms, comparable with the remainder 
 (Section~\ref{sec:rq3})}. The size matters more, and it is
 decided less by the members than by the infrastructure: every message carries the signing
 certificate and the OCSP responses, so a change of the CA and the OCSP responder enlarges every
-message, and it accounts for about three quarters of the growth (\newgreen{Section~\ref{sec:rq3}}). The step at
+message, and it accounts for about three quarters of the growth (\newtext{Section~\ref{sec:rq3}}). The step at
 the initial window is the one known from post-quantum TLS
 handshakes~\cite{sikeridis2020,westerbaan2021,chou2026}; in X-Road it is paid on every message on a
 new connection rather than once per handshake. With the default connection policy and distance
@@ -1328,9 +1328,42 @@ Threshold signatures change signing~\cite{bakhtina2026ijis}. Their reported roun
 whole cost of X-Road measured here with one client on the local network, and of the same order as the
 effect of the connection policy with an added round-trip time of 50\,ms.
 
-\begin{table*}[!tb]
+\subsection{The connection policy}
+
+Among the configurations compared, the largest effect is the decision to open a new connection for
+every message. On the local network it costs about 2\,ms and 6.2\,KB per exchange (3.3\,KB towards the provider
+and 2.9\,KB back),
+which is why it is easy to overlook. With an added round-trip time every message waits for several
+additional round trips, and at 50\,ms reusing connections saves 54\,\% of the latency for a 10\,KB
+response and 72\,\% for a 1\,MB response, and almost doubles the throughput with 16 clients. This
+agrees with the observation that the cost of TLS depends mostly on whether connections are
+reused~\cite{naylor2014}. Connection reuse is off by default~\cite{xroadsyspar}, so its benefit grows
+with the distance between the Security Servers of the communicating organisations. It is not free of
+side effects either: in the measurements, single requests over reused connections failed, consistent
+with a pooled connection that had already been closed by the other side. \newtext{The documentation
+of X-Road also gives a reason for the default: without pooled connections every connection is closed
+after one message, which is recommended for Security Servers behind a load balancer so that it can
+distribute the traffic evenly~\cite{xroadsyspar,xroadxlb}. Whether the failures observed with reused
+connections would also occur in production, and whether their rate, \newtext{up to} two requests in 10\,000
+under load, is acceptable for the services that use X-Road, was not examined. Enabling reuse is
+therefore a trade-off for the operators rather than a free improvement.}
+
+The connection policy also decides how much larger post-quantum messages cost. \newtext{With reused
+connections the TCP window is already open, and none of the schemes in Table~\ref{tab:pq} needed an
+additional round trip. With a new connection for every message they need up to two additional round
+trips with ML-DSA, Falcon and the composites and up to five with SLH-DSA in the CA; at an added
+50\,ms one or two round trips are 50 to 100\,ms per message, against the 153\,ms that reusing
+connections already saves for a 10\,KB response (\newtext{Section~\ref{sec:rtt}}).}
+
+\subsection{Comparison with earlier measurements}
+
+{\color{blue}Table~\ref{tab:related} compares the results with the earlier work on X-Road and on \newtext{post-quantum signatures; the
+comparisons with TLS connection reuse and post-quantum certificate chains in TLS are made above}.\par}
+
+\begin{table*}[!b]
 \centering\small
-\caption{Earlier work compared with the results of this study.}
+\caption{\newtext{Earlier work compared with the results of this study, where the comparison is not
+made in the text.}}
 \label{tab:related}
 \color{blue}
 \begin{tabular}{@{}p{0.15\textwidth}p{0.38\textwidth}p{0.41\textwidth}@{}}
@@ -1348,93 +1381,41 @@ only the ceilings and \emph{synctsa} are reported \\
 \addlinespace
 Bakhtina et al.~\cite{bakhtina2026ijis} & X-Road 7.7.0, all components on one laptop, mean of 1000
 requests: 32\,ms with a software token, 191--272\,ms with threshold signatures & 25--30\,ms with one
-client in three environments; one host is representative of latency on a local network, but not of
-throughput (1.4--1.8 times higher on three machines) or of distance \\
+client in three environments; \newtext{throughput 1.4--1.8 times higher on three machines than on one} \\
 \addlinespace
 Snetkov and Vakarjuk~\cite{snetkov2023} & Post-quantum signatures in UXP: a Dilithium5 signature
-takes 4595 bytes against 256 for RSA-2048 \newgreen{(ML-DSA-87: 4627)}; no timing & An exchange carries about 40\,KB, two such
-signatures would add about 8.7\,KB; TLS sessions are resumed without certificates; \newtext{with
-the certificates and OCSP responses in every message, ML-DSA adds 4.6--41\,KB and 0--2 round trips
-on a new connection (Table~\ref{tab:pq})} \\
+takes 4595 bytes against 256 for RSA-2048 (ML-DSA-87: 4627); no timing & \newtext{Two such signatures would
+add about 8.7\,KB to an exchange of about 40\,KB; with the certificates and OCSP responses in every
+message, ML-DSA adds 4.6--41\,KB and 0--2 round trips on a new connection (Table~\ref{tab:pq})} \\
 \addlinespace
-\newtext{Müller and Oupický~\cite{mueller2024}} & \newtext{Post-quantum and hybrid XML signatures in
-Apache Santuario and BouncyCastle; signing and verification time and document size, without
-certificate chains or network} & \newtext{The same libraries; per exchange the post-quantum
-signatures change the computation by about 1\,ms, while their size costs round trips on new
-connections} \\
+Müller and Oupický~\cite{mueller2024} & Post-quantum and hybrid XML signatures in Apache Santuario
+and BouncyCastle; signing and verification time and document size, without certificate chains or
+network & The same libraries; per exchange the post-quantum signatures change the computation by
+about 1\,ms, while their size costs round trips on new connections \\
 \addlinespace
-\newtext{Sikeridis et al.~\cite{sikeridis2020}, Chou and Cao~\cite{chou2026}} & \newtext{Post-quantum
-certificate chains in TLS add round trips once they exceed the initial TCP window} &
-\newtext{The same step for every X-Road message on a new connection, and from the fourth flight a
-limit by the receive window of the provider} \\
+Vakarjuk et al.~\cite{vakarjuk2024} & Obstacles to post-quantum migration in the Estonian
+e-government systems; signatures for X-Road should be short; no measurement & Signatures of the
+infrastructure make up about three quarters of the growth of a message; the size costs round trips
+only on new connections \\
 \addlinespace
-\newtext{Vakarjuk et al.~\cite{vakarjuk2024}} & \newtext{Obstacles to post-quantum migration in
-the Estonian e-government systems; signatures for X-Road should be short; no measurement} &
-\newtext{Signatures of the infrastructure make up about three quarters of the growth of a message;
-the size costs round trips only on new connections} \\
-\addlinespace
-\newtext{Abbasi et al.~\cite{abbasi2025}, Rahul et al.~\cite{rahul2026}, Demir et
-al.~\cite{demir2026}} & \newtext{Post-quantum (m)TLS~1.3: operations below 1\,ms, less than
-5\,\% added latency on servers, about 3\,\% of the CPU time in cryptography; the cost lies in the
-handshake size} & \newtext{The same order in X-Road: the signatures of an exchange take less than
-a tenth of the remainder of the path, and the size enlarges every message, not only the
-handshake} \\
-\addlinespace
-Mironova~\cite{mironova2017} & Estonian instance in 2017: global configuration valid for six hours,
-OCSP freshness eight hours & Shorter intervals in the testbed; background costs per message would be
-lower in production \\
-\addlinespace
-Naylor et al.~\cite{naylor2014} & The cost of TLS depends mostly on whether connections are reused &
-With an added 50\,ms, reusing connections saves 54\,\% at 10\,KB and 72\,\% at 1\,MB \\
+Abbasi et al.~\cite{abbasi2025}, Rahul et al.~\cite{rahul2026}, Demir et al.~\cite{demir2026} &
+Post-quantum (m)TLS~1.3: operations below 1\,ms, less than 5\,\% added latency on servers, about
+3\,\% of the CPU time in cryptography; the cost lies in the handshake size & The same order in
+X-Road: the signatures of an exchange take less than a tenth of the remainder of the path, and the
+size enlarges every message, not only the handshake \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
-\subsection{The connection policy}
 
-Among the configurations compared, the largest effect is the decision to open a new connection for
-every message. On the local network it costs about 2\,ms and 6.2\,KB per exchange (3.3\,KB towards the provider
-and 2.9\,KB back),
-which is why it is easy to overlook. With an added round-trip time every message waits for several
-additional round trips, and at 50\,ms reusing connections saves 54\,\% of the latency for a 10\,KB
-response and 72\,\% for a 1\,MB response, and almost doubles the throughput with 16 clients. This
-agrees with the observation that the cost of TLS depends mostly on whether connections are
-reused~\cite{naylor2014}. Connection reuse is off by default~\cite{xroadsyspar}, so its benefit grows
-with the distance between the Security Servers of the communicating organisations. It is not free of
-side effects either: in the measurements, single requests over reused connections failed, consistent
-with a pooled connection that had already been closed by the other side. \newtext{The documentation
-of X-Road also gives a reason for the default: without pooled connections every connection is closed
-after one message, which is recommended for Security Servers behind a load balancer so that it can
-distribute the traffic evenly~\cite{xroadsyspar,xroadxlb}. Whether the failures observed with reused
-connections would also occur in production, and whether their rate, \newgreen{up to} two requests in 10\,000
-under load, is acceptable for the services that use X-Road, was not examined. Enabling reuse is
-therefore a trade-off for the operators rather than a free improvement.}
-
-The connection policy also decides how much larger post-quantum messages cost. \newtext{With reused
-connections the TCP window is already open, and none of the schemes in Table~\ref{tab:pq} needed an
-additional round trip. With a new connection for every message they need up to two additional round
-trips with ML-DSA, Falcon and the composites and up to five with SLH-DSA in the CA; at an added
-50\,ms one or two round trips are 50 to 100\,ms per message, against the 153\,ms that reusing
-connections already saves for a 10\,KB response (\newgreen{Section~\ref{sec:rtt}}).}
-
-\subsection{Comparison with earlier measurements}
-
-{\color{blue}Table~\ref{tab:related} compares the results with the earlier work on X-Road and on the cost of TLS.\par}
-
-
-The end-to-end latency with one client, 25 to 30\,ms in the three environments used here, is of the same
-order as the 32\,ms reported for X-Road~7.7.0 with all components on one laptop~\cite{bakhtina2026ijis}.
-That figure was presented as a lower bound because there was no network between the
-servers~\cite{bakhtina2026ijis}. For one client on a local network, the comparison of one machine with
-three machines shows that such a single-host figure is representative, since the network cost is
-offset by the provider having a CPU of its own. It is not representative of throughput, which was
-1.4 to 1.8 times higher on three machines, nor of Security Servers that are farther apart, where the
-connection policy dominates. In the earlier measurement of a Security Server in front of a registry
-service, the path through the Security Server was reported as faster than the direct one at 20 and 30
-concurrent clients~\cite{taklai2020}, which suggests that the variation of the environment was
-comparable to the effect being measured; here, too, the spread under load was too large to compare
-configurations, while with one
-client and with an added round-trip time it mostly stayed within a few per cent.
+\newtext{The single-host figure of~\cite{bakhtina2026ijis} was presented as a lower bound because
+there was no network between the servers. For one client on a local network it is representative,
+since the network cost is offset by the provider having a CPU of its own, but not for throughput or
+for Security Servers that are farther apart, where the connection policy dominates. That the path
+through the Security Server appeared faster than the direct one under load~\cite{taklai2020}
+suggests that the variation of the environment was comparable to the effect being measured, as the
+spread under load was here, while with one client and with an added round-trip time it mostly stayed
+within a few per cent.}
 
 The warm-up needed was much longer than the earlier work suggests. The closest measurement reports
 means over 1000 requests without describing a warm-up~\cite{bakhtina2026ijis}, while here the latency did not settle
@@ -1480,7 +1461,7 @@ JSON or XML messages compress well, so the cost of logging a large body is a wor
 keys are in software tokens, whereas production Security Servers often keep them in hardware
 security modules, where signing goes through PKCS\#11 and may take considerably longer. The cause of
 the large spread of throughput under load, such as throttling of the laptop CPUs, garbage collection
-of the Java virtual machine or the database, was not investigated.} \newred{The sizes of 10\,KB and
+of the Java virtual machine or the database, was not investigated.} \newtext{The sizes of 10\,KB and
 1\,MB were chosen as a small and a large message, not from the distribution of message sizes in a real
 X-Road instance, which was not available, and the workload uses one request pattern against an echo
 service. Where a configuration made no difference, this means a difference below the spread between
@@ -1500,10 +1481,10 @@ integrated into X-Road, for example as a composite or as two separate signatures
 both the size and the number of operations.} \newtext{The} \newtext{estimated} \newtext{round trips depend on the TCP settings of the testbed, the initial window of 10 segments and the
 receive window of the provider, which the operating system adjusts itself, so the numbers of flights
 hold for this configuration; a shrinking message, as with ECDSA in scenario B, was not checked, since
-padding can only enlarge it. \newviolet{The model was corrected twice where it disagreed with the
+padding can only enlarge it. \newtext{The model was corrected twice where it disagreed with the
 grids, each time from the traffic captures, and after the last correction it was compared only with
 the points that had been measured already, not with new ones. For a message within about a segment
-of the boundary of a flight the estimate can therefore be off by one round trip.} \newgreen{The grids of the check
+of the boundary of a flight the estimate can therefore be off by one round trip.} \newtext{The grids of the check
 ran on the development laptop, whose latency without added delay varied between and within the
 grids; the check therefore rests on the latency at the added round-trip time, compared with the
 baseline of the same grid.} The authentication certificates are assumed to use the scheme of the
@@ -1514,7 +1495,7 @@ ML-DSA only from Java~24~\cite{jep497}, and an implementation of another library
 version may take a different time~\cite{oleksiichuk2026}. The
 signer of X-Road receives only a digest, while ML-DSA and SLH-DSA in their pure form sign the data
 itself, so X-Road would need their pre-hash variants~\cite{fips204,fips205} or a change of this
-interface; \newviolet{the pre-hash variants were benchmarked only for ML-DSA, SLH-DSA-128f and three
+interface; \newtext{the pre-hash variants were benchmarked only for ML-DSA, SLH-DSA-128f and three
 composites, not for Falcon, and not inside the signer of X-Road}. The
 composites of BouncyCastle~1.84 follow the drafts that preceded RFC~10073; their object identifiers
 match it, but their signatures were not compared with its test vectors.}
@@ -1529,7 +1510,7 @@ reference only.
 
 This study measured how much the trust mechanisms of X-Road cost per message, on three laptops
 connected by a switch, on one of them alone, on a faster laptop, and with a controlled round-trip time
-added between the Security Servers\newgreen{. Because X-Road does not support post-quantum signatures, their cost was
+added between the Security Servers\newtext{. Because X-Road does not support post-quantum signatures, their cost was
 estimated rather than measured: the times of the signature schemes, benchmarked on their own, were
 combined with what RQ1 and RQ2 showed about the path, namely how many signatures an exchange makes and
 verifies and how the size of a message turns into round trips. The estimate was checked on the testbed
@@ -1539,20 +1520,20 @@ For RQ1, the X-Road path added about 28\,ms to a 10\,KB exchange with one client
 Logging the message body made no measurable difference for small messages and accounted for almost
 half of the latency of a 1\,MB exchange. Opening a new connection for every message cost about 2\,ms
 and 6.2\,KB per exchange on the local network. Certificate status checking and batched time-stamping
-were not in the request path \newred{in the steady state, with valid cached OCSP responses}: requests to the OCSP responder only from background refreshes and about two time-stamping
+were not in the request path \newtext{in the steady state, with valid cached OCSP responses}: requests to the OCSP responder only from background refreshes and about two time-stamping
 requests per 1200 messages,
 while synchronous time-stamping added about 90\,ms. Signing and verification cannot be switched off;
 \newtext{measured on their own, they take 1.7\,ms per exchange on the development laptop, less than
 a tenth of the 22\,ms that remain of the path there once the costs that configuration can change are
 removed. The division is therefore threefold: the cryptographic operations are small, the
 architectural decisions that configuration can change are small on the local network but dominate
-with large bodies and with distance, and the \newred{residual processing} of the Security Server around the
+with large bodies and with distance, and the \newtext{residual processing} of the Security Server around the
 cryptography is the largest part of the latency of a small message on the local network.}
 
 For RQ2, most of the growth from a 10\,KB to a 1\,MB response came from writing the body to the
 message log. Under load the Security Servers reached about 100 requests per second on three machines,
 synchronous time-stamping \newtext{lowered that to 37--47\,\%}, and the spread between repetitions was too large to compare
-the other configurations\newred{; for load, the study therefore answers RQ2 only with the highest
+the other configurations\newtext{; for load, the study therefore answers RQ2 only with the highest
 throughput observed at 4, 16 and 32 clients and the effect of synchronous time-stamping, not with
 full throughput--latency curves}.
 
@@ -1570,15 +1551,15 @@ slower CPU of the three machines would be up to about 19\,ms, comparable with th
 path}. Messages of their size
 need no additional round trip with reused connections, but on a new connection one or two with ML-DSA
 once the CA and the OCSP responder migrate, and up to five with SLH-DSA in the CA; most of this growth comes from the
-signatures of the infrastructure, which every message carries.} \newviolet{The computation is the
+signatures of the infrastructure, which every message carries.} \newtext{The computation is the
 same for the pre-hash variants that the signer of X-Road, which receives only a digest, would
-need.} \newred{These figures concern the
+need.} \newtext{These figures concern the
 signatures of the messages; post-quantum key exchange and certificates in the TLS handshake between
 the Security Servers, which X-Road would first have to move to TLS~1.3, are not part of the
 estimate.}
 
 The results give a baseline for the present system against which post-quantum signatures, a
-decentralised PKI and threshold signatures can be compared. \newred{They also indicate that, under
+decentralised PKI and threshold signatures can be compared. \newtext{They also indicate that, under
 the evaluated conditions and the tested TCP configuration, the latency cost of larger post-quantum
 signatures comes from connection set-up and the TCP window rather than from the cryptography: with
 reused connections the padded messages needed no additional round trip, while with a new connection
@@ -1748,7 +1729,7 @@ P.~Kivim\"{a}ki.
 \newblock \newtext{Accessed 19 November 2026.}
 
 \bibitem{xroadmesstransp}
-\newgreen{Nordic Institute for Interoperability Solutions.
+\newtext{Nordic Institute for Interoperability Solutions.
 \newblock X-Road: Message Transport Protocol (PR-MESSTRANSP), version 2.7.
 \newblock \url{https://docs.x-road.global/Protocols/pr-messtransp_x-road_message_transport_protocol.html}.
 \newblock Accessed 20 November 2026.}
