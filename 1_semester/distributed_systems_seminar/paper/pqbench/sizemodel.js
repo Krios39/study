@@ -71,7 +71,7 @@ for (const infra of [...MEMBERS, 'SLH-DSA-128S', 'SLH-DSA-128F', 'SLH-DSA-256S']
 // - request ss1 -> ss2, TLS bytes on the wire: 12562 B at base (1-byte body); the first flight after the handshake
 //   carried ChangeCipherSpec plus 9 full segments (B87, C128F, C256S: 13032 B), then 20 segments;
 //   at base the request fits into the first flight, but its last partial segment (978 B after 8 full ones) waited for an ACK
-//   (Nagle), so the request always takes at least 2 flights. The first version counted 8 segments from the base capture and
+//   (not Nagle: TCP_NODELAY is set; the captures do not show why), so the request always takes at least 2 flights. The first version counted 8 segments from the base capture and
 //   predicted one round trip too many for B MLDSA65-P256 (41315 B on the wire), found by the grid matrix-pq-edge.json;
 // - response ss2 -> ss1: the first flight is ~1 KB of small TLS records (MIME start, chunk delimiters), one packet each,
 //   which takes the whole initial window; the rest (20700 B at base with a 10 KB body) follows in flights of 20 and 40 segments.
