@@ -87,11 +87,11 @@ export class MoveSampler {
     return this.rng.next() < this.swapShare ? this.sampleSwap(slotOf) : this.sampleMove(slotOf);
   }
 
-  noteAccepted() {
-    if (this.kind !== "kempe") return;
+  noteAccepted(kind = this.kind, length = this.length) {
+    if (kind !== "kempe") return;
     this.kempe.accepted++;
-    this.kempe.acceptedLengthSum += this.length;
-    this.kempe.acceptedByLength[Math.min(this.length, KEMPE_LENGTH_BUCKETS)]++;
+    this.kempe.acceptedLengthSum += length;
+    this.kempe.acceptedByLength[Math.min(length, KEMPE_LENGTH_BUCKETS)]++;
   }
 
   private pick(count: number): number {

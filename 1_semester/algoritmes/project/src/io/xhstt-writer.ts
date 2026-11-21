@@ -9,7 +9,7 @@ export interface XhsttSolution {
 
 export type XhsttEventStyle = "lessons" | "courses";
 
-export const XHSTT_EXPORT_WEIGHTS = Weights.without("difficulty", "dayImbalance", "dayLoadSquare", "misplaced", "shiftIdle");
+export const XHSTT_EXPORT_WEIGHTS = Weights.without("difficulty", "dayImbalance", "misplaced", "shiftIdle");
 
 export class XhsttWriter {
   private readonly lines: string[] = [];

@@ -8,9 +8,7 @@ export interface TabuOptions extends LocalSearchOptions {
 }
 
 export interface TabuResult extends SearchResult {
-  steps: number;
   worsening: number;
-  aspirated: number;
   blocked: number;
 }
 
@@ -34,7 +32,6 @@ export class TabuRun extends SearchRun<TabuResult> {
   private readonly chosenTo: Int32Array;
   private steps = 0;
   private worsening = 0;
-  private aspirated = 0;
   private blocked = 0;
 
   constructor(problem: Problem, start: Solution, options: TabuOptions) {
@@ -52,7 +49,7 @@ export class TabuRun extends SearchRun<TabuResult> {
     const current = timetable.cost;
     let chosenCost = Infinity;
     let chosenLength = 0;
-    let chosenTabu = false;
+    let chosenKind = sampler.kind;
     for (let k = 0; k < this.candidates && !this.finished; k++) {
       this.used++;
       if (!sampler.sample(timetable.slotOf)) continue;
@@ -68,7 +65,7 @@ export class TabuRun extends SearchRun<TabuResult> {
       if (cost >= chosenCost) continue;
       chosenCost = cost;
       chosenLength = length;
-      chosenTabu = tabu;
+      chosenKind = sampler.kind;
       this.chosenLessons.set(sampler.lessons.subarray(0, length));
       this.chosenTo.set(sampler.to.subarray(0, length));
     }
@@ -77,12 +74,12 @@ export class TabuRun extends SearchRun<TabuResult> {
       timetable.move(this.chosenLessons[i], this.chosenTo[i]);
       tabuUntil[this.chosenLessons[i]] = this.steps + this.tenure + Math.floor(this.rng.next() * (this.tenure / 2 + 1));
     }
-    if (chosenTabu) this.aspirated++;
+    sampler.noteAccepted(chosenKind, chosenLength);
     if (chosenCost > current) this.worsening++;
     this.keepIfBest(chosenCost);
   }
 
   result(): TabuResult {
-    return { ...this.summary(), steps: this.steps, worsening: this.worsening, aspirated: this.aspirated, blocked: this.blocked };
+    return { ...this.summary(), worsening: this.worsening, blocked: this.blocked };
   }
 }

@@ -6,7 +6,6 @@ export interface CostWeights {
   shiftBreak: number;
   shiftIdle: number;
   dayImbalance: number;
-  dayLoadSquare: number;
   misplaced: number;
   teacherWish: number;
 }
@@ -21,7 +20,6 @@ export const DEFAULT_COST_WEIGHTS: CostWeights = {
   shiftBreak: 10,
   shiftIdle: 2,
   dayImbalance: 2,
-  dayLoadSquare: 0,
   misplaced: 10,
   teacherWish: 50,
 };
@@ -33,7 +31,6 @@ export const SOFT_TERMS: readonly SoftTerm[] = [
   "shiftBreak",
   "shiftIdle",
   "dayImbalance",
-  "dayLoadSquare",
   "misplaced",
   "teacherWish",
 ];
@@ -68,6 +65,21 @@ export interface Evaluation {
   soft: SoftStats;
   cost: number;
   softCost: number;
+}
+
+export interface CostBreakdown {
+  unassigned: number;
+  classClash: number;
+  classGap: number;
+  teacherClash: number;
+  teacherUnavailable: number;
+  sameSubjectInDay: number;
+  difficulty: number;
+  misplaced: number;
+  dayImbalance: number;
+  teacherGap: number;
+  shiftBreak: number;
+  teacherWish: number;
 }
 
 export class Weights {

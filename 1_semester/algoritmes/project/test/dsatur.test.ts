@@ -63,6 +63,10 @@ describe("classic DSATUR", () => {
 describe("DSATUR with least-penalty slots", () => {
   const options = { respectAllowed: true, slotRule: "leastPenalty" } as const;
 
+  it("refuses to price slots outside the class window", () => {
+    expect(() => new Dsatur({ slotRule: "leastPenalty" }).solve(mini)).toThrow();
+  });
+
   it("puts two lessons of one subject on different days when it can", () => {
     const week: Instance = { ...tiny, days: 2, teachers: [{ id: "t1" }, { id: "t2" }] };
     const problem = Problem.from(week);

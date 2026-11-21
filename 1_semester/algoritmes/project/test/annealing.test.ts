@@ -54,6 +54,14 @@ describe("Timetable", () => {
     timetable.swap(0, 50);
     expect(timetable.cost).toBe(cost);
   });
+
+  it("splits the cost into parts that add up to it", () => {
+    for (const options of [best, {}]) {
+      const timetable = Timetable.from(medium, new Dsatur(options).solve(medium).slotOf);
+      const sum = Object.values(timetable.breakdown()).reduce((a, b) => a + b, 0);
+      expect(sum).toBeCloseTo(timetable.cost, 6);
+    }
+  });
 });
 
 describe("Annealing", () => {

@@ -42,6 +42,8 @@ describe("Tabu search", () => {
     expect(hardViolations(mini, result.slotOf).total).toBe(0);
     expect(result.evaluations).toBe(40000);
     expect(result.worsening).toBeGreaterThan(0);
+    expect(result.kempe.accepted).toBeGreaterThan(0);
+    expect(result.kempe.accepted).toBeLessThanOrEqual(result.kempe.tried);
   });
 
   it("is reproducible for a fixed seed", () => {

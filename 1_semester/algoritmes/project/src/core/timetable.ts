@@ -3,6 +3,7 @@ import {
   EASY_UP_TO,
   HEAVY_FROM,
   Weights,
+  type CostBreakdown,
   type CostWeights,
   type Evaluation,
   type HardViolations,
@@ -46,8 +47,6 @@ export class Timetable {
   private shiftBreaks = 0;
   private shiftIdle = 0;
   private imbalance = 0;
-  private loadSquares = 0;
-  private loadSquaresFloor = 0;
   private spread = 0;
   private misplaced = 0;
   private wishesBroken = 0;
@@ -76,9 +75,6 @@ export class Timetable {
     this.gapOfTeacherDay = new Int32Array(nTeachers * days);
     this.breakOfTeacherDay = new Int32Array(nTeachers * days);
     this.idleOfTeacherDay = new Int32Array(nTeachers * days);
-    const classHours = new Int32Array(nClasses);
-    for (let l = 0; l < nLessons; l++) classHours[problem.lessonClass[l]]++;
-    for (const hours of classHours) this.loadSquaresFloor += (hours * hours) / days;
     this.unassigned = nLessons;
     for (let c = 0; c < nClasses; c++) for (let d = 0; d < days; d++) this.spread += this.spreadOf(c, d);
   }
@@ -105,7 +101,6 @@ export class Timetable {
       w.shiftBreak * this.shiftBreaks +
       w.shiftIdle * this.shiftIdle +
       w.dayImbalance * this.imbalance +
-      w.dayLoadSquare * (this.loadSquares - this.loadSquaresFloor) +
       w.misplaced * this.misplaced +
       w.teacherWish * this.wishesBroken
     );
@@ -113,6 +108,24 @@ export class Timetable {
 
   get softCost(): number {
     return this.cost - this.weights.hard * this.hard;
+  }
+
+  breakdown(): CostBreakdown {
+    const w = this.weights;
+    return {
+      unassigned: w.hard * this.unassigned,
+      classClash: w.hard * this.classClash,
+      classGap: w.hard * (this.classGap + this.classSlot),
+      teacherClash: w.hard * this.teacherClash,
+      teacherUnavailable: w.hard * this.teacherUnavailable,
+      sameSubjectInDay: w.sameSubjectInDay * this.repeats,
+      difficulty: (w.difficulty * this.spread) / this.problem.days,
+      misplaced: w.misplaced * this.misplaced,
+      dayImbalance: w.dayImbalance * this.imbalance,
+      teacherGap: w.teacherGap * this.gapSquares,
+      shiftBreak: w.shiftBreak * this.shiftBreaks + w.shiftIdle * this.shiftIdle,
+      teacherWish: w.teacherWish * this.wishesBroken,
+    };
   }
 
   evaluation(): Evaluation {
@@ -193,7 +206,6 @@ export class Timetable {
       if (!problem.teacherAllowed[cell]) this.teacherUnavailable += sign;
       if (problem.teacherWished[t * problem.periods + problem.periodOf(slot)]) this.wishesBroken += sign;
     }
-    this.loadSquares += sign === 1 ? 2 * this.dayLoad[classDay] + 1 : 1 - 2 * this.dayLoad[classDay];
     this.dayLoad[classDay] += sign;
     this.dayScore[classDay] += sign * score;
 

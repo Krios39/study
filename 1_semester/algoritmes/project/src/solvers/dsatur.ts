@@ -16,7 +16,6 @@ export interface DsaturOptions {
   respectAllowed?: boolean;
   lessonRule?: LessonRule;
   slotRule?: SlotRule;
-  weights?: Partial<SlotWeights>;
 }
 
 export interface DsaturResult extends SolveResult {
@@ -26,12 +25,6 @@ export interface DsaturResult extends SolveResult {
 export interface DsaturStep {
   lesson: number;
   slot: number;
-}
-
-export interface SlotReasons {
-  gaps: number;
-  repeats: number;
-  load: number;
 }
 
 export const DEFAULT_SLOT_WEIGHTS: SlotWeights = { gap: 100, sameSubjectInDay: 1000, dayLoad: 1 };
@@ -65,7 +58,6 @@ export class Dsatur extends Solver<DsaturResult> {
 }
 
 export class DsaturRun {
-  readonly reasons: SlotReasons = { gaps: 0, repeats: 0, load: 0 };
   private readonly problem: Problem;
   private readonly slotOf: Int32Array;
   private readonly order: Int32Array;
@@ -80,7 +72,6 @@ export class DsaturRun {
   private readonly respectAllowed: boolean;
   private readonly lessonRule: LessonRule;
   private readonly slotRule: SlotRule;
-  private readonly weights: SlotWeights;
   private placed = 0;
 
   constructor(problem: Problem, options: DsaturOptions) {
@@ -89,7 +80,7 @@ export class DsaturRun {
     this.respectAllowed = options.respectAllowed ?? false;
     this.lessonRule = options.lessonRule ?? "saturation";
     this.slotRule = options.slotRule ?? "first";
-    this.weights = { ...DEFAULT_SLOT_WEIGHTS, ...options.weights };
+    if (this.slotRule === "leastPenalty" && !this.respectAllowed) throw new Error("slotRule leastPenalty needs respectAllowed");
     this.slotOf = new Int32Array(nLessons).fill(UNASSIGNED);
     this.order = new Int32Array(nLessons);
     this.done = new Uint8Array(nLessons);
@@ -184,7 +175,7 @@ export class DsaturRun {
   }
 
   penalty(lesson: number, slot: number): number {
-    const { problem, weights, reasons } = this;
+    const { problem } = this;
     const cls = problem.lessonClass[lesson];
     const day = problem.dayOf(slot);
     const period = problem.periodOf(slot);
@@ -201,10 +192,9 @@ export class DsaturRun {
     }
     const gapsBefore = last < 0 ? 0 : last - first + 1 - load;
     const gapsAfter = Math.max(last, period) - first + 1 - (load + 1);
-    reasons.gaps = gapsAfter - gapsBefore;
-    reasons.repeats = this.subjectInDay[(cls * problem.days + day) * problem.nSubjects + problem.lessonSubject[lesson]];
-    reasons.load = load;
-    return weights.gap * reasons.gaps + weights.sameSubjectInDay * reasons.repeats + weights.dayLoad * reasons.load;
+    const repeats = this.subjectInDay[(cls * problem.days + day) * problem.nSubjects + problem.lessonSubject[lesson]];
+    const weights = DEFAULT_SLOT_WEIGHTS;
+    return weights.gap * (gapsAfter - gapsBefore) + weights.sameSubjectInDay * repeats + weights.dayLoad * load;
   }
 
   private place(lesson: number, slot: number) {
