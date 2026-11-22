@@ -1,9 +1,17 @@
 import { build } from "esbuild";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 import { Loader } from "../src/io/loader.ts";
 
+const DATA_FILES = ["../src/model.ts", "src/main.ts", "src/builder.ts"];
+const SHORTEST_NAME = 3;
+
 class DemoBuilder {
+  private readonly renamed = DemoBuilder.ownMembers();
+
   static readonly SCHOOLS = [
     "mini",
     "small-7",
@@ -17,8 +25,8 @@ class DemoBuilder {
     "large-100-1shift-1",
     "large-100-2shift-1",
   ].flatMap((name) => [
-    { file: name, language: "Russian" },
-    { file: `${name}-kk`, language: "Kazakh" },
+    { file: `${name}-kk`, title: `${name}-kk`, language: "Kazakh" },
+    { file: name, title: `${name}-ru`, language: "Russian" },
   ]);
 
   static readonly FONTS = [
@@ -55,7 +63,7 @@ class DemoBuilder {
 
   private schools(): string {
     return JSON.stringify(
-      DemoBuilder.SCHOOLS.map((school) => ({ language: school.language, instance: Loader.instance(DemoBuilder.path(`../instances/${school.file}.json`)) })),
+      DemoBuilder.SCHOOLS.map((school) => ({ title: school.title, language: school.language, instance: Loader.instance(DemoBuilder.path(`../instances/${school.file}.json`)) })),
     );
   }
 
@@ -66,9 +74,54 @@ class DemoBuilder {
       format: "iife",
       target: "es2020",
       minify: true,
+      mangleProps: this.renamed,
+      legalComments: "none",
       write: false,
     });
     return result.outputFiles[0].text;
+  }
+
+  private static ownMembers(): RegExp {
+    const parse = (file: string) => ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true);
+    const walk = (node: ts.Node, visit: (node: ts.Node) => void) => {
+      visit(node);
+      ts.forEachChild(node, (child) => walk(child, visit));
+    };
+    const memberName = (node: ts.Node): string | undefined => {
+      const member = ts.isPropertyDeclaration(node) || ts.isMethodDeclaration(node) || ts.isAccessor(node) || ts.isPropertySignature(node) || ts.isMethodSignature(node);
+      return member && ts.isIdentifier(node.name) ? node.name.text : undefined;
+    };
+    const sources = [DemoBuilder.path("../src"), DemoBuilder.path("src")]
+      .flatMap((folder) => readdirSync(folder, { recursive: true, encoding: "utf8" }).map((file) => join(folder, file)))
+      .filter((file) => file.endsWith(".ts"));
+    const library = dirname(createRequire(import.meta.url).resolve("typescript"));
+    const kept = new Set<string>();
+    for (const file of readdirSync(library).filter((name) => /^lib\..*\.d\.ts$/.test(name))) {
+      walk(parse(join(library, file)), (node) => {
+        const name = memberName(node);
+        if (name) kept.add(name);
+      });
+    }
+    for (const file of DATA_FILES) {
+      walk(parse(DemoBuilder.path(file)), (node) => {
+        const name = memberName(node);
+        if (name) kept.add(name);
+      });
+    }
+    const own = new Set<string>();
+    for (const file of sources) {
+      walk(parse(file), (node) => {
+        const name = memberName(node);
+        if (name) own.add(name);
+        if (ts.isStringLiteralLike(node)) kept.add(node.text);
+        if (ts.isStringLiteralLike(node) || ts.isTemplateLiteralToken(node)) {
+          for (const match of node.text.matchAll(/data-([a-z]+)/g)) kept.add(match[1]);
+        }
+      });
+    }
+    const names = [...own].filter((name) => name.length >= SHORTEST_NAME && !kept.has(name)).sort();
+    console.log(`renaming ${names.length} of ${own.size} own members`);
+    return new RegExp(`^(${names.join("|")})$`);
   }
 
   private static embed(text: string): string {
