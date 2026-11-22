@@ -1,11 +1,13 @@
-export type Tone = "good" | "warn" | "bad" | "kempe" | "plain";
+export type Tone = "plain" | "good" | "bad" | "warn";
 
 export class Theme {
   readonly ink: string;
   readonly muted: string;
   readonly line: string;
   readonly allowed: string;
+  readonly surface: string;
   readonly onAccent: string;
+  readonly shade: string;
   private readonly tones: Record<Tone, string>;
 
   private constructor(read: (name: string) => string) {
@@ -13,8 +15,10 @@ export class Theme {
     this.muted = read("--muted");
     this.line = read("--line");
     this.allowed = read("--allowed");
+    this.surface = read("--surface");
     this.onAccent = read("--on-accent");
-    this.tones = { good: read("--good"), warn: read("--warn"), bad: read("--bad"), kempe: read("--kempe"), plain: read("--accent") };
+    this.shade = read("--shade");
+    this.tones = { plain: read("--accent"), good: read("--good"), bad: read("--bad"), warn: read("--warn") };
   }
 
   static read(): Theme {

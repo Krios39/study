@@ -6,8 +6,8 @@ import { Dom } from "./dom.ts";
 import { DsaturStage } from "./dsatur-stage.ts";
 import { Format } from "./format.ts";
 import { Pace } from "./pace.ts";
-import { Palette, type ColourMode } from "./palette.ts";
 import { SCENE_RATE, type Stage } from "./stage.ts";
+import { Trouble } from "./trouble.ts";
 
 interface School {
   language: string;
@@ -27,7 +27,11 @@ const STEPS: Step[] = [
 ];
 
 const DEFAULT_SCHOOL = "small-7";
-const START_HINT = "Press <b>Play</b> to watch the whole step, or <b>One step</b> to go move by move.";
+const START_HINTS = [
+  "<p>Step 1 builds a first timetable: it places the lessons one by one. Press <b>One step</b> to follow each decision, or <b>Play</b> to watch it run.</p>",
+  "<p>Step 2 improves the timetable by trying random changes. Colour shows how hard the subject is, a dark corner marks a lesson in a poor place. Press <b>One step</b> to follow one change, or <b>Play</b>.</p>",
+  "<p>Step 3 adds a smarter change: a chain of lessons that swap between two times together. Press <b>One step</b> to see one chain, or <b>Play</b>.</p>",
+];
 const NARROW_WIDTH = 860;
 const REFRESH_MS = 125;
 const SLIDER_STEPS = 1000;
@@ -40,7 +44,6 @@ class App {
   private readonly canvas = Dom.find<HTMLCanvasElement>("board");
   private readonly wrap = Dom.find("wrap");
   private readonly caption = Dom.find("caption");
-  private readonly about = Dom.find("about");
   private readonly panel = Dom.find("panel");
   private readonly progress = Dom.find("progress");
   private readonly tip = Dom.find("tip");
@@ -49,12 +52,11 @@ class App {
   private readonly speed = Dom.find<HTMLInputElement>("speed");
   private readonly rate = Dom.find("rate");
   private readonly school = Dom.find<HTMLSelectElement>("school");
-  private readonly colours = Dom.find<HTMLSelectElement>("colours");
   private readonly tabs: HTMLButtonElement[];
   private stage!: Stage;
   private board!: Board;
   private stepIndex = 0;
-  private playing = true;
+  private playing = false;
   private lastFrame = 0;
   private lastRefresh = 0;
   private shownCaption = "";
@@ -102,16 +104,8 @@ class App {
     return !this.playing && this.stage.done === 0 && !this.stage.animating;
   }
 
-  private get palette(): Palette {
-    return new Palette(this.problem, this.colours.value as ColourMode);
-  }
-
   private listen() {
     this.school.addEventListener("change", () => this.open(this.stepIndex));
-    this.colours.addEventListener("change", () => {
-      this.board.palette = this.palette;
-      this.dirty = true;
-    });
     this.play.addEventListener("click", () => {
       if (this.stage.finished) {
         this.open(this.stepIndex);
@@ -140,11 +134,10 @@ class App {
   private open(stepIndex: number) {
     this.stepIndex = stepIndex;
     this.stage = STEPS[stepIndex].create(this.problem);
-    this.board = new Board(this.canvas, this.problem, this.stage.names, this.palette, this.stage.pool);
+    this.board = new Board(this.canvas, this.problem, this.stage.names, this.stage.pool);
     this.pace.auto = true;
     this.stage.plan(this.pace);
     this.playing = false;
-    this.about.innerHTML = this.stage.about;
     this.panel.replaceChildren(this.stage.panel);
     this.tabs.forEach((tab, index) => {
       tab.classList.toggle("active", index === stepIndex);
@@ -161,28 +154,31 @@ class App {
     this.dirty = true;
     const narrow = this.width < NARROW_WIDTH;
     const top = this.wrap.getBoundingClientRect().top + window.scrollY;
-    const room = narrow ? window.innerHeight * 0.5 : window.innerHeight - top - 44;
+    const room = narrow ? window.innerHeight * 0.5 : window.innerHeight - top - 70;
     this.board.resize(this.wrap.clientWidth, Math.max(160, room));
   }
 
   private frame(now: number) {
+    const { stage } = this;
     const seconds = Math.min(0.1, (now - this.lastFrame) / 1000);
     this.lastFrame = now;
     if (this.playing) this.pace.spend(seconds);
-    this.stage.tick(seconds, this.playing ? this.pace.rate : 0);
-    if (this.dirty || this.stage.animating || this.stage.sparkling || this.stage.done !== this.drawnDone) {
-      this.board.draw(this.stage.picture());
-      this.dirty = false;
-      this.drawnDone = this.stage.done;
-    }
-    const caption = this.waiting ? START_HINT : this.stage.caption;
-    if (caption !== this.shownCaption) {
-      this.shownCaption = caption;
-      this.caption.innerHTML = this.shownCaption;
-    }
-    if (now - this.lastRefresh >= REFRESH_MS) {
+    stage.tick(seconds, this.playing ? this.pace.rate : 0);
+    const refresh = now - this.lastRefresh >= REFRESH_MS;
+    if (refresh) {
       this.lastRefresh = now;
       this.refresh(now);
+    }
+    if (this.dirty || stage.animating || stage.moving || refresh || stage.done !== this.drawnDone) {
+      this.board.draw(stage.picture());
+      this.dirty = false;
+      this.drawnDone = stage.done;
+    }
+    const caption = this.waiting ? START_HINTS[this.stepIndex] : stage.caption;
+    if (caption !== this.shownCaption) {
+      this.shownCaption = caption;
+      this.caption.innerHTML = caption;
+      this.canvas.setAttribute("aria-label", this.caption.textContent ?? "");
     }
     requestAnimationFrame((next) => this.frame(next));
   }
@@ -197,7 +193,7 @@ class App {
     this.progress.style.width = `${(100 * stage.done) / Math.max(1, stage.total)}%`;
     this.play.textContent = stage.finished ? "Replay" : this.playing ? "Pause" : "Play";
     this.auto.classList.toggle("on", pace.auto);
-    this.rate.textContent = Format.rate(fast ? Math.min(pace.rate, measured) : pace.rate);
+    this.rate.textContent = Format.rate(fast && measured > 0 ? Math.min(pace.rate, measured) : pace.rate);
     if (pace.auto) this.speed.value = String(Math.round(pace.position * SLIDER_STEPS));
     const next = this.tabs[this.stepIndex + 1];
     if (next) next.classList.toggle("next", stage.finished);
@@ -212,8 +208,11 @@ class App {
     this.tip.hidden = lesson < 0;
     if (lesson < 0) return;
     const { names } = this.stage;
-    this.tip.textContent = `${names.lesson(lesson)} · ${names.teachers(lesson)} · ${names.slot(slotOf[lesson])}`;
-    this.tip.style.left = `${Math.min(x + 12, bounds.width - 180)}px`;
+    const reasons = Trouble.reasons(this.stage.flag(lesson));
+    const why = reasons.length > 0 ? `
+Poor place: ${reasons.join("; ")}` : "";
+    this.tip.textContent = `${names.lesson(lesson)} · ${names.teachers(lesson)} · ${names.slot(slotOf[lesson])}${why}`;
+    this.tip.style.left = `${Math.max(0, Math.min(x + 12, bounds.width - 250))}px`;
     this.tip.style.top = `${y + 16}px`;
     window.clearTimeout(this.tipTimer);
     if (event.pointerType === "touch") this.tipTimer = window.setTimeout(() => (this.tip.hidden = true), TIP_MS);

@@ -1,28 +1,21 @@
 import { Format } from "./format.ts";
-import type { Theme, Tone } from "./theme.ts";
-
-export interface Series {
-  label: string;
-  tone: Tone;
-}
+import type { Theme } from "./theme.ts";
 
 const POINT_LIMIT = 900;
 const PADDING = { left: 6, right: 6, top: 16, bottom: 6 };
 
 export class CostChart {
   readonly canvas: HTMLCanvasElement;
-  private readonly series: Series[];
   private readonly span: number;
   private xs: number[] = [];
   private ys: number[][];
   private lowest = Infinity;
   private highest = 1;
 
-  constructor(canvas: HTMLCanvasElement, span: number, series: Series[]) {
+  constructor(canvas: HTMLCanvasElement, span: number, lines: number) {
     this.canvas = canvas;
     this.span = span;
-    this.series = series;
-    this.ys = series.map(() => []);
+    this.ys = Array.from({ length: lines }, () => []);
   }
 
   add(x: number, values: number[]) {
@@ -65,22 +58,29 @@ export class CostChart {
     context.font = "10px Rubik, system-ui, sans-serif";
     context.textBaseline = "top";
     context.textAlign = "left";
-    context.fillText(`cost, log scale · top ${Format.count(this.highest)}`, PADDING.left, 2);
+    context.fillText("penalty points", PADDING.left, 2);
     context.textAlign = "right";
-    context.fillText(`lowest ${Format.count(this.lowest)}`, width - PADDING.right, 2);
+    context.fillText(`${Format.count(this.highest)} → ${Format.count(this.lowest)}`, width - PADDING.right, 2);
 
-    for (let index = this.series.length - 1; index >= 0; index--) {
+    for (let index = this.ys.length - 1; index >= 0; index--) {
       const line = this.ys[index];
-      context.strokeStyle = theme.tone(this.series[index].tone);
-      context.globalAlpha = index === 0 ? 1 : 0.75;
+      context.strokeStyle = theme.tone(index === 0 ? "plain" : "warn");
       context.lineWidth = index === 0 ? 2 : 1.5;
+      context.setLineDash(index === 0 ? [] : [4, 3]);
       context.beginPath();
       for (let i = 0; i < line.length; i++) {
         if (i === 0) context.moveTo(px(this.xs[i]), py(line[i]));
         else context.lineTo(px(this.xs[i]), py(line[i]));
       }
       context.stroke();
+      if (index > 0 || line.length < 2) continue;
+      context.lineTo(px(this.xs[line.length - 1]), PADDING.top + plotHeight);
+      context.lineTo(px(this.xs[0]), PADDING.top + plotHeight);
+      context.fillStyle = theme.tone("plain");
+      context.globalAlpha = 0.14;
+      context.fill();
+      context.globalAlpha = 1;
     }
-    context.globalAlpha = 1;
+    context.setLineDash([]);
   }
 }

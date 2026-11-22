@@ -1,9 +1,8 @@
 import type { Problem } from "../../src/core/problem.ts";
-import type { Flash, Picture } from "./board.ts";
+import type { Picture } from "./board.ts";
 import { Dom } from "./dom.ts";
 import { Names } from "./names.ts";
 import type { Pace } from "./pace.ts";
-import type { Tone } from "./theme.ts";
 
 export interface Scene {
   progress: number;
@@ -11,28 +10,17 @@ export interface Scene {
   more: boolean;
 }
 
-interface Spark {
-  lesson: number;
-  tone: Tone;
-  born: number;
-}
-
 export const SCENE_RATE = 8;
 export const SETTLE = 0.85;
 const STEP_SECONDS = 1.6;
-const SPARK_SECONDS = 0.45;
-const SPARK_LIMIT = 240;
 
 export abstract class Stage<S extends Scene = Scene> {
-  abstract readonly about: string;
   readonly problem: Problem;
   readonly names: Names;
   readonly panel: HTMLElement;
   caption = "";
   protected scene: S | undefined;
-  private clock = 0;
   private credit = 0;
-  private sparks: Spark[] = [];
 
   constructor(problem: Problem) {
     this.problem = problem;
@@ -48,6 +36,7 @@ export abstract class Stage<S extends Scene = Scene> {
   abstract picture(): Picture;
   abstract refresh(): void;
   protected abstract open(duration: number): S | undefined;
+  protected abstract follow(scene: S): S;
   protected abstract burst(count: number): void;
   protected abstract narrate(scene: S | undefined): string;
 
@@ -55,12 +44,15 @@ export abstract class Stage<S extends Scene = Scene> {
     return this.scene !== undefined;
   }
 
-  get sparkling(): boolean {
-    return this.sparks.length > 0;
+  get moving(): boolean {
+    return false;
+  }
+
+  flag(_lesson: number): number {
+    return 0;
   }
 
   tick(seconds: number, rate: number) {
-    this.clock += seconds;
     if (this.scene) {
       this.scene.progress += seconds / this.scene.duration;
       if (this.scene.progress >= 1) {
@@ -87,22 +79,7 @@ export abstract class Stage<S extends Scene = Scene> {
     else this.scene = undefined;
   }
 
-  protected phases(labels: string[], active: number): string {
-    const chips = labels.map((label, index) => `<span class="${index === active ? "on" : index < active ? "past" : ""}"><em>${index + 1}</em>${label}</span>`);
-    return `<div class="phases">${chips.join("")}</div>`;
-  }
-
-  protected follow(_scene: S): S | undefined {
-    return undefined;
-  }
-
-  protected spark(lesson: number, tone: Tone) {
-    if (this.sparks.length >= SPARK_LIMIT) this.sparks.shift();
-    this.sparks.push({ lesson, tone, born: this.clock });
-  }
-
-  protected flashes(): Flash[] {
-    this.sparks = this.sparks.filter((spark) => this.clock - spark.born < SPARK_SECONDS);
-    return this.sparks.map((spark) => ({ lesson: spark.lesson, tone: spark.tone, alpha: 1 - (this.clock - spark.born) / SPARK_SECONDS }));
+  protected say(step: number, steps: number, title: string, text: string, extra = ""): string {
+    return `<div class="scene"><em>${step} / ${steps}</em><b>${title}</b></div><p>${text}</p>${extra}`;
   }
 }
