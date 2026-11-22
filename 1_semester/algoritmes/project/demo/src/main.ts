@@ -7,7 +7,7 @@ import { DsaturStage } from "./dsatur-stage.ts";
 import { Format } from "./format.ts";
 import { Pace } from "./pace.ts";
 import { Palette, type ColourMode } from "./palette.ts";
-import type { Stage } from "./stage.ts";
+import { SCENE_RATE, type Stage } from "./stage.ts";
 
 interface School {
   language: string;
@@ -59,6 +59,11 @@ class App {
   private lastRefresh = 0;
   private shownCaption = "";
   private tipTimer = 0;
+  private dirty = true;
+  private drawnDone = -1;
+  private ratedDone = 0;
+  private ratedAt = 0;
+  private width = 0;
 
   constructor() {
     this.schools = JSON.parse(Dom.find("schools").textContent ?? "[]") as School[];
@@ -103,10 +108,15 @@ class App {
 
   private listen() {
     this.school.addEventListener("change", () => this.open(this.stepIndex));
-    this.colours.addEventListener("change", () => (this.board.palette = this.palette));
+    this.colours.addEventListener("change", () => {
+      this.board.palette = this.palette;
+      this.dirty = true;
+    });
     this.play.addEventListener("click", () => {
-      if (this.stage.finished) this.open(this.stepIndex);
-      else this.playing = !this.playing;
+      if (this.stage.finished) {
+        this.open(this.stepIndex);
+        this.playing = true;
+      } else this.playing = !this.playing;
     });
     Dom.find("step").addEventListener("click", () => {
       this.playing = false;
@@ -115,8 +125,13 @@ class App {
     Dom.find("restart").addEventListener("click", () => this.open(this.stepIndex));
     this.speed.addEventListener("input", () => this.pace.choose(Pace.at(Number(this.speed.value) / SLIDER_STEPS)));
     this.auto.addEventListener("click", () => (this.pace.auto = !this.pace.auto));
-    window.addEventListener("resize", () => this.layout());
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => this.board.restyle());
+    window.addEventListener("resize", () => {
+      if (window.innerWidth !== this.width || window.innerWidth >= NARROW_WIDTH) this.layout();
+    });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      this.board.restyle();
+      this.dirty = true;
+    });
     this.canvas.addEventListener("pointermove", (event) => this.showTip(event));
     this.canvas.addEventListener("pointerdown", (event) => this.showTip(event));
     this.canvas.addEventListener("pointerleave", () => (this.tip.hidden = true));
@@ -137,11 +152,14 @@ class App {
     });
     this.tip.hidden = true;
     this.lastRefresh = 0;
+    this.ratedDone = 0;
     this.layout();
   }
 
   private layout() {
-    const narrow = window.innerWidth < NARROW_WIDTH;
+    this.width = window.innerWidth;
+    this.dirty = true;
+    const narrow = this.width < NARROW_WIDTH;
     const top = this.wrap.getBoundingClientRect().top + window.scrollY;
     const room = narrow ? window.innerHeight * 0.5 : window.innerHeight - top - 44;
     this.board.resize(this.wrap.clientWidth, Math.max(160, room));
@@ -152,7 +170,11 @@ class App {
     this.lastFrame = now;
     if (this.playing) this.pace.spend(seconds);
     this.stage.tick(seconds, this.playing ? this.pace.rate : 0);
-    this.board.draw(this.stage.picture());
+    if (this.dirty || this.stage.animating || this.stage.sparkling || this.stage.done !== this.drawnDone) {
+      this.board.draw(this.stage.picture());
+      this.dirty = false;
+      this.drawnDone = this.stage.done;
+    }
     const caption = this.waiting ? START_HINT : this.stage.caption;
     if (caption !== this.shownCaption) {
       this.shownCaption = caption;
@@ -160,18 +182,22 @@ class App {
     }
     if (now - this.lastRefresh >= REFRESH_MS) {
       this.lastRefresh = now;
-      this.refresh();
+      this.refresh(now);
     }
     requestAnimationFrame((next) => this.frame(next));
   }
 
-  private refresh() {
+  private refresh(now: number) {
     const { stage, pace } = this;
+    const measured = (1000 * (stage.done - this.ratedDone)) / Math.max(1, now - this.ratedAt);
+    this.ratedDone = stage.done;
+    this.ratedAt = now;
+    const fast = this.playing && !stage.finished && pace.rate > SCENE_RATE;
     stage.refresh();
     this.progress.style.width = `${(100 * stage.done) / Math.max(1, stage.total)}%`;
     this.play.textContent = stage.finished ? "Replay" : this.playing ? "Pause" : "Play";
     this.auto.classList.toggle("on", pace.auto);
-    this.rate.textContent = Format.rate(pace.rate);
+    this.rate.textContent = Format.rate(fast ? Math.min(pace.rate, measured) : pace.rate);
     if (pace.auto) this.speed.value = String(Math.round(pace.position * SLIDER_STEPS));
     const next = this.tabs[this.stepIndex + 1];
     if (next) next.classList.toggle("next", stage.finished);
@@ -182,7 +208,7 @@ class App {
     const x = event.clientX - bounds.left;
     const y = event.clientY - bounds.top;
     const slotOf = this.stage.picture().slotOf;
-    const lesson = this.board.lessonAt(x, y, slotOf);
+    const lesson = this.stage.animating ? -1 : this.board.lessonAt(x, y, slotOf);
     this.tip.hidden = lesson < 0;
     if (lesson < 0) return;
     const { names } = this.stage;

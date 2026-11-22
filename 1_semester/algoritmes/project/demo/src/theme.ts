@@ -5,6 +5,7 @@ export class Theme {
   readonly muted: string;
   readonly line: string;
   readonly allowed: string;
+  readonly onAccent: string;
   private readonly tones: Record<Tone, string>;
 
   private constructor(read: (name: string) => string) {
@@ -12,6 +13,7 @@ export class Theme {
     this.muted = read("--muted");
     this.line = read("--line");
     this.allowed = read("--allowed");
+    this.onAccent = read("--on-accent");
     this.tones = { good: read("--good"), warn: read("--warn"), bad: read("--bad"), kempe: read("--kempe"), plain: read("--accent") };
   }
 

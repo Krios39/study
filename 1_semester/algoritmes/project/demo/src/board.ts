@@ -231,7 +231,7 @@ export class Board {
   private drawMarks(marks: Mark[]) {
     const { context, theme } = this;
     const lettered = this.cellWidth >= 22 && this.cellHeight >= 14;
-    context.font = `600 ${Math.min(11, Math.floor(this.cellHeight * 0.5))}px system-ui, sans-serif`;
+    context.font = `600 ${Math.min(11, Math.floor(this.cellHeight * 0.5))}px Rubik, system-ui, sans-serif`;
     context.textAlign = "center";
     context.textBaseline = "middle";
     for (const mark of marks) {
@@ -275,7 +275,7 @@ export class Board {
     }
 
     const labelled = this.cellWidth >= 30 && this.cellHeight >= 14;
-    context.font = `600 ${Math.min(11, Math.floor(this.cellHeight * 0.5))}px system-ui, sans-serif`;
+    context.font = `600 ${Math.min(11, Math.floor(this.cellHeight * 0.5))}px Rubik, system-ui, sans-serif`;
     context.textAlign = "center";
     context.textBaseline = "middle";
     for (let lesson = 0; lesson < nLessons; lesson++) {
@@ -451,7 +451,7 @@ export class Board {
 
   private drawTags(marks: Mark[]) {
     const { context, theme } = this;
-    context.font = "700 11px system-ui, sans-serif";
+    context.font = "700 11px Rubik, system-ui, sans-serif";
     context.textAlign = "center";
     context.textBaseline = "middle";
     for (const mark of marks) {
@@ -475,7 +475,7 @@ export class Board {
   private drawBadges(badges: Badge[]) {
     const { context, theme } = this;
     const size = Math.max(13, Math.min(24, Math.floor(this.cellHeight * 0.6)));
-    context.font = `700 ${size}px system-ui, sans-serif`;
+    context.font = `700 ${size}px Rubik, system-ui, sans-serif`;
     context.textAlign = "center";
     context.textBaseline = "middle";
     for (const badge of badges) {
@@ -491,7 +491,7 @@ export class Board {
       context.roundRect(right - width, top, width, height, height / 2);
       context.fill();
       context.shadowBlur = 0;
-      context.fillStyle = "#fff";
+      context.fillStyle = theme.onAccent;
       context.fillText(badge.text, right - width / 2, top + height / 2 + 0.5);
     }
   }
@@ -499,7 +499,7 @@ export class Board {
   private drawLabels() {
     const { context, problem, theme } = this;
     context.fillStyle = theme.muted;
-    context.font = "11px system-ui, sans-serif";
+    context.font = "11px Rubik, system-ui, sans-serif";
     context.textBaseline = "middle";
     context.textAlign = "center";
     const dayWidth = problem.periods * this.cellWidth;
@@ -509,7 +509,7 @@ export class Board {
     if (this.poolWidth >= 60) context.fillText("to place", this.labelWidth + (this.poolWidth - POOL_GAP) / 2, HEADER_HEIGHT / 2);
     if (this.labelWidth === 0) return;
     context.textAlign = "right";
-    context.font = `${Math.min(11, this.cellHeight - 1)}px system-ui, sans-serif`;
+    context.font = `${Math.min(11, this.cellHeight - 1)}px Rubik, system-ui, sans-serif`;
     problem.instance.classes.forEach((cls, row) => {
       context.fillText(cls.id, this.labelWidth - 5, HEADER_HEIGHT + row * this.cellHeight + this.cellHeight / 2 + 0.5);
     });

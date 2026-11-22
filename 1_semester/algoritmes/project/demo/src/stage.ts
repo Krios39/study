@@ -17,7 +17,8 @@ interface Spark {
   born: number;
 }
 
-const SCENE_RATE = 8;
+export const SCENE_RATE = 8;
+export const SETTLE = 0.85;
 const STEP_SECONDS = 1.6;
 const SPARK_SECONDS = 0.45;
 const SPARK_LIMIT = 240;
@@ -52,6 +53,10 @@ export abstract class Stage<S extends Scene = Scene> {
 
   get animating(): boolean {
     return this.scene !== undefined;
+  }
+
+  get sparkling(): boolean {
+    return this.sparks.length > 0;
   }
 
   tick(seconds: number, rate: number) {

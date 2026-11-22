@@ -6,7 +6,7 @@ import { DEFAULT_SLOT_WEIGHTS, Dsatur, type DsaturRun } from "../../src/solvers/
 import { Picture, type Mark } from "./board.ts";
 import { Format } from "./format.ts";
 import type { Pace } from "./pace.ts";
-import { Stage, type Scene } from "./stage.ts";
+import { SETTLE, Stage, type Scene } from "./stage.ts";
 
 type Phase = "pick" | "judge" | "move";
 
@@ -108,18 +108,18 @@ export class DsaturStage extends Stage<PlacementScene> {
       return picture;
     }
     if (scene.phase === "judge") {
-      const seen = Math.max(1, Math.ceil(scene.progress * scene.candidates.length));
+      const seen = Math.max(1, Math.ceil(Math.min(1, scene.progress / SETTLE) * scene.candidates.length));
       const revealed = scene.candidates.slice(0, seen);
       const leader = revealed.reduce((best, candidate) => (candidate.penalty < best.penalty ? candidate : best));
       picture.marks = [
         ...scene.blocked,
         ...scene.candidates.map((candidate, index) =>
           index < seen
-            ? { ...candidate.mark, ring: candidate === leader, tag: candidate === leader || (scene.progress < 1 && index === seen - 1) }
+            ? { ...candidate.mark, ring: candidate === leader, tag: candidate === leader || (scene.progress < SETTLE && index === seen - 1) }
             : { ...candidate.mark, text: undefined },
         ),
       ];
-      const at = scene.progress >= 1 ? slot : revealed[revealed.length - 1].mark.slot;
+      const at = scene.progress >= SETTLE ? slot : revealed[revealed.length - 1].mark.slot;
       picture.flights = [{ lesson, from: at, to: at, progress: 0, tone: "plain" }];
       return picture;
     }
@@ -217,7 +217,8 @@ export class DsaturStage extends Stage<PlacementScene> {
     if (scene.phase === "pick") {
       const places = scene.candidates.length;
       const against = scene.rival < 0 ? "" : ` · tightest in another class: ${names.lesson(scene.rival)}, ${scene.rivalMarks.length}`;
-      const tie = scene.rival >= 0 && scene.rivalMarks.length === places ? " · tie goes to the one that blocks more lessons" : "";
+      const tied = scene.rival >= 0 && scene.rivalMarks.length === places;
+      const tie = tied && this.run.openDegreeOf(scene.lesson) > this.run.openDegreeOf(scene.rival) ? " · tie goes to the one that blocks more lessons" : "";
       return `<div class="line">${name}<small>fewest places left goes first: ${places}${against}${tie}</small></div>` + PICK_KEYS;
     }
     if (scene.slot === UNASSIGNED) return `<div class="line">${name}<small class="bad">no place left — does not fit, step 2 repairs it</small></div>`;

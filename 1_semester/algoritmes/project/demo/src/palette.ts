@@ -2,13 +2,11 @@ import type { Problem } from "../../src/core/problem.ts";
 
 export type ColourMode = "subject" | "difficulty";
 
-const DARK_INK = "#14161a";
-const LIGHT_INK = "#ffffff";
+const INK = "#14161a";
 
 export class Palette {
   private readonly problem: Problem;
   private readonly fills: string[];
-  private readonly inks: string[];
 
   constructor(problem: Problem, mode: ColourMode) {
     this.problem = problem;
@@ -19,16 +17,15 @@ export class Palette {
     );
     const hue = subjects.map((subject) => Math.round(125 - (125 * (subject.difficulty - 1)) / Math.max(1, hardest - 1)));
     this.fills = subjects.map((_, index) =>
-      mode === "subject" ? `hsl(${Math.round((index * 137.5) % 360)} 62% ${lightness[index]}%)` : `hsl(${hue[index]} 70% ${Math.round(lightness[index])}%)`,
+      mode === "subject" ? `hsl(${Math.round((index * 137.5) % 360)} 62% ${lightness[index]}%)` : `hsl(${hue[index]} 70% ${lightness[index]}%)`,
     );
-    this.inks = lightness.map((value) => (value < 50 ? LIGHT_INK : DARK_INK));
   }
 
   fill(lesson: number): string {
     return this.fills[this.problem.lessonSubject[lesson]];
   }
 
-  ink(lesson: number): string {
-    return this.inks[this.problem.lessonSubject[lesson]];
+  ink(_lesson: number): string {
+    return INK;
   }
 }

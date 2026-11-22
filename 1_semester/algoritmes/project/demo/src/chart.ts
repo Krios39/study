@@ -62,7 +62,7 @@ export class CostChart {
     context.lineWidth = 1;
     context.strokeRect(PADDING.left + 0.5, PADDING.top + 0.5, plotWidth - 1, plotHeight - 1);
     context.fillStyle = theme.muted;
-    context.font = "10px system-ui, sans-serif";
+    context.font = "10px Rubik, system-ui, sans-serif";
     context.textBaseline = "top";
     context.textAlign = "left";
     context.fillText(`cost, log scale · top ${Format.count(this.highest)}`, PADDING.left, 2);
