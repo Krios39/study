@@ -233,7 +233,7 @@ export class Board {
     const y = Math.max(0, top);
     context.fillStyle = fill;
     context.beginPath();
-    context.roundRect(middle - width / 2, y, width, 16, 4);
+    context.rect(middle - width / 2, y, width, 16);
     context.moveTo(middle - 4, y + 16);
     context.lineTo(middle, y + 20);
     context.lineTo(middle + 4, y + 16);
@@ -490,7 +490,7 @@ export class Board {
         const top = Math.max(0, Math.min(this.height - 20, middle - 10));
         context.fillStyle = theme.tone("plain");
         context.beginPath();
-        context.roundRect(right - width, top, width, 20, 10);
+        context.rect(right - width, top, width, 20);
         context.fill();
         context.fillStyle = theme.onAccent;
         context.fillText(text, right - width / 2, top + 10.5);

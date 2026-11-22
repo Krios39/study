@@ -2,7 +2,7 @@ import { Format } from "./format.ts";
 import type { Theme } from "./theme.ts";
 
 const POINT_LIMIT = 900;
-const PADDING = { left: 6, right: 6, top: 16, bottom: 6 };
+const PADDING = { left: 0, right: 0, top: 20, bottom: 2 };
 
 export class CostChart {
   readonly canvas: HTMLCanvasElement;
@@ -55,7 +55,7 @@ export class CostChart {
     context.lineWidth = 1;
     context.strokeRect(PADDING.left + 0.5, PADDING.top + 0.5, plotWidth - 1, plotHeight - 1);
     context.fillStyle = theme.muted;
-    context.font = "10px Rubik, system-ui, sans-serif";
+    context.font = "12px Rubik, system-ui, sans-serif";
     context.textBaseline = "top";
     context.textAlign = "left";
     context.fillText("penalty points", PADDING.left, 2);
