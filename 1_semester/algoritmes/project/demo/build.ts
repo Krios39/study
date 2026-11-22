@@ -27,13 +27,23 @@ class DemoBuilder {
   ];
 
   async run() {
+    await this.write("index.html", "src/main.ts", this.schools());
+    await this.write("school.html", "src/builder.ts", this.dictionaries());
+  }
+
+  private async write(file: string, entry: string, data: string) {
     const page = readFileSync(DemoBuilder.path("src/page.html"), "utf8");
-    const schools = DemoBuilder.embed(this.schools());
-    const bundle = DemoBuilder.embed(await this.bundle());
-    const html = page.replace("/*FONTS*/", () => this.fonts()).replace("/*SCHOOLS*/", () => schools).replace("/*BUNDLE*/", () => bundle);
-    const target = DemoBuilder.path("index.html");
+    const bundle = DemoBuilder.embed(await this.bundle(entry));
+    const html = page.replace("/*FONTS*/", () => this.fonts()).replace("/*DATA*/", () => DemoBuilder.embed(data)).replace("/*BUNDLE*/", () => bundle);
+    const target = DemoBuilder.path(file);
     writeFileSync(target, html);
     console.log(`${target}: ${Math.round(html.length / 1024)} KB`);
+  }
+
+  private dictionaries(): string {
+    const subjects = Loader.subjects(DemoBuilder.path("../instances/subjects.json"));
+    const curriculum = (file: string) => Loader.curriculum(DemoBuilder.path(`../instances/${file}`), subjects);
+    return JSON.stringify({ subjects, curricula: { kk: curriculum("curriculum-kk.json"), ru: curriculum("curriculum.json") } });
   }
 
   private fonts(): string {
@@ -49,9 +59,9 @@ class DemoBuilder {
     );
   }
 
-  private async bundle(): Promise<string> {
+  private async bundle(entry: string): Promise<string> {
     const result = await build({
-      entryPoints: [DemoBuilder.path("src/main.ts")],
+      entryPoints: [DemoBuilder.path(entry)],
       bundle: true,
       format: "iife",
       target: "es2020",

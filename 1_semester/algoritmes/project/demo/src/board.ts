@@ -44,10 +44,10 @@ export class Picture {
   arrows: Arrow[] = [];
   crossed: number[] = [];
   bands: number[] = [];
-  counts: Int32Array | undefined;
-  countRow = -1;
   trouble: Uint8Array | undefined;
   gaps = false;
+  counts: Int32Array | undefined;
+  countRow = -1;
 
   constructor(slotOf: Int32Array) {
     this.slotOf = slotOf;
@@ -103,7 +103,7 @@ export class Board {
     this.hidden = new Uint8Array(problem.nLessons);
     const { subjects } = problem.instance;
     const hardest = Math.max(...subjects.map((subject) => subject.difficulty));
-    this.fills = subjects.map((subject) => `hsl(${Math.round(EASY_HUE * (1 - (subject.difficulty - 1) / Math.max(1, hardest - 1)))} 60% 62%)`);
+    this.fills = subjects.map((subject) => `hsl(${Math.round(EASY_HUE * (1 - (subject.difficulty - 1) / Math.max(1, hardest - 1)))} 80% 58%)`);
   }
 
   resize(width: number, maxHeight: number) {
@@ -152,6 +152,13 @@ export class Board {
       if (px >= this.x && px < this.x + this.w && py >= this.y && py < this.y + this.h) return lesson;
     }
     return -1;
+  }
+
+  countRowAt(px: number, py: number): number {
+    const right = this.labelWidth + this.poolWidth;
+    if (this.poolWidth === 0 || px < right - COUNT_GAP || px >= right || py < HEADER_HEIGHT) return -1;
+    const row = Math.floor((py - HEADER_HEIGHT) / this.cellHeight);
+    return row < this.problem.nClasses ? row : -1;
   }
 
   private get insetX(): number {
@@ -319,7 +326,7 @@ export class Board {
       const costly = !broken && slot !== UNASSIGNED && trouble !== undefined && trouble[lesson] > 0;
       const insetX = Math.min(this.insetX, this.w * 0.2);
       context.fillStyle = broken ? theme.tone("bad") : this.fills[problem.lessonSubject[lesson]];
-      context.globalAlpha = slot === UNASSIGNED && !broken ? 0.5 : 1;
+      context.globalAlpha = slot === UNASSIGNED && !broken ? 0.85 : 1;
       context.fillRect(this.x + insetX, this.y + this.insetY, this.w - 2 * insetX, this.h - 2 * this.insetY);
       context.globalAlpha = 1;
       if (broken) {

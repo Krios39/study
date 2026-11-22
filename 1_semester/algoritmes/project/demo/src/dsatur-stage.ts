@@ -38,6 +38,7 @@ export class DsaturStage extends Stage<PlacementScene> {
   private readonly run: DsaturRun;
   private readonly classBusy: Uint8Array;
   private readonly rowCounts: Int32Array;
+  private readonly rowLessons: Int32Array;
   private countedAt = -1;
   private placed = 0;
   private unplaced = 0;
@@ -49,6 +50,7 @@ export class DsaturStage extends Stage<PlacementScene> {
     this.run = Dsatur.recommended().start(problem);
     this.classBusy = new Uint8Array(problem.nClasses * problem.nSlots);
     this.rowCounts = new Int32Array(problem.nClasses);
+    this.rowLessons = new Int32Array(problem.nClasses);
   }
 
   get finished(): boolean {
@@ -76,12 +78,20 @@ export class DsaturStage extends Stage<PlacementScene> {
   }
 
   picture(): Picture {
-    const { run, scene, problem } = this;
+    const { run, scene, problem, hovered } = this;
     const picture = new Picture(run.current);
     picture.counts = this.counts();
     picture.gaps = this.finished;
     if (this.finished && !scene) picture.trouble = this.trouble();
     if (this.unplaced > 0) picture.crossed = this.pool.filter((lesson) => run.isPlaced(lesson) && run.current[lesson] === UNASSIGNED);
+    if (hovered >= 0 && !run.isPlaced(hovered)) {
+      const { closed, free } = this.scan(hovered);
+      const row = problem.lessonClass[hovered];
+      if (this.rowLessons[row] === hovered) picture.countRow = row;
+      picture.marks = [...closed, ...free.map((candidate) => ({ ...candidate.mark, text: undefined }))];
+      picture.flights = [{ lesson: hovered, from: UNASSIGNED, to: UNASSIGNED, progress: 0, tone: "plain" }];
+      return picture;
+    }
     if (!scene) return picture;
     const { lesson, slot } = scene;
     const waiting = { lesson, from: UNASSIGNED, to: UNASSIGNED, progress: 0, tone: "plain" as const };
@@ -109,9 +119,36 @@ export class DsaturStage extends Stage<PlacementScene> {
       `<div class="tile bad"><span>Did not fit</span><b class="${this.unplaced > 0 ? "bad" : ""}">${this.unplaced}</b></div>${cost}</div>`;
   }
 
+  get hoverable(): boolean {
+    return true;
+  }
+
+  get score(): number | undefined {
+    return this.finished ? this.evaluation().cost : undefined;
+  }
+
+  tightest(row: number): number {
+    return this.counts()[row] < 0 ? -1 : this.rowLessons[row];
+  }
+
+  note(lesson: number): string {
+    const { run, names } = this;
+    if (run.isPlaced(lesson)) return "";
+    this.counts();
+    const free = run.freeSlotsOf(lesson);
+    const places = `${free} free ${free === 1 ? "place" : "places"} left (green dots)`;
+    if (lesson === run.peek()) return `${places}: the fewest of all waiting lessons, so it goes next`;
+    if (lesson === this.rowLessons[this.problem.lessonClass[lesson]]) return `${places}: the fewest in class ${names.className(lesson)}`;
+    return places;
+  }
+
   protected open(duration: number): PlacementScene | undefined {
     const lesson = this.run.peek();
     if (lesson === undefined) return undefined;
+    return { progress: 0, duration: duration * SHARE.pick, whole: duration, more: true, phase: "pick", lesson, ...this.scan(lesson), affected: 0 };
+  }
+
+  private scan(lesson: number): { slot: number; closed: Mark[]; free: Candidate[] } {
     const { problem, run } = this;
     const row = problem.lessonClass[lesson];
     const base = row * problem.nSlots;
@@ -132,7 +169,7 @@ export class DsaturStage extends Stage<PlacementScene> {
         slot = s;
       }
     }
-    return { progress: 0, duration: duration * SHARE.pick, whole: duration, more: true, phase: "pick", lesson, slot, closed, free, affected: 0 };
+    return { slot, closed, free };
   }
 
   protected follow(scene: PlacementScene): PlacementScene {
@@ -151,7 +188,7 @@ export class DsaturStage extends Stage<PlacementScene> {
       if (scene.phase === "pick") {
         const places = scene.free.length;
         const closed = scene.closed.length > 0 ? " Red crosses: its teacher is busy then." : "";
-        return this.say(1, 3, "Whose turn?", `${name} goes next: it has <b>${places}</b> free ${places === 1 ? "place" : "places"} left, and no waiting lesson has fewer. Green dots are those places.${closed}`);
+        return this.say(1, 3, "Whose turn?", `${name} goes next: it has <b>${places}</b> free ${places === 1 ? "place" : "places"} left, and no waiting lesson has fewer. If it waited, others could take its last places. Green dots are its free places.${closed}`);
       }
       if (scene.phase === "judge") {
         return this.say(2, 3, "Which place is best?", `Each free place gets penalty points: ${SCORING}. The fewest points win: <b>${names.slot(scene.slot)}</b>.`);
@@ -165,20 +202,23 @@ export class DsaturStage extends Stage<PlacementScene> {
     if (!this.finished) return `<p>Placing lessons, the one with the fewest free places first: <b>${this.placed}</b> of ${this.total}.</p>`;
     const { cost, hard } = this.evaluation();
     const costly = Trouble.count(this.trouble());
-    const placed = this.unplaced === 0 ? `All ${this.total} lessons are placed` : `${this.placed} lessons are placed, ${this.unplaced} did not fit`;
-    const rules = hard.total === 0 ? "and no rule is broken" : `but <b class="bad">${hard.total} rules are broken</b> (red crosses)`;
-    return `<p>${placed} ${rules}. Still, <b>${costly} lessons</b> (dark corner) sit in a poor place, and the timetable costs <b>${Format.count(cost)}</b> penalty points. Step 2 lowers that.</p>`;
+    const placed = this.unplaced === 0 ? `All ${this.total} lessons are placed` : `${this.placed} of ${this.total} lessons are placed`;
+    const rules = hard.total === 0 ? " and no rule is broken" : `, but <b class="bad">${hard.total} ${hard.total === 1 ? "rule is" : "rules are"} broken</b> (red crosses${this.unplaced > 0 ? `, ${this.unplaced} lessons found no place` : ""})`;
+    return `<p>${placed}${rules}. Still, <b>${costly} lessons</b> (dark corner) sit in a poor place, and the timetable costs <b>${Format.count(cost)}</b> penalty points. Step 2 lowers that.</p>`;
   }
 
   private counts(): Int32Array {
     if (this.countedAt === this.done) return this.rowCounts;
-    const { run, problem, rowCounts } = this;
+    const { run, problem, rowCounts, rowLessons } = this;
     rowCounts.fill(-1);
     for (let lesson = 0; lesson < problem.nLessons; lesson++) {
       if (run.isPlaced(lesson)) continue;
       const row = problem.lessonClass[lesson];
       const free = run.freeSlotsOf(lesson);
-      if (rowCounts[row] < 0 || free < rowCounts[row]) rowCounts[row] = free;
+      const best = rowLessons[row];
+      if (rowCounts[row] >= 0 && (free > rowCounts[row] || (free === rowCounts[row] && run.openDegreeOf(lesson) <= run.openDegreeOf(best)))) continue;
+      rowCounts[row] = free;
+      rowLessons[row] = lesson;
     }
     this.countedAt = this.done;
     return rowCounts;

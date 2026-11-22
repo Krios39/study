@@ -153,6 +153,10 @@ export class AnnealingStage extends Stage<MoveScene> {
     return this.trails.length > 0;
   }
 
+  get score(): number | undefined {
+    return this.finished ? this.run.cost : undefined;
+  }
+
   flag(lesson: number): number {
     return this.flags[lesson];
   }
@@ -274,6 +278,10 @@ export class AnnealingStage extends Stage<MoveScene> {
       return `<p>Trying random changes: <b>${Format.count(run.evaluations)}</b> of ${Format.count(this.total)}. Penalty now <b>${Format.count(run.timetable.cost)}</b>. The cooler it gets, the fewer worse changes are kept.</p>`;
     }
     const poor = `Lessons in a poor place (dark corner): ${this.startTrouble} → <b>${Trouble.count(this.flags)}</b>.`;
+    const broken = this.shown.evaluation().hard.total;
+    if (broken > 0) {
+      return `<p><b class="bad">No valid timetable was found: ${broken} ${broken === 1 ? "rule is" : "rules are"} still broken</b> (red crosses). The school may be impossible as it is set up, or this search did not find the way. Penalty ${Format.count(run.startCost)} → ${Format.count(run.cost)}.</p>`;
+    }
     const summary = `Done: penalty <b>${Format.count(run.startCost)} → ${Format.count(run.cost)}</b>. ${poor}`;
     if (!rival) return `<p>${summary} Step 3 adds Kempe chains to go lower.</p>`;
     const gain = 1 - run.cost / rival.cost;

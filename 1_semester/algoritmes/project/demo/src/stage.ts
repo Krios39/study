@@ -19,6 +19,7 @@ export abstract class Stage<S extends Scene = Scene> {
   readonly names: Names;
   readonly panel: HTMLElement;
   caption = "";
+  hovered = -1;
   protected scene: S | undefined;
   private credit = 0;
 
@@ -48,8 +49,24 @@ export abstract class Stage<S extends Scene = Scene> {
     return false;
   }
 
+  get score(): number | undefined {
+    return undefined;
+  }
+
   flag(_lesson: number): number {
     return 0;
+  }
+
+  get hoverable(): boolean {
+    return false;
+  }
+
+  tightest(_row: number): number {
+    return -1;
+  }
+
+  note(_lesson: number): string {
+    return "";
   }
 
   tick(seconds: number, rate: number) {

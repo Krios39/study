@@ -49,6 +49,8 @@ button, select, input { font: inherit; color: inherit; }
 .top { display: flex; align-items: center; gap: 20px; padding: 12px 20px 0; flex-wrap: wrap; }
 .brand h1 { margin: 0; font-size: 18px; line-height: 1.2; }
 .brand span { color: var(--muted); font-size: 12px; }
+.other { display: block; margin-top: 2px; color: var(--accent); font-size: 13px; font-weight: 600; text-decoration: none; }
+.other:hover { text-decoration: underline; }
 .tabs { display: flex; gap: 6px; margin-left: auto; }
 .tab {
   display: flex;
@@ -73,6 +75,8 @@ button, select, input { font: inherit; color: inherit; }
   font-size: 12px;
 }
 .tab .short { display: none; }
+.tab small:not(:empty) { padding: 1px 7px; border-radius: 999px; background: var(--allowed); color: var(--ink); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tab small:not(:empty)::before { content: "penalty "; font-weight: 400; }
 .tab.active { border-color: var(--ink); background: var(--ink); color: var(--surface); }
 .tab.active em { background: var(--surface); color: var(--ink); }
 .tab.next { border-color: var(--ink); animation: pulse 1.2s ease-in-out infinite; }
@@ -93,6 +97,66 @@ button.toggle.on { border-color: var(--ink); font-weight: 600; }
 .speed { min-width: 190px; flex: 1; max-width: 300px; }
 .speed input { width: 100%; height: 34px; margin: 0; accent-color: var(--ink); }
 .speed b { color: var(--ink); font-weight: 600; }
+main[hidden] { display: none; }
+.builder { margin: 12px 20px 0; padding: 14px 16px; }
+.builder.wizarding { max-width: 660px; margin: 28px auto 0; padding: 24px 28px 26px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06); }
+.wizard { display: flex; gap: 6px; margin: 0 0 22px; padding: 0; list-style: none; }
+.wizard li { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 6px; border-bottom: 3px solid var(--line); color: var(--muted); font-size: 13px; white-space: nowrap; }
+.wizard em { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--allowed); font-style: normal; font-weight: 700; font-size: 11px; }
+.wizard .on { border-color: var(--accent); color: var(--ink); font-weight: 700; }
+.wizard .on em { background: var(--accent); color: var(--on-accent); }
+.wizard .past { border-color: var(--ink); color: var(--ink); }
+.wizard .past em { background: var(--ink); color: var(--surface); }
+.make h2 { margin: 0 0 6px; font-size: 22px; line-height: 1.2; }
+.make p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+.make ul { margin: 0; padding: 0; list-style: none; }
+.make li { display: flex; align-items: center; gap: 12px; min-height: 46px; border-top: 1px solid var(--line); font-size: 15px; }
+.make li:last-child { border-bottom: 1px solid var(--line); }
+.make li > span:first-child { flex: 1; min-width: 0; }
+.make li small { display: block; color: var(--muted); font-size: 12px; }
+.make li > small { flex: 0 0 96px; text-align: right; }
+.make small.bad, .make .sum.bad { color: var(--bad); font-weight: 600; }
+.make .people { max-height: 340px; overflow-y: auto; }
+.make .option { display: block; margin-top: 14px; font-size: 14px; }
+.make .sum { margin: 14px 0 0; color: var(--ink); font-size: 14px; font-weight: 600; }
+.switch { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; }
+.switch span { flex: 1; min-width: 0; }
+.switch small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.4; }
+.switch div { flex: none; display: inline-flex; padding: 3px; border-radius: 10px; background: var(--allowed); }
+.switch button { height: 32px; padding: 0 16px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.switch button.on { background: var(--surface); color: var(--ink); font-weight: 700; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+.grades { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.grade { display: grid; place-items: center; gap: 0; height: 84px; border: 2px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--muted); cursor: pointer; }
+.grade b { font-size: 28px; line-height: 1; }
+.grade small { font-size: 11px; }
+.grade.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--ink); }
+.grade.on small { color: var(--accent); font-weight: 600; }
+.week { display: grid; grid-template-columns: repeat(5, 76px); gap: 6px; }
+.week > span { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
+.week > b { text-align: center; color: var(--muted); font-size: 12px; font-weight: 600; }
+.weekhead { display: flex; gap: 12px; padding: 0 0 6px; }
+.weekhead > span:first-child { flex: 1; }
+.third { height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--good) 14%, var(--surface)); cursor: pointer; font-size: 10px; }
+.third.off { border-color: var(--bad); background: var(--bad); color: var(--on-accent); font-weight: 600; text-decoration: line-through; }
+.nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
+.nav button { height: 42px; padding: 0 18px; font-size: 15px; }
+.nav .primary { margin-left: auto; }
+.nav button:disabled { opacity: 0.45; cursor: default; }
+.made { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 14px; }
+.made span { flex: 1; min-width: 200px; }
+.controls[hidden] { display: none; }
+.controls .tabs { margin: 0 auto 0 0; }
+.tab:disabled { opacity: 0.45; cursor: not-allowed; }
+.stepper { display: inline-flex; align-items: center; gap: 6px; }
+.stepper button { width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); cursor: pointer; font-size: 15px; line-height: 1; }
+.stepper b { min-width: 16px; text-align: center; font-variant-numeric: tabular-nums; }
+.verdict { margin-top: 14px; padding: 10px 14px; border-left: 4px solid var(--tint); border-radius: 8px; background: color-mix(in srgb, var(--tint) 10%, var(--surface)); font-size: 13px; }
+.verdict.good { --tint: var(--good); }
+.verdict.warn { --tint: var(--warn); }
+.verdict.bad { --tint: var(--bad); }
+.verdict b { display: block; font-size: 15px; }
+.verdict ul { margin: 4px 0; padding-left: 18px; }
+.verdict span { color: var(--muted); }
 main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; padding: 0 20px 16px; align-items: start; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .stagecol { padding: 12px; min-width: 0; }
@@ -139,11 +203,11 @@ b.warn { color: var(--warn); }
   font-weight: 700;
   line-height: 1;
 }
-.key .lesson { width: 44px; background: linear-gradient(90deg, hsl(125 60% 62%), hsl(62 60% 62%), hsl(0 60% 62%)); }
+.key .lesson { width: 44px; background: linear-gradient(90deg, hsl(125 80% 58%), hsl(62 80% 58%), hsl(0 80% 58%)); }
 .key .now { background: var(--accent); border: 2px solid var(--shade); }
 .key .yes { background: color-mix(in srgb, var(--good) 22%, var(--allowed)); color: var(--good); }
 .key .no { background: color-mix(in srgb, var(--bad) 15%, var(--allowed)); color: var(--bad); }
-.key .costly { background: linear-gradient(to top right, hsl(62 60% 62%) 50%, var(--shade) 50%); }
+.key .costly { background: linear-gradient(to top right, hsl(62 80% 58%) 50%, var(--shade) 50%); }
 aside { padding: 14px; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 12px; }
 .tile { padding: 7px 9px; border: 1px solid var(--line); border-left: 4px solid var(--tint, var(--line)); border-radius: 8px; background: color-mix(in srgb, var(--tint, transparent) 9%, var(--surface)); }
@@ -186,7 +250,12 @@ aside { padding: 14px; }
 .stroke.dashed { margin-left: 12px; border-top: 2px dashed var(--warn); }
 .counts { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
 .counts b { color: var(--ink); }
-footer { padding: 0 20px 16px; color: var(--muted); font-size: 12px; }
+footer { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 4px 20px 18px; color: var(--muted); font-size: 12px; }
+.hire { display: inline-block; padding: 8px 16px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 999px; background: color-mix(in srgb, var(--accent) 9%, var(--surface)); color: var(--ink); font-size: 13px; text-decoration: none; }
+.hire b { color: var(--accent); text-decoration: underline; }
+.hire:hover { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
+.top-hire { margin-left: auto; }
+.tabs + .top-hire { margin-left: 0; }
 
 @media (max-width: 859px) {
   body { padding-bottom: 122px; }
@@ -196,6 +265,8 @@ footer { padding: 0 20px 16px; color: var(--muted); font-size: 12px; }
   .tab { flex: 1; justify-content: center; padding: 7px 6px; gap: 5px; }
   .tab .long { display: none; }
   .tab .short { display: inline; }
+  .tab { flex-wrap: wrap; }
+  .tab small:not(:empty)::before { content: ""; }
   .controls { padding: 10px 12px; }
   .setup { width: 100%; }
   .setup .field { flex: 1; min-width: 0; }
@@ -217,12 +288,23 @@ footer { padding: 0 20px 16px; color: var(--muted); font-size: 12px; }
   main { grid-template-columns: minmax(0, 1fr); padding: 0 12px 12px; gap: 12px; }
   .stagecol { padding: 10px; }
   .caption { font-size: 14px; height: 216px; }
+  .builder { margin: 10px 12px 0; padding: 12px; }
+  .builder.wizarding { margin: 12px 12px 0; padding: 16px 14px 18px; }
+  .wizard li { font-size: 0; gap: 0; }
+  .wizard li.on { font-size: 12px; gap: 6px; }
+  .grades { grid-template-columns: repeat(4, 1fr); }
+  .grade { height: 68px; }
+  .week { grid-template-columns: repeat(5, 54px); gap: 3px; }
+  .third { font-size: 0; }
+  .make li { flex-wrap: wrap; padding: 6px 0; }
   .dice { grid-template-columns: minmax(0, 1fr); }
   .formula { left: 0; right: 0; top: 100%; width: auto; max-width: none; }
   .formula b { white-space: normal; }
   .tabs { flex-wrap: wrap; }
   .scene { font-size: 16px; }
-  footer { padding: 0 12px 12px; }
+  footer { padding: 4px 12px 12px; }
+  .top-hire { display: none; }
+  .hire { border-radius: 14px; }
 }
 </style>
 </head>
@@ -231,13 +313,14 @@ footer { padding: 0 20px 16px; color: var(--muted); font-size: 12px; }
   <div class="brand">
     <h1>School timetabling</h1>
     <span>watch the algorithm build a timetable, step by step</span>
+    <a id="other" class="other"></a>
   </div>
   <nav id="tabs" class="tabs"></nav>
+  <a class="hire top-hire" href="https://krios39.github.io" target="_blank" rel="noopener">Like this demo and algorithm? 🫠 Wanna hire me? 🙃 <b>Here is my CV</b></a>
 </header>
-<section class="controls">
-  <div class="setup">
-    <label class="field"><span>School</span><select id="school"></select></label>
-  </div>
+<section id="builder" class="builder card" hidden></section>
+<section class="controls" id="controls">
+  <div class="setup" id="setup"></div>
   <div class="transport">
     <button id="play" class="primary">Play</button>
     <button id="step" class="plain">One step</button>
@@ -246,7 +329,7 @@ footer { padding: 0 20px 16px; color: var(--muted); font-size: 12px; }
     <button id="auto" class="toggle on">Auto</button>
   </div>
 </section>
-<main>
+<main id="stage">
   <section class="card stagecol">
     <div class="progress-track"><div id="progress"></div></div>
     <div id="caption" class="caption" aria-live="polite"></div>
@@ -261,8 +344,8 @@ footer { padding: 0 20px 16px; color: var(--muted); font-size: 12px; }
   </section>
   <aside class="card"><div id="panel"></div></aside>
 </main>
-<footer>Rows are classes, columns are lesson times from Monday to Friday. Ruslan Nechshadimov · Algorithmics MTAT.03.238</footer>
-<script id="schools" type="application/json">/*SCHOOLS*/</script>
+<footer><a class="hire" href="https://krios39.github.io" target="_blank" rel="noopener">Like this demo and algorithm? 🫠 Wanna hire me? 🙃 <b>Here is my CV</b></a><span>Rows are classes, columns are lesson times from Monday to Friday. Ruslan Nechshadimov · Algorithmics MTAT.03.238</span></footer>
+<script id="data" type="application/json">/*DATA*/</script>
 <script>/*BUNDLE*/</script>
 </body>
 </html>
