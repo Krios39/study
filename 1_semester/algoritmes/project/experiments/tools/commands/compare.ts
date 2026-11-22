@@ -23,6 +23,7 @@ export class CompareCommand extends Command {
     const tenure = Number(args.get("tenure") ?? 10);
     const seed = Number(args.get("seed") ?? 1);
     const note = args.get("note") ?? "";
+    const kempeShare = args.get("kempe-share") === undefined ? undefined : Number(args.get("kempe-share"));
 
     const groups = SchoolSets.named(set);
 
@@ -38,7 +39,7 @@ export class CompareCommand extends Command {
       const result =
         algo === "tabu"
           ? new Tabu({ seed, evaluations: budget, candidates, tenure }).solve(problem, slotOf)
-          : new Annealing({ seed, evaluations: budget }).solve(problem, slotOf);
+          : new Annealing({ seed, evaluations: budget, kempeShare }).solve(problem, slotOf);
       const seconds = (performance.now() - started) / 1000;
       const table = Timetable.from(problem, result.slotOf);
       const softStats = table.soft();
