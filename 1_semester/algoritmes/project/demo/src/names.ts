@@ -1,7 +1,8 @@
 import type { Problem } from "../../src/core/problem.ts";
 import { UNASSIGNED } from "../../src/model.ts";
+import { Lang } from "./text.ts";
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const WEEK = 7;
 
 export class Names {
   private readonly problem: Problem;
@@ -11,14 +12,19 @@ export class Names {
   constructor(problem: Problem) {
     this.problem = problem;
     const words = problem.instance.subjects.map((subject) => subject.id.split("_"));
-    this.titles = words.map((parts) => Names.capital(parts.join(" ")));
+    this.titles = problem.instance.subjects.map((subject) => Names.title(subject.id));
     this.codes = words.map((parts) =>
-      parts.length === 1 ? Names.capital(parts[0].slice(0, 4)) : Names.capital(parts[0].slice(0, 2)) + Names.capital(parts[1].slice(0, 2)),
+      Lang.has(`code.${parts.join("_")}`) ? Lang.t(`code.${parts.join("_")}`) : parts.length === 1 ? Names.capital(parts[0].slice(0, 4)) : Names.capital(parts[0].slice(0, 2)) + Names.capital(parts[1].slice(0, 2)),
     );
   }
 
   static day(day: number): string {
-    return DAYS[day % DAYS.length];
+    return Lang.t(`day.${day % WEEK}`);
+  }
+
+  static title(subject: string): string {
+    const key = `subject.${subject}`;
+    return Lang.has(key) ? Lang.t(key) : Names.capital(subject.split("_").join(" "));
   }
 
   subject(lesson: number): string {
@@ -43,8 +49,8 @@ export class Names {
   }
 
   slot(slot: number): string {
-    if (slot === UNASSIGNED) return "not placed";
-    return `${Names.day(this.problem.dayOf(slot))}, lesson ${this.problem.periodOf(slot) + 1}`;
+    if (slot === UNASSIGNED) return Lang.t("slot.unplaced");
+    return Lang.t("slot.name", { day: Names.day(this.problem.dayOf(slot)), period: this.problem.periodOf(slot) + 1 });
   }
 
   private static capital(text: string): string {

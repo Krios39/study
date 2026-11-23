@@ -7,6 +7,7 @@ import { Picture, type Mark } from "./board.ts";
 import { Format } from "./format.ts";
 import type { Pace } from "./pace.ts";
 import { SETTLE, Stage, type Scene } from "./stage.ts";
+import { Lang } from "./text.ts";
 import { Trouble } from "./trouble.ts";
 
 type Phase = "pick" | "judge" | "move";
@@ -30,9 +31,7 @@ const SHARE: Record<Phase, number> = { pick: 0.35, judge: 0.35, move: 0.3 };
 const LANDING = 0.6;
 const AUTO_SECONDS = 25;
 const AUTO_START_RATE = 1;
-const SCORING =
-  `+${DEFAULT_SLOT_WEIGHTS.gap} for a gap in the class day, +${Format.count(DEFAULT_SLOT_WEIGHTS.sameSubjectInDay)} for the same subject twice a day, ` +
-  `+${DEFAULT_SLOT_WEIGHTS.dayLoad} per lesson already that day`;
+const scoring = () => Lang.t("dsatur.scoring", { gap: DEFAULT_SLOT_WEIGHTS.gap, same: DEFAULT_SLOT_WEIGHTS.sameSubjectInDay, load: DEFAULT_SLOT_WEIGHTS.dayLoad });
 
 export class DsaturStage extends Stage<PlacementScene> {
   private readonly run: DsaturRun;
@@ -113,10 +112,10 @@ export class DsaturStage extends Stage<PlacementScene> {
   }
 
   refresh() {
-    const cost = this.finished ? `<div class="tile warn"><span>Penalty points</span><b>${Format.count(this.evaluation().cost)}</b></div>` : "";
+    const cost = this.finished ? `<div class="tile warn"><span>${Lang.t("tile.penalty")}</span><b>${Format.count(this.evaluation().cost)}</b></div>` : "";
     this.panel.innerHTML =
-      `<div class="tiles"><div class="tile plain"><span>Placed</span><b>${this.placed} / ${this.total}</b></div>` +
-      `<div class="tile bad"><span>Did not fit</span><b class="${this.unplaced > 0 ? "bad" : ""}">${this.unplaced}</b></div>${cost}</div>`;
+      `<div class="tiles"><div class="tile plain"><span>${Lang.t("tile.placed")}</span><b>${this.placed} / ${this.total}</b></div>` +
+      `<div class="tile bad"><span>${Lang.t("tile.unplaced")}</span><b class="${this.unplaced > 0 ? "bad" : ""}">${this.unplaced}</b></div>${cost}</div>`;
   }
 
   get hoverable(): boolean {
@@ -136,9 +135,9 @@ export class DsaturStage extends Stage<PlacementScene> {
     if (run.isPlaced(lesson)) return "";
     this.counts();
     const free = run.freeSlotsOf(lesson);
-    const places = `${free} free ${free === 1 ? "place" : "places"} left (green dots)`;
-    if (lesson === run.peek()) return `${places}: the fewest of all waiting lessons, so it goes next`;
-    if (lesson === this.rowLessons[this.problem.lessonClass[lesson]]) return `${places}: the fewest in class ${names.className(lesson)}`;
+    const places = Lang.t("dsatur.note.places", { n: free });
+    if (lesson === run.peek()) return Lang.t("dsatur.note.next", { places });
+    if (lesson === this.rowLessons[this.problem.lessonClass[lesson]]) return Lang.t("dsatur.note.class", { places, class: names.className(lesson) });
     return places;
   }
 
@@ -184,27 +183,24 @@ export class DsaturStage extends Stage<PlacementScene> {
   protected narrate(scene: PlacementScene | undefined): string {
     const { names } = this;
     if (scene) {
-      const name = `<b>${names.lesson(scene.lesson)}</b>`;
+      const lesson = `<b>${names.lesson(scene.lesson)}</b>`;
       if (scene.phase === "pick") {
-        const places = scene.free.length;
-        const closed = scene.closed.length > 0 ? " Red crosses: its teacher is busy then." : "";
-        return this.say(1, 3, "Whose turn?", `${name} goes next: it has <b>${places}</b> free ${places === 1 ? "place" : "places"} left, and no waiting lesson has fewer. If it waited, others could take its last places. Green dots are its free places.${closed}`);
+        const closed = scene.closed.length > 0 ? Lang.t("dsatur.pick.closed") : "";
+        return this.say(1, 3, Lang.t("dsatur.pick.title"), Lang.t("dsatur.pick.text", { lesson, n: scene.free.length, closed }));
       }
       if (scene.phase === "judge") {
-        return this.say(2, 3, "Which place is best?", `Each free place gets penalty points: ${SCORING}. The fewest points win: <b>${names.slot(scene.slot)}</b>.`);
+        return this.say(2, 3, Lang.t("dsatur.judge.title"), Lang.t("dsatur.judge.text", { scoring: scoring(), slot: names.slot(scene.slot) }));
       }
-      if (scene.slot === UNASSIGNED) {
-        return this.say(3, 3, "No place left", `${name} has no free place, so it stays unplaced. Step 2 repairs it.`);
-      }
-      const lost = scene.affected > 0 ? `, so ${scene.affected} waiting ${scene.affected === 1 ? "lesson loses" : "lessons lose"} a place` : "";
-      return this.say(3, 3, "Place it", `${name} takes <b>${names.slot(scene.slot)}</b>. That time is now closed for its class and its teacher${lost}.`);
+      if (scene.slot === UNASSIGNED) return this.say(3, 3, Lang.t("dsatur.none.title"), Lang.t("dsatur.none.text", { lesson }));
+      const lost = scene.affected > 0 ? Lang.t("dsatur.place.lost", { n: scene.affected }) : "";
+      return this.say(3, 3, Lang.t("dsatur.place.title"), Lang.t("dsatur.place.text", { lesson, slot: names.slot(scene.slot), lost }));
     }
-    if (!this.finished) return `<p>Placing lessons, the one with the fewest free places first: <b>${this.placed}</b> of ${this.total}.</p>`;
+    if (!this.finished) return Lang.t("dsatur.running", { placed: this.placed, total: this.total });
     const { cost, hard } = this.evaluation();
-    const costly = Trouble.count(this.trouble());
-    const placed = this.unplaced === 0 ? `All ${this.total} lessons are placed` : `${this.placed} of ${this.total} lessons are placed`;
-    const rules = hard.total === 0 ? " and no rule is broken" : `, but <b class="bad">${hard.total} ${hard.total === 1 ? "rule is" : "rules are"} broken</b> (red crosses${this.unplaced > 0 ? `, ${this.unplaced} lessons found no place` : ""})`;
-    return `<p>${placed}${rules}. Still, <b>${costly} lessons</b> (dark corner) sit in a poor place, and the timetable costs <b>${Format.count(cost)}</b> penalty points. Step 2 lowers that.</p>`;
+    const placed = this.unplaced === 0 ? Lang.t("dsatur.done.all", { total: this.total }) : Lang.t("dsatur.done.some", { placed: this.placed, total: this.total });
+    const unplaced = this.unplaced > 0 ? Lang.t("dsatur.done.unplaced", { n: this.unplaced }) : "";
+    const rules = hard.total === 0 ? Lang.t("dsatur.done.clean") : Lang.t("dsatur.done.broken", { n: hard.total, unplaced });
+    return Lang.t("dsatur.done.text", { placed, rules, n: Trouble.count(this.trouble()), cost });
   }
 
   private counts(): Int32Array {

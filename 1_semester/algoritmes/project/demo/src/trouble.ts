@@ -1,8 +1,9 @@
 import { EASY_UP_TO, HEAVY_FROM } from "../../src/core/cost.ts";
 import type { Problem } from "../../src/core/problem.ts";
 import { UNASSIGNED } from "../../src/model.ts";
+import { Lang } from "./text.ts";
 
-const REASONS = ["the same subject twice this day", "an easy lesson in the first half of the day", "a hard lesson in the second half of the day", "at a time its teacher asked to avoid"];
+const REASONS = 4;
 
 export class Trouble {
   static of(problem: Problem, slotOf: Int32Array): Uint8Array {
@@ -47,7 +48,9 @@ export class Trouble {
   }
 
   static reasons(flag: number): string[] {
-    return REASONS.filter((_, bit) => (flag & (1 << bit)) !== 0);
+    return Array.from({ length: REASONS }, (_, bit) => bit)
+      .filter((bit) => (flag & (1 << bit)) !== 0)
+      .map((bit) => Lang.t(`trouble.${bit}`));
   }
 
   static count(flags: Uint8Array): number {

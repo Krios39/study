@@ -13,6 +13,7 @@ import { Flame } from "./flame.ts";
 import { Format } from "./format.ts";
 import type { Pace } from "./pace.ts";
 import { SETTLE, Stage, type Scene } from "./stage.ts";
+import { Lang } from "./text.ts";
 import { Theme, type Tone } from "./theme.ts";
 import { Trouble } from "./trouble.ts";
 
@@ -44,14 +45,6 @@ interface MoveScene extends Scene {
 
 const PLAIN_PHASES: Phase[] = ["propose", "price", "decide"];
 const CHAIN_PHASES: Phase[] = ["stuck", "build", "closed", "price", "decide"];
-const TITLES: Record<Phase, string> = {
-  propose: "Try a random change",
-  stuck: "A plain move gets stuck",
-  build: "The blockers move the other way",
-  closed: "The chain is closed",
-  price: "Better or worse?",
-  decide: "Keep it or undo it",
-};
 const SHARE: Record<Phase, number> = { propose: 0.25, stuck: 0.2, build: 0.3, closed: 0.2, price: 0.3, decide: 0.45 };
 const TRAVEL = 0.6;
 const TRAIL_SECONDS = 0.18;
@@ -59,25 +52,25 @@ const ARROWS_UP_TO = 30;
 const TRAIL_LIMIT = 1500;
 const AUTO_SECONDS = 40;
 const AUTO_START_RATE = 0.8;
-const MAX_EVALUATIONS = 1_000_000;
+export const MAX_EVALUATIONS = 1_000_000;
 const CHAIN_PATIENCE = 300;
 const FRAME_BUDGET_MS = 12;
 const REFERENCE_WORSENING = 10;
 const REASONS_SHOWN = 3;
 
-const PARTS: { key: keyof CostBreakdown; label: string }[] = [
-  { key: "unassigned", label: "lesson not placed" },
-  { key: "classClash", label: "class has two lessons at once" },
-  { key: "classGap", label: "gap in the class day" },
-  { key: "teacherClash", label: "teacher in two classes at once" },
-  { key: "teacherUnavailable", label: "teacher is away" },
-  { key: "sameSubjectInDay", label: "same subject twice a day" },
-  { key: "difficulty", label: "uneven hard days" },
-  { key: "misplaced", label: "hard lesson late or easy one early" },
-  { key: "dayImbalance", label: "uneven number of lessons per day" },
-  { key: "teacherGap", label: "gaps for the teacher" },
-  { key: "shiftBreak", label: "teacher split between shifts" },
-  { key: "teacherWish", label: "teacher's wish ignored" },
+const PARTS: (keyof CostBreakdown)[] = [
+  "unassigned",
+  "classClash",
+  "classGap",
+  "teacherClash",
+  "teacherUnavailable",
+  "sameSubjectInDay",
+  "difficulty",
+  "misplaced",
+  "dayImbalance",
+  "teacherGap",
+  "shiftBreak",
+  "teacherWish",
 ];
 
 export class AnnealingStage extends Stage<MoveScene> {
@@ -124,7 +117,7 @@ export class AnnealingStage extends Stage<MoveScene> {
     this.chart = new CostChart(canvas, this.run.budget, withKempe ? 2 : 1);
     this.counts = Dom.make("p", "counts");
     this.panel.append(this.tiles, meter, canvas);
-    if (withKempe) this.panel.append(Dom.make("p", "legend", '<i class="stroke"></i>with chains <i class="stroke dashed"></i>without chains'));
+    if (withKempe) this.panel.append(Dom.make("p", "legend", `<i class="stroke"></i>${Lang.t("anneal.legend.with")} <i class="stroke dashed"></i>${Lang.t("anneal.legend.without")}`));
     this.panel.append(this.counts);
     this.record();
   }
@@ -192,7 +185,7 @@ export class AnnealingStage extends Stage<MoveScene> {
       const progress = phase === "decide" && scene.accepted ? 1 : Math.min(1, scene.progress / TRAVEL);
       picture.flights = lessons.map((_, index) => (back ? flight(index, to[index], from[index], progress, tone) : flight(index, from[index], to[index], progress, tone)));
       const worse = scene.delta > 0;
-      picture.flights[0].note = phase === "decide" ? (scene.accepted ? "kept" : "undone") : scene.delta === 0 ? "0" : Format.signed(scene.delta);
+      picture.flights[0].note = phase === "decide" ? Lang.t(scene.accepted ? "anneal.note.kept" : "anneal.note.undone") : scene.delta === 0 ? "0" : Format.signed(scene.delta);
       if (phase === "price") picture.flights[0].tone = scene.delta === 0 ? "plain" : worse ? "bad" : "good";
       return picture;
     }
@@ -211,24 +204,26 @@ export class AnnealingStage extends Stage<MoveScene> {
     const { run, rival } = this;
     const temperature = run.currentTemperature;
     this.meter.style.setProperty("--heat", this.warmth.toFixed(3));
-    const chances = [10, 100, 1000].map((worse) => `<tr><td>worse by ${Format.count(worse)}</td><td>${Format.percent(Math.exp(-worse / temperature))}</td></tr>`).join("");
+    const chances = [10, 100, 1000]
+      .map((worse) => `<tr><td>${Lang.t("anneal.formula.row", { points: worse })}</td><td>${Format.percent(Math.exp(-worse / temperature))}</td></tr>`)
+      .join("");
     this.formula.innerHTML =
-      `<b>chance to keep a worse change = e<sup>−Δ / T</sup></b><span>Δ is how many penalty points worse the change is, T is the temperature.</span>` +
-      `<b>T = ${DEFAULT_START_TEMPERATURE} × (${DEFAULT_END_TEMPERATURE} / ${DEFAULT_START_TEMPERATURE})<sup>done / all attempts</sup> = ${temperature.toFixed(1)}</b>` +
-      `<span>It cools from ${DEFAULT_START_TEMPERATURE} to ${DEFAULT_END_TEMPERATURE} over the run. Right now:</span><table>${chances}</table>`;
-    this.heatText.textContent = `Temperature ${temperature.toFixed(1)}`;
-    this.heatHint.innerHTML = `a change ${REFERENCE_WORSENING} points worse is kept with chance <b>${Format.percent(Math.exp(-REFERENCE_WORSENING / temperature))}</b>`;
+      `<b>${Lang.t("anneal.formula.chance")}</b><span>${Lang.t("anneal.formula.legend")}</span>` +
+      `<b>T = ${DEFAULT_START_TEMPERATURE} × (${DEFAULT_END_TEMPERATURE} / ${DEFAULT_START_TEMPERATURE})<sup>${Lang.t("anneal.formula.power")}</sup> = ${temperature.toFixed(1)}</b>` +
+      `<span>${Lang.t("anneal.formula.cooling", { start: DEFAULT_START_TEMPERATURE, end: DEFAULT_END_TEMPERATURE })}</span><table>${chances}</table>`;
+    this.heatText.textContent = Lang.t("anneal.temperature", { value: temperature.toFixed(1) });
+    this.heatHint.innerHTML = Lang.t("anneal.heatHint", { points: REFERENCE_WORSENING, chance: Format.percent(Math.exp(-REFERENCE_WORSENING / temperature)) });
 
     const { shown } = this;
     this.flags = Trouble.of(this.problem, shown.slotOf);
     const tiles = [
-      `<div class="tile bad"><span>Start penalty</span><b>${Format.count(run.startCost)}</b></div>`,
-      `<div class="tile good"><span>Penalty now</span><b>${Format.count(shown.cost)}</b></div>`,
+      `<div class="tile bad"><span>${Lang.t("tile.startPenalty")}</span><b>${Format.count(run.startCost)}</b></div>`,
+      `<div class="tile good"><span>${Lang.t("tile.penaltyNow")}</span><b>${Format.count(shown.cost)}</b></div>`,
     ];
-    if (rival) tiles.push(`<div class="tile warn"><span>Without chains</span><b>${Format.count(this.finished ? rival.cost : rival.timetable.cost)}</b></div>`);
-    else tiles.push(`<div class="tile warn"><span>Poor places</span><b>${Trouble.count(this.flags)}</b></div>`);
+    if (rival) tiles.push(`<div class="tile warn"><span>${Lang.t("tile.withoutChains")}</span><b>${Format.count(this.finished ? rival.cost : rival.timetable.cost)}</b></div>`);
+    else tiles.push(`<div class="tile warn"><span>${Lang.t("tile.poorPlaces")}</span><b>${Trouble.count(this.flags)}</b></div>`);
     this.tiles.innerHTML = tiles.join("");
-    this.counts.innerHTML = `<b>${Format.count(run.evaluations)}</b> of ${Format.count(this.total)} attempts`;
+    this.counts.innerHTML = Lang.t("anneal.attempts", { done: run.evaluations, total: this.total });
     this.chart.draw(Theme.read());
   }
 
@@ -266,32 +261,28 @@ export class AnnealingStage extends Stage<MoveScene> {
       const texts: Record<Phase, string> = {
         propose: scene.proposal,
         stuck: scene.proposal,
-        build: `${scene.hops[this.revealed(scene) - 1]} Chain so far: <b>${this.revealed(scene)}</b> lessons.`,
+        build: Lang.t("anneal.build", { hop: scene.hops[this.revealed(scene) - 1], n: this.revealed(scene) }),
         closed: scene.hops[0],
         price: scene.price,
         decide: scene.verdict,
       };
-      return this.say(order.indexOf(scene.phase) + 1, order.length, TITLES[scene.phase], texts[scene.phase]);
+      return this.say(order.indexOf(scene.phase) + 1, order.length, Lang.t(`anneal.title.${scene.phase}`), texts[scene.phase]);
     }
     const { run, rival } = this;
-    if (!this.finished) {
-      return `<p>Trying random changes: <b>${Format.count(run.evaluations)}</b> of ${Format.count(this.total)}. Penalty now <b>${Format.count(run.timetable.cost)}</b>. The cooler it gets, the fewer worse changes are kept.</p>`;
-    }
-    const poor = `Lessons in a poor place (dark corner): ${this.startTrouble} → <b>${Trouble.count(this.flags)}</b>.`;
+    if (!this.finished) return Lang.t("anneal.running", { done: run.evaluations, total: this.total, cost: run.timetable.cost });
     const broken = this.shown.evaluation().hard.total;
-    if (broken > 0) {
-      return `<p><b class="bad">No valid timetable was found: ${broken} ${broken === 1 ? "rule is" : "rules are"} still broken</b> (red crosses). The school may be impossible as it is set up, or this search did not find the way. Penalty ${Format.count(run.startCost)} → ${Format.count(run.cost)}.</p>`;
-    }
-    const summary = `Done: penalty <b>${Format.count(run.startCost)} → ${Format.count(run.cost)}</b>. ${poor}`;
-    if (!rival) return `<p>${summary} Step 3 adds Kempe chains to go lower.</p>`;
+    if (broken > 0) return Lang.t("anneal.broken", { n: broken, before: run.startCost, after: run.cost });
+    const poor = Lang.t("anneal.poor", { before: this.startTrouble, after: Trouble.count(this.flags) });
+    const summary = Lang.t("anneal.summary", { before: run.startCost, after: run.cost, poor });
+    if (!rival) return Lang.t("anneal.done.next", { summary });
     const gain = 1 - run.cost / rival.cost;
     const comparison =
       gain > 0.005
-        ? `the chains end <b class="good">${Format.percent(gain)} lower</b>`
+        ? Lang.t("anneal.compare.lower", { share: Format.percent(gain) })
         : gain < -0.005
-          ? `on this school the chains did not help (${Format.percent(-gain)} higher)`
-          : "about the same on this school";
-    return `<p>${summary} Without chains the same number of attempts ends at ${Format.count(rival.cost)}: ${comparison}.</p>`;
+          ? Lang.t("anneal.compare.higher", { share: Format.percent(-gain) })
+          : Lang.t("anneal.compare.same");
+    return Lang.t("anneal.done.rival", { summary, cost: rival.cost, comparison });
   }
 
   private get warmth(): number {
@@ -346,8 +337,8 @@ export class AnnealingStage extends Stage<MoveScene> {
     const links: Link[] = [];
     const blockers: number[] = [];
     const hops: string[] = [];
-    let proposal = `Move ${first} from ${names.slot(from[0])} to <b>${names.slot(to[0])}</b>.`;
-    if (sampler.kind === "swap") proposal = `Swap ${first} (${names.slot(from[0])}) with <b>${names.subject(lessons[1])}</b> (${names.slot(from[1])}).`;
+    let proposal = Lang.t("anneal.move", { lesson: first, from: names.slot(from[0]), to: names.slot(to[0]) });
+    if (sampler.kind === "swap") proposal = Lang.t("anneal.swap", { lesson: first, from: names.slot(from[0]), other: names.subject(lessons[1]), otherFrom: names.slot(from[1]) });
     if (chain) {
       lessons.forEach((lesson, index) => {
         const parent = lessons.findIndex((other, at) => at < index && from[at] !== from[index] && problem.neighbours(other).includes(lesson));
@@ -355,17 +346,20 @@ export class AnnealingStage extends Stage<MoveScene> {
         const sameClass = problem.lessonClass[lessons[parent]] === problem.lessonClass[lesson];
         links.push({ from: lessons[parent], fromSlot: from[parent], to: lesson, toSlot: from[index] });
         if (parent === 0) blockers.push(lesson);
-        const why = sameClass ? "the same class" : "the same teacher";
+        const why = Lang.t(sameClass ? "anneal.why.class" : "anneal.why.teacher");
         hops.push(
           parent === 0
-            ? `<b>${names.lesson(lesson)}</b> is in the way, so it moves the other way, to ${names.slot(to[index])}.`
-            : `There it bumps into <b>${names.lesson(lesson)}</b> (${why}), which has to move too.`,
+            ? Lang.t("anneal.hop.first", { lesson: names.lesson(lesson), to: names.slot(to[index]) })
+            : Lang.t("anneal.hop.next", { lesson: names.lesson(lesson), why }),
         );
       });
       const blocker = blockers[0];
-      const clash = problem.lessonClass[blocker] === problem.lessonClass[lessons[0]] ? `its class already has ${names.subject(blocker)} then` : `its teacher already teaches ${names.lesson(blocker)} then`;
-      proposal = `${first} wants to move to <b>${names.slot(to[0])}</b>. But ${clash}: a plain move would be a clash (red cross).`;
-      hops[0] = `Nobody else is in the way. All <b>${lessons.length}</b> lessons swap between ${names.slot(from[0])} and ${names.slot(to[0])} at once, so no clash appears.`;
+      const clash =
+        problem.lessonClass[blocker] === problem.lessonClass[lessons[0]]
+          ? Lang.t("anneal.clash.class", { subject: names.subject(blocker) })
+          : Lang.t("anneal.clash.teacher", { lesson: names.lesson(blocker) });
+      proposal = Lang.t("anneal.stuck", { lesson: first, to: names.slot(to[0]), clash });
+      hops[0] = Lang.t("anneal.closed", { n: lessons.length, from: names.slot(from[0]), to: names.slot(to[0]) });
     }
     const order = chain ? CHAIN_PHASES : PLAIN_PHASES;
     const whole = duration / order.reduce((sum, phase) => sum + SHARE[phase], 0);
@@ -398,30 +392,28 @@ export class AnnealingStage extends Stage<MoveScene> {
     const was = table.breakdown();
     lessons.forEach((lesson, index) => table.move(lesson, to[index]));
     const next = table.breakdown();
-    const reasons = PARTS.map(({ key, label }) => ({ label, points: next[key] - was[key] }))
+    const reasons = PARTS.map((key) => ({ label: Lang.t(`cost.${key}`), points: next[key] - was[key] }))
       .filter((part) => Math.abs(part.points) >= 0.5)
       .sort((x, y) => Math.abs(y.points) - Math.abs(x.points));
     const listed = reasons.slice(0, REASONS_SHOWN).map((part) => `${part.label} <b>${Format.signed(part.points)}</b>`);
     if (reasons.length > REASONS_SHOWN) listed.push("…");
-    const why = listed.length > 0 ? ` Why: ${listed.join(", ")}.` : "";
-    const change = Math.abs(delta) < 0.5 ? "<b>no change</b>" : `<b class="${delta < 0 ? "good" : "bad"}">${Format.signed(delta)}</b>`;
-    return `The penalty of the whole timetable would go from <b>${Format.count(old)}</b> to <b>${Format.count(old + delta)}</b>: ${change}.${why}`;
+    const why = listed.length > 0 ? Lang.t("anneal.price.why", { reasons: listed.join(", ") }) : "";
+    const change = Math.abs(delta) < 0.5 ? Lang.t("anneal.price.none") : `<b class="${delta < 0 ? "good" : "bad"}">${Format.signed(delta)}</b>`;
+    return Lang.t("anneal.price.text", { before: old, after: old + delta, change, why });
   }
 
   private verdict(delta: number, accepted: boolean, roll: number): string {
     if (delta <= 0) {
-      const how = delta < 0 ? `Better by ${Format.count(-delta)} points` : "No worse than before";
-      return `${how}. Rule: a change that is not worse is <b class="good">always kept</b>.`;
+      const how = delta < 0 ? Lang.t("anneal.verdict.better", { points: -delta }) : Lang.t("anneal.verdict.same");
+      return Lang.t("anneal.verdict.always", { how });
     }
     const chance = Math.exp(-delta / this.heat);
-    const outcome = accepted ? '<b class="good">kept</b>' : '<b class="bad">undone</b>';
-    const text =
-      `Worse by <b>${Format.count(delta)}</b> points. Rule: a worse change is kept only by chance, and the chance shrinks when the change is worse and when the temperature is lower. ` +
-      `Here, at temperature ${this.heat.toFixed(1)}, the chance is <b>${Format.percent(chance)}</b>.`;
+    const outcome = accepted ? `<b class="good">${Lang.t("anneal.note.kept")}</b>` : `<b class="bad">${Lang.t("anneal.note.undone")}</b>`;
+    const text = Lang.t("anneal.verdict.worse", { points: delta, temperature: this.heat.toFixed(1), chance: Format.percent(chance) });
     const gauge =
-      `<div class="dice"><div class="gauge" role="img" aria-label="chance ${Format.percent(chance)}"><i style="width:${(100 * chance).toFixed(2)}%"></i>` +
-      `<u style="left:${(100 * roll).toFixed(2)}%"></u></div><span>the random draw (black mark) fell in the ${accepted ? "green" : "red"} part: ${outcome}</span>` +
-      `<div class="ends"><b class="good">keep ${Format.percent(chance)}</b><b class="bad">undo ${Format.percent(1 - chance)}</b></div></div>`;
+      `<div class="dice"><div class="gauge" role="img" aria-label="${Lang.t("anneal.dice.label", { chance: Format.percent(chance) })}"><i style="width:${(100 * chance).toFixed(2)}%"></i>` +
+      `<u style="left:${(100 * roll).toFixed(2)}%"></u></div><span>${Lang.t(accepted ? "anneal.dice.green" : "anneal.dice.red", { outcome })}</span>` +
+      `<div class="ends"><b class="good">${Lang.t("anneal.dice.keep", { chance: Format.percent(chance) })}</b><b class="bad">${Lang.t("anneal.dice.undo", { chance: Format.percent(1 - chance) })}</b></div></div>`;
     return text + "</p>" + gauge + "<p>";
   }
 }

@@ -3,19 +3,20 @@ import type { Curriculum, Instance, LanguageOfInstruction, SubjectDictionary } f
 import { App } from "./app.ts";
 import { Dom } from "./dom.ts";
 import { Names } from "./names.ts";
-import { GROUP_LABELS, SchoolDraft, type GroupRow, type Verdict } from "./school.ts";
+import { SchoolDraft, type GroupRow, type Issue } from "./school.ts";
+import { Lang } from "./text.ts";
 
 interface Dictionaries {
   subjects: SubjectDictionary;
   curricula: Record<LanguageOfInstruction, Curriculum>;
 }
 
-const LANGUAGES: Record<LanguageOfInstruction, string> = { kk: "Kazakh", ru: "Russian" };
-
-const STEPS = ["Grades", "Classes", "Teachers", "Preferences"];
+const LANGUAGES: LanguageOfInstruction[] = ["kk", "ru"];
+const STEPS = 5;
 const MOST_CLASSES = 6;
 const MOST_TEACHERS = 12;
 const REASONS_SHOWN = 4;
+const VERDICTS = { bad: "impossible", warn: "tight", good: "good" };
 
 class Builder {
   private readonly drafts: Record<LanguageOfInstruction, SchoolDraft>;
@@ -28,6 +29,9 @@ class Builder {
   private readonly chosen = new Set<string>();
   private readonly closed = new Map<string, number[]>();
   private split = true;
+  private shifts = 1;
+  private readonly late = new Set<number>(SchoolDraft.secondShift);
+  private readonly pinned = new Map<string, string[]>();
   private step = 0;
   private created = false;
   private instance!: Instance;
@@ -47,8 +51,12 @@ class Builder {
   private press(target: HTMLElement) {
     const button = target.closest<HTMLButtonElement>("button");
     if (!button || button.disabled) return;
-    const { go, grade, group, teacher, third, step, language } = button.dataset;
+    const { go, grade, group, teacher, third, step, language, shifts, late, shift, link, room } = button.dataset;
     if (language) this.language = language as LanguageOfInstruction;
+    if (shifts) this.shifts = Number(shifts);
+    if (late && shift === "2") this.late.add(Number(late));
+    if (late && shift === "1") this.late.delete(Number(late));
+    if (link && room) this.link(link, room);
     if (go === "back") this.step--;
     if (go === "next") this.step++;
     if (go === "edit") this.created = false;
@@ -86,7 +94,7 @@ class Builder {
     const groups = draft.groups(this.classes, this.split);
     for (const group of [...this.teachers.keys()]) if (!groups.some((row) => row.group === group)) this.teachers.delete(group);
     for (const row of groups) if (!this.chosen.has(row.group) || !this.teachers.has(row.group)) this.teachers.set(row.group, row.suggested);
-    this.instance = draft.instance(this.classes, new Map(groups.map((row) => [row.group, this.teachers.get(row.group)!])), this.closed, this.split);
+    this.instance = draft.instance(this.classes, new Map(groups.map((row) => [row.group, this.teachers.get(row.group)!])), this.closed, this.split, this.lateGrades, this.pinned);
     this.stage.hidden = !this.created;
     this.controls.hidden = !this.created;
     this.root.classList.toggle("wizarding", !this.created);
@@ -97,40 +105,54 @@ class Builder {
   }
 
   private wizard(groups: GroupRow[]): string {
-    const chips = STEPS.map((label, index) => `<li class="${index === this.step ? "on" : index < this.step ? "past" : ""}"><em>${index + 1}</em>${label}</li>`).join("");
-    const last = this.step === STEPS.length - 1;
+    const labels = Array.from({ length: STEPS }, (_, index) => Lang.t(`wizard.step.${index}`));
+    const chips = labels.map((label, index) => `<li class="${index === this.step ? "on" : index < this.step ? "past" : ""}"><em>${index + 1}</em>${label}</li>`).join("");
+    const last = this.step === STEPS - 1;
     const empty = this.classes.size === 0;
     const forward = last
-      ? '<button class="primary" data-go="create">Create the school and build its timetable</button>'
-      : `<button class="primary" data-go="next"${empty ? " disabled" : ""}>Next: ${STEPS[this.step + 1].toLowerCase()}</button>`;
-    const back = this.step > 0 ? '<button class="plain" data-go="back">Back</button>' : "";
-    const body = [() => this.gradesStep(), () => this.classesStep(), () => this.teachersStep(groups), () => this.preferencesStep()][this.step]();
+      ? `<button class="primary" data-go="create">${Lang.t("wizard.create")}</button>`
+      : `<button class="primary" data-go="next"${empty ? " disabled" : ""}>${Lang.t("wizard.next", { step: labels[this.step + 1].toLowerCase() })}</button>`;
+    const back = this.step > 0 ? `<button class="plain" data-go="back">${Lang.t("wizard.back")}</button>` : "";
+    const body = [() => this.gradesStep(), () => this.classesStep(), () => this.teachersStep(groups), () => this.linksStep(), () => this.preferencesStep()][this.step]();
     const verdict = this.step >= 2 ? this.banner() : "";
     return `<ol class="wizard">${chips}</ol><div class="make">${body}</div>${verdict}<div class="nav">${back}${forward}</div>`;
   }
 
   private stepper(key: string, value: string, count: number): string {
-    return `<span class="stepper"><button data-step="-1" data-${key}="${value}" aria-label="fewer">−</button><b>${count}</b><button data-step="1" data-${key}="${value}" aria-label="more">+</button></span>`;
+    return (
+      `<span class="stepper"><button data-step="-1" data-${key}="${value}" aria-label="${Lang.t("wizard.fewer")}">−</button><b>${count}</b>` +
+      `<button data-step="1" data-${key}="${value}" aria-label="${Lang.t("wizard.more")}">+</button></span>`
+    );
   }
 
   private get lessons(): number {
     return this.instance.requirements.reduce((sum, requirement) => sum + requirement.hours, 0);
   }
 
+  private get doubled(): boolean {
+    return SchoolDraft.doubled(this.classes, this.lateGrades);
+  }
+
+  private get lateGrades(): Set<number> {
+    return this.shifts === 2 ? this.late : new Set<number>();
+  }
+
   private gradesStep(): string {
     const tiles = SchoolDraft.grades
-      .map((grade) => `<button class="grade${this.classes.has(grade) ? " on" : ""}" data-grade="${grade}" aria-pressed="${this.classes.has(grade)}"><b>${grade}</b><small>grade</small></button>`)
+      .map((grade) => `<button class="grade${this.classes.has(grade) ? " on" : ""}" data-grade="${grade}" aria-pressed="${this.classes.has(grade)}"><b>${grade}</b><small>${Lang.t("grades.tile")}</small></button>`)
       .join("");
-    const note = this.classes.size === 0 ? '<p class="sum bad">Pick at least one grade.</p>' : `<p class="sum">${this.classes.size} of ${SchoolDraft.grades.length} grades picked</p>`;
-    const languages = (Object.keys(LANGUAGES) as LanguageOfInstruction[])
-      .map((language) => `<button class="${language === this.language ? "on" : ""}" data-language="${language}" aria-pressed="${language === this.language}">${LANGUAGES[language]}</button>`)
-      .join("");
-    const other = LANGUAGES[this.language === "kk" ? "ru" : "kk"];
-    const hint =
-      `State schools in Kazakhstan teach either in Kazakh or in Russian. The choice changes the curriculum and how hard two subjects count: ` +
-      `here ${LANGUAGES[this.language]} is the language of instruction and counts as easier (${this.hardness(this.language)} points), ${other} is the second language and counts as harder (${this.hardness(this.language === "kk" ? "ru" : "kk")} points).`;
-    const choice = `<div class="switch"><span>Language of instruction<small>${hint}</small></span><div>${languages}</div></div>`;
-    return `${choice}<h2>Which grades does your school have?</h2><p>Press a grade to add or remove it. Each grade follows the national curriculum for classes taught in ${LANGUAGES[this.language]}.</p><div class="grades">${tiles}</div>${note}`;
+    const note =
+      this.classes.size === 0
+        ? `<p class="sum bad">${Lang.t("grades.none")}</p>`
+        : `<p class="sum">${Lang.t("grades.picked", { picked: this.classes.size, all: SchoolDraft.grades.length })}</p>`;
+    const languages = LANGUAGES.map(
+      (language) => `<button class="${language === this.language ? "on" : ""}" data-language="${language}" aria-pressed="${language === this.language}">${Lang.t(`language.${language}`)}</button>`,
+    ).join("");
+    const second: LanguageOfInstruction = this.language === "kk" ? "ru" : "kk";
+    const name = Lang.t(`language.${this.language}`);
+    const hint = Lang.t("grades.language.hint", { language: name, other: Lang.t(`language.${second}`), easy: this.hardness(this.language), hard: this.hardness(second) });
+    const choice = `<div class="switch"><span>${Lang.t("grades.language")}<small>${hint}</small></span><div>${languages}</div></div>`;
+    return `${choice}<h2>${Lang.t("grades.title")}</h2><p>${Lang.t("grades.text", { language: name })}</p><div class="grades">${tiles}</div>${note}`;
   }
 
   private hardness(language: LanguageOfInstruction): number {
@@ -138,14 +160,32 @@ class Builder {
   }
 
   private classesStep(): string {
+    const two = this.shifts === 2;
     const rows = [...this.classes]
       .sort((a, b) => a[0] - b[0])
-      .map(([grade, count]) => `<li><span>Grade ${grade}</span>${this.stepper("grade", String(grade), count)}<small>${count === 1 ? "class" : "classes"}</small></li>`)
+      .map(([grade, count]) => {
+        const shift = [1, 2]
+          .map((at) => {
+            const on = this.late.has(grade) === (at === 2);
+            return `<button class="${on ? "on" : ""}" data-late="${grade}" data-shift="${at}" aria-pressed="${on}">${Lang.t(`classes.shift.${at}`)}</button>`;
+          })
+          .join("");
+        return (
+          `<li><span>${Lang.t("classes.grade", { grade })}</span>${two ? `<span class="pair">${shift}</span>` : ""}` +
+          `${this.stepper("grade", String(grade), count)}<small>${Lang.t("classes.count", { n: count })}</small></li>`
+        );
+      })
       .join("");
+    const options = [1, 2]
+      .map((count) => `<button class="${count === this.shifts ? "on" : ""}" data-shifts="${count}" aria-pressed="${count === this.shifts}">${Lang.t(count === 1 ? "classes.shifts.one" : "classes.shifts.two")}</button>`)
+      .join("");
+    const lost = two && !this.doubled ? Lang.t("classes.shifts.lost") : "";
+    const choice = `<div class="switch"><span>${Lang.t("classes.shifts")}<small>${Lang.t("classes.shifts.hint")}${lost}</small></span><div>${options}</div></div>`;
+    const subjects = this.drafts[this.language].splitSubjects.map((subject) => Names.title(subject)).join(", ");
     return (
-      `<h2>How many classes in each grade?</h2><p>From 1 to ${MOST_CLASSES} parallel classes.</p><ul>${rows}</ul>` +
-      `<label class="option"><input type="checkbox" id="split"${this.split ? " checked" : ""}> Split each class into two groups for ${this.drafts[this.language].splitSubjects.join(", ")}</label>` +
-      `<p class="sum">${this.instance.classes.length} classes · ${this.lessons} lessons a week</p>`
+      `${choice}<h2>${Lang.t("classes.title")}</h2><p>${Lang.t("classes.text", { most: MOST_CLASSES })}</p><ul>${rows}</ul>` +
+      `<label class="option"><input type="checkbox" id="split"${this.split ? " checked" : ""}> ${Lang.t("classes.split", { subjects })}</label>` +
+      `<p class="sum">${Lang.t("classes.sum", { classes: this.instance.classes.length, lessons: this.lessons })}</p>`
     );
   }
 
@@ -156,61 +196,116 @@ class Builder {
         const mine = loads.filter((row) => row.group === group);
         const heaviest = Math.max(...mine.map((row) => row.load));
         const tone = mine.some((row) => row.load > row.free) ? "bad" : "";
-        return `<li><span>${GROUP_LABELS[group]}<small>${hours} lessons a week</small></span>${this.stepper("group", group, this.teachers.get(group)!)}<small class="${tone}">up to ${heaviest} each</small></li>`;
+        return (
+          `<li><span>${Lang.t(`group.${group}`)}<small>${Lang.t("teachers.hours", { hours })}</small></span>${this.stepper("group", group, this.teachers.get(group)!)}` +
+          `<small class="${tone}">${Lang.t("teachers.heaviest", { load: heaviest })}</small></li>`
+        );
       })
       .join("");
-    return `<h2>How many teachers for each subject?</h2><p>The numbers are a suggestion of about 24 lessons a week per teacher. Fewer teachers means more lessons for each.</p><ul>${rows}</ul><p class="sum">${this.instance.teachers.length} teachers</p>`;
+    return `<h2>${Lang.t("teachers.title")}</h2><p>${Lang.t("teachers.text")}</p><ul>${rows}</ul><p class="sum">${Lang.t("teachers.sum", { teachers: this.instance.teachers.length })}</p>`;
+  }
+
+  private linksStep(): string {
+    const draft = this.drafts[this.language];
+    const links = draft.links(this.instance);
+    const loads = SchoolDraft.rows(this.instance);
+    const shared = [...this.teachers].filter(([, count]) => count > 1).map(([group]) => group);
+    if (shared.length === 0) return `<h2>${Lang.t("links.title")}</h2><p>${Lang.t("links.none")}</p>`;
+    const rows = shared
+      .flatMap((group) => loads.filter((row) => row.group === group))
+      .map((row) => {
+        const chips = this.instance.classes
+          .filter((cls) => links.has(SchoolDraft.linkKey(cls.id, row.group)))
+          .map((cls) => {
+            const on = links.get(SchoolDraft.linkKey(cls.id, row.group))!.includes(row.id);
+            return `<button class="chip${on ? " on" : ""}" data-link="${row.id}" data-room="${cls.id}" aria-pressed="${on}">${cls.id}</button>`;
+          })
+          .join("");
+        const label = `${Lang.t(`group.${row.group}`)} · ${Lang.t("links.load", { load: row.load })}`;
+        return `<li><span><b>${row.id}</b><small class="${row.load > row.free ? "bad" : ""}">${label}</small></span><span class="chips">${chips}</span></li>`;
+      })
+      .join("");
+    return `<h2>${Lang.t("links.title")}</h2><p>${Lang.t("links.text")}</p><ul class="people">${rows}</ul>`;
+  }
+
+  private link(teacher: string, room: string) {
+    const draft = this.drafts[this.language];
+    const group = teacher.replace(/\d+$/, "");
+    const links = draft.links(this.instance);
+    const key = SchoolDraft.linkKey(room, group);
+    const current = links.get(key) ?? [];
+    if (current.includes(teacher)) return;
+    for (const [other, chosen] of links) if (other.endsWith(`:${group}`)) this.pinned.set(other, chosen);
+    this.pinned.set(key, current.length <= 1 ? [teacher] : [...current.slice(1), teacher]);
   }
 
   private preferencesStep(): string {
-    const parts = SchoolDraft.parts.map(([first, last]) => `${first + 1}–${last + 1}`);
+    const { doubled } = this;
+    const perShift = SchoolDraft.partsPerShift;
+    const perDay = SchoolDraft.parts.length;
     const head = Array.from({ length: SchoolDraft.days }, (_, day) => `<b>${Names.day(day)}</b>`).join("");
     const rows = SchoolDraft.rows(this.instance)
       .map((row) => {
         const closed = this.closed.get(row.id) ?? [];
-        const days = Array.from({ length: SchoolDraft.days }, (_, day) => {
-          const cells = parts
-            .map((label, part) => {
-              const at = day * parts.length + part;
-              return `<button class="third${closed.includes(at) ? " off" : ""}" data-teacher="${row.id}" data-third="${at}" aria-pressed="${closed.includes(at)}" aria-label="${row.id}, ${Names.day(day)}, lessons ${label}">${label}</button>`;
-            })
-            .join("");
-          return `<span>${cells}</span>`;
-        }).join("");
-        return `<li><span><b>${row.id}</b><small class="${row.load > row.free ? "bad" : ""}">${row.load} lessons, ${row.free} possible times</small></span><span class="week">${days}</span></li>`;
+        const lines = (doubled ? row.shifts : [0])
+          .map((shift) => {
+            const days = Array.from({ length: SchoolDraft.days }, (_, day) => {
+              const cells = SchoolDraft.parts
+                .slice(shift * perShift, (shift + 1) * perShift)
+                .map(([first, last], part) => {
+                  const at = day * perDay + shift * perShift + part;
+                  const label = `${first + 1}–${last + 1}`;
+                  const name = Lang.t("preferences.cell", { teacher: row.id, day: Names.day(day), part: label });
+                  return `<button class="third${closed.includes(at) ? " off" : ""}" data-teacher="${row.id}" data-third="${at}" aria-pressed="${closed.includes(at)}" aria-label="${name}">${label}</button>`;
+                })
+                .join("");
+              return `<span>${cells}</span>`;
+            }).join("");
+            const label = doubled ? `<i>${Lang.t(`classes.shift.${shift + 1}`)}</i>` : "";
+            return `<span class="shiftrow">${label}<span class="week">${days}</span></span>`;
+          })
+          .join("");
+        const load = Lang.t("preferences.load", { load: row.load, free: row.free });
+        return `<li><span><b>${row.id}</b><small class="${row.load > row.free ? "bad" : ""}">${load}</small></span><span class="shifts">${lines}</span></li>`;
       })
       .join("");
     return (
-      `<h2>When can each teacher not work?</h2><p>Every day has three parts: lessons ${parts.join(", ")}. Press a part to close it for that teacher. Close all three for a full day off.</p>` +
+      `<h2>${Lang.t("preferences.title")}</h2><p>${Lang.t(doubled ? "preferences.text.shift" : "preferences.text.day")}</p>` +
       `<div class="weekhead"><span></span><span class="week">${head}</span></div><ul class="people">${rows}</ul>`
     );
   }
 
   private summary(): string {
-    const off = [...this.closed.values()].filter((thirds) => thirds.length > 0).length;
+    const off = this.instance.teachers.filter((teacher) => (teacher.unavailable ?? []).length > 0).length;
+    const text = Lang.t(this.doubled ? "summary.text.shifts" : "summary.text", {
+      language: Lang.t(`language.${this.language}`),
+      classes: this.instance.classes.length,
+      lessons: this.lessons,
+      teachers: this.instance.teachers.length,
+    });
     return (
-      `<div class="made"><span><b>Your school:</b> taught in ${LANGUAGES[this.language]}, ${this.instance.classes.length} classes, ${this.lessons} lessons a week, ${this.instance.teachers.length} teachers` +
-      `${off > 0 ? `, ${off} with closed times` : ""}.</span><button class="plain" data-go="edit">Change the school</button></div>${this.banner()}`
+      `<div class="made"><span>${text}${off > 0 ? Lang.t("summary.closed", { n: off }) : ""}.</span>` +
+      `<button class="plain" data-go="edit">${Lang.t("summary.edit")}</button></div>${this.banner()}`
     );
   }
 
   private banner(): string {
-    const verdict: Verdict = SchoolDraft.verdict(this.instance);
-    const list = (lines: string[]) => {
-      const rest = lines.length > REASONS_SHOWN ? `<li>… and ${lines.length - REASONS_SHOWN} more</li>` : "";
-      return `<ul>${lines.slice(0, REASONS_SHOWN).map((line) => `<li>${line}</li>`).join("")}${rest}</ul>`;
+    const verdict = SchoolDraft.verdict(this.instance);
+    const line = (issue: Issue) => Lang.t(issue.key, issue.subject ? { ...issue.params, subject: Names.title(issue.subject) } : issue.params);
+    const list = (issues: Issue[]) => {
+      const rest = issues.length > REASONS_SHOWN ? `<li>${Lang.t("verdict.more", { n: issues.length - REASONS_SHOWN })}</li>` : "";
+      return `<ul>${issues.slice(0, REASONS_SHOWN).map((issue) => `<li>${line(issue)}</li>`).join("")}${rest}</ul>`;
     };
-    if (verdict.impossible.length > 0) {
-      return `<div class="verdict bad"><b>No valid timetable can exist for this school.</b>${list(verdict.impossible)}<span>Add teachers or reopen some of their times. You can still build it to see where it breaks: lessons that do not fit stay red.</span></div>`;
-    }
-    if (verdict.tight.length > 0) {
-      return `<div class="verdict warn"><b>A timetable may exist, but it will be hard to find.</b>${list(verdict.tight)}<span>If rules stay broken at the end of the run, no valid timetable was found.</span></div>`;
-    }
-    return '<div class="verdict good"><b>Nothing rules a timetable out.</b><span>Only the run shows whether a valid timetable is really found: this check cannot prove that one exists.</span></div>';
+    const block = (tone: keyof typeof VERDICTS, issues: Issue[]) =>
+      `<div class="verdict ${tone}"><b>${Lang.t(`verdict.${VERDICTS[tone]}.title`)}</b>${issues.length > 0 ? list(issues) : ""}<span>${Lang.t(`verdict.${VERDICTS[tone]}.text`)}</span></div>`;
+    if (verdict.impossible.length > 0) return block("bad", verdict.impossible);
+    if (verdict.tight.length > 0) return block("warn", verdict.tight);
+    return block("good", []);
   }
 }
 
+Lang.apply();
 const other = Dom.find<HTMLAnchorElement>("other");
 other.href = "index.html";
-other.textContent = "← Example schools";
+other.textContent = Lang.t("link.examples");
 new Builder(JSON.parse(Dom.find("data").textContent ?? "{}") as Dictionaries);

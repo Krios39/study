@@ -30,7 +30,7 @@ interface DraftTeacher {
 }
 
 const LAYOUT_ATTEMPTS = 200;
-const SECOND_SHIFT_GRADES = new Set([6, 7, 8]);
+export const SECOND_SHIFT_GRADES = new Set([6, 7, 8]);
 
 export class PlantedGenerator extends InstanceGenerator<PlantedParams, Planted> {
   generate(params: PlantedParams): Planted {

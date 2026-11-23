@@ -5,26 +5,23 @@ import { Dom } from "./dom.ts";
 import { DsaturStage } from "./dsatur-stage.ts";
 import { Format } from "./format.ts";
 import { Pace } from "./pace.ts";
+import { ResultStage } from "./result-stage.ts";
 import { SCENE_RATE, type Stage } from "./stage.ts";
+import { Lang } from "./text.ts";
 import { Trouble } from "./trouble.ts";
 
 interface Step {
-  label: string;
-  short: string;
+  key: string;
   create: (problem: Problem) => Stage;
 }
 
 const STEPS: Step[] = [
-  { label: "DSATUR", short: "DSATUR", create: (problem) => new DsaturStage(problem) },
-  { label: "Simulated annealing", short: "Annealing", create: (problem) => new AnnealingStage(problem, false) },
-  { label: "Annealing + Kempe chains", short: "+ Kempe", create: (problem) => new AnnealingStage(problem, true) },
+  { key: "result", create: (problem) => new ResultStage(problem) },
+  { key: "dsatur", create: (problem) => new DsaturStage(problem) },
+  { key: "annealing", create: (problem) => new AnnealingStage(problem, false) },
+  { key: "kempe", create: (problem) => new AnnealingStage(problem, true) },
 ];
 
-const START_HINTS = [
-  "<p>Step 1 builds a first timetable. The lesson with the fewest free places is always placed first: the number beside each class is that count for its tightest lesson. Hover a number to see the lesson. Press <b>One step</b> or <b>Play</b>.</p>",
-  "<p>Step 2 improves the timetable by trying random changes. Colour shows how hard the subject is, a dark corner marks a lesson in a poor place. Press <b>One step</b> to follow one change, or <b>Play</b>.</p>",
-  "<p>Step 3 adds a smarter change: a chain of lessons that swap between two times together. Press <b>One step</b> to see one chain, or <b>Play</b>.</p>",
-];
 const NARROW_WIDTH = 860;
 const MIN_BOARD_ROOM = 380;
 const REFRESH_MS = 125;
@@ -66,11 +63,11 @@ export class App {
     this.source = source;
     this.guided = guided;
     this.tabs = STEPS.map((step, index) => {
-      const tab = Dom.make("button", "tab", `<em>${index + 1}</em><span class="long">${step.label}</span><span class="short">${step.short}</span><small></small>`);
+      const tab = Dom.make("button", "tab", `<em>${index === 0 ? "✓" : index}</em><span class="long">${Lang.t(`tab.${step.key}`)}</span><span class="short">${Lang.t(`tab.${step.key}.short`)}</span><small></small>`);
       tab.addEventListener("click", () => {
-        if (index === 0 || !this.guided || this.built) this.open(index);
+        if (index <= 1 || !this.guided || this.built) this.open(index);
       });
-      Dom.find("tabs").append(tab);
+      if (index > 0 || this.guided) Dom.find("tabs").append(tab);
       return tab;
     });
     this.speed.max = String(SLIDER_STEPS);
@@ -82,12 +79,11 @@ export class App {
   reload() {
     this.built = false;
     this.stages = [];
-    this.open(this.guided ? 0 : this.stepIndex);
-    this.playing = this.guided;
+    this.open(this.guided ? 0 : Math.max(1, this.stepIndex));
   }
 
   private get waiting(): boolean {
-    return !this.playing && this.stage.done === 0 && !this.stage.animating;
+    return this.stepIndex > 0 && !this.playing && this.stage.done === 0 && !this.stage.animating;
   }
 
   private listen() {
@@ -100,6 +96,11 @@ export class App {
     Dom.find("step").addEventListener("click", () => {
       this.playing = false;
       this.stage.stepOnce();
+    });
+    this.caption.addEventListener("click", (event) => {
+      if (!(event.target as HTMLElement).closest("[data-watch]")) return;
+      this.open(1);
+      this.playing = this.guided;
     });
     Dom.find("restart").addEventListener("click", () => this.open(this.stepIndex, true));
     this.speed.addEventListener("input", () => this.pace.choose(Pace.at(Number(this.speed.value) / SLIDER_STEPS)));
@@ -125,6 +126,7 @@ export class App {
     this.pace.auto = true;
     this.stage.plan(this.pace);
     this.playing = false;
+    document.body.classList.toggle("intro", stepIndex === 0);
     this.panel.replaceChildren(this.stage.panel);
     this.tabs.forEach((tab, index) => {
       tab.classList.toggle("active", index === stepIndex);
@@ -149,6 +151,7 @@ export class App {
     const { stage } = this;
     const seconds = Math.min(0.1, (now - this.lastFrame) / 1000);
     this.lastFrame = now;
+    if (stage.finished && !stage.animating) this.playing = false;
     if (this.playing) this.pace.spend(seconds);
     stage.tick(seconds, this.playing ? this.pace.rate : 0);
     const refresh = now - this.lastRefresh >= REFRESH_MS;
@@ -161,7 +164,7 @@ export class App {
       this.dirty = false;
       this.drawnDone = stage.done;
     }
-    const caption = this.waiting ? START_HINTS[this.stepIndex] : stage.caption;
+    const caption = this.waiting ? Lang.t(`hint.${STEPS[this.stepIndex].key}`) : stage.caption;
     if (caption !== this.shownCaption) {
       this.shownCaption = caption;
       this.caption.innerHTML = caption;
@@ -178,15 +181,16 @@ export class App {
     const fast = this.playing && !stage.finished && pace.rate > SCENE_RATE;
     stage.refresh();
     this.progress.style.width = `${(100 * stage.done) / Math.max(1, stage.total)}%`;
-    this.play.textContent = stage.finished ? "Replay" : this.playing ? "Pause" : "Play";
+    this.play.textContent = Lang.t(stage.finished ? "control.replay" : this.playing ? "control.pause" : "control.play");
+    document.body.classList.toggle("solving", this.stepIndex === 0 && !stage.finished);
     this.auto.classList.toggle("on", pace.auto);
     this.rate.textContent = Format.rate(fast && measured > 0 ? Math.min(pace.rate, measured) : pace.rate);
     if (pace.auto) this.speed.value = String(Math.round(pace.position * SLIDER_STEPS));
-    if (this.stepIndex === 0 && stage.finished) this.built = true;
-    this.tabs.forEach((tab, index) => (tab.disabled = this.guided && !this.built && index > 0));
+    if (this.stepIndex === 1 && stage.finished) this.built = true;
+    this.tabs.forEach((tab, index) => (tab.disabled = this.guided && !this.built && index > 1));
     this.tabs.forEach((tab, index) => {
       const score = this.stages[index]?.score;
-      tab.querySelector("small")!.textContent = score === undefined ? "" : Format.count(score);
+      tab.querySelector("small")!.innerHTML = score === undefined ? "" : `<i class="long">${Lang.t("tab.penalty")} </i>${Format.count(score)}`;
     });
     const next = this.tabs[this.stepIndex + 1];
     if (next) next.classList.toggle("next", stage.finished);
@@ -210,7 +214,7 @@ export class App {
     if (lesson < 0) return;
     const { names } = stage;
     const reasons = Trouble.reasons(stage.flag(lesson));
-    const lines = [`${names.lesson(lesson)} · ${names.teachers(lesson)} · ${names.slot(slotOf[lesson])}`, stage.note(lesson), reasons.length > 0 ? `Poor place: ${reasons.join("; ")}` : ""];
+    const lines = [`${names.lesson(lesson)} · ${names.teachers(lesson)} · ${names.slot(slotOf[lesson])}`, stage.note(lesson), reasons.length > 0 ? Lang.t("tip.poor", { reasons: reasons.join("; ") }) : ""];
     this.tip.textContent = lines.filter((line) => line !== "").join("\n");
     this.tip.style.left = `${Math.max(0, Math.min(x + 12, bounds.width - 250))}px`;
     this.tip.style.top = `${y + 16}px`;

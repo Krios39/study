@@ -1,6 +1,8 @@
+import { Lang } from "./text.ts";
+
 export class Format {
   static count(value: number): string {
-    return Math.round(value).toLocaleString("en-US");
+    return Lang.number(value);
   }
 
   static signed(value: number): string {
@@ -9,14 +11,14 @@ export class Format {
 
   static percent(share: number): string {
     if (share >= 0.995) return "100%";
-    if (share < 0.0005) return "almost 0%";
+    if (share < 0.0005) return Lang.t("percent.almostZero");
     return share < 0.1 ? `${(share * 100).toFixed(1)}%` : `${Math.round(share * 100)}%`;
   }
 
   static rate(perSecond: number): string {
-    if (perSecond < 10) return `${perSecond.toFixed(1)} steps/s`;
-    if (perSecond < 1000) return `${Math.round(perSecond)} steps/s`;
-    if (perSecond < 1_000_000) return `${Math.round(perSecond / 1000)}k steps/s`;
-    return `${(perSecond / 1_000_000).toFixed(1)}M steps/s`;
+    if (perSecond < 10) return Lang.t("rate.plain", { value: perSecond.toFixed(1) });
+    if (perSecond < 1000) return Lang.t("rate.plain", { value: String(Math.round(perSecond)) });
+    if (perSecond < 1_000_000) return Lang.t("rate.thousand", { value: String(Math.round(perSecond / 1000)) });
+    return Lang.t("rate.million", { value: (perSecond / 1_000_000).toFixed(1) });
   }
 }

@@ -8,9 +8,11 @@ import { Loader } from "../src/io/loader.ts";
 
 const DATA_FILES = ["../src/model.ts", "src/main.ts", "src/builder.ts"];
 const SHORTEST_NAME = 3;
+const BASE_LOCALE = "en";
 
 class DemoBuilder {
   private readonly renamed = DemoBuilder.ownMembers();
+  private readonly locales = DemoBuilder.readLocales();
 
   static readonly SCHOOLS = [
     "mini",
@@ -25,8 +27,8 @@ class DemoBuilder {
     "large-100-1shift-1",
     "large-100-2shift-1",
   ].flatMap((name) => [
-    { file: `${name}-kk`, title: `${name}-kk`, language: "Kazakh" },
-    { file: name, title: `${name}-ru`, language: "Russian" },
+    { file: `${name}-kk`, title: `${name}-kk`, language: "kk" },
+    { file: name, title: `${name}-ru`, language: "ru" },
   ]);
 
   static readonly FONTS = [
@@ -42,7 +44,7 @@ class DemoBuilder {
   private async write(file: string, entry: string, data: string) {
     const page = readFileSync(DemoBuilder.path("src/page.html"), "utf8");
     const bundle = DemoBuilder.embed(await this.bundle(entry));
-    const html = page.replace("/*FONTS*/", () => this.fonts()).replace("/*DATA*/", () => DemoBuilder.embed(data)).replace("/*BUNDLE*/", () => bundle);
+    const html = page.replace("/*FONTS*/", () => this.fonts()).replace("/*DATA*/", () => DemoBuilder.embed(data)).replace("/*LOCALES*/", () => DemoBuilder.embed(this.locales)).replace("/*BUNDLE*/", () => bundle);
     const target = DemoBuilder.path(file);
     writeFileSync(target, html);
     console.log(`${target}: ${Math.round(html.length / 1024)} KB`);
@@ -108,6 +110,9 @@ class DemoBuilder {
         if (name) kept.add(name);
       });
     }
+    for (const file of readdirSync(DemoBuilder.path("locales"))) {
+      for (const match of readFileSync(join(DemoBuilder.path("locales"), file), "utf8").matchAll(/\{(\w+)\}/g)) kept.add(match[1]);
+    }
     const own = new Set<string>();
     for (const file of sources) {
       walk(parse(file), (node) => {
@@ -122,6 +127,27 @@ class DemoBuilder {
     const names = [...own].filter((name) => name.length >= SHORTEST_NAME && !kept.has(name)).sort();
     console.log(`renaming ${names.length} of ${own.size} own members`);
     return new RegExp(`^(${names.join("|")})$`);
+  }
+
+  private static readLocales(): string {
+    const folder = DemoBuilder.path("locales");
+    const tables: Record<string, Record<string, unknown>> = {};
+    for (const file of readdirSync(folder).filter((name) => name.endsWith(".json")).sort()) {
+      tables[file.replace(".json", "")] = JSON.parse(readFileSync(join(folder, file), "utf8"));
+    }
+    const base = tables[BASE_LOCALE];
+    if (!base) throw new Error(`missing locales/${BASE_LOCALE}.json`);
+    const sources = readdirSync(DemoBuilder.path("src")).map((file) => readFileSync(join(DemoBuilder.path("src"), file), "utf8"));
+    const used = new Set(sources.flatMap((text) => [...text.matchAll(/(?:Lang\.t\(|data-text=)"([^"]+)"/g)].map((match) => match[1])));
+    const unknown = [...used].filter((key) => !(key in base));
+    if (unknown.length > 0) throw new Error(`texts missing in locales/${BASE_LOCALE}.json: ${unknown.join(", ")}`);
+    for (const [locale, table] of Object.entries(tables)) {
+      const missing = Object.keys(base).filter((key) => !(key in table));
+      const extra = Object.keys(table).filter((key) => !(key in base));
+      if (missing.length > 0) console.log(`locale ${locale}: ${missing.length} texts not translated, shown in English: ${missing.join(", ")}`);
+      if (extra.length > 0) console.log(`locale ${locale}: unknown texts: ${extra.join(", ")}`);
+    }
+    return JSON.stringify(tables);
   }
 
   private static embed(text: string): string {

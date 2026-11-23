@@ -2,6 +2,7 @@ import type { Problem } from "../../src/core/problem.ts";
 import { UNASSIGNED } from "../../src/model.ts";
 import { Names } from "./names.ts";
 import { Theme, type Tone } from "./theme.ts";
+import { Lang } from "./text.ts";
 
 export interface Flight {
   lesson: number;
@@ -512,11 +513,11 @@ export class Board {
       context.fillText(Names.day(day), this.columnX(problem.slot(day, 0)) + dayWidth / 2, HEADER_HEIGHT / 2);
     }
     if (this.poolWidth >= 150) {
-      context.fillText("waiting lessons", this.labelWidth + (this.poolWidth - COUNT_GAP) / 2, HEADER_HEIGHT / 2);
+      context.fillText(Lang.t("board.waiting.long"), this.labelWidth + (this.poolWidth - COUNT_GAP) / 2, HEADER_HEIGHT / 2);
       context.textAlign = "right";
-      context.fillText("free", this.labelWidth + this.poolWidth - 10, HEADER_HEIGHT / 2);
+      context.fillText(Lang.t("board.free"), this.labelWidth + this.poolWidth - 10, HEADER_HEIGHT / 2);
     } else if (this.poolWidth >= 80) {
-      context.fillText("waiting", this.labelWidth + (this.poolWidth - COUNT_GAP) / 2, HEADER_HEIGHT / 2);
+      context.fillText(Lang.t("board.waiting"), this.labelWidth + (this.poolWidth - COUNT_GAP) / 2, HEADER_HEIGHT / 2);
     }
     if (this.labelWidth === 0) return;
     context.textAlign = "right";

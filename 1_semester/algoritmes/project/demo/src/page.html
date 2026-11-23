@@ -70,7 +70,8 @@ b.warn { color: var(--warn); }
 .tab em { font-style: normal; font-weight: 700; opacity: 0.6; }
 .tab .short { display: none; }
 .tab small:not(:empty) { font-size: 15px; font-weight: 700; }
-.tab small:not(:empty)::before { content: "· penalty "; font-weight: 400; }
+.tab small:not(:empty)::before { content: "· "; font-weight: 400; }
+.tab small i { font-style: normal; font-weight: 400; }
 .tab.active { border-bottom-color: currentColor; font-weight: 700; }
 .tab.active em { opacity: 1; }
 .top .tab.active { background: #ffffff; color: var(--brand-dark); border-bottom-color: #ffffff; }
@@ -80,6 +81,22 @@ b.warn { color: var(--warn); }
 
 .controls { display: flex; align-items: flex-end; gap: 16px 28px; flex-wrap: wrap; padding: 26px 40px 6px; }
 .controls[hidden], main[hidden] { display: none; }
+.intro .transport { display: none; }
+.intro .wrap { height: 0; overflow: hidden; visibility: hidden; }
+.intro .key, .intro aside { display: none; }
+.intro .caption { height: auto; min-height: 320px; overflow: visible; }
+.ready span { display: block; color: var(--head); font-size: 30px; font-weight: 700; line-height: 1.15; }
+.ready span.bad { color: var(--bad); }
+.ready b { display: block; margin: 6px 0 14px; color: var(--accent); font-size: 128px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.ready button { height: 56px; padding: 0 28px; font-size: 18px; }
+.loader { display: flex; align-items: center; gap: 16px; color: var(--head); font-size: 30px; line-height: 1.15; }
+.loader i { width: 30px; height: 30px; background: var(--accent); animation: turn 1.2s linear infinite; }
+@keyframes turn { to { transform: rotate(360deg); } }
+.languages { display: flex; gap: 14px; margin-top: 12px; }
+.languages button { padding: 0; border: 0; background: none; color: #ffffff; font: inherit; font-size: 15px; text-decoration: underline; cursor: pointer; }
+.languages button.on { font-weight: 700; text-decoration: none; }
+.key b, .speed i { font-style: normal; font-weight: inherit; }
+.caption button { margin-top: 12px; }
 .controls .tabs { margin-right: auto; color: var(--head); border-bottom: 1px solid var(--line); }
 .setup, .transport { display: flex; align-items: flex-end; gap: 10px; }
 .field { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--muted); }
@@ -176,12 +193,22 @@ aside { padding: 26px 26px 28px; background: var(--allowed); }
 .stepper { display: inline-flex; align-items: center; gap: 10px; }
 .stepper button { width: 38px; height: 38px; border: 2px solid var(--accent); border-radius: 4px; background: var(--surface); color: var(--accent); font-size: 20px; line-height: 1; cursor: pointer; }
 .stepper b { min-width: 22px; text-align: center; font-size: 20px; font-variant-numeric: tabular-nums; }
-.week { display: grid; grid-template-columns: repeat(5, 84px); gap: 8px; }
+.week { display: grid; grid-template-columns: repeat(5, 96px); gap: 8px; }
 .week > span { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
 .week > b { text-align: center; color: var(--muted); font-size: 14px; font-weight: 500; }
 .weekhead { display: flex; gap: 14px; padding-bottom: 8px; }
 .weekhead > span:first-child { flex: 1; }
-.third { height: 34px; padding: 0; border: 0; background: var(--allowed); color: var(--head); font-size: 11px; cursor: pointer; }
+.third { height: 34px; padding: 0; white-space: nowrap; border: 0; background: var(--allowed); color: var(--head); font-size: 11px; cursor: pointer; }
+.shifts { display: grid; gap: 6px; padding: 8px 0; }
+.shiftrow { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.shiftrow i { color: var(--muted); font-size: 13px; font-style: normal; white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; max-width: 520px; padding: 8px 0; }
+.chip { min-width: 46px; height: 34px; padding: 0 8px; border: 0; background: var(--allowed); color: var(--head); font-size: 14px; cursor: pointer; }
+.chip.on { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.pair { display: inline-flex; }
+.pair button { height: 38px; padding: 0 12px; border: 2px solid var(--accent); background: var(--surface); color: var(--accent); font-size: 14px; font-weight: 500; cursor: pointer; }
+.pair button + button { border-left: 0; }
+.pair button.on { background: var(--accent); color: var(--on-accent); }
 .third.off { background: var(--bad); color: #ffffff; font-weight: 700; text-decoration: line-through; }
 .nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 34px; }
 .nav button { height: 56px; padding: 0 28px; font-size: 18px; }
@@ -202,6 +229,8 @@ footer { display: flex; align-items: center; justify-content: space-between; gap
 
 @media (prefers-reduced-motion: reduce) { .tab.next:not(.active) { animation: none; } }
 @media (max-width: 859px) {
+  .ready b { font-size: 76px; }
+  .intro .caption { min-height: 240px; }
   body { padding-bottom: 128px; font-size: 16px; }
   .top::before { right: -260px; opacity: 0.6; }
   .mast { padding: 22px 16px 18px; }
@@ -213,7 +242,6 @@ footer { display: flex; align-items: center; justify-content: space-between; gap
   .tab { height: 50px; padding: 0 12px; font-size: 15px; }
   .tab .long { display: none; }
   .tab .short { display: inline; }
-  .tab small:not(:empty)::before { content: "· "; }
   .controls { padding: 16px 16px 0; }
   .controls .tabs { width: 100%; }
   .setup { width: 100%; }
@@ -253,11 +281,12 @@ footer { display: flex; align-items: center; justify-content: space-between; gap
 <header class="top">
   <div class="mast">
     <div class="brand">
-      <h1>School timetabling</h1>
-      <span>Watch the algorithm build a timetable, step by step</span>
+      <h1 data-text="page.heading"></h1>
+      <span data-text="page.subtitle"></span>
       <a id="other" class="other"></a>
+      <div id="languages" class="languages"></div>
     </div>
-    <a class="hire" href="https://krios39.github.io" target="_blank" rel="noopener"><span class="lead">Like this demo and algorithm? 🫠 </span>Wanna hire me? 🙃 <b>Here is my CV</b></a>
+    <a class="hire" href="https://krios39.github.io" target="_blank" rel="noopener" data-text="page.hire"></a>
   </div>
   <nav id="tabs" class="tabs"></nav>
 </header>
@@ -265,11 +294,11 @@ footer { display: flex; align-items: center; justify-content: space-between; gap
 <section class="controls" id="controls">
   <div class="setup" id="setup"></div>
   <div class="transport">
-    <button id="play" class="primary">Play</button>
-    <button id="step" class="plain">One step</button>
-    <button id="restart" class="plain">Restart</button>
-    <label class="field speed"><span>Speed · <b id="rate"></b></span><input id="speed" type="range" min="0" max="1000" value="100"></label>
-    <button id="auto" class="toggle on">Auto</button>
+    <button id="play" class="primary" data-text="control.play"></button>
+    <button id="step" class="plain" data-text="control.step"></button>
+    <button id="restart" class="plain" data-text="control.restart"></button>
+    <label class="field speed"><span><i data-text="control.speed"></i> · <b id="rate"></b></span><input id="speed" type="range" min="0" max="1000" value="100"></label>
+    <button id="auto" class="toggle on" data-text="control.auto"></button>
   </div>
 </section>
 <main id="stage">
@@ -278,20 +307,21 @@ footer { display: flex; align-items: center; justify-content: space-between; gap
     <div id="caption" class="caption" aria-live="polite"></div>
     <div id="wrap" class="wrap"><canvas id="board" role="img"></canvas><div id="tip" class="tip" hidden></div></div>
     <div class="key">
-      <span><i class="lesson"></i>a lesson, from easy to hard subject</span>
-      <span><i class="now"></i>the lesson being decided now</span>
-      <span><i class="yes">●</i>allowed · kept</span>
-      <span><i class="no">✕</i>not allowed · undone · rule broken</span>
-      <span><i class="costly"></i>poor place, costs penalty points</span>
+      <span><i class="lesson"></i><b data-text="key.lesson"></b></span>
+      <span><i class="now"></i><b data-text="key.now"></b></span>
+      <span><i class="yes">●</i><b data-text="key.allowed"></b></span>
+      <span><i class="no">✕</i><b data-text="key.forbidden"></b></span>
+      <span><i class="costly"></i><b data-text="key.poor"></b></span>
     </div>
   </section>
   <aside><div id="panel"></div></aside>
 </main>
 <footer>
-  <span>Rows are classes, columns are lesson times from Monday to Friday. Ruslan Nechshadimov · Algorithmics MTAT.03.238</span>
-  <a class="hire" href="https://krios39.github.io" target="_blank" rel="noopener">Like this demo and algorithm? 🫠 Wanna hire me? 🙃 <b>Here is my CV</b></a>
+  <span data-text="page.footer"></span>
+  <a class="hire" href="https://krios39.github.io" target="_blank" rel="noopener" data-text="page.hire"></a>
 </footer>
 <script id="data" type="application/json">/*DATA*/</script>
+<script id="locales" type="application/json">/*LOCALES*/</script>
 <script>/*BUNDLE*/</script>
 </body>
 </html>

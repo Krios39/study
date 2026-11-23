@@ -1,5 +1,6 @@
 import { Format } from "./format.ts";
 import type { Theme } from "./theme.ts";
+import { Lang } from "./text.ts";
 
 const POINT_LIMIT = 900;
 const PADDING = { left: 0, right: 0, top: 20, bottom: 2 };
@@ -58,7 +59,7 @@ export class CostChart {
     context.font = "12px Rubik, system-ui, sans-serif";
     context.textBaseline = "top";
     context.textAlign = "left";
-    context.fillText("penalty points", PADDING.left, 2);
+    context.fillText(Lang.t("chart.penalty"), PADDING.left, 2);
     context.textAlign = "right";
     context.fillText(`${Format.count(this.highest)} → ${Format.count(this.lowest)}`, width - PADDING.right, 2);
 
