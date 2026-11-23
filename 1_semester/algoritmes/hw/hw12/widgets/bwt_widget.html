@@ -1,88 +1,81 @@
-<div id="bw" style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin: 15px 0; background: #fff; color: #1e293b;">
-    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 14px;">
-        <label>Text <input id="bw-text" value="bananabananabandanas" maxlength="24" style="width: 220px; font-family: monospace; padding: 3px;"></label>
-        <span style="font-size: 13px; color: #475569;">($ is appended)</span>
-        <button id="bw-back" style="padding: 4px 10px;">◀ Back</button>
-        <button id="bw-step" style="padding: 4px 10px;">Decode step ▶</button>
-        <button id="bw-play" style="padding: 4px 10px;">Play</button>
-        <button id="bw-end" style="padding: 4px 10px;">To end</button>
-        <label>Speed <input id="bw-speed" type="range" min="1" max="10" value="5"></label>
+<div id="bw" style="border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0; margin: 12px 0; font-size: 14px;">
+    <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
+        <label>Text <input id="bw-text" value="banana" maxlength="14" style="width: 150px; font-family: monospace;"></label>
+        <label>Pattern <input id="bw-pat" value="ana" maxlength="10" style="width: 90px; font-family: monospace;"></label>
+        <label>Link copies of <select id="bw-letter"></select></label>
     </div>
-    <div id="bw-out" style="font-family: monospace; font-size: 14px; margin-top: 10px;"></div>
-    <div style="overflow-x: auto;"><table id="bw-table" style="border-collapse: collapse; margin: 10px 0; font-family: monospace; font-size: 14px;"></table></div>
-    <div id="bw-info" style="font-family: monospace; font-size: 13px; min-height: 40px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 8px; white-space: pre-wrap;"></div>
-    <div id="bw-result" style="font-size: 14px; margin-top: 8px;"></div>
+    <div style="overflow-x: auto;"><svg id="bw-svg" style="display: block; margin-top: 8px;"></svg></div>
+    <div id="bw-out"></div>
+    <div style="font-size: 13px; color: #475569;">Rows are all rotations of the text, sorted. F is the first column, L the last; L is the BWT. The lines link the k-th copy of a letter in L to the k-th copy in F: it is the same letter of the text. Green rows start with the pattern.</div>
 </div>
 <script>
 window.addEventListener("load", function () {
     const $ = id => document.getElementById(id);
-    let s = "", n = 0, rows = [], L = [], F = [], rankL = [], rankF = [], C = {}, steps = [], at = 0, timer = null;
-    const sub = k => `<sub style="font-size: 9px; color: #64748b;">${k}</sub>`;
-
-    function build() {
-        clearInterval(timer); timer = null; $("bw-play").textContent = "Play";
-        s = $("bw-text").value.replace(/[\s$]/g, "") + "$";
-        n = s.length;
-        rows = [...Array(n).keys()].map(i => s.slice(i) + s.slice(0, i)).map((r, i) => ({ r, i }));
-        rows.sort((a, b) => (a.r < b.r ? -1 : a.r > b.r ? 1 : 0));
-        L = rows.map(x => x.r[n - 1]); F = rows.map(x => x.r[0]);
-        const seenL = {}, seenF = {};
-        rankL = L.map(c => (seenL[c] = (seenL[c] || 0) + 1) - 1);
-        rankF = F.map(c => (seenF[c] = (seenF[c] || 0) + 1) - 1);
-        C = {};
-        F.forEach((c, r) => { if (!(c in C)) C[c] = r; });
-        steps = [];
-        let row = 0, known = "$";
-        for (let k = 1; k < n; k++) {
-            const c = L[row], next = C[c] + rankL[row];
-            known = c + known;
-            steps.push({ row, c, copy: rankL[row], next, known });
-            row = next;
-        }
-        at = 0;
-        const runs = t => t.split("").filter((c, i) => i === 0 || c !== t[i - 1]).length;
-        $("bw-out").innerHTML = `text = <strong>${s}</strong> &nbsp; BWT = <strong style="color: #b91c1c;">${L.join("")}</strong> &nbsp; runs: ${runs(s)} → ${runs(L.join(""))}` +
-            `<br><span style="font-size: 12px; color: #475569;">C (first row of each letter in F): ${Object.keys(C).map(c => `${c}:${C[c]}`).join("  ")}</span>`;
-        draw();
-    }
+    let last = "";
 
     function draw() {
-        const st = steps[at - 1];
-        const td = "padding: 3px 7px; border: 1px solid #e2e8f0;";
-        let html = `<tr style="background: #e2e8f0;"><th style="${td}">row</th><th style="${td}">F</th><th style="${td}">middle</th><th style="${td}">L</th><th style="${td}"></th></tr>`;
-        rows.forEach((x, r) => {
-            let bg = x.i === 0 ? "background: #fef3c7;" : "";
-            let fStyle = "background: #dbeafe; font-weight: bold;", lStyle = "background: #fee2e2; font-weight: bold;";
-            let note = x.i === 0 ? "original text" : "";
-            if (st && r === st.row) { bg = "background: #e0e7ff;"; lStyle = "background: #f97316; color: white; font-weight: bold;"; note = `read L = ${st.c}${sub(st.copy)}`; }
-            if (st && r === st.next) { fStyle = "background: #f97316; color: white; font-weight: bold;"; note = `same copy ${st.c}${sub(st.copy)} in F → next row`; }
-            html += `<tr style="${bg}"><td style="${td}">${r}</td><td style="${td} ${fStyle}">${F[r]}${sub(rankF[r])}</td>` +
-                `<td style="${td} color: #94a3b8;">${x.r.slice(1, n - 1)}</td><td style="${td} ${lStyle}">${L[r]}${sub(rankL[r])}</td><td style="${td} font-size: 12px; color: #9a3412;">${note}</td></tr>`;
-        });
-        $("bw-table").innerHTML = html;
-        if (!st) {
-            $("bw-info").textContent = "Rows are the sorted rotations; yellow is the original text. Subscripts number the copies of each letter from the top, separately in F and in L: the k-th copy in L is the same letter occurrence as the k-th copy in F. Decoding starts in row 0, which begins with $.";
-            $("bw-result").innerHTML = "recovered: <code>$</code>";
-            return;
+        const s = $("bw-text").value.replace(/[\s$]/g, "") + "$", p = $("bw-pat").value.replace(/\s/g, ""), n = s.length;
+        const rows = [...Array(n).keys()].map(i => ({ i, r: s.slice(i) + s.slice(0, i) })).sort((a, b) => (a.r < b.r ? -1 : 1));
+        const F = rows.map(x => x.r[0]), L = rows.map(x => x.r[n - 1]);
+        const letters = [...new Set(s)].filter(c => c !== "$").sort();
+        if (letters.join("") !== last) {
+            const keep = $("bw-letter").value;
+            $("bw-letter").innerHTML = letters.map(c => `<option>${c}</option>`).join("");
+            $("bw-letter").value = letters.includes(keep) ? keep : letters[0] || "";
+            last = letters.join("");
         }
-        $("bw-info").textContent = `step ${at}: row ${st.row} ends with ${st.c} (copy #${st.copy} of '${st.c}' in L). This letter stands just before the row's first letter in the text.\n` +
-            `The same occurrence is copy #${st.copy} of '${st.c}' in F, i.e. row C[${st.c}] + ${st.copy} = ${C[st.c]} + ${st.copy} = ${st.next}. Continue there.`;
-        const done = at === steps.length;
-        $("bw-result").innerHTML = `recovered (${st.known.length} of ${n}): <code><strong>${st.known.slice(0, 1)}</strong>${st.known.slice(1)}</code>` +
-            (done ? (st.known === s ? " &nbsp;<strong style=\"color: #15803d;\">exact round trip ✓</strong>" : " &nbsp;<strong style=\"color: #b91c1c;\">mismatch</strong>") : "");
+        const sel = $("bw-letter").value;
+        const C = 20, R = 22, X0 = 30, Y0 = 22, gap = 110;
+        const xF2 = X0 + n * C + gap;
+        const C0 = {};
+        F.forEach((c, r) => { if (!(c in C0)) C0[c] = r; });
+        const occ = (c, i) => L.slice(0, i).filter(x => x === c).length;
+        let lo = 0, hi = n;
+        const steps = [];
+        for (let j = p.length - 1; j >= 0 && lo < hi; j--) {
+            const c = p[j];
+            if (!(c in C0)) { lo = hi = 0; steps.push([p.slice(j), 0, 0]); break; }
+            lo = C0[c] + occ(c, lo); hi = C0[c] + occ(c, hi);
+            steps.push([p.slice(j), lo, hi]);
+        }
+        const green = r => p && r >= lo && r < hi;
+        let g = `<text x="${X0 + C / 2}" y="12" font-size="11" fill="#666" text-anchor="middle">F</text><text x="${X0 + (n - 0.5) * C}" y="12" font-size="11" fill="#666" text-anchor="middle">L</text><text x="${xF2 + C / 2}" y="12" font-size="11" fill="#666" text-anchor="middle">F</text>`;
+        rows.forEach((x, r) => {
+            const y = Y0 + r * R;
+            if (green(r)) g += `<rect x="0" y="${y}" width="${X0 + n * C}" height="${R}" fill="#dcfce7"/>`;
+            g += `<text x="${X0 - 8}" y="${y + 15}" font-size="11" fill="#999" text-anchor="end">${r}</text>`;
+            for (let j = 0; j < n; j++) {
+                const edge = j === 0 || j === n - 1;
+                g += `<text x="${X0 + j * C + C / 2}" y="${y + 15}" font-family="monospace" font-size="14" text-anchor="middle" fill="${edge ? "#111" : "#aaa"}"${edge ? ' font-weight="bold"' : ""}>${x.r[j]}</text>`;
+            }
+            g += `<text x="${xF2 + C / 2}" y="${y + 15}" font-family="monospace" font-size="14" text-anchor="middle" font-weight="bold">${F[r]}</text>`;
+        });
+        g += `<rect x="${X0}" y="${Y0}" width="${C}" height="${n * R}" fill="none" stroke="#999"/><rect x="${X0 + (n - 1) * C}" y="${Y0}" width="${C}" height="${n * R}" fill="none" stroke="#999"/><rect x="${xF2}" y="${Y0}" width="${C}" height="${n * R}" fill="none" stroke="#999"/>`;
+        let k = 0;
+        L.forEach((c, r) => {
+            if (c !== sel) return;
+            const to = C0[c] + k;
+            g += `<line x1="${X0 + n * C + 2}" y1="${Y0 + r * R + R / 2}" x2="${xF2 - 2}" y2="${Y0 + to * R + R / 2}" stroke="#b45309" stroke-width="1.5"/>`;
+            g += `<text x="${X0 + n * C + 8}" y="${Y0 + r * R + R / 2 - 3}" font-size="10" fill="#b45309">${k + 1}</text>`;
+            g += `<text x="${xF2 - 8}" y="${Y0 + to * R + R / 2 - 3}" font-size="10" fill="#b45309" text-anchor="end">${k + 1}</text>`;
+            k++;
+        });
+        const svg = $("bw-svg");
+        svg.setAttribute("width", xF2 + C + 10);
+        svg.setAttribute("height", Y0 + n * R + 4);
+        svg.innerHTML = g;
+        const runs = t => [...t].filter((c, i) => i === 0 || c !== t[i - 1]).length;
+        const bwt = L.join("");
+        let row = 0, back = "$";
+        for (let step = 1; step < n; step++) { const c = L[row]; back = c + back; row = C0[c] + occ(c, row); }
+        let msg = `BWT = <code><b>${bwt}</b></code> (runs of equal letters: ${runs(s)} in the text, ${runs(bwt)} in the BWT). Undo: start in row 0, take L, jump along its line to F, repeat; the letters come out right to left and give <code>${back}</code>.`;
+        if (p) msg += `<br>Search <b>${p}</b> from its last letter: ` + steps.map(([q, a, b]) => `<code>${q}</code> → rows ${a < b ? `${a}–${b - 1}` : "none"}`).join(", ") +
+            (lo < hi ? `; it occurs at ${rows.slice(lo, hi).map(x => x.i).sort((a, b) => a - b).join(", ")}.` : "; it does not occur.");
+        $("bw-out").innerHTML = msg;
     }
 
-    function step() { if (at < steps.length) { at++; draw(); } else { clearInterval(timer); timer = null; $("bw-play").textContent = "Play"; } }
-    $("bw-text").addEventListener("change", build);
-    $("bw-step").addEventListener("click", () => { clearInterval(timer); timer = null; $("bw-play").textContent = "Play"; step(); });
-    $("bw-back").addEventListener("click", () => { if (at > 0) { at--; draw(); } });
-    $("bw-end").addEventListener("click", () => { at = steps.length; draw(); });
-    $("bw-play").addEventListener("click", () => {
-        if (timer) { clearInterval(timer); timer = null; $("bw-play").textContent = "Play"; return; }
-        if (at >= steps.length) at = 0;
-        $("bw-play").textContent = "Pause";
-        timer = setInterval(step, 1300 - 110 * $("bw-speed").value);
-    });
-    build();
+    ["bw-text", "bw-pat"].forEach(id => $(id).addEventListener("input", draw));
+    $("bw-letter").addEventListener("change", draw);
+    draw();
 });
 </script>

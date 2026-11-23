@@ -54,7 +54,8 @@ def figure(path, alt, caption):
 
 
 def widget(name):
-    return (HW / "widgets" / name).read_text(encoding="utf-8")
+    return (HW / "widgets" / f"{name}_widget.html").read_text(encoding="utf-8")
+
 
 
 def g(x):
@@ -89,9 +90,8 @@ def t1():
         <p>Horspool trace for <code>abra</code> in <code>abracadabra</code> (shift table: a→3, b→2, r→1, others→4):</p>
         {pre(chr(10).join(d["trace"]))}
         <p {NOTE}>At position 1 the window ends with <code>c</code>, which is not in the pattern, so the whole pattern jumps past it (shift 4).</p>
-        <h3>Interactive: step through the three methods</h3>
-        <p {NOTE}>Choose an example or type a text and pattern. Each step is one letter comparison; the counter uses the same rules as the Rust code (the totals for all three methods are shown below the widget). The nearly periodic and periodic examples are small versions of the T2 families.</p>
-        {widget("search_widget.html")}
+        <h3>Interactive: which letters each method reads</h3>
+                {widget("search")}
         <h3>Results on 1,000,000 uniform letters</h3>
         <p>Text: {d["size"]:,} letters <code>a–z</code>, independent uniform sampling, splitmix64 seed {d["seed"]}. Patterns: <code>text[{d["pattern_position"]:,} .. {d["pattern_position"]:,}+m]</code>, so each has at least one match.</p>
         {res}
@@ -251,6 +251,8 @@ def t3():
         <p {NOTE}>Check: the trie has one node per distinct nonempty substring (174) plus the root. The tree has 21 leaves and 13 internal nodes, all branching, so at most 2·21 nodes, as expected.</p>
         {svg("t3/T3_trie.svg", "Suffix trie of bananabananabandanas$ with the three search paths.")}
         {svg("t3/T3_tree.svg", "Suffix tree of bananabananabandanas$; edges carry their text interval [start, end).")}
+        <h3>Interactive: suffix tree and suffix array</h3>
+                {widget("tree")}
         <h3>Search traces</h3>
         {table(["pattern", "positions", "trie", "suffix tree"], trace_rows)}
         <ul>
@@ -373,9 +375,8 @@ decode(L):
         <p>Decoding the shared example (all 20 steps):</p>
         {steps}
         <p>The result is <code>{m["text"]}</code>, identical to the original.</p>
-        <h3>Interactive: rotation table and decoding</h3>
-        <p {NOTE}>The table is built in the browser from the typed text; the subscripts are the copy numbers used by the decoder. Each step highlights the row being read (L, orange) and the row it leads to (the same copy in F, orange). Try the own example <code>lollipoplollipoplol</code> or a text without repetitions.</p>
-        {widget("bwt_widget.html")}
+        <h3>Interactive: rotation matrix, decoding links and backward search</h3>
+                {widget("bwt")}
         <ul>
             <li><strong>Repeated letters:</strong> the rows that start with a letter c are sorted by what follows c. The rows that end with c are sorted by the same continuation (it is at the front of those rows). So the k-th <code>a</code> in L is the k-th <code>a</code> in F; the copy number tells the copies apart. For example, step 2 reads the copy #8 of <code>a</code> in row 20 and jumps to <code>C[a] + 8 = 1 + 8 = 9</code>.</li>
             <li><strong>The end marker:</strong> it is unique and smallest, so the decoder knows the start row (row 0, the rotation beginning with <code>$</code>) without storing the index of the original row, and it ensures that all rotations are different, which is what links the BWT to the suffix array. Without it the transform is not reversible: <code>BWT(banana) = BWT(ananab) = {d["without_end_marker"]["banana"]}</code>, so rotations of the same text cannot be told apart.</li>

@@ -1,0 +1,114 @@
+<div id="tw" style="border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0; margin: 12px 0; font-size: 14px;">
+    <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
+        <label>Text <input id="tw-text" value="banana" maxlength="14" style="width: 150px; font-family: monospace;"></label>
+        <label>Pattern <input id="tw-pat" value="ana" maxlength="10" style="width: 90px; font-family: monospace;"></label>
+        <label><input type="checkbox" id="tw-trie"> one letter per edge (suffix trie)</label>
+    </div>
+    <div style="overflow-x: auto;"><svg id="tw-svg" style="display: block; margin-top: 8px;"></svg></div>
+    <div id="tw-out"></div>
+    <div style="font-size: 13px; color: #475569;">Read from the root down: the letters on the way to a leaf spell a suffix, and the number under the leaf (SA) is where it starts. Leaves come out in sorted order, so the bottom line is the suffix array. Blue: the pattern's path. Green: the suffixes that start with the pattern, always one block of neighbouring columns.</div>
+</div>
+<script>
+window.addEventListener("load", function () {
+    const $ = id => document.getElementById(id);
+
+    function trie(s) {
+        const root = { kids: {}, depth: 0, leaf: null };
+        for (let i = 0; i < s.length; i++) {
+            let v = root;
+            for (let j = i; j < s.length; j++) {
+                if (!v.kids[s[j]]) v.kids[s[j]] = { kids: {}, depth: v.depth + 1, leaf: null };
+                v = v.kids[s[j]];
+            }
+            v.leaf = i;
+        }
+        return root;
+    }
+
+    function shape(v, compress, label) {
+        if (compress && label !== undefined) {
+            while (Object.keys(v.kids).length === 1 && v.leaf === null) {
+                const c = Object.keys(v.kids)[0];
+                label += c;
+                v = v.kids[c];
+            }
+        }
+        return { label: label || "", depth: v.depth, leaf: v.leaf, kids: Object.keys(v.kids).sort().map(c => shape(v.kids[c], compress, c)) };
+    }
+
+    const count = v => 1 + v.kids.reduce((a, c) => a + count(c), 0);
+    const leaves = (v, out) => { if (!v.kids.length) out.push(v); v.kids.forEach(c => leaves(c, out)); return out; };
+
+    function walk(root, p) {
+        const marks = new Set();
+        let v = root, i = 0;
+        while (i < p.length) {
+            const c = v.kids.find(k => k.label[0] === p[i]);
+            if (!c) return { marks, fail: true, at: i };
+            let k = 0;
+            while (k < c.label.length && i < p.length) {
+                if (c.label[k] !== p[i]) return { marks, fail: true, at: i };
+                marks.add(c); c.upto = k + 1; k++; i++;
+            }
+            v = c;
+        }
+        return { marks, fail: false, locus: v };
+    }
+
+    function draw() {
+        const s = $("tw-text").value.replace(/[\s$]/g, "") + "$", p = $("tw-pat").value.replace(/\s/g, "");
+        const t = trie(s);
+        const root = shape(t, !$("tw-trie").checked);
+        const treeNodes = count(shape(t, true)), trieNodes = count(shape(t, false));
+        const res = p ? walk(root, p) : { marks: new Set(), fail: false, locus: null };
+        const hit = new Set(res.locus && !res.fail ? leaves(res.locus, []) : []);
+        const all = leaves(root, []);
+        const D = 22, CW = 34, X0 = 30, Y0 = 16;
+        const pos = new Map();
+        let col = 0;
+        (function place(v) {
+            if (!v.kids.length) { pos.set(v, X0 + col * CW); col++; return; }
+            v.kids.forEach(place);
+            pos.set(v, (pos.get(v.kids[0]) + pos.get(v.kids[v.kids.length - 1])) / 2);
+        })(root);
+        const Y = d => Y0 + d * D, bottom = Y(s.length) + 14, W = X0 + col * CW + 10, H = bottom + 48;
+        let g = "";
+        all.forEach(v => { if (hit.has(v)) g += `<rect x="${pos.get(v) - CW / 2}" y="0" width="${CW}" height="${H}" fill="#dcfce7"/>`; });
+        (function edges(v) {
+            v.kids.forEach(c => {
+                const x = pos.get(c), d0 = v.depth, on = res.marks.has(c);
+                g += `<path d="M${pos.get(v)},${Y(d0)} H${x} V${Y(c.depth)}" fill="none" stroke="#999"/>`;
+                if (on) g += `<path d="M${pos.get(v)},${Y(d0)} H${x} V${Y(d0 + c.upto)}" fill="none" stroke="#1d4ed8" stroke-width="3"/>`;
+                for (let j = 0; j < c.label.length; j++) {
+                    const blue = on && j < c.upto;
+                    g += `<text x="${x + 5}" y="${Y(d0 + j) + D / 2 + 6}" font-family="monospace" font-size="15" fill="${blue ? "#1d4ed8" : "#111"}"${blue ? ' font-weight="bold"' : ""}>${c.label[j]}</text>`;
+                }
+                edges(c);
+            });
+            if (!v.kids.length) g += `<line x1="${pos.get(v)}" x2="${pos.get(v)}" y1="${Y(v.depth)}" y2="${bottom}" stroke="#ccc" stroke-dasharray="2 3"/>`;
+            g += `<circle cx="${pos.get(v)}" cy="${Y(v.depth)}" r="${v === res.locus && !res.fail ? 5 : 3}" fill="${v === res.locus && !res.fail ? "#15803d" : "#111"}"/>`;
+        })(root);
+        g += `<text x="${X0 - 12}" y="${bottom + 16}" font-size="11" fill="#666" text-anchor="end">row</text><text x="${X0 - 12}" y="${bottom + 36}" font-size="11" fill="#666" text-anchor="end">SA</text>`;
+        all.forEach((v, r) => {
+            const x = pos.get(v);
+            g += `<text x="${x}" y="${bottom + 16}" font-size="12" fill="#666" text-anchor="middle">${r}</text><text x="${x}" y="${bottom + 36}" font-size="14" text-anchor="middle"${hit.has(v) ? ' font-weight="bold"' : ""}>${v.leaf}</text>`;
+        });
+        const svg = $("tw-svg");
+        svg.setAttribute("width", W);
+        svg.setAttribute("height", H);
+        svg.innerHTML = g;
+        let msg = `<code>${s}</code>: suffix tree ${treeNodes} nodes, suffix trie ${trieNodes} nodes. `;
+        if (!p) msg += "Type a pattern.";
+        else if (res.fail) msg += `<b>${p}</b> does not occur: after <b>${p.slice(0, res.at) || "the root"}</b> nothing continues with <b>${p[res.at]}</b>.`;
+        else {
+            const ranks = all.map((v, r) => hit.has(v) ? r : -1).filter(r => r >= 0);
+            msg += `<b>${p}</b> occurs at ${[...hit].map(v => v.leaf).sort((a, b) => a - b).join(", ")} = suffix-array ${ranks.length > 1 ? `rows ${ranks[0]}–${ranks[ranks.length - 1]}` : `row ${ranks[0]}`}.`;
+        }
+        $("tw-out").innerHTML = msg;
+    }
+
+    ["tw-text", "tw-pat"].forEach(id => $(id).addEventListener("input", draw));
+    $("tw-trie").addEventListener("change", draw);
+    draw();
+});
+</script>
