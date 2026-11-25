@@ -1,0 +1,81 @@
+{
+  "run": "full_s260240_q170000_v1_rtt100_r1",
+  "rep": 1,
+  "config": "full",
+  "target": "xroad",
+  "size": 260240,
+  "vus": 1,
+  "req": 170000,
+  "rtt": 100,
+  "n": 150,
+  "warmup": 100,
+  "wall_s": 310.172,
+  "started": "2026-11-25T01:16:14.153Z",
+  "finished": "2026-11-25T01:21:26.304Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 113830709,
+      "tx": 114190834
+    },
+    "ss2": {
+      "rx": 114123894,
+      "tx": 114032805
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 94609408,
+    "ss2": 94502912
+  },
+  "link_bytes": {
+    "xroad_rx": 70448076,
+    "link_rx": 70448076,
+    "xroad_tx": 48162959,
+    "link_tx": 48162959
+  },
+  "timestamping": {
+    "completed": true,
+    "wait_s": 34,
+    "ss1": {
+      "unstamped_after_run": 51,
+      "unstamped_final": 0
+    },
+    "ss2": {
+      "unstamped_after_run": 44,
+      "unstamped_final": 0
+    },
+    "ca_calls_while_waiting": {
+      "ocsp": 0,
+      "tsa": 2,
+      "sign": 0,
+      "ocsp_rt_mean_s": null,
+      "tsa_rt_mean_s": 0.0085
+    }
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 10,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 0.0079
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]"
+  },
+  "k6_stdout": "full\txroad\tsize=260240\tvus=1\trep=1\tp50=1242.4\tp90=1248.3\tp99=1260.8\terrors=0",
+  "tsa_probe_after": "200",
+  "flow_rtt": {
+    "sockets": 5,
+    "minrtt_ms": 100.161,
+    "minrtt_min_ms": 100.122,
+    "srtt_ms": 100.321
+  },
+  "tsa_restarted_before": false,
+  "rtt_ms": 100,
+  "netem_qdisc": true,
+  "netem_mode": "egress",
+  "netem": {
+    "ss1": "netem 40: dev eth0 parent 1:4 limit 100000 delay 50ms seed 10209873321975114089",
+    "ss2": "netem 40: dev eth0 parent 1:4 limit 100000 delay 50ms seed 13559407054441511569"
+  }
+}

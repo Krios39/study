@@ -1,0 +1,81 @@
+{
+  "run": "full_s14240_q15000_v1_rtt20_r2",
+  "rep": 2,
+  "config": "full",
+  "target": "xroad",
+  "size": 14240,
+  "vus": 1,
+  "req": 15000,
+  "rtt": 20,
+  "n": 150,
+  "warmup": 100,
+  "wall_s": 31.761,
+  "started": "2026-11-25T02:47:56.847Z",
+  "finished": "2026-11-25T02:48:30.549Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 11497207,
+      "tx": 11776389
+    },
+    "ss2": {
+      "rx": 11722143,
+      "tx": 11603833
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 10305536,
+    "ss2": 10338304
+  },
+  "link_bytes": {
+    "xroad_rx": 7514448,
+    "link_rx": 7514448,
+    "xroad_tx": 7931278,
+    "link_tx": 7931278
+  },
+  "timestamping": {
+    "completed": true,
+    "wait_s": 17,
+    "ss1": {
+      "unstamped_after_run": 500,
+      "unstamped_final": 0
+    },
+    "ss2": {
+      "unstamped_after_run": 500,
+      "unstamped_final": 0
+    },
+    "ca_calls_while_waiting": {
+      "ocsp": 0,
+      "tsa": 2,
+      "sign": 0,
+      "ocsp_rt_mean_s": null,
+      "tsa_rt_mean_s": 0.008
+    }
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 0,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": null
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]"
+  },
+  "k6_stdout": "full\txroad\tsize=14240\tvus=1\trep=2\tp50=119.9\tp90=122.6\tp99=129.0\terrors=0",
+  "tsa_probe_after": "200",
+  "flow_rtt": {
+    "sockets": 5,
+    "minrtt_ms": 20.113,
+    "minrtt_min_ms": 20.092,
+    "srtt_ms": 20.347
+  },
+  "tsa_restarted_before": false,
+  "rtt_ms": 20,
+  "netem_qdisc": true,
+  "netem_mode": "egress",
+  "netem": {
+    "ss1": "netem 40: dev eth0 parent 1:4 limit 100000 delay 10ms seed 8065519492934009840",
+    "ss2": "netem 40: dev eth0 parent 1:4 limit 100000 delay 10ms seed 10957336654087065276"
+  }
+}

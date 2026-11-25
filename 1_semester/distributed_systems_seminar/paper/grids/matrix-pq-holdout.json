@@ -1,0 +1,89 @@
+{
+  "_comment": "Holdout check of the frozen flight model (pqbench/sizemodel.js as of 20.11.2026): new sizes and RTT 100 ms, none used to build or correct the model. Predictions: pq-holdout-predictions.csv, written by pqbench/holdout.js before the run.",
+  "reps": 3,
+  "warmup_first": 1000,
+  "warmup_next": 100,
+  "n": 150,
+  "n_large": 150,
+  "large_from": 1048576,
+  "configs": [
+    "full",
+    "reuse"
+  ],
+  "points": [
+    [
+      10240,
+      1,
+      1
+    ],
+    [
+      14240,
+      1,
+      15000
+    ],
+    [
+      16940,
+      1,
+      27800
+    ],
+    [
+      20040,
+      1,
+      31000
+    ],
+    [
+      50240,
+      1,
+      60000
+    ],
+    [
+      77940,
+      1,
+      85800
+    ],
+    [
+      74840,
+      1,
+      88900
+    ],
+    [
+      130240,
+      1,
+      120000
+    ],
+    [
+      193740,
+      1,
+      137900
+    ],
+    [
+      190740,
+      1,
+      141000
+    ],
+    [
+      260240,
+      1,
+      170000
+    ]
+  ],
+  "rtts": [
+    0,
+    20,
+    100
+  ],
+  "direct": false,
+  "control": {
+    "config": "full",
+    "size": 10240,
+    "vus": 1,
+    "per_rep": true
+  },
+  "stamping_timeout_s": 300,
+  "burnin": {
+    "size": 10240,
+    "vus": 4,
+    "n": 1000,
+    "warmup": 500
+  }
+}

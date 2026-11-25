@@ -1,0 +1,81 @@
+{
+  "run": "reuse_s260240_q170000_v1_rtt100_r3",
+  "rep": 3,
+  "config": "reuse",
+  "target": "xroad",
+  "size": 260240,
+  "vus": 1,
+  "req": 170000,
+  "rtt": 100,
+  "n": 150,
+  "warmup": 100,
+  "wall_s": 62.639,
+  "started": "2026-11-25T05:29:28.336Z",
+  "finished": "2026-11-25T05:30:32.925Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 112448328,
+      "tx": 112821175
+    },
+    "ss2": {
+      "rx": 112504131,
+      "tx": 112789400
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 94814208,
+    "ss2": 94994432
+  },
+  "link_bytes": {
+    "xroad_rx": 69340891,
+    "link_rx": 69340891,
+    "xroad_tx": 46744368,
+    "link_tx": 46744368
+  },
+  "timestamping": {
+    "completed": true,
+    "wait_s": 50,
+    "ss1": {
+      "unstamped_after_run": 141,
+      "unstamped_final": 0
+    },
+    "ss2": {
+      "unstamped_after_run": 106,
+      "unstamped_final": 0
+    },
+    "ca_calls_while_waiting": {
+      "ocsp": 0,
+      "tsa": 2,
+      "sign": 0,
+      "ocsp_rt_mean_s": null,
+      "tsa_rt_mean_s": 0.008
+    }
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 2,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 0.008
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]\npool-enable-connection-reuse = true\nserver-support-clients-pooled-connections = true\nserver-connector-max-idle-time = 120000",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]\npool-enable-connection-reuse = true\nserver-support-clients-pooled-connections = true\nserver-connector-max-idle-time = 120000"
+  },
+  "k6_stdout": "reuse\txroad\tsize=260240\tvus=1\trep=3\tp50=239.2\tp90=243.4\tp99=256.2\terrors=0",
+  "tsa_probe_after": "200",
+  "flow_rtt": {
+    "sockets": 5,
+    "minrtt_ms": 100.035,
+    "minrtt_min_ms": 100.035,
+    "srtt_ms": 103.142
+  },
+  "tsa_restarted_before": false,
+  "rtt_ms": 100,
+  "netem_qdisc": true,
+  "netem_mode": "egress",
+  "netem": {
+    "ss1": "netem 40: dev eth0 parent 1:4 limit 100000 delay 50ms seed 7368405988123918514",
+    "ss2": "netem 40: dev eth0 parent 1:4 limit 100000 delay 50ms seed 7314652132146557320"
+  }
+}

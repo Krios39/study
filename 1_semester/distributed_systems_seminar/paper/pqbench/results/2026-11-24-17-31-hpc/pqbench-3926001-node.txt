@@ -1,0 +1,8 @@
+slurm job: 3926001 node: artemis2 partition: main
+Model name:                              AMD EPYC 7763 64-Core Processor
+Thread(s) per core:                      2
+Core(s) per socket:                      64
+Socket(s):                               2
+CPU(s) scaling MHz:                      69%
+CPU max MHz:                             3530.4929
+CPU min MHz:                             1500.0000

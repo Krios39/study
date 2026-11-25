@@ -1,0 +1,81 @@
+{
+  "run": "full_s193740_q137900_v1_rtt100_r3",
+  "rep": 3,
+  "config": "full",
+  "target": "xroad",
+  "size": 193740,
+  "vus": 1,
+  "req": 137900,
+  "rtt": 100,
+  "n": 150,
+  "warmup": 100,
+  "wall_s": 261.797,
+  "started": "2026-11-25T04:19:02.713Z",
+  "finished": "2026-11-25T04:23:26.481Z",
+  "net_bytes": {
+    "ss1": {
+      "rx": 88571270,
+      "tx": 88876493
+    },
+    "ss2": {
+      "rx": 88843743,
+      "tx": 88826154
+    }
+  },
+  "messagelog_growth_bytes": {
+    "ss1": 71843840,
+    "ss2": 71852032
+  },
+  "link_bytes": {
+    "xroad_rx": 53436312,
+    "link_rx": 53436312,
+    "xroad_tx": 39655401,
+    "link_tx": 39655401
+  },
+  "timestamping": {
+    "completed": true,
+    "wait_s": 23,
+    "ss1": {
+      "unstamped_after_run": 74,
+      "unstamped_final": 0
+    },
+    "ss2": {
+      "unstamped_after_run": 66,
+      "unstamped_final": 0
+    },
+    "ca_calls_while_waiting": {
+      "ocsp": 0,
+      "tsa": 2,
+      "sign": 0,
+      "ocsp_rt_mean_s": null,
+      "tsa_rt_mean_s": 0.0085
+    }
+  },
+  "ca_calls": {
+    "ocsp": 0,
+    "tsa": 8,
+    "sign": 0,
+    "ocsp_rt_mean_s": null,
+    "tsa_rt_mean_s": 0.00775
+  },
+  "local_ini": {
+    "ss1": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]",
+    "ss2": "[proxy-ui-api]\nwsdl-validator-command = /usr/share/xroad/wsdlvalidator/bin/wsdlvalidator_wrapper.sh\n\n\n[message-log]\n\n\n[proxy]"
+  },
+  "k6_stdout": "full\txroad\tsize=193740\tvus=1\trep=3\tp50=1042.3\tp90=1047.0\tp99=1055.3\terrors=0",
+  "tsa_probe_after": "200",
+  "flow_rtt": {
+    "sockets": 5,
+    "minrtt_ms": 100.156,
+    "minrtt_min_ms": 100.11,
+    "srtt_ms": 100.373
+  },
+  "tsa_restarted_before": false,
+  "rtt_ms": 100,
+  "netem_qdisc": true,
+  "netem_mode": "egress",
+  "netem": {
+    "ss1": "netem 40: dev eth0 parent 1:4 limit 100000 delay 50ms seed 522546432289388329",
+    "ss2": "netem 40: dev eth0 parent 1:4 limit 100000 delay 50ms seed 11906014053272737280"
+  }
+}
