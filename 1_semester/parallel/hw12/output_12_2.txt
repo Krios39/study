@@ -1,0 +1,11 @@
+run 1: Time taken: 1.2000
+rows=10 cols=10 partitions=2 master=local[*] defaultParallelism=14
+Time taken (median of 1): 1.2000
+b = [2.47934988 1.03260663 2.81487644 2.57446166 2.13123836 2.45694991
+ 2.53934487 2.26322042 1.98438695 2.10711534]
+check OK: result matches np.matmul(A, x)
+run 1: Time taken: 3.0669
+rows=32000 cols=1000 partitions=100 master=local[*] defaultParallelism=14
+Time taken (median of 1): 3.0669
+b (first 5 of 32000) = [246.60357112 254.06023784 242.52912311 251.30994155 256.61833912]
+check OK: result matches np.matmul(A, x)

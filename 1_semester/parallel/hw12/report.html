@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homework 12 Report - Parallel Computing</title>
+        <style>
+            table.t { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; font-family: Consolas, monospace; text-align: center; }
+            table.t th { background: #2d2d2d; color: #fff; padding: 8px; border: 1px solid #444; }
+            table.t td { padding: 6px; border: 1px solid #ddd; }
+            table.t tr:nth-child(even) td { background: #f9f9f9; }
+            pre.term { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.4; margin: 12px 0; max-height: 520px; overflow-y: auto; }
+        </style>
+    </head>
+    <body>
+<details>
+    <summary>Environment</summary>
+    <div class="details-content">
+        <table class="t">
+            <tbody>
+                <tr><td>Local</td><td>WSL Ubuntu 26.04, OpenJDK 17.0.21, Python 3.14, <code>pyspark 4.3.0</code>, <code>numpy 2.5</code> in a virtualenv. Scripts run with <code>spark-submit</code> in local mode</td></tr>
+                <tr><td>Cluster</td><td>UT HPC <strong>rocket</strong>, SLURM 25.11.7. Modules <code>python/3.9.12</code>, <code>py-virtualenv/20.22.0</code>, <code>openjdk/17.0.3_7</code>, virtualenv <code>sparkenv2</code> with <code>pyspark 4.2.1</code> and <code>numpy 2.2.6</code></td></tr>
+            </tbody>
+        </table>
+        <ul style="font-size: 14px;">
+            <li><strong>Why WSL instead of the <code>apache/spark-py</code> container.</strong> Spark in local mode needs only Java and the <code>pyspark</code> pip package, which already contains Spark. WSL gives the same Linux environment as the container without a 1 GB image, and the same scripts run unchanged on rocket.</li>
+            <li><strong>Python version on rocket.</strong> Loading <code>openjdk/17.0.3_7</code> reloads <code>python/3.9.12</code> as <code>python/3.10.10</code>, as the module system reports at the top of every <code>.out</code> file. The virtualenv was therefore created with Python 3.10.10. This does not affect the results.</li>
+            <li><strong>Installing once.</strong> The template installs pyspark inside every measurement job. Here a separate setup job (<code>setup_env.sbatch</code>) creates <code>sparkenv2</code> once. The five measurement jobs start with <code>--dependency=afterok</code> on it, so they never run five <code>pip install</code>s in the same folder at the same time.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Files</summary>
+    <div class="details-content">
+        <table class="t">
+            <thead><tr><th>File</th><th>Content</th></tr></thead>
+            <tbody>
+                <tr><td><code>pi.py</code>, <code>output_pi.txt</code></td><td>12.1: Spark example and its output</td></tr>
+                <tr><td><code>sparkMatVecMult.py</code></td><td>12.2 / 12.3: matrix-vector multiplication, arguments <code>rows columns partitions [repeats] [check]</code></td></tr>
+                <tr><td><code>output_12_2.txt</code></td><td>12.2: local runs with validation (10 &times; 10 and 32000 &times; 1000)</td></tr>
+                <tr><td><code>sparkjob.sbatch</code>, <code>setup_env.sbatch</code>, <code>submit_all.sh</code></td><td>12.3: SLURM job script, setup job, script that submits all jobs</td></tr>
+                <tr><td><code>cluster/sparkjob-*.out</code>, <code>cluster/setup-*.out</code></td><td>12.3: outputs of the rocket jobs</td></tr>
+                <tr><td><code>task12_3_plot.py</code>, <code>summary_12_3.csv</code>, <code>speedup_12_3.png</code></td><td>12.3: parses the <code>.out</code> files, speedup table and plot</td></tr>
+                <tr><td><code>sparkBankAccounts.py</code>, <code>Unclaimed_bank_accounts.csv</code></td><td>12.4: script and dataset</td></tr>
+                <tr><td><code>output_12_4.txt</code></td><td>12.4: full output for year 1993</td></tr>
+                <tr><td><code>sparkMatMatMult.py</code>, <code>output_bonus.txt</code></td><td>Bonus: matrix-matrix multiplication with <code>BlockMatrix</code></td></tr>
+            </tbody>
+        </table>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 12.1: Spark setup, pi.py</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;"><code>spark-submit pi.py 10</code> with 10 partitions (1 000 000 random points):</p>
+<pre class="term">Pi is roughly 3.136200</pre>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 12.2: Matrix-vector multiplication</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;">The RDD contains the rows of $A$ as NumPy vectors. One <code>map()</code> turns every row into $b_i = A_i \cdot x$, and <code>collect()</code> returns $b$ in row order:</p>
+<pre class="term">def multiply(sc, A, x, partitions):
+    Aspark = sc.parallelize(A, partitions)
+    b = Aspark.map(lambda row: float(np.dot(row, x)))
+    return np.array(b.collect())</pre>
+        <ul style="font-size: 14px;">
+            <li>$x$ is a local NumPy array captured by the lambda. Spark serialises it together with the function and sends it to every task, so each partition gets its own copy. For a very long vector, <code>sc.broadcast</code> would send it once per executor instead.</li>
+            <li>Arguments: <code>sparkMatVecMult.py rows columns partitions [repeats] [check]</code>. With <code>check</code>, the result is compared with <code>np.matmul(A, x)</code> using <code>np.testing.assert_allclose</code>. The random generator has a fixed seed (12), so every run, local or on rocket, uses the same matrix.</li>
+            <li>The timing follows the assignment: from <code>parallelize</code> to the end of <code>collect()</code>, because Spark evaluates lazily.</li>
+        </ul>
+<pre class="term">$ spark-submit sparkMatVecMult.py 10 10 2 1 check
+run 1: Time taken: 1.2000
+rows=10 cols=10 partitions=2 master=local[*] defaultParallelism=14
+b = [2.47934988 1.03260663 2.81487644 2.57446166 2.13123836 2.45694991
+ 2.53934487 2.26322042 1.98438695 2.10711534]
+check OK: result matches np.matmul(A, x)
+
+$ spark-submit sparkMatVecMult.py 32000 1000 100 1 check
+rows=32000 cols=1000 partitions=100 master=local[*] defaultParallelism=14
+b (first 5 of 32000) = [246.60357112 254.06023784 242.52912311 251.30994155 256.61833912]
+check OK: result matches np.matmul(A, x)</pre>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 12.3: Running on rocket, speedup</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;"><code>sparkjob.sbatch</code> is the template from the assignment with these changes:</p>
+        <ul style="font-size: 14px;">
+            <li>own job name;</li>
+            <li><code>cores</code> is taken from <code>SLURM_CPUS_PER_TASK</code>, so <code>local[cores]</code> always matches the allocation;</li>
+            <li><code>OMP/OPENBLAS/MKL_NUM_THREADS=1</code>, so NumPy does not start its own threads and all parallelism comes from Spark;</li>
+            <li><code>--driver-memory 8000M</code> for the larger matrix;</li>
+            <li>validation is off.</li>
+        </ul>
+        <p style="font-size: 14px;"><code>submit_all.sh</code> submits one job per core count, 1, 2, 4, 8 and 16 (<code>--cpus-per-task</code>). Each job runs two matrix sizes, 32000 &times; 1000 (as in the template) and 128000 &times; 1000, with 100 partitions and 3 repetitions. The table reports the median of the 3 runs.</p>
+        <table class="t">
+            <thead><tr><th>Cores</th><th>Node (CPU)</th><th>Job</th><th>32000 &times; 1000, s</th><th>speedup</th><th>128000 &times; 1000, s</th><th>speedup</th></tr></thead>
+            <tbody>
+                <tr><td>1</td><td>ares2 (EPYC 7702)</td><td>3955039</td><td>5.523</td><td>1.00</td><td>8.876</td><td>1.00</td></tr>
+                <tr><td>2</td><td>artemis12 (EPYC 7763)</td><td>3955040</td><td>2.888</td><td>1.91</td><td>7.012</td><td>1.27</td></tr>
+                <tr><td>4</td><td>artemis7 (EPYC 7763)</td><td>3955041</td><td>2.255</td><td>2.45</td><td>5.499</td><td>1.61</td></tr>
+                <tr><td>8</td><td>artemis8 (EPYC 7763)</td><td>3955042</td><td>1.764</td><td>3.13</td><td>4.862</td><td>1.83</td></tr>
+                <tr><td>16</td><td>artemis4 (EPYC 7763)</td><td>3955043</td><td>1.111</td><td>4.97</td><td>3.585</td><td>2.48</td></tr>
+            </tbody>
+        </table>
+        <img src="speedup_12_3.png" alt="Time and speedup of Spark matrix-vector multiplication" style="max-width: 100%;" />
+        <h3>Discussion</h3>
+        <ul style="font-size: 14px;">
+            <li><strong>More cores did reduce the time.</strong> For 32000 &times; 1000 it fell from 5.5 s to 1.1 s (speedup 5.0 at 16 cores), and for 128000 &times; 1000 from 8.9 s to 3.6 s (speedup 2.5). The speedup is far from linear, and efficiency at 16 cores is 0.31 and 0.15.</li>
+            <li><strong>Why.</strong> The measured time has two parts.
+                <ul>
+                    <li><strong>Serial part.</strong> In <code>parallelize</code>, the driver pickles all rows of the NumPy matrix and hands them to Spark. Spark then sends $b$ back to the driver in <code>collect</code>. This happens in the single driver process and does not get faster with more cores.</li>
+                    <li><strong>Parallel part.</strong> 100 tasks, each with its own Python worker overhead, unpickling and the dot products.</li>
+                </ul>
+                Fitting $T(c) = s + p/c$ to the 1-core and 16-core points gives:
+                <ul>
+                    <li>32000 rows: $s \approx 0.8$ s and $p \approx 4.7$ s;</li>
+                    <li>128000 rows: $s \approx 3.2$ s and $p \approx 5.6$ s.</li>
+                </ul>
+                The serial part grows about 4&times; with the 4&times; larger matrix, because the driver has to serialise 4&times; more data. The parallel part barely grows, because it is dominated by per-task overhead, not by arithmetic: $1.28 \cdot 10^8$ multiply-adds take well under a second in NumPy. This is Amdahl's law: the larger matrix has a larger serial fraction (about 36% instead of 15%), so its speedup is lower.</li>
+            <li><strong>Making the matrix larger therefore does not help here,</strong> unlike in a typical compute-bound program, because the work that grows with the matrix is exactly the serial transfer from the driver. Better scaling would require creating or reading the data in parallel on the executors (as in the bonus, or from a distributed file system), so that the driver never holds the whole matrix.</li>
+            <li><strong>The first run is always slower</strong> (for example 9.0 s against 5.5 s on 1 core) because of JVM and Python worker start-up. This is why the median of 3 runs is used.</li>
+            <li><strong>Hardware.</strong> SLURM placed the 1-core job on <code>ares2</code> (EPYC 7702) and the others on <code>artemis</code> nodes (EPYC 7763). The 7763 is the faster core, so the speedups relative to the 7702 baseline are slightly optimistic. The jobs were not <code>--exclusive</code>, as the assignment suggests, so other users could share the nodes.</li>
+            <li><strong>Correctness.</strong> All runs print the same first values of $b$ as the local run that passed <code>assert_allclose</code>, because the seed is fixed.</li>
+        </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Exercise 12.4: Unclaimed bank accounts</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;"><code>spark-submit sparkBankAccounts.py Unclaimed_bank_accounts.csv 1993</code>. The CSV is read with the DataFrame CSV reader, as given in the assignment, and immediately converted to an RDD of 7-tuples. Everything after that uses the RDD API only.</p>
+<pre class="term">def analyse(rdd, key_fn):
+    return (rdd.map(lambda t: (key_fn(t), t[BALANCE]))
+               .groupByKey()
+               .map(balance_stats)
+               .sortByKey())</pre>
+        <ul style="font-size: 14px;">
+            <li><strong>map &rarr; groupByKey &rarr; map.</strong> The first <code>map</code> emits <code>(key, balance)</code>, where the key is the city, or the tuple <code>(city, bank)</code> for the second analysis. <code>groupByKey</code> collects all balances of a key. The second <code>map</code> (<code>balance_stats</code>) sorts the group once and returns its count, average, minimum, maximum, the 3 highest and the 3 lowest balances. <code>sortByKey</code> only makes the output easy to read.</li>
+            <li><strong>Year filter.</strong> The year is the second program argument. <code>filter</code> keeps the rows whose <code>Last_Trans</code> (format <code>MM/DD/YYYY</code>, read as a string) ends with that year. Both groupings are then repeated on the filtered RDD. I used 1993, the year with the most records (1015).</li>
+            <li><strong>Cleaning the keys.</strong> Cities and bank names have trailing spaces and mixed case (<code>'Edmonton'</code> / <code>'EDMONTON '</code>), so both are stripped and upper-cased. An empty value becomes <code>(blank)</code>, which covers 3509 accounts without a city and 27 without a bank. I did not try to merge spelling variants such as <code>EDMONTON</code>, <code>EDMONTON,AB</code> and <code>EDMONTON CAN</code>. That would need a hand-made mapping and changes the data, not the Spark logic.</li>
+            <li><strong>Check.</strong> The per-city counts, means, minimums and maximums were recomputed independently with pandas and match. For example, for <code>EDMONTON</code>: 4429 accounts, mean 620.30, max 77 273.87, and in 1993 361 accounts with mean 556.73.</li>
+        </ul>
+<pre class="term">records: 12815
+=== 1. Balance by City: 837 groups ===
+=== 2. Balance by (City, Bank): 1020 groups ===
+records with last transaction in 1993: 1015
+=== 3a. Balance by City, last transaction in 1993: 81 groups ===
+=== 3b. Balance by (City, Bank), last transaction in 1993: 113 groups ===</pre>
+        <p style="font-size: 14px;">Sample lines (columns: key, count, avg, min, max, top-3 highest, top-3 lowest):</p>
+<pre class="term">1. by City
+EDMONTON	4429	620.30	0.01	77273.87	[77273.87, 67510.34, 51877.33]	[0.01, 0.01, 0.01]
+CALGARY	21	1299.17	1.25	19838.28	[19838.28, 1821.28, 1661.7]	[1.25, 2.73, 15.89]
+(blank)	3509	568.16	0.01	98428.28	[98428.28, 32900.03, 22998.59]	[0.01, 0.02, 0.03]
+
+2. by (City, Bank)
+EDMONTON | BANK OF MONTREAL	1092	717.91	0.06	67510.34	[67510.34, 33890.3, 22342.45]	[0.06, 0.19, 0.3]
+EDMONTON | ROYAL BANK OF CANADA	752	723.63	0.08	77273.87	[77273.87, 37968.21, 26571.83]	[0.08, 0.5, 1.0]
+EDMONTON | TORONTO-DOMINION BANK	832	688.42	0.01	51877.33	[51877.33, 47714.39, 28316.11]	[0.01, 0.2, 0.39]
+
+3a. by City, 1993
+EDMONTON	361	556.73	0.01	22342.45	[22342.45, 15260.62, 9580.54]	[0.01, 0.01, 0.02]
+
+3b. by (City, Bank), 1993
+EDMONTON | BANK OF MONTREAL	98	647.98	1.21	22342.45	[22342.45, 4616.23, 2976.42]	[1.21, 1.73, 2.21]
+EDMONTON | ROYAL BANK OF CANADA	29	1657.69	3.56	15260.62	[15260.62, 9580.54, 7846.6]	[3.56, 19.22, 28.98]</pre>
+        <p style="font-size: 14px;">The complete output (all groups) is in <code>output_12_4.txt</code>. One record in the dataset is malformed: its columns are shifted, so the bank name is a date and <code>Last_Trans</code> is <code>'TA. '</code>. It is kept in the full analysis and is naturally excluded by the year filter.</p>
+    </div>
+</details>
+
+<details>
+    <summary>Bonus: Matrix-matrix multiplication with both matrices distributed</summary>
+    <div class="details-content">
+        <p style="font-size: 14px;"><code>sparkMatMatMult.py n block_size partitions [check]</code> uses <code>pyspark.mllib.linalg.distributed.BlockMatrix</code>.</p>
+        <ul style="font-size: 14px;">
+            <li><strong>Both matrices are distributed from the start.</strong> The driver parallelises only the list of block indices $(i, j)$. Each block is then generated inside a <code>map</code> on the executors, from a seed derived from <code>(seed, matrix id, i, j)</code>, and wrapped as <code>Matrices.dense</code>. Neither $A$ nor $B$ exists as a whole anywhere, unlike in 12.2, where the driver holds the full matrix and only distributes it.</li>
+            <li><strong><code>A.multiply(B)</code></strong> is Spark's block algorithm. It replicates the blocks of $A$ and $B$ to the result blocks that need them, joins them on the shared index $k$ (via cogroup), multiplies matching blocks and sums $C_{ij} = \sum_k A_{ik} B_{kj}$. Both inputs are shuffled. Neither is broadcast or collected.</li>
+            <li>The result $C$ is also a distributed <code>BlockMatrix</code>. Inside the timed part, only its trace is computed (a <code>filter</code> on diagonal blocks plus <code>sum</code>), so the whole product is really evaluated without being collected.</li>
+            <li><strong>Check.</strong> With <code>check</code>, $C$ is collected and compared with <code>A @ B</code> in NumPy. NumPy builds $A$ and $B$ from the same per-block seeds, which is only possible for test sizes.</li>
+        </ul>
+<pre class="term">n=8 block=4 blocks=2x2 partitions=2 master=local[4]
+A partitions=2 B partitions=2 C partitions=4
+trace(C) = 14.389946
+check OK: result matches numpy A @ B
+
+n=1200 block=200 blocks=6x6 partitions=8 master=local[4]
+A partitions=8 B partitions=8 C partitions=9
+trace(C) = 359944.642003
+check OK: result matches numpy A @ B
+
+n=4000 block=500 blocks=8x8 partitions=16 master=local[4]
+A partitions=16 B partitions=16 C partitions=16
+trace(C) = 3999475.160304
+Time taken: 42.7941</pre>
+        <p style="font-size: 14px;">These runs were made locally in WSL with 4 cores. The trace of a product of two random $[0,1)$ matrices is close to $n \cdot n/4$ ($n = 4000$ gives $4 \cdot 10^6$), which is a further sanity check for the large run that was not compared with NumPy.</p>
+    </div>
+</details>
+
+<details>
+    <summary>Limitations</summary>
+    <div class="details-content">
+        <ul style="font-size: 14px;">
+            <li>12.3 uses one job per core count with 3 repetitions on shared, non-exclusive nodes, and the 1-core baseline ran on a different CPU type than the other points.</li>
+            <li>Spark runs in local mode (one node). The assignment itself notes that a multi-node run would need a Spark master and workers.</li>
+            <li>12.4 cleans only whitespace and letter case in the keys. Different spellings of the same city remain separate groups.</li>
+        </ul>
+    </div>
+</details>
+
+    </body>
+    <script>
+        function loadKaTeXAndRender() {
+            const katexCSS = document.createElement("link");
+            katexCSS.rel = "stylesheet";
+            katexCSS.href =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(katexCSS);
+
+            const katexScript = document.createElement("script");
+            katexScript.src =
+                "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+            katexScript.defer = true;
+
+            katexScript.onload = () => {
+                const autoRenderScript = document.createElement("script");
+                autoRenderScript.src =
+                    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                autoRenderScript.defer = true;
+
+                autoRenderScript.onload = () => {
+                    if (window.renderMathInElement) {
+                        window.renderMathInElement(document.body, {
+                            delimiters: [
+                                { left: "$$", right: "$$", display: true },
+                                { left: "$", right: "$", display: false },
+                            ],
+                            throwOnError: false,
+                        });
+                    }
+                };
+                document.head.appendChild(autoRenderScript);
+            };
+
+            document.head.appendChild(katexScript);
+        }
+        loadKaTeXAndRender();
+    </script>
+</html>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.6;
+        color: #111;
+        background-color: #fff;
+        max-width: 1280px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 8px 0;
+    }
+
+    .math {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 17px;
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+
+    ul {
+        margin: 8px 0 16px 20px;
+    }
+
+    li {
+        margin-bottom: 4px;
+    }
+
+    .report-header {
+        margin-bottom: 28px;
+    }
+
+    .report-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #111;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .report-meta-table th {
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        width: 15%;
+        padding: 3px 6px 3px 0;
+        white-space: nowrap;
+    }
+
+    .report-meta-table td {
+        color: #111;
+        width: 35%;
+        padding: 3px 12px 3px 0;
+    }
+
+    .report-meta-table a {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .report-meta-table a:hover {
+        text-decoration: underline;
+    }
+
+    .report-divider {
+        border: 0;
+        border-top: 1px solid #d1d5db;
+        margin-top: 8px;
+    }
+
+    .math-left .katex-display {
+        text-align: left !important;
+    }
+
+    .math-left .katex-display > .katex {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    /* Сноски в тексте */
+    a.ref-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0 1px;
+    }
+
+    a.ref-link:hover {
+        text-decoration: underline;
+    }
+
+    .report-references {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .report-references h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .report-references ol {
+        padding-left: 20px;
+    }
+
+    .report-references li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
+
+    .report-references .ref-title {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .report-references a {
+        color: #1a73e8 !important;
+        text-decoration: underline !important;
+        word-break: break-all;
+        cursor: pointer;
+    }
+
+    details {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin: 16px 0;
+        background-color: #fff;
+        transition: all 0.2s ease;
+    }
+
+    details[open] {
+        border-color: #cbd5e1;
+    }
+
+    details > :not(summary) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    summary {
+        cursor: pointer;
+        padding: 10px 14px;
+        user-select: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    summary:hover {
+        background-color: #f8fafc;
+    }
+
+    summary h2 {
+        display: inline;
+        font-size: 16px;
+        margin: 0 0 0 6px;
+    }
+
+    .details-content {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 16px auto;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    img + p {
+        text-align: center;
+        font-size: 13px;
+        color: #57606a;
+        margin-top: -8px;
+        margin-bottom: 20px;
+    }
+</style>

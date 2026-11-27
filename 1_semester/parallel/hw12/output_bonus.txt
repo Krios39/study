@@ -1,0 +1,16 @@
+n=8 block=4 blocks=2x2 partitions=2 master=local[4]
+A partitions=2 B partitions=2 C partitions=4
+trace(C) = 14.389946
+Time taken: 6.1754
+C[0, :4] = [1.65496679 1.89406221 1.6290514  1.56255508]
+check OK: result matches numpy A @ B
+n=1200 block=200 blocks=6x6 partitions=8 master=local[4]
+A partitions=8 B partitions=8 C partitions=9
+trace(C) = 359944.642003
+Time taken: 7.7380
+C[0, :4] = [296.88134678 298.54707801 298.60657879 288.18140669]
+check OK: result matches numpy A @ B
+n=4000 block=500 blocks=8x8 partitions=16 master=local[4]
+A partitions=16 B partitions=16 C partitions=16
+trace(C) = 3999475.160304
+Time taken: 42.7941
